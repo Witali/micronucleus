@@ -22,3 +22,4 @@ firmware/osccalASM.o
 firmware/usbdrv/oddebug.o
 firmware/usbdrv/usbdrvasm.o
 firmware/.vscode/*
+/.worktree/
