@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Check the installed loader, unchanged EEPROM, and optional application readback."""
 import argparse
+import hashlib
+import json
 from pathlib import Path
 import sys
 import time
@@ -16,12 +18,20 @@ def main():
     p.add_argument('--start',action='store_true')
     p.add_argument('--check-configuration',action='store_true')
     p.add_argument('--firmware-manifest',type=Path,help='Expected layout; default is the deployed 6844-byte capacity')
+    p.add_argument('--benchmark-reads',type=int,default=0,metavar='COUNT',help='Time repeated application Flash reads without writing memory')
+    p.add_argument('--readback-dir',type=Path,help='Save verified repeated Flash reads and EEPROM in a new local directory')
+    p.add_argument('--timeout',type=float,default=30,help='Seconds to wait for the selected loader')
     args=p.parse_args();sys.path.insert(0,args.python_libs)
+    if args.benchmark_reads<0:p.error('--benchmark-reads must be nonnegative')
+    if args.timeout<=0:p.error('--timeout must be positive')
+    if args.readback_dir and args.benchmark_reads<2:p.error('--readback-dir requires at least two benchmark reads')
+    if args.readback_dir and args.readback_dir.exists():p.error('--readback-dir must name a new directory')
     boot,app_bytes,reset=firmware_layout(args.firmware_manifest)
     import usb.core
     import usb.backend.libusb0
     backend=usb.backend.libusb0.get_backend(find_library=lambda _:args.dll)
-    until=time.monotonic()+30;device=None
+    print(f'Waiting up to {args.timeout:g} seconds for capacity {app_bytes}; press RESET and keep USB power connected.',flush=True)
+    until=time.monotonic()+args.timeout;device=None
     while time.monotonic()<until:
         try:
             d=usb.core.find(idVendor=0x16d0,idProduct=0x0753,backend=backend)
@@ -40,6 +50,26 @@ def main():
     assert bytes(device.ctrl_transfer(0xc0,0xb0,app_bytes,0,1,timeout=3000))==b'','Protected Flash range was exposed'
     print(f'PASS: installed Micronucleus+ 2.8, ATtiny88, 64-byte pages, {app_bytes} application bytes, boot {boot:#06x}')
     print('PASS: all 64 EEPROM bytes unchanged; Flash boundary protected')
+    previous=None;samples=[]
+    for run in range(args.benchmark_reads):
+        started=time.perf_counter()
+        image=b''.join(read(0xb0,address,min(8,app_bytes-address)) for address in range(0,app_bytes,8))
+        elapsed=time.perf_counter()-started
+        samples.append(elapsed)
+        if previous is not None:assert image==previous,'Repeated Flash reads differ'
+        previous=image
+        print(f'READ BENCHMARK {run+1}: {app_bytes} bytes, {(app_bytes+7)//8} requests, '
+              f'{elapsed:.6f} seconds, {app_bytes/elapsed:.1f} bytes/second',flush=True)
+    if args.readback_dir:
+        args.readback_dir.mkdir(parents=True)
+        (args.readback_dir/'flash-app.bin').write_bytes(previous)
+        (args.readback_dir/'eeprom.bin').write_bytes(eeprom)
+        record={'boot_address':boot,'application_bytes':app_bytes,'usb_bcd_device':device.bcdDevice,
+                'flash_sha256':hashlib.sha256(previous).hexdigest(),
+                'eeprom_sha256':hashlib.sha256(eeprom).hexdigest(),'read_seconds':samples,
+                'repeated_reads_identical':True}
+        (args.readback_dir/'manifest.json').write_text(json.dumps(record,indent=2)+'\n')
+        print('PASS: repeated Flash readback and EEPROM saved locally to',args.readback_dir,flush=True)
     if args.check_configuration:
         configuration=bytes(device.ctrl_transfer(0x80,8,0,0,1,timeout=3000))
         assert configuration==b'\x01',('GET_CONFIGURATION',configuration)
