@@ -178,8 +178,8 @@
 #if PCINT18 != PCIE2
 #error The reused PCMSK2 and PCICR enable mask requires identical bit positions
 #endif
-#if LOW8(APP_LIMIT + 1) < FLASH_READ_MAX_BYTES
-#error Optimized Flash range check assumes boundary low-byte >= 8
+#if LOW8(APP_LIMIT) < FLASH_READ_MAX_BYTES
+#error Optimized Flash range check requires no borrow in APP_LIMIT low byte minus length
 #endif
 #if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)
 #error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
@@ -1251,15 +1251,14 @@ flash_read:
     brsh    ee_empty            /* reject length > 8 */
     ldd     r18, Y+CTX_SETUP_VALUE_LOW            /* wValue low - start address */
     ldd     r19, Y+CTX_SETUP_VALUE_HIGH            /* wValue high */
-    /* All byte counts are 1..8. Since APP_LIMIT ends at >=0x07,
-       addresses below its high-byte window cannot exceed the bound. */
-    cpi     r19, HIGH8(APP_LIMIT + 1)
-    brlo    flash_valid
-    brne    ee_empty
-    /* start+length <= APP_LIMIT, checked without 8-bit overflow. */
+    /* Require start <= APP_LIMIT-length. The compile-time guard proves
+       that subtracting a valid length cannot borrow from the high byte.
+       CP/CPC then compare the complete unsigned 16-bit start address. */
     ldi     r30, LOW8(APP_LIMIT)
     sub     r30, r24
     cp      r30, r18
+    ldi     r30, HIGH8(APP_LIMIT)
+    cpc     r30, r19
     brlo    ee_empty
 flash_valid:
     /* Reuse two pointer stores in usb_reply_set_pointer. The extra RJMP consumes two
