@@ -1,0 +1,5 @@
+PASS: installed Micronucleus+ 2.8, ATtiny88, 64-byte pages, 6844 application bytes
+PASS: all 64 EEPROM bytes unchanged; Flash boundary protected
+PASS: standard GET_CONFIGURATION returns configuration 1 from SRAM
+PASS: application Flash readback matches Intel HEX (excluding patched RESET), 200 bytes
+Application start command sent

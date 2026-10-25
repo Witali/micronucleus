@@ -1,4 +1,6 @@
-# ATtiny88 self-updater design — not implemented
+# ATtiny88 self-updater design and implementation
+
+The plan below was originally imported as future work. A later [implementation](../../experimental/attiny88/updater/README.md) adapts the existing C updater with AVR self-programming primitives, image/readback checks, independent CPU models, and hardware testing. The corrected target is 1344 bytes at `0x1AC0`. The historical 1320/1328-byte images are retained unchanged and are not the final hardware target.
 
 The proposed updater would let a board running a working Micronucleus bootloader replace that bootloader over USB. A temporary application would contain the updater and the replacement image. Upstream already supplies the generic source [`firmware/upgrade.c`](../../firmware/upgrade.c), the Makefile rules for embedding an image, and a precompiled [`upgrade-t88_default.hex`](../../firmware/upgrades/upgrade-t88_default.hex). Its header describes its ATtiny85 origins, but the repository also builds it for ATtiny88. The supplied HEX installs the stock bootloader; our imported assembly image needs a separate, verified adaptation.
 

@@ -20,7 +20,7 @@ https://github.com/micronucleus/micronucleus/tree/v1.11
 
 # Experimental ATtiny88 development
 
-The fork also preserves an experimental assembly implementation with application Flash reads and EEPROM access. See [experimental/attiny88](experimental/attiny88/README.md) for Fast Pass7, the conservative USB variant, build requirements, and validation limits. The [development history](docs/attiny88-history/DEVELOPMENT_HISTORY.md) records the separately committed stages; the [self-updater plan](docs/attiny88-history/SELF_UPDATER_PLAN.md) remains a future design.
+The fork also preserves an assembly implementation with application Flash reads and EEPROM access. See [experimental/attiny88](experimental/attiny88/README.md) for the historical versions and the packet/reset-corrected 1344-byte strict USB version. The [development history](docs/attiny88-history/DEVELOPMENT_HISTORY.md) records the separately committed stages. The [ATtiny88 USB updater](experimental/attiny88/updater/README.md) adapts the existing upstream updater and includes independent emulator checks, a reversible USB trial, local backup tools, and opt-in hardware memory tests.
 
 # Usage
 

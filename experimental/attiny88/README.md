@@ -1,9 +1,10 @@
 # Experimental Micronucleus+ for ATtiny88
 
-This directory contains the assembly development line imported from the October 25, 2026 handoff. Upstream C firmware and the original command-line tool remain in their existing directories. The imported code targets ATtiny88 / MH-Tiny88 at 16 MHz and has not been validated on physical USB hardware.
+This directory contains the assembly development line imported from the October 25, 2026 handoff. Upstream C firmware and the original command-line tool remain in their existing directories. The original imported images are historical experiments. A subsequent real-board trial uncovered vendor-dispatch, SRAM-reply and watchdog-startup defects; the [corrected strict USB version](variants/strict_usb_verified/README.md) and [USB updater](updater/README.md) address them without changing the low-level USB handler.
 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |
 | --- | ---: | --- | ---: | --- |
+| Packet/reset-corrected strict USB, hardware target | 1344 | `0x1AC0` | 6844 | 1–8 bytes/request |
 | Fast Pass7, selected development line | 1320 | `0x1AC0` | 6844 | 1–8 bytes/request |
 | Strict USB Pass7, initial hardware trial candidate | 1328 | `0x1AC0` | 6844 | 1–8 bytes/request |
 | Historical compact Pass4 | 1344 | `0x1AC0` | 6844 | 1 byte/request |
@@ -12,6 +13,8 @@ This directory contains the assembly development line imported from the October 
 Fast and strict Pass7 support standard Micronucleus Flash writes, application Flash reads, and read/write access to all 64 EEPROM bytes. USB packet CRC remains enabled. The selected line excludes the memory-range CRC experiment; verify readback on the host instead.
 
 ## Build and check
+
+For the current hardware target, use `python3 updater/build_verified.py` and `python3 updater/build.py`, followed by the checks documented in the updater directory. The commands below reproduce the original historical Pass7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
 
 Requirements: Python **3.10+**, Clang with the AVR backend, `llvm-objcopy`, `llvm-objdump`, and GNU `avr-ld`. In Ubuntu/WSL these tools are supplied by `clang`, `llvm`, and `binutils-avr`. No external Python packages are needed for offline builds or tests.
 
@@ -48,7 +51,7 @@ See [PROTOCOL.md](PROTOCOL.md) for memory layout and requests. `python3 host/mic
 
 These images are experimental ISP installation artifacts. A fresh-device ISP image includes RESET and is not an application image to upload through an existing USB bootloader. No physical board was flashed during import. Software trace comparisons do not establish electrical USB compatibility, power-loss recovery, or reliability at 16 MHz on a particular device.
 
-An ATtiny88 self-updater has **not** been implemented. Its preserved [design plan](../../docs/attiny88-history/SELF_UPDATER_PLAN.md) is a future task, not a supported installation method. Initial hardware testing needs a working ISP recovery path and backups of the original device state.
+The [ATtiny88 application updater](updater/README.md) now embeds the corrected strict image. It validates the payload and written pages before final RESET handover. Its [original design plan](../../docs/attiny88-history/SELF_UPDATER_PLAN.md) remains preserved for provenance. First-page power-loss recovery still requires ISP in the worst case; the local device backup is not published with the source.
 
 ## History and license
 

@@ -1,0 +1,16 @@
+> Please plug in the device (will time out in 120 seconds) ... 
+> Device is found!
+connecting: 20% complete
+connecting: 27% complete
+connecting: 34% complete
+connecting: 40% complete
+> Device has firmware version 2.8
+> Device signature: 0x1e9311 
+> Bootloader entry condition: The bootloader is always activated after reset.
+> Bootloader exit condition: The bootloader exits after 6 seconds (default) if no uploading detected.
+> Bootloader saves MCUSR contents in GPIOR0 register.
+> Available space for user applications: 6844 bytes
+> Suggested sleep time between sending pages: 7ms
+> Whole page count: 107  page size: 64
+> Erase function sleep duration: 749ms
+>> Micronucleus done. Thank you!
