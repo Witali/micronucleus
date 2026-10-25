@@ -88,16 +88,26 @@ image; `isp-fresh.hex` from the loader builder serves a different purpose.
 The later [strict USB optimization candidate](../variants/strict_usb_optimized/README.md)
 has a separate `build_optimized.py` entry point. It retains packet/reset fixes
 and permits exactly four audited cycle-neutral USB-engine substitutions.
-It uses 1314 bytes without LED, 1332 active high or 1330 active low with the
-default mask. All default PD0 LED modes fit at `0x1AC0`
-with 6844 application bytes. Its manifests work with the same updater command
+It uses 1274 bytes without LED at `0x1B00`, reserves 20 pages and exposes
+6908 application bytes. Default-mask PD0 LED modes use 1296/1294 bytes at
+`0x1AC0`, with 6844 application bytes. Its manifests work with the same updater command
 above. The candidate's documentation records exact sizes, focused changes,
-cycle comparisons and independent erase/updater model checks. It has not been
-installed on the physical board; default builds and release files stay pinned.
+cycle comparisons and independent erase/updater model checks. It has been
+installed and memory-tested on the physical board in its no-LED configuration;
+see the [20-page hardware record](../variants/strict_usb_optimized/HARDWARE_TEST.md).
+LED modes retain model validation; default builds and release files stay pinned.
 
 ## Hardware memory test and user actions
 
-`test_hardware_memory.py --help` describes an explicit opt-in physical test. It reuses the existing host library rather than duplicating its unit tests: write/read all 64 EEPROM bytes, erase them by programming `0xFF`, restore their local backup, write/read all 6844 application Flash bytes, erase/read the whole application, then restore and start the known LED image. EEPROM has no dedicated USB erase opcode; the hardware erase/write cycle is exercised through the supported EEPROM write command. The test requires `--exercise-hardware`, a backup, an LED image and an external report destination. It is never run by ordinary test discovery.
+`test_hardware_memory.py --help` describes an explicit opt-in physical test. It reuses the existing host library: write/read all 64 EEPROM bytes, erase to `0xFF`, restore the backup, write/read/erase the entire application reservation, then restore and start the selected original application. `--firmware-manifest` selects its actual capacity and RESET (6908 bytes for the 20-page image); omission retains the earlier 6844-byte layout. `--restore-hex` selects the original application; `--led-hex` remains an alias. EEPROM has no separate USB erase opcode. The test requires `--exercise-hardware`, backups and an external report destination, and never runs in ordinary discovery.
+
+`check_installed.py` accepts the same firmware manifest. `--benchmark-reads N`
+times read-only eight-byte Flash requests; `--readback-dir` saves identical
+repeated Flash reads, EEPROM and a manifest in a new local directory and
+requires at least two reads. These dumps exclude protected loader/postscript
+bytes. Preserve an exact source image with its original RESET before an
+updater or memory test replaces an unknown application. The measured 6908-byte
+read takes approximately 2.592 seconds on the tested Windows/libusb0 host.
 
 Instructions to a person must distinguish **press the RESET button** from **remove all board power**. Use the button for a normal loader window after the final fixes. Request a full power cycle explicitly for a cold-start check or for clearing an old latched reset condition. If requesting a power cycle, specify removal of USB/other power for 2–3 seconds. During actual bootloader programming, neither reset nor remove power. Otherwise leave the board connected until a specific action is requested.
 

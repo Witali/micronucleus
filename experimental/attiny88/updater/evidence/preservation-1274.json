@@ -1,0 +1,14 @@
+{
+  "old_application_bytes": 6844,
+  "new_application_bytes": 6908,
+  "differences_in_original_region": [
+    {
+      "address": 0,
+      "before": 95,
+      "after": 127
+    }
+  ],
+  "application_bytes_after_reset_unchanged": true,
+  "new_64_bytes_erased": true,
+  "eeprom_64_bytes_unchanged": true
+}

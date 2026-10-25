@@ -1,0 +1,16 @@
+{
+  "boot_address": 6912,
+  "flash_bytes": 6908,
+  "eeprom_bytes": 64,
+  "checks": {
+    "EEPROM: write/read all 64 bytes": true,
+    "EEPROM: erase to 0xFF and read all 64 bytes": true,
+    "EEPROM: original contents restored exactly": true,
+    "Flash: write/read all 6908 application bytes, accounting for patched RESET": true,
+    "Flash: erase/read all 6908 application bytes": true,
+    "Flash: original application restored and readback verified": true,
+    "EEPROM: still unchanged after Flash write/erase/restore": true,
+    "Original application start command accepted": true
+  },
+  "passed": true
+}
