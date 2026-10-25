@@ -2,7 +2,7 @@
 """Opt-in physical Flash/EEPROM write/read/erase test with restoration.
 
 Not part of unittest discovery. Requires an explicitly selected real board,
-the saved EEPROM backup, and the known LED image to leave on the device.
+the saved EEPROM backup, and a verified application image to restore.
 """
 import argparse
 import importlib.util
@@ -20,8 +20,9 @@ ROOT=Path(__file__).resolve().parent
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--exercise-hardware',action='store_true',required=True)
-    for name in ['dll','python-libs','micronucleus','backup','led-hex','report']:
+    for name in ['dll','python-libs','micronucleus','backup','report']:
         p.add_argument('--'+name,required=True)
+    p.add_argument('--restore-hex','--led-hex',dest='restore_hex',required=True,help='Original application to restore after testing')
     p.add_argument('--firmware-manifest',type=Path,help='Expected layout; default is the deployed 6844-byte capacity')
     args=p.parse_args();sys.path.insert(0,args.python_libs)
     boot,app_bytes,reset=firmware_layout(args.firmware_manifest)
@@ -96,22 +97,22 @@ def main():
                 assert tool.read_flash()==b'\xff'*app_bytes
                 passed(f'Flash: erase/read all {app_bytes} application bytes')
             finally:
-                tool=cli(tool,'restore-led',image=Path(args.led_hex))
-                cells=host.load_image(Path(args.led_hex),max_size=app_bytes)
+                tool=cli(tool,'restore-app',image=Path(args.restore_hex))
+                cells=host.load_image(Path(args.restore_hex),max_size=app_bytes)
                 tool.verify_flash(cells,skip_reset_vector=True)
                 assert tool.read_flash_block(0,2)==reset.to_bytes(2,'little')
-                passed('Flash: LED application restored and readback verified')
+                passed('Flash: original application restored and readback verified')
         assert tool.read()==original
         passed('EEPROM: still unchanged after Flash write/erase/restore')
         tool.dev.ctrl_transfer(0x40,4,0,0,b'',timeout=3000)
-        passed('LED application start command accepted')
+        passed('Original application start command accepted')
         report['passed']=True
     except Exception as exc:
         report['error']=str(exc)
         raise
     finally:
         destination.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-    print('PASS: hardware memory cycle complete; original EEPROM and LED application restored.',flush=True)
+    print('PASS: hardware memory cycle complete; original EEPROM and application restored.',flush=True)
 
 
 if __name__=='__main__':main()
