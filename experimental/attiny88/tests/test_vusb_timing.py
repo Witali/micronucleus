@@ -67,9 +67,9 @@ def start_new(build,data,fromlabel):
  return sim
 
 def sim_tx(build,m,r):
- sim=start_new(build,{'memory':m,'registers':r},'L1c56')
+ sim=start_new(build,{'memory':m,'registers':r},'usb_tx_acquire_bus')
  for _ in range(3000):
-  if sim.pc==sim.labels['L1be8']:
+  if sim.pc==sim.labels['usb_handler_packet_done']:
    return sim.bus_events,sim.t,sim.m
   sim.step()
  raise RuntimeError((build['start'],sim.t,hex(sim.pc)))
@@ -93,14 +93,14 @@ def test_tx():
 def measure_ack(build,pid,mode):
  m=bytearray(0x300);r=[0]*32
  r[1]=0;r[19]=0x0b;r[28]=0;r[29]=1
- # L1baa subtracts zero and leaves Y = 0x100; packet PID is at Y+0
+ # usb_rx_end_packet subtracts zero and leaves Y = 0x100; packet PID is at Y+0
  m[0x100]=pid;m[0x101]=0;m[0x10c]=0;m[0x112]=1;m[0x114]=mode;m[0x10f]=0x5a
  r[30]=0;r[31]=1  # established during cycle-neutral sync prologue
- sim=start_new(build,{'memory':m,'registers':r},'L1baa')
+ sim=start_new(build,{'memory':m,'registers':r},'usb_rx_end_packet')
  for _ in range(500):
-  if sim.pc==sim.labels['L1c56']:
+  if sim.pc==sim.labels['usb_tx_acquire_bus']:
    return sim.t,sim.m
-  if sim.pc==sim.labels['L1be8']:return None,sim.m
+  if sim.pc==sim.labels['usb_handler_packet_done']:return None,sim.m
   sim.step()
  return None,sim.m
 
@@ -124,12 +124,12 @@ def test_sync_prologue():
   m=bytearray(rng.getrandbits(8) for _ in range(0x300))
   r=[rng.getrandbits(8) for _ in range(32)]
   r[1]=0
-  a=start_new(OLD,{'memory':m,'registers':r},'L1af8')
-  b=start_new(NEW,{'memory':m,'registers':r},'L1af8')
+  a=start_new(OLD,{'memory':m,'registers':r},'usb_rx_sync_confirmed')
+  b=start_new(NEW,{'memory':m,'registers':r},'usb_rx_sync_confirmed')
   a.io[0x9]=b.io[0x9]=rng.choice([0,2,4,6])
   for z in (a,b):
    for _ in range(25):
-    if z.pc==z.labels['L1b86']:break
+    if z.pc==z.labels['usb_rx_sample_odd_bit']:break
     z.step()
    else:raise AssertionError(('sync prologue did not reach sample',hex(z.pc)))
   if a.t!=b.t or a.flags!=b.flags or a.m!=b.m:

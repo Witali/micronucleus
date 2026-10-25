@@ -15,11 +15,11 @@ class DispatcherDifferential(unittest.TestCase):
                 sims=(Sim(BASE,seed),Sim(OPT,seed))
                 outcomes=[]
                 for x in sims:
-                    x.pc=x.labels['L1d7e']
+                    x.pc=x.labels['bootloader_dispatch_command']
                     for _ in range(100):
-                        if x.pc==x.labels['L1d9c']:
+                        if x.pc==x.labels['usb_control_process_received_packet']:
                             outcomes.append('dispatch');break
-                        if x.pc==x.labels['L1eac']:
+                        if x.pc==x.labels['bootloader_start_application']:
                             outcomes.append('exit');break
                         x.step()
                     else:self.fail(f'did not terminate {cmd=}, {idle=}: {hex(x.pc)}')

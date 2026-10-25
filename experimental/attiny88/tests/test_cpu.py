@@ -32,7 +32,7 @@ class AVR:
         self.mem[0x011b]=index&255;self.mem[0x011c]=(index>>8)&255
         self.mem[0x011d]=length&255;self.mem[0x011e]=(length>>8)&255
         self.io={0x1f:2 if ep_busy else 0,0x20:0,0x21:0,0x37:1 if spm_busy else 0}
-        self.pc=self.labels['L1f0c'];self.flags=0;self.stack=[];self.cycle=0
+        self.pc=self.labels['usb_dispatch_extended_or_standard_request'];self.flags=0;self.stack=[];self.cycle=0
         self.last_eempe_cycle=None;self.spmmemwrites=0;self.eeprom_writes=0
         self.trace=[];self.outcome=None
     def flag(self,n):return bool(self.flags&(1<<n))
@@ -49,7 +49,7 @@ class AVR:
         dec.START=BOOT;dec.raw=self.flash
         return dec.decode(addr)
     def run(self):
-        stop={self.labels['L1f34']:'onebyte',self.labels['L1eca']:'zero',self.labels['old_vendor_dispatch']:'legacy',self.labels['L1de2']:'flash'}
+        stop={self.labels['usb_reply_use_scratch_buffer']:'onebyte',self.labels['usb_reply_empty']:'zero',self.labels['usb_standard_dispatch']:'legacy',self.labels['usb_reply_limit_length']:'flash'}
         for _ in range(350):
             if self.pc in stop:
                 self.outcome=stop[self.pc]

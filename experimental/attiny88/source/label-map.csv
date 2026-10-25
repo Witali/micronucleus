@@ -1,0 +1,98 @@
+historical_label,label,purpose
+L1a82,startup_clear_sram_byte,Clear the next byte in the bootloader SRAM context.
+L1a84,startup_check_sram_end,Repeat SRAM clearing until X reaches 0x012C.
+L1a9c,usb_crc16_next_byte,Read a byte and mix it into the CRC accumulator.
+L1aa0,usb_crc16_shift_bit,Shift the CRC and conditionally apply polynomial 0xA001.
+L1aaa,usb_crc16_advance_bit_count,Advance the packed eight-bit CRC loop counter.
+L1aae,usb_crc16_check_remaining_bytes,Process remaining bytes or append the two CRC bytes.
+L1abe,usb_rx_wait_for_j,Wait for the USB J state with a bounded sync counter.
+L1ac4,usb_rx_wait_for_k,Sample for the next J-to-K sync transition.
+L1ade,usb_rx_found_k,Prepare the receive pointer and test for two consecutive K bits.
+L1af8,usb_rx_sync_confirmed,Initialize receive state while preserving the first-bit sample phase.
+L1b14,usb_rx_unstuff_bit6,Handle stuffing detected at receive bit 6 and adjust the timing accumulator.
+L1b20,usb_rx_unstuff_bit7,Resample data bit 7 after a stuffed bit and adjust timing.
+L1b2c,usb_rx_unstuff_even_bit,Resample an even data bit and detect SE0.
+L1b3a,usb_rx_unstuff_even_resume_jump,Keep the two-cycle jump into the even-bit resume path.
+L1b3c,usb_rx_unstuff_odd_bit,Resample an odd data bit and detect SE0.
+L1b4a,usb_rx_unstuff_odd_resume_jump,Keep the two-cycle jump into the odd-bit resume path.
+L1b4c,usb_rx_decode_bit6,Decode bit 6 and compensate fractional receive timing.
+L1b58,usb_rx_shift_bit6,Shift the decoded bit-6 value into the receive register.
+L1b5c,usb_rx_sample_bit7,Sample bit 7 and check whether bit 6 required unstuffing.
+L1b6a,usb_rx_finish_byte,Check bit-7 stuffing and store the reconstructed byte.
+L1b72,usb_rx_sample_even_bit,Sample and decode data bit 0 or 2 or 4.
+L1b82,usb_rx_shift_stuff_mask,Advance the reconstruction mask after an even bit.
+L1b86,usb_rx_sample_odd_bit,Sample and decode data bit 1 or 3 or 5 and detect SE0.
+L1b96,usb_rx_advance_bit_pair,Advance the receive bit-pair counter or finish the byte.
+L1ba2,usb_rx_overflow,Clear the pending USB edge after receive-buffer overflow.
+L1ba6,usb_rx_ignore_packet,Discard an unsupported or misaddressed packet by clearing its token.
+L1baa,usb_rx_end_packet,Recover packet start after SE0 and dispatch its PID.
+L1bd8,usb_rx_handle_setup_or_out,Start waiting for the DATA packet following SETUP or OUT.
+L1bda,usb_rx_wait_for_data,Wait for a pending USB edge or the short DATA timeout.
+L1be4,usb_rx_store_token,Publish the current token in the USB SRAM context.
+L1be8,usb_handler_packet_done,Restore the packet counter and receive another pending packet if needed.
+L1bf0,usb_handler_return,Restore Y and return from the polled USB handler.
+L1bf6,usb_rx_handle_data,Accept DATA0 or DATA1 or send NAK when the receive buffer is occupied.
+L1c14,usb_rx_handle_in,Choose queued endpoint-zero data or a handshake for an IN token.
+L1c30,usb_tx_stuff_regular_bit,Insert a stuffed zero during transmission of data bits 0 through 5.
+L1c36,usb_tx_stuff_regular_delay,Preserve the stuffed-bit output timing before resuming transmission.
+L1c3c,usb_tx_stuff_bit6,Handle the bit-6 stuffing path and compensate the shift register.
+L1c44,usb_tx_stuff_bit7,Reset stuffing history and resume the bit-7 output path.
+L1c48,usb_tx_send_nak,Select the NAK handshake PID.
+L1c4c,usb_tx_send_ack,Select the ACK handshake PID.
+L1c4e,usb_tx_send_count_handshake,Use the handshake PID already held in the packet counter.
+L1c50,usb_tx_prepare_handshake,Point Y at the handshake register and set the two-byte transmit count.
+L1c56,usb_tx_acquire_bus,Drive the USB pins and initialize NRZI transmission including SYNC.
+L1c64,usb_tx_begin_byte,Initialize the packed transmit bit counter for the next byte.
+L1c66,usb_tx_send_regular_bit,Emit the next NRZI bit for data bits 0 through 5.
+L1c70,usb_tx_check_regular_stuffing,Check the six-one history and advance the regular-bit loop.
+L1c7e,usb_tx_send_bit6,Emit data bit 6 and handle its stuffing history.
+L1c8a,usb_tx_send_bit7,Emit data bit 7 and advance to the next byte or end of packet.
+L1cb2,usb_tx_finish_eop,Clear the TX-generated pending edge and prepare bus release after SE0.
+L1cc2,usb_tx_eop_delay,Hold the required end-of-packet interval before releasing the USB pins.
+usb_program_page,flash_buffer_append_word,Protect the RESET word then stage one word in the Flash page buffer.
+L1cd8,flash_buffer_load_word,Execute page-buffer SPM and advance the current address by two bytes.
+L1d02,usb_disconnect_delay_outer,Reload the inner counter for the initial USB disconnect delay.
+L1d06,usb_disconnect_delay_inner,Count down one inner USB disconnect delay interval.
+L1d3a,bootloader_poll_begin,Initialize the five-millisecond USB poll and host-reset counters.
+L1d40,usb_poll_sample_bus,Sample both USB lines and rearm reset detection outside SE0.
+L1d48,usb_poll_check_reset_duration,Detect sustained SE0 and clear the active and pending USB addresses.
+L1d54,usb_poll_check_packet_pending,Call the bit-level handler when a USB pin-change edge is pending.
+L1d5e,bootloader_process_pending_command,Service the watchdog and execute a queued application erase.
+L1d6a,flash_erase_application_page,Erase application pages in reverse order down through page zero.
+L1d7e,bootloader_dispatch_command,Dispatch page commit or application exit while preserving pending work.
+L1d86,flash_commit_buffered_page,Bounds-check and write the staged page using a page-aligned SPM address.
+L1d9a,bootloader_clear_command,Clear the completed or unrecognized queued command.
+L1d9c,usb_control_process_received_packet,Check the received payload and dispatch a complete eight-byte SETUP.
+L1dce,bootloader_handle_vendor_request,Refresh the idle timeout and handle device info or legacy Flash commands.
+L1de2,usb_reply_limit_length,Clamp the prepared reply length to the host-requested wLength.
+L1df4,usb_reply_store_length,Publish the number of remaining control-reply bytes.
+L1df8,usb_rx_release_buffer,Mark the received packet buffer available for the next packet.
+L1dfc,usb_tx_prepare_pending_reply,Build a control-IN block when TX is idle and reply bytes remain.
+L1e14,usb_tx_prepare_data_packet,Update remaining length and toggle DATA0 or DATA1 for the next block.
+L1e3a,usb_tx_copy_flash_payload,Copy reply bytes from Flash to the endpoint-zero transmit buffer.
+L1e4c,usb_tx_append_payload_crc,Append CRC16 and mark the end of a short control reply.
+L1e60,usb_tx_publish_packet_length,Publish the prepared TX block length including protocol overhead.
+L1e64,bootloader_check_idle_timeout,Increment idle polls and start the application at timeout if present.
+L1e7c,usb_poll_resynchronize,Enter the post-poll resynchronization path with LED code omitted.
+L1e82,legacy_led_off_anchor,Retain a zero-byte anchor where the removed LED-off code used to be.
+L1e84,usb_poll_check_missed_packet,Check whether USB traffic arrived during command and reply processing.
+L1e8a,usb_poll_wait_for_idle,Wait for a quiet USB interval before accepting the next packet.
+L1e98,usb_poll_advance_timeout,Continue the bus-poll loop until its timeout expires.
+L1e9e,bootloader_poll_timeout,Continue with queued commands after the bus-poll timeout.
+L1eac,bootloader_start_application,Release USB and preserve reset flags before jumping to the application.
+L1ec0,bootloader_check_set_flash_address,Recognize the legacy page-transfer command and check the current address.
+L1ece,flash_set_address_and_clear_buffer,Load the requested page address and clear the temporary page buffer.
+L1eca,usb_reply_empty,Return a zero-length control reply through the common length limiter.
+L1ee2,bootloader_check_write_flash_word_pair,Recognize the four-byte Flash-data request and queue full-page commits.
+L1f06,bootloader_queue_command,Store the low six request bits as a deferred bootloader command.
+L1f0c,usb_dispatch_extended_or_standard_request,Check EEPROM and Flash extensions before the standard-request fallback.
+old_vendor_dispatch,usb_standard_dispatch,Handle standard endpoint-zero requests after the extension checks.
+L1f34,usb_reply_use_scratch_buffer,Select the shared response scratch buffer at SRAM 0x010A.
+L1f22,usb_reply_set_pointer,Store the prepared response pointer and continue with length limiting.
+L1f2c,usb_standard_check_set_address,Handle SET_ADDRESS or continue standard-request dispatch.
+L1f3a,usb_standard_check_get_descriptor,Choose the device or configuration descriptor for GET_DESCRIPTOR.
+L1f62,usb_standard_check_configuration,Dispatch GET_CONFIGURATION and SET_CONFIGURATION.
+L1f70,usb_standard_check_get_interface,Return the default interface byte or an empty unsupported-request reply.
+L1f7a,usb_standard_get_configuration,Prepare a one-byte reply pointing at the current USB configuration.
+main_tail,usb_reply_pointer_trampoline,Jump to the common response-pointer stores after configuration setup.
+L1f82,legacy_led_on_anchor,Retain a zero-byte anchor where the removed LED-on code used to be.

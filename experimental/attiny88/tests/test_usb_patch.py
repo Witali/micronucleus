@@ -19,6 +19,7 @@ from collections import deque
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tests'))
 import avr_decoder as dec
+from source_labels import with_semantic_names
 BASE=0x1B40
 NEW=0x1AC0
 
@@ -28,14 +29,14 @@ def symtab(p):
     for line in subprocess.check_output(['llvm-objdump','-t',str(p)],text=True).splitlines():
         m=re.match(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+(.+)$',line)
         if m:res[m[2]]=int(m[1],16)
-    return res
+    return with_semantic_names(res)
 
 
 def segment(binfile,obj,offset):
     sy=symtab(obj)
     dec.START=offset
     dec.raw=binfile.read_bytes()
-    start,end=sy['USB_handler'],sy['usb_program_page']
+    start,end=sy['USB_handler'],sy['flash_buffer_append_word']
     items=[];p=start
     while p<end:
         ins=dec.decode(p)
@@ -112,10 +113,10 @@ class UsbPatchAudit(unittest.TestCase):
             pc,zlo,zhi=q.popleft()
             if (pc,zlo,zhi) in seen:continue
             seen.add((pc,zlo,zhi))
-            if pc==sy['L1be4']:
+            if pc==sy['usb_rx_store_token']:
                 seen_target.add((zlo,zhi))
                 continue
-            if pc<sy['USB_handler'] or pc>=sy['usb_program_page']:
+            if pc<sy['USB_handler'] or pc>=sy['flash_buffer_append_word']:
                 continue
             ins=dec.decode(pc);arg=operand(ins)
             ops=arg.split(',') if arg else []
@@ -141,13 +142,13 @@ class UsbPatchAudit(unittest.TestCase):
     def test_removed_r17_initializations_are_dead(self):
         dec.START=NEW
         dec.raw=(ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin').read_bytes()
-        for name in ('L1ba2','L1baa','L1cb2'):
+        for name in ('usb_rx_overflow','usb_rx_end_packet','usb_tx_finish_eop'):
             q=deque([self.ns[name]+2]);seen=set();reached_writes=[]
             while q:
                 pc=q.popleft()
                 if pc in seen:continue
                 seen.add(pc)
-                if pc<self.ns['USB_handler'] or pc>=self.ns['usb_program_page']:
+                if pc<self.ns['USB_handler'] or pc>=self.ns['flash_buffer_append_word']:
                     continue
                 ins=dec.decode(pc);args=operand(ins).split(',')
                 regs=re.findall(r'r\d+',operand(ins))

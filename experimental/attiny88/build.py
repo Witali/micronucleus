@@ -71,9 +71,12 @@ def main():
     assert old_fast==(ROOT/'reference/Pass5_Fast_1344.bin').read_bytes(), 'Pass5 baseline not reproducible'
     # USB-CRC must remain exactly identical. The USB bit engine is allowed
     # precisely three 2-cycle PCIFR stores and one 2-cycle SRAM store rewrite.
-    for first,last in [('usb_crc16_append','USB_handler'),('USB_handler','usb_program_page')]:
+    # The maintained source uses semantic names. Reference objects retain
+    # their historical symbol spelling; compare the same byte boundaries.
+    for first,last,reference_last in [('usb_crc16_append','USB_handler','USB_handler'),
+                                      ('USB_handler','flash_buffer_append_word','usb_program_page')]:
         a=boot[syms[first]-BOOT_AT:syms[last]-BOOT_AT]
-        b=base[bsyms[first]-0x1B40:bsyms[last]-0x1B40]
+        b=base[bsyms[first]-0x1B40:bsyms[reference_last]-0x1B40]
         if first=='usb_crc16_append':
             assert a==b, 'USB CRC changed!'
             print('CHECK V-USB CRC: 44 bytes byte-identical')

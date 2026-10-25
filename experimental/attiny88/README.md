@@ -36,6 +36,34 @@ Fast Pass7 body SHA-256: `6f573edc063f1e7751d551ac2ee3384ecfc92d807fa2db5e279e1d
 
 Strict USB body SHA-256: `fab49bebffe9a03c0db4504313e2af6c67678dde2b2211bf6dfe6d98fd9c4d5a`.
 
+## Assembly labels
+
+The maintained [Fast Pass7 source](source/micronucleus_t88_plus.S) uses semantic
+labels instead of the address-like names inherited from disassembly. Each
+renamed block has a short English comment describing its role. Names distinguish
+USB synchronization and NRZI receive paths (`usb_rx_*`), transmit/stuffing/EOP
+paths (`usb_tx_*`), control replies (`usb_reply_*`), standard requests
+(`usb_standard_*`), the bootloader poll/command loop (`bootloader_*`), and Flash
+page-buffer operations (`flash_*`).
+
+The [label map](source/label-map.csv) records all 94 former address labels and
+three misleading named labels with their new names and purposes. For example,
+`L1abe` is `usb_rx_wait_for_j`, `L1d6a` is
+`flash_erase_application_page`, and `L1e3a` is `usb_tx_copy_flash_payload`.
+The former `usb_program_page` becomes `flash_buffer_append_word`: it stages
+one word with SPM; the separate `flash_commit_buffered_page` actually writes
+the page. `legacy_led_off_anchor` and `legacy_led_on_anchor` intentionally
+contain no instructions because those LED operations were removed in Pass7.
+
+This naming change preserves every instruction and all 97 mapped symbol
+addresses. The 1320-byte body and its SHA-256 above are unchanged. Tests and
+the repeat scanner use the new names. `tests/source_labels.py` exposes semantic
+aliases only in test-side dictionaries when reading old reference objects;
+it does not add historical aliases to the maintained assembly. The archived
+sources and original handoff remain intact. The corrected strict hardware
+target in `variants/strict_usb_verified/` is a separate source and is unchanged
+by this readability update.
+
 ## Files and protocol
 
 - `source/micronucleus_t88_plus.S`: historical Fast Pass7 source.

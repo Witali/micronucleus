@@ -27,7 +27,7 @@ def symbols():
 def run():
     sy=symbols()
     dec.START=0x1AC0;dec.raw=(ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin').read_bytes()
-    start=sy['usb_program_page'];end=0x1AC0+len(dec.raw)
+    start=sy['flash_buffer_append_word'];end=0x1AC0+len(dec.raw)
     seq=[];pc=start
     while pc<end:
         ins=dec.decode(pc)

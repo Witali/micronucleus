@@ -5,6 +5,7 @@
 """
 import importlib.util, os, random, re, subprocess, sys
 from pathlib import Path
+from source_labels import with_semantic_names
 ROOT=Path(__file__).parent
 sys.argv=['decoder']
 spec=importlib.util.spec_from_file_location('avr_decoder', ROOT/'avr_decoder.py')
@@ -16,7 +17,7 @@ def symbols(path):
  for line in s.splitlines():
   m=re.match(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+(.+)$',line)
   if m: out[m.group(2)]=int(m.group(1),16)
- return out
+ return with_semantic_names(out)
 
 BASE={'name':'upstream','start':0x1ac0,'bin':ROOT.parent/'reference/Pass5_Fast_1344.bin','o':ROOT.parent/'build/reference_pass5.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
@@ -29,7 +30,7 @@ class Sim:
   data=build['bin'].read_bytes(); self.flash[self.base:self.base+len(data)]=data
   self.labels=symbols(self.o)
   self.m=bytearray(init['memory']); self.r=init['registers'].copy()
-  self.flags=0;self.calls=[];self.steps=0;self.pc=self.labels['L1d9c'];self.stop=self.labels['L1d3a']; self.ending=self.labels['L1eac']
+  self.flags=0;self.calls=[];self.steps=0;self.pc=self.labels['usb_control_process_received_packet'];self.stop=self.labels['bootloader_poll_begin']; self.ending=self.labels['bootloader_start_application']
   self.events=[];self.visited=set()
   self.io={0x1b:0,0x09:0x02,0x0a:0,0x0b:0,0x34:0,0x1e:0}
   self.r[1]=0
