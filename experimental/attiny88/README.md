@@ -5,12 +5,19 @@ This directory contains the assembly development line imported from the October 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |
 | --- | ---: | --- | ---: | --- |
 | Packet/reset-corrected strict USB, hardware target | 1344 | `0x1AC0` | 6844 | 1–8 bytes/request |
+| Optimized strict USB candidate, LED off, software validated | 1326 | `0x1AC0` | 6844 | 1–8 bytes/request |
 | Historical Fast Pass7, uncorrected | 1320 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
 | Historical strict Pass7, uncorrected | 1328 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
 | Historical compact Pass4 | 1344 | `0x1AC0` | 6844 | 1 byte/request |
 | Rejected range-CRC Pass6 experiment | 1554 | `0x19C0` | 6588 | 1–8 bytes/request |
 
 The corrected strict build supports standard Micronucleus Flash writes, application Flash reads, and read/write access to all 64 EEPROM bytes. The historical images declared these extensions but need the packet-level corrections described above. USB packet CRC remains enabled. The current target excludes the memory-range CRC experiment; verify readback on the host instead.
+
+The separate [strict USB optimization candidate](variants/strict_usb_optimized/README.md)
+retains the corrected behavior and identical 516-byte USB engine. It uses
+1326 code bytes without LED, 1344 with the board's active-high PD0 LED and
+1342 with active-low PD0. Both LED modes now fit the same 21 pages as the
+no-LED image. The default hardware release remains the tested 1344-byte build.
 
 ## Build and check
 
@@ -98,6 +105,7 @@ python3 tools/import_microchip_device.py --check
 - `firmware/`: archived fast body, fresh-device ISP HEX, and complete Flash image.
 - `variants/strict_usb_1328/`: historical strict source and images; its original 516-byte USB handler and 44-byte CRC routine are unchanged, but packet/reset fixes are needed.
 - `variants/strict_usb_verified/`: corrected 1344-byte target used in the successful USB upgrade and hardware memory tests.
+- `variants/strict_usb_optimized/`: smaller corrected candidate with semantic labels/constants and unchanged strict USB timing; software/model validation only.
 - `variants/compact_pass4/` and `variants/range_crc_pass6/`: historical alternatives, excluded from the selected build.
 - `host/micronucleus_plus.py`: Flash/EEPROM host utility. Physical use requires PyUSB and a compatible libusb backend; Flash writes delegate to the stock Micronucleus CLI.
 - `reference/`, `tests/`, and `tools/`: comparison binaries, AVR model, timing checks, and provenance verification.

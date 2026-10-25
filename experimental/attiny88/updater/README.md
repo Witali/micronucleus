@@ -85,6 +85,14 @@ These are software results; no LED-enabled loader has been installed on the
 board as part of this change. The output `updater.hex` is the USB application
 image; `isp-fresh.hex` from the loader builder serves a different purpose.
 
+The later [strict USB optimization candidate](../variants/strict_usb_optimized/README.md)
+has a separate `build_optimized.py` entry point. It keeps the deployed USB
+engine and packet/reset fixes, and its default PD0 LED modes fit at `0x1AC0`
+with 6844 application bytes. Its manifests work with the same updater command
+above. The candidate's documentation records exact sizes, focused changes,
+cycle comparisons and independent erase/updater model checks. It has not been
+installed on the physical board; default builds and release files stay pinned.
+
 ## Hardware memory test and user actions
 
 `test_hardware_memory.py --help` describes an explicit opt-in physical test. It reuses the existing host library rather than duplicating its unit tests: write/read all 64 EEPROM bytes, erase them by programming `0xFF`, restore their local backup, write/read all 6844 application Flash bytes, erase/read the whole application, then restore and start the known LED image. EEPROM has no dedicated USB erase opcode; the hardware erase/write cycle is exercised through the supported EEPROM write command. The test requires `--exercise-hardware`, a backup, an LED image and an external report destination. It is never run by ordinary test discovery.
