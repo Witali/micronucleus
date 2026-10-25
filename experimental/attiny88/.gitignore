@@ -1,0 +1,7 @@
+!*.json
+__pycache__/
+*.py[cod]
+*.elf
+/build/
+/build_results/
+/upstream/
