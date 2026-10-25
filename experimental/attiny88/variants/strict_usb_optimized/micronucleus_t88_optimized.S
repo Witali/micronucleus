@@ -1050,12 +1050,13 @@ bootloader_check_write_flash_word_pair:
     ldd     r24, Y+CTX_SETUP_INDEX_LOW
     ldd     r25, Y+CTX_SETUP_INDEX_HIGH
     rcall   flash_buffer_append_word
-    mov     r24, r4
-    andi    r24, FLASH_PAGE_OFFSET_MASK
+    /* The helper returned Z=R4:R5. Only the persistent R4:R5 pair is
+       needed after this check; Z is disposable until the next helper. */
+    andi    r30, FLASH_PAGE_OFFSET_MASK
     brbc    SREG_Z, usb_reply_empty
     ldi     r25, CMD_COMMIT_PAGE
     mov     r3, r25
-    rjmp    usb_reply_limit_length
+    rjmp    usb_reply_empty
 
 /* Store the low six request bits as a deferred bootloader command. */
 bootloader_queue_command:
