@@ -34,7 +34,7 @@ def main():
     backend=usb.backend.libusb0.get_backend(find_library=lambda _:args.dll)
     report={'boot_address':boot,'flash_bytes':app_bytes,'eeprom_bytes':64,'checks':{},'passed':False}
     destination=Path(args.report);destination.parent.mkdir(parents=True,exist_ok=True)
-    print('Waiting for Micronucleus+ 2.8; press RESET once, keeping USB power connected.',flush=True)
+    print(f'Waiting for Micronucleus+ 2.8, capacity {app_bytes}.',flush=True)
 
     def connect(timeout=120):
         until=time.monotonic()+timeout

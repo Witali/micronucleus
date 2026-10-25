@@ -30,7 +30,7 @@ def main():
     import usb.core
     import usb.backend.libusb0
     backend=usb.backend.libusb0.get_backend(find_library=lambda _:args.dll)
-    print(f'Waiting up to {args.timeout:g} seconds for capacity {app_bytes}; press RESET and keep USB power connected.',flush=True)
+    print(f'Waiting up to {args.timeout:g} seconds for the selected loader, capacity {app_bytes}.',flush=True)
     until=time.monotonic()+args.timeout;device=None
     while time.monotonic()<until:
         try:
