@@ -62,6 +62,7 @@ class LoaderCPU extends AVRCore {
       assert.equal(this.i,0);
       if(cmd===17){this.buffer.fill(255);this.loaded.clear();}
       else if(cmd===1) {
+        assert.equal(this.r[29],1,'Flash buffer load lost the Y context invariant');
         assert.equal(z&1,0);assert.ok(!this.loaded.has(z&63));
         this.loaded.add(z&63);this.buffer[z&63]=this.r[0];this.buffer[(z&63)+1]=this.r[1];
       } else {

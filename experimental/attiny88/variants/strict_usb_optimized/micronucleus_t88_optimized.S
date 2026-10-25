@@ -187,6 +187,9 @@
 #if HIGH8(USB_CONTEXT_BASE) != LOW8(CRC16_POLYNOMIAL)
 #error CRC polynomial low byte must match the context pointer high byte in Y
 #endif
+#if HIGH8(USB_CONTEXT_BASE) != SPM_BUFFER_LOAD
+#error Flash buffer load command must match the context pointer high byte in Y
+#endif
 #if USB_EP0_PAYLOAD_BYTES >= CRC_BIT_COUNTER_INCREMENT
 #error Packed CRC counter requires the payload byte count to fit below the bit phase increment
 #endif
@@ -623,9 +626,10 @@ flash_buffer_append_word:
 
 /* Execute page-buffer SPM and advance the current address by two bytes. */
 flash_buffer_load_word:
-    ldi     r18, SPM_BUFFER_LOAD
     movw    r0, r24
-    out     _SFR_IO_ADDR(SPMCSR), r18     /* optimize: I/O address SPMCSR (0x57 - 0x20); 2 B vs 4 B */
+    /* Both callers handle SETUP with Y=USB_CONTEXT_BASE. The compile-time
+       guard proves YH is also the SPM page-buffer load command. */
+    out     _SFR_IO_ADDR(SPMCSR), r29
     spm
     eor     r1, r1
     adiw    r30, AVR_WORD_BYTES  /* update page fill pointer in Z; only callers overwrite r24 after return */
