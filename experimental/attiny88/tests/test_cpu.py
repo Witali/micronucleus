@@ -93,6 +93,15 @@ class AVR:
                 aa=self.r[self.register(ops[0])];bb=self.r[self.register(ops[1])]+(1 if self.flag(0) else 0)
                 self.ssub(aa,bb)
                 self.setflag(1,old_zero and aa==bb)
+            elif op in ('subi','sbci'):
+                d=self.register(ops[0]); a=self.r[d]
+                old_zero=self.flag(1)
+                v=self.numeric(ops[1])+(1 if op=='sbci' and self.flag(0) else 0)
+                self.r[d]=(a-v)&255
+                self.ssub(a,v)
+                if op=='sbci': self.setflag(1, old_zero and self.r[d]==0)
+            elif op=='mov':
+                self.r[self.register(ops[0])]=self.r[self.register(ops[1])]
             elif op=='movw':
                 d=self.register(ops[0]);sr=self.register(ops[1]);self.r[d]=self.r[sr];self.r[d+1]=self.r[sr+1]
             elif op in ('add','adc'):

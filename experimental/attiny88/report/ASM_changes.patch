@@ -1,0 +1,228 @@
+--- MicronucleusPlus_v2_8_base_1402.S
++++ Fast_2_8_8byte_optimized.S
+@@ -6,11 +6,17 @@
+  * Source uses historical mnemonic labels; numeric names do NOT encode relocated addresses.
+  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
+  */
+-.section .text
+-/* Edit BOOT_AT only after the build audits that the loader fits in flash. */
+ #ifndef BOOT_AT
+ #define BOOT_AT 0x1b00
+ #endif
++#if ((BOOT_AT - 3) & 0xff) < 8
++#error Optimized Flash range check assumes boundary low-byte >= 8
++#endif
++#if ((BOOT_AT + 0x0a) >> 8) != ((BOOT_AT + 0x1c) >> 8)
++#error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
++#endif
++.section .text
++/* Edit BOOT_AT only after the build audits that the loader fits in flash. */
+ .org BOOT_AT
+ .global bootloader_start
+ bootloader_start:
+@@ -470,11 +476,10 @@
+     sts     0x010f, r24
+     ldi     r24, 0xff
+     sts     0x0100, r24
+-    lds     r24, 0x006d
+-    ori     r24, 0x04
++    /* After reset both PCMSK2 and PCICR are zero.  Only PCINT18 / PCIE2
++       are required: direct writes avoid redundant read-modify-write. */
++    ldi     r24, 0x04
+     sts     0x006d, r24
+-    lds     r24, 0x0068
+-    ori     r24, 0x04
+     sts     0x0068, r24
+     /* Removed 0x1d30: sbi     0xa, 0 (size-optimized, see CHANGES.md) */
+     mov     r7, r1
+@@ -767,8 +772,7 @@
+     cpi     r24, 0xc0
+     brne    old_vendor_dispatch
+     cpi     r25, 0xa0
+-    brne    ee_check_flash
+-    rjmp    ee_read
++    breq    ee_read
+ 
+ ee_check_flash:
+     cpi     r25, 0xb0
+@@ -777,13 +781,11 @@
+ 
+ ee_check_write:
+     cpi     r25, 0xc0
+-    brne    ee_check_busy
+-    rjmp    ee_write
++    breq    ee_write
+ 
+ ee_check_busy:
+     cpi     r25, 0xf0
+-    brne    old_vendor_dispatch
+-    rjmp    ee_ready
++    breq    ee_ready
+ 
+ old_vendor_dispatch:
+     ldd     r18, Y+25
+@@ -811,24 +813,21 @@
+     brbc    1, L1f62
+     ldd     r24, Y+26
+     cpi     r24, 0x01
+-    brbc    1, L1f56
+-    ldi     r24, ((BOOT_AT + 0x1c) & 0xff)
+-    ldi     r25, ((BOOT_AT + 0x1c) >> 8)
+-
+-L1f4a:
+-    movw    r18, r24    /* pointer -> common reply buffer helper; r18/r19 not live afterwards */
+-    ldi     r24, 0x12    /* descriptor reply length */
+-    rjmp    L1f22      /* shared stores Y+17/Y+16 and common return */
+-
+-L1f56:
++    breq    desc_device
+     cpi     r24, 0x02
+-    brbs    1, L1f5c
+-    rjmp    L1eca
+-
+-L1f5c:
++    brne    L1eca
+     ldi     r24, ((BOOT_AT + 0x0a) & 0xff)
++    rjmp    desc_ptr
++
++desc_device:
++    ldi     r24, ((BOOT_AT + 0x1c) & 0xff)
++
++desc_ptr:
++    /* Both descriptors are in the same 256-byte Flash window. */
+     ldi     r25, ((BOOT_AT + 0x0a) >> 8)
+-    rjmp    L1f4a
++    movw    r18, r24
++    ldi     r24, 0x12
++    rjmp    L1f22
+ 
+ L1f62:
+     cpi     r25, 0x08
+@@ -866,27 +865,19 @@
+  * EEPROM is not modified on unsupported or invalid requests.
+  */
+ 
+-/* Common validation, returns carry=0 on valid, carry=1 on invalid.
+-   Read wValue 16bit from Y+25/26, and reject >63 (non-wrapping).
+-   OUT: r16=EEARL (0..63). r18 altered. Does not write EEPROM. */
+-ee_validate_addr:
+-    ldd     r18, Y+26
+-    tst     r18
+-    brne    ee_invalid_addr
+-    ldd     r16, Y+25
+-    cpi     r16, 0x40
+-    brsh    ee_invalid_addr
+-    clc
+-    ret
+-ee_invalid_addr:
+-    sec
+-    ret
++/* 0xF0 readiness. Reuse exact busy-status code for EEPE=1. */
++ee_ready:
++    sbic    0x1f, 1
++    rjmp    ee_busy
++    in      r18, 0x37
++    andi    r18, 0x01
++    rjmp    ee_return_one
+ 
+ /* 0xA0 read EEPROM address. wIndex ignored (as SPI dummy field).
+    If EEPROM busy, zero-length reply; host should poll 0xF0. */
+ ee_read:
+     rcall   ee_validate_addr
+-    brcs    ee_empty
++    brcc    ee_empty
+     sbic    0x1f, 1
+     rjmp    ee_empty
+     out     0x21, r16
+@@ -905,7 +896,7 @@
+    (erase+write) BEFORE the timed sequence. */
+ ee_write:
+     rcall   ee_validate_addr
+-    brcs    ee_bad_addr
++    brcc    ee_bad_addr
+     ldd     r19, Y+28
+     tst     r19
+     brne    ee_bad_addr
+@@ -929,17 +920,7 @@
+ 
+ ee_busy:
+     ldi     r18, 0x01
+-    rjmp    ee_return_one
+-
+-/* 0xF0 ISP-like RDY/BSY: 0 ready, 1 EEPROM or SPM busy. */
+-ee_ready:
+-    in      r18, 0x1f
+-    lsr     r18
+-    andi    r18, 0x01
+-    in      r19, 0x37
+-    andi    r19, 0x01
+-    or      r18, r19
+-    rjmp    ee_return_one
++    /* Fall through to common 1-byte response. */
+ 
+ /* Shared 1-byte USB response buffer at SRAM 0x010A, reused by legacy
+    Micronucleus vendor responses. Fall through to common setup-response code. */
+@@ -959,12 +940,13 @@
+  * eight-byte requests; application reset vector remains patched in raw dump.
+  */
+ flash_read:
+-    ldd     r18, Y+27            /* wIndex low byte */
+-    ldd     r19, Y+28            /* wIndex high byte */
++    /* Require wIndex==0 and high byte of wLength==0. Combine all
++       reserved-byte checks into one OR / branch. */
++    ldd     r18, Y+27
++    ldd     r19, Y+28
++    or      r18, r19
++    ldd     r19, Y+30
+     or      r18, r19
+-    brne    ee_empty            /* only wIndex=0 */
+-    ldd     r19, Y+30            /* wLength high */
+-    tst     r19
+     brne    ee_empty
+     ldd     r24, Y+29            /* wLength low, reply length */
+     tst     r24
+@@ -973,17 +955,32 @@
+     brsh    ee_empty            /* reject length > 8 */
+     ldd     r18, Y+25            /* wValue low - start address */
+     ldd     r19, Y+26            /* wValue high */
+-    movw    r30, r18
++    /* All byte counts are 1..8. Since APP_LIMIT ends at >=0x07,
++       addresses below its high-byte window cannot exceed the bound. */
++    cpi     r19, ((BOOT_AT - 3) >> 8)
++    brlo    flash_valid
++    brne    ee_empty
++    mov     r30, r18
+     add     r30, r24
+-    adc     r31, r1              /* R1=0 since startup */
+-    brcs    ee_empty            /* reject address wraparound */
+-    cpi     r30, ((BOOT_AT - 4) & 0xff)
+-    ldi     r25, ((BOOT_AT - 4) >> 8)
+-    cpc     r31, r25
+-    brcs    flash_valid
+-    breq    flash_valid
+-    rjmp    ee_empty            /* reject if end > APP_LIMIT */
++    brcs    ee_empty
++    cpi     r30, ((BOOT_AT - 3) & 0xff)
++    brsh    ee_empty
+ flash_valid:
+-    std     Y+17, r19            /* existing USB flash message pointer, high */
+-    std     Y+16, r18            /* pointer low */
+-    rjmp    L1de2               /* existing data-transfer engine */
++    /* Reuse two pointer stores in L1f22. The extra RJMP consumes two
++       cycles outside the low-level USB sampling/transmit path. */
++    rjmp    L1f22
++
++/* Common validation, returns carry=1 on valid, carry=0 on invalid.
++   Read wValue 16bit from Y+25/26, and reject >63 (non-wrapping).
++   OUT: r16=EEARL (0..63). r18 altered. Does not write EEPROM. */
++ee_validate_addr:
++    /* 16-bit compare wValue (Y+26:Y+25) < 0x0040.
++       CPC with R1=0 propagates low-byte borrow into high byte.
++       C=1 means valid (< 0x0040).
++       Callers use BRCC for invalid, replacing their earlier BRCS. */
++    ldd     r16, Y+25
++    cpi     r16, 0x40
++    ldd     r18, Y+26
++    cpc     r18, r1
++    ret
++

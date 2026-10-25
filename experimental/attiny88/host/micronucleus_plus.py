@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Micronucleus+ ATtiny88 USB EEPROM + Flash read programmer (v2.8).
+"""Micronucleus+ ATtiny88 USB EEPROM + Flash read programmer (v2.8 / 2.9).
 
-Compatible with the opt-in 2.8 ATtiny88 extension ONLY for EEPROM/Flash read.
+Compatible with ATtiny88 Micronucleus+ extensions 2.8 (up to 8-byte Flash reads)
+and 2.9 (one-byte compact Flash reads).
 For Flash *writing*, delegates to the stock Micronucleus CLI to preserve the
 well-tested legacy protocol and vector patching; supply --micronucleus path.
 Does not expose fuse, lock-bit, signature or arbitrary ISP instructions.
@@ -13,7 +14,7 @@ Vendor IN controls:
   0xA0 READ EEPROM: wValue=address, wIndex=0, wLength=1 -> data byte
   0xC0 WRITE EEPROM: wValue=address, wIndex=byte, wLength=1 -> status byte
   0xF0 RDY/BSY: wValue=wIndex=0, wLength=1 -> 0 ready, 1 busy
-  0xB0 READ FLASH: wValue=byte-address, wIndex=0, wLength 1..8 -> raw bytes
+  0xB0 READ FLASH: wValue=byte-address, wIndex=0, wLength 1..8 (2.8) or 1 (2.9)
 """
 from __future__ import annotations
 
@@ -45,6 +46,7 @@ class EEPROMTool:
         self.flash_size = None
         self.features = None
         self.version = None
+        self.flash_block_size = 8
 
     def transfer(self, opcode: int, w_value: int = 0, w_index: int = 0, length: int = 1) -> bytes:
         try:
@@ -63,6 +65,11 @@ class EEPROMTool:
             raise EEPROMError('EEPROM+Flash extension not advertised; connect an ATtiny88 Micronucleus+ v2.8 device')
         self.features = header[6]
         self.version = header[7]
+        # The USB device descriptor is bcdDevice 0x0208 (fast) or
+        # 0x0209 (compact). GET_INFO[7] is the application version.
+        # Unknown variants default to historical Micronucleus+ 2.8 (8-byte).
+        bcd = int(getattr(self.dev, 'bcdDevice', 0x0208))
+        self.flash_block_size = 1 if bcd == 0x0209 else 8
         self.size = EEPROM_SIZE
         self.flash_size = (header[0] << 8) | header[1]
         if not (0 < self.flash_size <= 8192) or (self.flash_size + 4) % 64 != 0:
@@ -142,10 +149,10 @@ class EEPROMTool:
 
 
     def read_flash_block(self, address: int, count: int) -> bytes:
-        """Physical application Flash bytes: one USB control-IN of up to 8 bytes."""
+        """Physical application Flash bytes, bounded by device-specific max block length."""
         if self.flash_size is None:
             raise EEPROMError('Call check_device() before Flash read')
-        if not 1 <= count <= 8 or address < 0 or address + count > self.flash_size:
+        if not 1 <= count <= self.flash_block_size or address < 0 or address + count > self.flash_size:
             raise EEPROMError(f'Invalid Flash block 0x{address:04X} + {count} (limit {self.flash_size})')
         buf = self.transfer(REQ_READFLASH, w_value=address, w_index=0, length=count)
         if len(buf) != count:
@@ -159,11 +166,12 @@ class EEPROMTool:
             length = self.flash_size - start
         if not 0 <= start <= self.flash_size or length < 0 or start + length > self.flash_size:
             raise EEPROMError(f'Invalid Flash range 0x{start:04X} + {length}')
-        return b''.join(self.read_flash_block(a, min(8, start + length - a))
-                        for a in range(start, start + length, 8))
+        n = self.flash_block_size
+        return b''.join(self.read_flash_block(a, min(n, start + length - a))
+                        for a in range(start, start + length, n))
 
     def verify_flash(self, patch: Mapping[int, int], skip_reset_vector: bool = False) -> None:
-        """Verify sparse or dense Flash images with up to 8 bytes per USB control-IN."""
+        """Verify sparse or dense Flash images with device-specific block size."""
         if self.flash_size is None:
             raise EEPROMError('Call check_device() before Flash verification')
         for addr in patch:
@@ -176,7 +184,7 @@ class EEPROMTool:
         while offset < len(addrs):
             segment = [addrs[offset]]
             offset += 1
-            while offset < len(addrs) and len(segment) < 8 and addrs[offset] == segment[-1] + 1:
+            while offset < len(addrs) and len(segment) < self.flash_block_size and addrs[offset] == segment[-1] + 1:
                 segment.append(addrs[offset])
                 offset += 1
             buf = self.read_flash_block(segment[0], len(segment))
@@ -289,7 +297,7 @@ def parse_number(s: str) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description='Micronucleus+ v2.8 ATtiny88 Flash+EEPROM USB programmer')
+    parser = argparse.ArgumentParser(description='Micronucleus+ v2.8/2.9 ATtiny88 Flash+EEPROM USB programmer')
     parser.add_argument('--micronucleus', default='micronucleus', metavar='PATH',
                         help='Original Micronucleus executable used for Flash WRITE only')
     sub = parser.add_subparsers(dest='command', required=True)
@@ -323,8 +331,8 @@ def main(argv=None) -> int:
         tool = EEPROMTool(dev)
         n = tool.check_device()
         if args.command == 'info':
-            print(f'Micronucleus+ v2.8 ATtiny88: EEPROM={n} bytes, application Flash={tool.flash_size} bytes')
-            print(f'Features byte=0x{tool.features:02X}, EEPROM A0/C0/F0, Flash Read B0 (up to 8 bytes/request)')
+            print(f'Micronucleus+ ATtiny88: EEPROM={n} bytes, application Flash={tool.flash_size} bytes')
+            print(f'Features byte=0x{tool.features:02X}, EEPROM A0/C0/F0, Flash Read B0 ({tool.flash_block_size} byte(s)/request)')
         elif args.command in ('eeprom-read','read'):
             image = tool.read()
             if args.path.suffix.lower() in ('.hex', '.eep', '.ihex'):

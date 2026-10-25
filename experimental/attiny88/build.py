@@ -50,7 +50,7 @@ def main():
     assert (len(boot)%2)==0
     assert boot[2:4]==bytes([(BOOT_AT-POSTSCRIPT)>>8,(BOOT_AT-POSTSCRIPT)&255])
     assert boot[8]==0xE0, f'Feature flags missing: {boot[8]:02X}'
-    assert boot[0x28]==8 and boot[0x29]==2, 'Expected bcdDevice 2.7'
+    assert boot[0x28]==8 and boot[0x29]==2, 'Expected bcdDevice 2.8'
     rjmp=(0xc000|(((BOOT_AT//2)-1)&0x0fff)).to_bytes(2,'little')
     image=bytearray([0xff]*FLASH)
     image[0:2]=rjmp
@@ -68,7 +68,7 @@ def main():
         b=base[bsyms[first]-0x1B40:bsyms[last]-0x1B40]
         assert a==b, f'Bit-level USB/CRC changed! {first}->{last}'
         print(f'CHECK {first} section: {len(a)} identical bytes')
-    assert syms['ee_write'] < syms['ee_ready'] < syms['ee_return_one'] < syms['flash_read']
+    assert syms['ee_ready'] < syms['ee_read'] < syms['ee_write'] < syms['ee_return_one'] < syms['flash_read']
     print('PASS: code bytes:',len(boot),'range',hex(BOOT_AT),hex(BOOT_AT+len(boot)-1))
     print('PASS: EEPROM bit 0x40 / Flash Read bit 0x80 / MCUSR bit 0x20, version 2.8, app memory',BOOT_AT-POSTSCRIPT,'bytes')
     print('sha256:',hashlib.sha256(boot).hexdigest())
