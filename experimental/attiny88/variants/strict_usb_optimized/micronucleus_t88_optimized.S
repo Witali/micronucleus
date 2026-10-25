@@ -869,9 +869,9 @@ usb_tx_prepare_pending_reply:
 
 /* Update remaining length and toggle DATA0 or DATA1 for the next block. */
 usb_tx_prepare_data_packet:
-    mov     r25, r24
-    sub     r25, r23
-    std     Y+CTX_MSG_LENGTH, r25
+    /* R24 stays live as the remaining message length throughout CRC.
+       Publish it only once, immediately before the completed packet. */
+    sub     r24, r23
     ldd     r25, Y+CTX_TX_PID
     ldi     r18, USB_DATA_PID_TOGGLE
     eor     r25, r18
@@ -932,9 +932,10 @@ usb_crc16_append:
     st      X+, r19
     st      X+, r25
 usb_crc16_core_end:
+    /* Short payloads leave R24=0 and XL<12. CPI supplies their borrow,
+       turning zero into USB_NO_MESSAGE; full packets retain R24. */
     cpi     r26, USB_FULL_TX_PACKET_BYTES
-    brbs    SREG_Z, usb_tx_publish_packet_length
-    ldi     r24, USB_NO_MESSAGE
+    sbci    r24, 0
     std     Y+CTX_MSG_LENGTH, r24
 
 /* Publish the prepared TX block length including protocol overhead. */

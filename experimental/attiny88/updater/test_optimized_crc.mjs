@@ -44,6 +44,12 @@ for(const file of process.argv.slice(2)) {
     for(let step=0;step<1200;step++) {
       const pc=cpu.pc*2;
       if(pc===s.bootloader_check_idle_timeout){complete=true;break;}
+      if(pc===s.usb_crc16_mix_byte||pc===s.usb_crc16_core_end) {
+        assert.equal(cpu.r[24],length-payload.length,'CRC clobbered the live message remainder');
+      }
+      if(pc===s.usb_crc16_core_end+2) {
+        assert.equal(cpu.c,Number(payload.length<8),'Final XL comparison supplied the wrong short-packet borrow');
+      }
       if(pc===s.usb_tx_copy_flash_payload+2&&cpu.r[23]) {
         assert.equal(cpu.c,1,'CP must supply inverted-CRC carry-in');
         assert.ok(cpu.r[23]<=8,'Packed byte count escaped its low five bits');

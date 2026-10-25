@@ -39,7 +39,8 @@ def main():
             except AssertionError:
                 continue
             raise AssertionError(f'USB audit accepted mutation at {address:#x}, mask {mask:#x}')
-        for address in [symbols['usb_tx_copy_flash_payload'],symbols['usb_crc16_mix_byte']]:
+        for address in [symbols['usb_tx_copy_flash_payload'],symbols['usb_crc16_mix_byte'],
+                        symbols['usb_crc16_core_end']+2]:
             broken=bytearray(body);broken[address-base]^=1
             try:
                 audit_reply_crc(reference,0x1ac0,reference_symbols,bytes(broken),base,symbols)
@@ -47,7 +48,7 @@ def main():
                 continue
             raise AssertionError(f'CRC audit accepted mutation at {address:#x}')
         print(f'PASS: {file.parent.name}: exact USB whitelist, branch/skip mapping, '
-              'Z-pointer proof, R17 liveness, CRC recurrence and six rejected opcode mutations')
+              'Z-pointer proof, R17 liveness, CRC recurrence and seven rejected opcode mutations')
 
 
 if __name__ == '__main__':

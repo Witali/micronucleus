@@ -43,9 +43,13 @@ def audit_reply_crc(reference, reference_base, reference_symbols, body, base, sy
     remaining-byte count (0..8). YH supplies polynomial low byte 1. Independent
     CPU tests check the count/carry invariants and checksum, including empty,
     short/full and multi-packet Flash/SRAM responses.
+
+    R24 retains the remaining message length until publication. CPI XL,12
+    supplies carry for a short payload; SBCI R24,0 changes its zero remainder
+    into 0xff while preserving the remainder of every full packet.
     """
     reply=body[symbols['usb_tx_prepare_pending_reply']-base:symbols['bootloader_check_idle_timeout']-base]
-    assert hashlib.sha256(reply).hexdigest() == '8746a7f69931451f8eb5f74e6543bfcf2d76aac69976b57122703fd8cfdc5b3d', (
+    assert hashlib.sha256(reply).hexdigest() == '37b83006b4681c1e75e0eece1b1c0f16585bc5336a33f63e6036a327c3c7dda7', (
         'Reply copy/CRC/count code changed; rerun the recurrence and timing audit')
     old_first=reference_symbols['usb_crc16_next_byte']+2  # Omit the separate SRAM LD.
     new_first=symbols['usb_crc16_mix_byte']
