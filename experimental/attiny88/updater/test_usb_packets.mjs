@@ -52,6 +52,7 @@ for(const address of [0,8,255,256,6800,6836]) {
 }
 let cpu=new PacketCPU(0xc0,0,0,8);assert.deepEqual(cpu.packet(),Array.from(body.slice(2,10)));
 cpu=new PacketCPU(0x80,0,0,2);assert.deepEqual(cpu.packet(),[0,0]);
+cpu=new PacketCPU(0x80,8,0,1);cpu.data[0x115]=1;assert.deepEqual(cpu.packet(),[1]);
 cpu=new PacketCPU(0xc0,0xa0,17,1);assert.deepEqual(cpu.packet(),[0x91]);
 cpu=new PacketCPU(0xc0,0xf0,0,1);assert.deepEqual(cpu.packet(),[0]);
 cpu=new PacketCPU(0xc0,0xc0,17,1,0x55);assert.deepEqual(cpu.packet(),[0]);assert.equal(cpu.eeprom[17],0x55);
@@ -59,4 +60,18 @@ cpu=new PacketCPU(0xc0,0xc0,64,1,0x55);assert.deepEqual(cpu.packet(),[2]);
 for(const [address,length,index] of [[6844,1,0],[6843,2,0],[65535,8,0],[0,9,0],[0,8,1]]) {
   cpu=new PacketCPU(0xc0,0xb0,address,length,index);assert.deepEqual(cpu.packet(),[]);
 }
-console.log('PASS: 17 complete SETUP-to-TX cases: vendor routing, Flash/SRAM data, EEPROM status, standard requests and bounds');
+console.log('PASS: 18 complete SETUP-to-TX cases: vendor routing, Flash/SRAM data, EEPROM status, standard requests and bounds');
+for(const flags of [1,2,4,8,15]) {
+  const flash=new Uint8Array(8192).fill(255);flash.set(body,0x1ac0);
+  const cpu=new AVRCore(flash,null,{target:'attiny88',cpuHz:16000000,fastIdle:false,fastBlocks:false});
+  cpu.pc=symbols.main/2;cpu.data[0x54]=flags;cpu.data[0x60]=(flags&8)?8:0;
+  let finished=false;
+  for(let step=0;step<12;step++) {
+    cpu.step();
+    if(cpu.data[0x54]===0&&cpu.data[0x1e+32]===flags&&cpu.data[0x60]===0) {
+      finished=true;break;
+    }
+  }
+  assert.ok(finished,'Reset flags/watchdog were not cleared in the required order');
+}
+console.log('PASS: POR/EXTR/BOR/WDR/mixed reset flags preserved and cleared before watchdog disable');

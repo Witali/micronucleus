@@ -19,6 +19,12 @@ def main():
     helper = importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
     source = (ROOT.parent/'variants/strict_usb_1328/micronucleus_t88_plus_strict.S').read_text()
     assert 'r2,' not in source and 'r2\n' not in source
+    # WDRF forces WDE on real hardware. Preserve/reset MCUSR before the
+    # watchdog-disable sequence, instead of waiting until application exit.
+    save_reset = '    in      r24, 0x34\n    out     0x1e, r24\n    out     0x34, r1\n'
+    assert source.count(save_reset)==1
+    source = source.replace(save_reset,'',1)
+    source = source.replace('main:\n    wdr\n','main:\n    wdr\n'+save_reset,1)
     source = source.replace('    ldd     r24, Y+23\n    andi    r24, 0x60',
                             '    mov     r2, r1    /* New SETUP defaults to a Flash response. */\n'
                             '    ldd     r24, Y+23\n    andi    r24, 0x60',1)
@@ -32,6 +38,10 @@ def main():
     source = source.replace('    ldi     r19, 0x01                        /* repeated 16-bit pointer high */',
                             '    ldi     r19, 0x01                        /* repeated 16-bit pointer high */\n'
                             '    mov     r2, r19    /* Standard/EEPROM response buffer is SRAM. */',1)
+    # GET_CONFIGURATION used a second SRAM pointer path. Reuse the same
+    # one-byte RAM reply helper without increasing the image size.
+    source = source.replace('L1f7a:\n    ldi     r18, 0x15\n    ldi     r19, 0x01\n    ldi     r24, 0x01\n\nmain_tail:\n    rjmp    L1f22',
+                            'L1f7a:\n    ldd     r18, Y+21\n    std     Y+10, r18\n    ldi     r24, 0x01\n\nmain_tail:\n    rjmp    L1f34',1)
     out = ROOT.parent/'variants/strict_usb_verified'
     out.mkdir(exist_ok=True)
     asm = out/'micronucleus_t88_verified.S';asm.write_text(source)

@@ -8,7 +8,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_ADDRESS = 0x1AC0
-EXPECTED = '850cecac7cd4e106443942982e9f1c409d70abffbaad6f718fc7450903dfeb18'
+EXPECTED = 'ec49d723147b6cb4eb1fc4ee24b947d46f5dc5274c4a26168c60857ca4b416fc'
 
 
 def record(address, payload=b'', kind=0):

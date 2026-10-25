@@ -454,6 +454,9 @@ L1cd8:
 
 main:
     wdr
+    in      r24, 0x34
+    out     0x1e, r24
+    out     0x34, r1
     /* WDT unlock: WDCE|WDE=0x18 is sufficient regardless of the
        previous prescaler and interrupt settings. Next store, immediately,
        clears WDE/WDCE; timed sequence is unchanged. Saves four bytes. */
@@ -722,9 +725,6 @@ L1eac:
     out     0xa, r1
     sts     0x0068, r1
     sts     0x006d, r1
-    in      r24, 0x34
-    out     0x1e, r24
-    out     0x34, r1
 app_jump:
     .word (0xc000 | (((bootloader_start - 4 - app_jump - 2)/2) & 0x0fff)) /* relative RJMP into application postscript */
 
@@ -852,12 +852,12 @@ L1f70:
     rjmp    L1f34
 
 L1f7a:
-    ldi     r18, 0x15
-    ldi     r19, 0x01
+    ldd     r18, Y+21
+    std     Y+10, r18
     ldi     r24, 0x01
 
 main_tail:
-    rjmp    L1f22
+    rjmp    L1f34
 
 L1f82:
     /* Removed 0x1f82: sbi     0xb, 0 (size-optimized, see CHANGES.md) */
