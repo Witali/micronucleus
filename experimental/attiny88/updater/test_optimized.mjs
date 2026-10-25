@@ -136,12 +136,14 @@ for(const file of process.argv.slice(2)) {
   assert.ok(reset.data.slice(0x100,0x12c).every(value=>value===0));
   assert.equal(reset.data[0x12c],0x55);assert.equal(reset.r[1],0);
   assert.equal(reset.data[0x5d]|reset.data[0x5e]<<8,0x2ff);
+  assert.equal(reset.r[28]|reset.r[29]<<8,0x100,'Startup must retain the context base in Y');
   // Execute the final disconnect-delay iteration instead of millions of
   // identical countdown steps. Its zero pair must initialize R4:R5 even
   // when command/pointer registers contain arbitrary values at entry.
   for(const pattern of [0,255,0x55,0xaa]) {
     const startup=new LoaderCPU(meta,body);
     startup.r.fill(pattern);startup.r[1]=0;
+    startup.r[28]=reset.r[28];startup.r[29]=reset.r[29];
     startup.r[24]=1;startup.r[25]=0;startup.r[18]=1;
     startup.pc=meta.symbols.usb_disconnect_delay_inner/2;
     startup.untilPC(meta.symbols.bootloader_poll_begin);

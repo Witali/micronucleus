@@ -628,19 +628,18 @@ startup:
     ldi     r29, HIGH8(RAMEND)
     out     _SFR_IO_ADDR(SPL), r28
     out     _SFR_IO_ADDR(SPH), r29
-    /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
-    ldi     r26, LOW8(USB_CONTEXT_BASE)
-    ldi     r27, HIGH8(USB_CONTEXT_BASE)
-    /* Removed 0x1a80: rjmp    startup_check_sram_end (size-optimized, see CHANGES.md) */
+    /* Clear backwards through Y, retaining the context base for the
+       two initial status stores after the disconnect delay. */
+    ldi     r28, LOW8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES)
+    ldi     r29, HIGH8(USB_CONTEXT_BASE)
 
 /* Clear the next byte in the bootloader SRAM context. */
 startup_clear_sram_byte:
-    st      X+, r1
+    st      -Y, r1
 
-/* Repeat SRAM clearing until X reaches 0x012C. */
+/* Repeat SRAM clearing until Y reaches USB_CONTEXT_BASE. */
 startup_check_sram_end:
-    cpi     r26, LOW8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES)
-    /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
+    cpi     r28, LOW8(USB_CONTEXT_BASE)
     brbc    SREG_Z, startup_clear_sram_byte
 
 main:
@@ -677,9 +676,9 @@ usb_disconnect_delay_inner:
        after releasing USB so the disconnect duration stays unchanged. */
     movw    r4, r24
     ldi     r24, USB_PID_NAK
-    sts     (USB_CONTEXT_BASE + CTX_TX_LENGTH), r24
+    std     Y+CTX_TX_LENGTH, r24
     ldi     r24, USB_NO_MESSAGE
-    sts     (USB_CONTEXT_BASE + CTX_MSG_LENGTH), r24
+    std     Y+CTX_MSG_LENGTH, r24
     /* After reset both PCMSK2 and PCICR are zero.  Only PCINT18 / PCIE2
        are required: direct writes avoid redundant read-modify-write. */
     ldi     r24, USB_INTERRUPT_ENABLE_MASK
