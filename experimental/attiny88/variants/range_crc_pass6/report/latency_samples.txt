@@ -1,0 +1,7 @@
+CRC START cycles: 67
+CRC STEP  1 bytes:  159 AVR cycles, 9.94 us at 16 MHz, response=0040bf
+CRC STEP  2 bytes:  249 AVR cycles, 15.56 us at 16 MHz, response=000e6e
+CRC STEP  4 bytes:  420 AVR cycles, 26.25 us at 16 MHz, response=005e39
+CRC STEP  8 bytes:  774 AVR cycles, 48.38 us at 16 MHz, response=00858a
+CRC STEP 16 bytes: 1488 AVR cycles, 93.00 us at 16 MHz, response=002a14
+NOTE: This is extra control-handler time, NOT a proof of USB timing compliance.

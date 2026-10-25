@@ -1,0 +1,11 @@
+2 consecutive instructions: 5 exact repeated patterns
+  lines=[529, 554, 737], occurrences=3, size benefit=0 bytes before save/restore; seq=('out     0x37, r24', 'spm')
+  lines=[514, 691], occurrences=2, size benefit=-2 bytes before save/restore; seq=('ldi     r24, 0x04', 'out     0x1b, r24')
+  lines=[900, 1100], occurrences=2, size benefit=-2 bytes before save/restore; seq=('sbi     0x1f, 0', 'in      r18, 0x20')
+  lines=[978, 1029], occurrences=2, size benefit=-2 bytes before save/restore; seq=('ldd     r18, Y+25', 'ldd     r19, Y+26')
+  lines=[1091, 1115], occurrences=2, size benefit=-2 bytes before save/restore; seq=('cp      r30, r16', 'cpc     r31, r17')
+3 consecutive instructions: 0 exact repeated patterns
+4 consecutive instructions: 0 exact repeated patterns
+5 consecutive instructions: 0 exact repeated patterns
+NOTE: These are source-text matches only; equivalent fragments with different registers are not detected.
+Do not extract code from USB_handler or setup critical paths without cycle-level proof.
