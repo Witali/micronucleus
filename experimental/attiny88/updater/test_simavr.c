@@ -14,8 +14,10 @@
 
 int main(int argc, char **argv)
 {
-    assert(argc==5||argc==6);
-    const char *mode=argc==6?argv[5]:"normal";
+    assert(argc==6||argc==7);
+    const char *mode=argc==7?argv[6]:"normal";
+    uint32_t boot=strtoul(argv[5],NULL,0),postscript=boot-64;
+    assert(boot>=0x1800&&boot<=0x1ac0&&(boot&63)==0);
     uint32_t complete=strtoul(argv[2],NULL,0), abort_pc=strtoul(argv[3],NULL,0);
     avr_t *avr=avr_make_mcu_by_name("atmega88");assert(avr);
     avr->ramend=0x2ff;avr->e2end=63;avr->frequency=16000000;avr->fuse[2]=0xfe;
@@ -47,22 +49,22 @@ int main(int argc, char **argv)
             assert(command==1||command==3||command==5);
             previous_command=command;previous_z=z;
             if(command==3||command==5) {
-                assert(z==0||z==0x1a80||(z>=0x1ac0&&z<8192));
+                assert(z==0||z==postscript||(z>=boot&&z<8192));
                 assert((z&63)==0);
                 if(command==3)erased++;else written++;
             }
         }
         avr->pc=avr_run_one(avr);
-        if(previous_command==5&&previous_z==0x1ac0&&!strcmp(mode,"readback"))avr->flash[0x1ac0]^=1;
+        if(previous_command==5&&previous_z==boot&&!strcmp(mode,"readback"))avr->flash[boot]^=1;
         if(avr->state==cpu_Crashed||avr->state==cpu_Done){fprintf(stderr,"simavr stopped\n");return 3;}
     }
     assert(avr->pc==complete);
-    assert((avr->flash[0]|avr->flash[1]<<8)==0xcd5f);
-    assert(erased==24&&written==24&&clear_count==24);
+    assert((avr->flash[0]|avr->flash[1]<<8)==(uint16_t)(0xc000|((boot/2-1)&0xfff)));
+    assert(erased==(8192-boot)/64+3&&written==erased&&clear_count==erased);
     for(uint32_t i=0x80;i<strtoul(argv[4],NULL,0);i++)assert(avr->flash[i]==before[i]);
-    for(int i=0x1a80;i<0x1ac0;i++)assert(avr->flash[i]==255);
-    file=fopen("build/simavr-result.bin","wb");assert(file);assert(fwrite(avr->flash,1,8192,file)==8192);fclose(file);
-    puts("PASS: simavr independent CPU and native SPM: 24 erased/written pages, final RESET, intact updater, cleared postscript");
+    for(uint32_t i=postscript;i<boot;i++)assert(avr->flash[i]==255);
+    file=fopen("simavr-result.bin","wb");assert(file);assert(fwrite(avr->flash,1,8192,file)==8192);fclose(file);
+    printf("PASS: simavr independent CPU and native SPM: %u erased/written pages, final RESET, intact updater, cleared postscript\n",erased);
     avr_terminate(avr);
     return 0;
 }

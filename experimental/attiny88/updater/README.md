@@ -1,6 +1,6 @@
 # Verified ATtiny88 updater adaptation
 
-This application adapts the in-place flow from upstream [`firmware/upgrade.c`](../../../firmware/upgrade.c). Upstream also supplies `firmware/upgrades/upgrade-t88_default.hex`; that image installs the stock loader, whereas this builder embeds the pinned **packet-corrected strict USB 1344-byte** Micronucleus+ image at **0x1AC0**. The historical 1328-byte image failed the first reversible trial's extension requests and is not the update target.
+This application adapts the in-place flow from upstream [`firmware/upgrade.c`](../../../firmware/upgrade.c). Upstream also supplies `firmware/upgrades/upgrade-t88_default.hex`; that image installs the stock loader, whereas this builder defaults to the pinned **packet-corrected strict USB 1344-byte** Micronucleus+ image at **0x1AC0**. A firmware manifest selects a configured image, including the optional LED variants below. The historical 1328-byte image failed the first reversible trial's extension requests and is not the update target.
 
 The updater and its image execute from application Flash starting at `0x0080` and end at `0x0816` in the recorded AVR-GCC build, below the old loader at `0x1A00`, the new postscript page, and the destination image. The total ELF text is 1942 bytes. The embedded image is padded to 1344 bytes (21 pages).
 
@@ -49,6 +49,41 @@ After uploading the rehearsal as an application, `usb_backup.py` uses only vendo
 The final application updater is `build/updater.hex`, intended for the working stock uploader. `upload_stock.py` first requires the original 2.2 descriptor and 6650-byte capacity, so an application cannot accidentally be uploaded through the running diagnostic variant. It is distinct from the fresh-device ISP image. Build and checks do not themselves flash a board. Hardware results, when available, belong in a separate record.
 
 The tested ready-to-upload application image is retained in `releases/upgrade-t88-verified.hex`; its checksum and target are recorded in `releases/SHA256SUMS.txt`. Use it only with the verified ATtiny88 target and working Micronucleus, not as an arbitrary application for another AVR.
+
+## USB updater for a configured LED image
+
+Build a selected loader, then pass its manifest to the application updater:
+
+```sh
+python3 build_verified.py --led on
+python3 build.py --firmware-manifest build/led-on/firmware.json \
+    --output-dir build/updater-led-on
+node test_micromusic.mjs build/updater-led-on
+python3 test_simavr.py /path/to/simavr-source --build-dir build/updater-led-on
+
+python3 build_verified.py --led active-low
+python3 build.py --firmware-manifest build/led-active-low/firmware.json \
+    --output-dir build/updater-led-low
+node test_micromusic.mjs build/updater-led-low
+python3 test_simavr.py /path/to/simavr-source --build-dir build/updater-led-low
+```
+
+The same interface accepts a custom macro build. Without `--output-dir`, a
+configured updater goes to the firmware manifest's directory under `updater/`;
+it does not overwrite `build/updater.hex`. The builder validates the target,
+body hash, page size, signature, capacity and page alignment before embedding
+the selected image. It derives the destination, postscript and RESET from its
+actual boot boundary. `bootloader-image.bin` in the updater directory contains
+the exact padded payload used by both emulator checks.
+
+The default `python3 build.py` remains byte-identical to the previously tested
+release. The `ACTIVE_HIGH` and `ACTIVE_LOW` updaters end at `0x0856`, embed 1408
+bytes at `0x1A80`, and report 6780 application bytes after installation. Both
+pass byte-exact update and fuse/CRC/readback failure checks in MicroMusic and
+simavr. MicroMusic also checks five restarts between completed operations.
+These are software results; no LED-enabled loader has been installed on the
+board as part of this change. The output `updater.hex` is the USB application
+image; `isp-fresh.hex` from the loader builder serves a different purpose.
 
 ## Hardware memory test and user actions
 

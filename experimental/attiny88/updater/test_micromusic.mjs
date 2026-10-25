@@ -8,10 +8,11 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 const root = path.dirname(fileURLToPath(import.meta.url));
 const music = process.env.MICROMUSIC_ROOT || 'C:/Work/MicroMusic';
 const {AVRCore} = await import(pathToFileURL(path.join(music, 'web-player/lib/avr-reference.js')).href);
-const metadata = JSON.parse(fs.readFileSync(path.join(root, 'build/manifest.json')));
-const original = new Uint8Array(fs.readFileSync(path.join(root, 'build/updater.flash.bin')));
-const body = new Uint8Array(fs.readFileSync(path.join(root, '../variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin')));
-const expected = new Uint8Array(1344).fill(255); expected.set(body);
+const build=path.resolve(process.argv[2]||path.join(root,'build'));
+const metadata = JSON.parse(fs.readFileSync(path.join(build, 'manifest.json')));
+const original = new Uint8Array(fs.readFileSync(path.join(build, 'updater.flash.bin')));
+const expected = new Uint8Array(fs.readFileSync(path.join(build, metadata.image_file)));
+const boot=metadata.image_address,postscript=boot-64;
 const entry = metadata.symbols;
 
 class UpdaterCPU extends AVRCore {
@@ -42,14 +43,14 @@ class UpdaterCPU extends AVRCore {
         assert.equal(offset&1,0); assert.ok(!this.loaded.has(offset));
         this.loaded.add(offset);this.buffer[offset]=this.r[0];this.buffer[offset+1]=this.r[1];
       } else {
-        assert.ok(base===0 || base===0x1a80 || (base>=0x1ac0&&base<8192));
+        assert.ok(base===0 || base===postscript || (base>=boot&&base<8192));
         assert.ok(at<base || at>=base+64,'Updater erases executing code');
         if(cmd===3)this.rom.fill(255,base,base+64);
         else {
           assert.equal(cmd,5);assert.equal(z,base,'PGWRT is not page-aligned');
           assert.equal(this.loaded.size,32);assert.ok(this.rom.slice(base,base+64).every(x=>x===255));
           this.rom.set(this.buffer,base);this.buffer.fill(255);this.loaded.clear();
-          if(this.corruptReadback&&base===0x1ac0){this.rom[base]^=1;this.corruptReadback=false;}
+          if(this.corruptReadback&&base===boot){this.rom[base]^=1;this.corruptReadback=false;}
         }
         this.operations.push({command:cmd,address:base});
         // Flash erase/write halts this MCU. Only functional order is asserted;
@@ -104,9 +105,9 @@ function run(image, options={}) {
 
 function verifySuccess(test) {
   assert.equal(test.result,'complete');
-  assert.deepEqual(test.cpu.rom.slice(0x1ac0),expected);
-  assert.ok(test.cpu.rom.slice(0x1a80,0x1ac0).every(x=>x===255));
-  assert.equal(test.cpu.rom[0]|test.cpu.rom[1]<<8,0xcd5f);
+  assert.deepEqual(test.cpu.rom.slice(boot),expected);
+  assert.ok(test.cpu.rom.slice(postscript,boot).every(x=>x===255));
+  assert.equal(test.cpu.rom[0]|test.cpu.rom[1]<<8,0xc000|((boot/2-1)&0xfff));
   assert.deepEqual(test.cpu.rom.slice(0x80,metadata.updater_end),original.slice(0x80,metadata.updater_end));
 }
 verifySuccess(run(original));

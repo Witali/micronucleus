@@ -1,40 +1,48 @@
 #!/usr/bin/env python3
 """Build the native runner against an explicit simavr source/build directory."""
 from pathlib import Path
+import argparse
+import hashlib
 import json
 import subprocess
-import sys
 
 ROOT = Path(__file__).resolve().parent
 
 
 def main():
-    sim = Path(sys.argv[1]).resolve() / 'simavr'
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('simavr_source', type=Path)
+    parser.add_argument('--build-dir', type=Path, default=ROOT/'build')
+    args = parser.parse_args()
+    sim = args.simavr_source.resolve() / 'simavr'
+    build = args.build_dir.resolve()
     library = next(sim.glob('obj-*/libsimavr.so')).parent
-    executable = ROOT / 'build/test_simavr'
+    executable = build / 'test_simavr'
     subprocess.run(['gcc', '-Wall', '-Wextra', '-Werror', '-I' + str(sim / 'sim'),
                     str(ROOT / 'test_simavr.c'), '-L' + str(library), '-Wl,-rpath,' + str(library),
                     '-lsimavr', '-lelf', '-o', str(executable)], check=True)
-    metadata = json.loads((ROOT / 'build/manifest.json').read_text())
-    prefix = [str(executable), str(ROOT / 'build/updater.flash.bin'),
+    metadata = json.loads((build / 'manifest.json').read_text())
+    boot = metadata['image_address']
+    prefix = [str(executable), str(build / 'updater.flash.bin'),
               str(metadata['symbols']['updater_complete']), str(metadata['symbols']['updater_abort']),
-              str(metadata['updater_end'])]
-    subprocess.run(prefix, cwd=ROOT, check=True)
-    actual = (ROOT / 'build/simavr-result.bin').read_bytes()[0x1ac0:]
-    expected = (ROOT.parent / 'variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin').read_bytes()
-    assert actual == expected, 'simavr updated image differs from the pinned strict image'
+              str(metadata['updater_end']), str(boot)]
+    subprocess.run(prefix, cwd=build, check=True)
+    actual = (build / 'simavr-result.bin').read_bytes()[boot:]
+    expected = (build / metadata['image_file']).read_bytes()
+    assert hashlib.sha256(expected).hexdigest() == metadata['padded_image_sha256']
+    assert actual == expected, 'simavr updated image differs from the selected image'
     for mode, code in [('disabled',1),('readback',4)]:
-        result = subprocess.run(prefix + [mode], cwd=ROOT, capture_output=True, text=True)
+        result = subprocess.run(prefix + [mode], cwd=build, capture_output=True, text=True)
         assert result.returncode == 2 and f'Updater aborted: {code}' in result.stderr, result
         if mode == 'disabled':
             assert 'erased:0 written:0' in result.stderr
         else:
             assert 'reset:c03f' in result.stderr
-    damaged = bytearray((ROOT / 'build/updater.flash.bin').read_bytes())
+    damaged = bytearray((build / 'updater.flash.bin').read_bytes())
     damaged[metadata['symbols']['bootloader_image'] + 17] ^= 1
-    corrupt = ROOT / 'build/corrupt-image.bin'
+    corrupt = build / 'corrupt-image.bin'
     corrupt.write_bytes(damaged)
-    result = subprocess.run([prefix[0],str(corrupt),*prefix[2:]],cwd=ROOT,capture_output=True,text=True)
+    result = subprocess.run([prefix[0],str(corrupt),*prefix[2:]],cwd=build,capture_output=True,text=True)
     assert result.returncode == 2 and 'Updater aborted: 2 erased:0 written:0' in result.stderr, result
     print('PASS: simavr byte-exact target image and independent fuse/CRC/readback failure cases')
 
