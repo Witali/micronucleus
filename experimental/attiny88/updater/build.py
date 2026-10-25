@@ -8,7 +8,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_ADDRESS = 0x1AC0
-EXPECTED = 'fab49bebffe9a03c0db4504313e2af6c67678dde2b2211bf6dfe6d98fd9c4d5a'
+EXPECTED = '850cecac7cd4e106443942982e9f1c409d70abffbaad6f718fc7450903dfeb18'
 
 
 def record(address, payload=b'', kind=0):
@@ -19,8 +19,8 @@ def record(address, payload=b'', kind=0):
 def main():
     build = ROOT / 'build'
     build.mkdir(exist_ok=True)
-    image = (ROOT.parent / 'variants/strict_usb_1328/BOOTLOADER_BODY_1AC0_STRICT_1328.bin').read_bytes()
-    assert len(image) == 1328 and hashlib.sha256(image).hexdigest() == EXPECTED
+    image = (ROOT.parent / 'variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin').read_bytes()
+    assert len(image) == 1344 and hashlib.sha256(image).hexdigest() == EXPECTED
     image = image.ljust(8192 - IMAGE_ADDRESS, b'\xff')
     crc = binascii.crc_hqx(image, 0xffff)
     header = '#include <avr/pgmspace.h>\n'
@@ -59,7 +59,7 @@ def main():
                 'updater_end': 0x80 + len(body), 'symbols': symbols}
     (build / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print('PASS: updater application end', hex(manifest['updater_end']),
-          '; embedded strict image 1328 bytes, padded to', len(image), '; CRC', hex(crc))
+          '; embedded corrected strict image 1344 bytes, padded to', len(image), '; CRC', hex(crc))
     print('Output:', build / 'updater.hex')
 
 

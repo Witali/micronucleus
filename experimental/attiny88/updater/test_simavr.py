@@ -21,7 +21,7 @@ def main():
               str(metadata['updater_end'])]
     subprocess.run(prefix, cwd=ROOT, check=True)
     actual = (ROOT / 'build/simavr-result.bin').read_bytes()[0x1ac0:]
-    expected = (ROOT.parent / 'variants/strict_usb_1328/BOOTLOADER_BODY_1AC0_STRICT_1328.bin').read_bytes().ljust(1344,b'\xff')
+    expected = (ROOT.parent / 'variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin').read_bytes()
     assert actual == expected, 'simavr updated image differs from the pinned strict image'
     for mode, code in [('disabled',1),('readback',4)]:
         result = subprocess.run(prefix + [mode], cwd=ROOT, capture_output=True, text=True)

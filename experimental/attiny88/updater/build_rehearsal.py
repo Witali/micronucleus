@@ -20,7 +20,7 @@ def main():
     spec2.loader.exec_module(updater)
     build = ROOT / 'build'
     build.mkdir(exist_ok=True)
-    source = (ROOT.parent / 'variants/strict_usb_1328/micronucleus_t88_plus_strict.S').read_text()
+    source = (ROOT.parent / 'variants/strict_usb_verified/micronucleus_t88_verified.S').read_text()
     front, tail = source.split('flash_read:\n', 1)
     start = tail.index('    /* All byte counts')
     stop = tail.index('flash_valid:\n')

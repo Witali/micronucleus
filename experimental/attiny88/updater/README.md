@@ -1,6 +1,6 @@
 # Verified ATtiny88 updater adaptation
 
-This application adapts the in-place flow from upstream [`firmware/upgrade.c`](../../../firmware/upgrade.c). Upstream also supplies `firmware/upgrades/upgrade-t88_default.hex`; that image installs the stock loader, whereas this builder embeds the pinned **Strict USB 1328-byte** Micronucleus+ image at **0x1AC0**.
+This application adapts the in-place flow from upstream [`firmware/upgrade.c`](../../../firmware/upgrade.c). Upstream also supplies `firmware/upgrades/upgrade-t88_default.hex`; that image installs the stock loader, whereas this builder embeds the pinned **packet-corrected strict USB 1344-byte** Micronucleus+ image at **0x1AC0**. The historical 1328-byte image failed the first reversible trial's extension requests and is not the update target.
 
 The updater and its image execute from application Flash starting at `0x0080` and end at `0x0816` in the recorded AVR-GCC build, below the old loader at `0x1A00`, the new postscript page, and the destination image. The total ELF text is 1942 bytes. The embedded image is padded to 1344 bytes (21 pages).
 
@@ -18,7 +18,9 @@ No fuse or EEPROM writes are implemented. A readback error keeps the temporary u
 ## Build and model checks
 
 ```sh
+python3 build_verified.py
 python3 build.py
+node test_usb_packets.mjs
 node test_micromusic.mjs
 python3 test_simavr.py /path/to/simavr-source
 ```
@@ -35,8 +37,8 @@ Checks pass for the exact resulting image, intact updater memory, late RESET com
 python3 build_rehearsal.py
 ```
 
-This produces `build/rehearsal.hex`, an ordinary application that runs the strict USB engine at `0x1000`, ending at `0x1536` and leaving the old loader at `0x1A00` untouched. Only the diagnostic Flash-read bound is expanded to 8192 bytes. Its low-level USB engine is unchanged. Do not send Flash/EEPROM write commands to the rehearsal.
+This produces `build/rehearsal.hex`, an ordinary application that runs the corrected strict USB engine at `0x1000`, ending at `0x1546` and leaving the old loader at `0x1A00` untouched. Only the diagnostic Flash-read bound is expanded to 8192 bytes. Its low-level USB engine is unchanged. Do not send Flash/EEPROM write commands to the rehearsal.
 
 After uploading the rehearsal as an application, `usb_backup.py` uses only vendor IN requests for information, Flash reads and EEPROM reads. It requires two identical reads of each memory, checks the old RESET, and saves a local dump, hashes, and an ISP recovery HEX for the stock 2.2 loader. Pass `--dll`, `--python-libs` if needed, and a new local `--backup` directory. Device backups stay outside the public repository.
 
-The final application updater is `build/updater.hex`, intended for the working stock uploader. It is distinct from the fresh-device ISP image. Build and checks do not themselves flash a board. Hardware results, when available, belong in a separate record.
+The final application updater is `build/updater.hex`, intended for the working stock uploader. `upload_stock.py` first requires the original 2.2 descriptor and 6650-byte capacity, so an application cannot accidentally be uploaded through the running diagnostic variant. It is distinct from the fresh-device ISP image. Build and checks do not themselves flash a board. Hardware results, when available, belong in a separate record.

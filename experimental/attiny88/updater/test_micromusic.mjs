@@ -10,7 +10,7 @@ const music = process.env.MICROMUSIC_ROOT || 'C:/Work/MicroMusic';
 const {AVRCore} = await import(pathToFileURL(path.join(music, 'web-player/lib/avr-reference.js')).href);
 const metadata = JSON.parse(fs.readFileSync(path.join(root, 'build/manifest.json')));
 const original = new Uint8Array(fs.readFileSync(path.join(root, 'build/updater.flash.bin')));
-const body = new Uint8Array(fs.readFileSync(path.join(root, '../variants/strict_usb_1328/BOOTLOADER_BODY_1AC0_STRICT_1328.bin')));
+const body = new Uint8Array(fs.readFileSync(path.join(root, '../variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin')));
 const expected = new Uint8Array(1344).fill(255); expected.set(body);
 const entry = metadata.symbols;
 
