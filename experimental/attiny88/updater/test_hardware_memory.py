@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from firmware_layout import firmware_layout
 
 ROOT=Path(__file__).resolve().parent
 
@@ -21,14 +22,16 @@ def main():
     p.add_argument('--exercise-hardware',action='store_true',required=True)
     for name in ['dll','python-libs','micronucleus','backup','led-hex','report']:
         p.add_argument('--'+name,required=True)
+    p.add_argument('--firmware-manifest',type=Path,help='Expected layout; default is the deployed 6844-byte capacity')
     args=p.parse_args();sys.path.insert(0,args.python_libs)
+    boot,app_bytes,reset=firmware_layout(args.firmware_manifest)
     import usb.core
     import usb.util
     import usb.backend.libusb0
     spec=importlib.util.spec_from_file_location('memory_host',ROOT.parent/'host/micronucleus_plus.py')
     host=importlib.util.module_from_spec(spec);spec.loader.exec_module(host)
     backend=usb.backend.libusb0.get_backend(find_library=lambda _:args.dll)
-    report={'flash_bytes':6844,'eeprom_bytes':64,'checks':{},'passed':False}
+    report={'boot_address':boot,'flash_bytes':app_bytes,'eeprom_bytes':64,'checks':{},'passed':False}
     destination=Path(args.report);destination.parent.mkdir(parents=True,exist_ok=True)
     print('Waiting for Micronucleus+ 2.8; press RESET once, keeping USB power connected.',flush=True)
 
@@ -39,7 +42,7 @@ def main():
                 dev=usb.core.find(idVendor=0x16d0,idProduct=0x0753,backend=backend)
                 if dev and dev.bcdDevice==0x0208:
                     tool=host.EEPROMTool(dev);tool.check_device()
-                    if tool.flash_size==6844:return tool
+                    if tool.flash_size==app_bytes:return tool
             except (usb.core.USBError,host.EEPROMError):pass
             time.sleep(0.1)
         raise RuntimeError('Expected new loader was not observed')
@@ -78,7 +81,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix='tiny88-memory-') as temporary:
             # Safe fallback entry: RESET -> 0x0080 -> an infinite RJMP loop.
             # Arbitrary test data is never executable even if the loader times out.
-            pattern=bytearray((i*109+0x27)&255 for i in range(6844))
+            pattern=bytearray((i*109+0x27)&255 for i in range(app_bytes))
             pattern[:2]=(0xc03f).to_bytes(2,'little')
             pattern[0x80:0x82]=(0xcfff).to_bytes(2,'little')
             image=Path(temporary)/'pattern.hex'
@@ -86,17 +89,17 @@ def main():
             try:
                 tool=cli(tool,'flash-pattern',image=image)
                 actual=tool.read_flash()
-                assert actual[:2]==(0xcd5f).to_bytes(2,'little')
+                assert actual[:2]==reset.to_bytes(2,'little')
                 assert actual[2:]==pattern[2:]
-                passed('Flash: write/read all 6844 application bytes, accounting for patched RESET')
+                passed(f'Flash: write/read all {app_bytes} application bytes, accounting for patched RESET')
                 tool=cli(tool,'flash-erase',erase=True)
-                assert tool.read_flash()==b'\xff'*6844
-                passed('Flash: erase/read all 6844 application bytes')
+                assert tool.read_flash()==b'\xff'*app_bytes
+                passed(f'Flash: erase/read all {app_bytes} application bytes')
             finally:
                 tool=cli(tool,'restore-led',image=Path(args.led_hex))
-                cells=host.load_image(Path(args.led_hex),max_size=6844)
+                cells=host.load_image(Path(args.led_hex),max_size=app_bytes)
                 tool.verify_flash(cells,skip_reset_vector=True)
-                assert tool.read_flash_block(0,2)==(0xcd5f).to_bytes(2,'little')
+                assert tool.read_flash_block(0,2)==reset.to_bytes(2,'little')
                 passed('Flash: LED application restored and readback verified')
         assert tool.read()==original
         passed('EEPROM: still unchanged after Flash write/erase/restore')

@@ -7,13 +7,13 @@ spec=importlib.util.spec_from_file_location('mn_eeprom',ROOT/'host/micronucleus_
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 
 class FakeDevice:
-    def __init__(self,ext=True):
+    def __init__(self,ext=True,flash_size=6844):
         self.e=bytearray(range(64)); self.ext=ext; self.cycles=0; self.calls=[];self.busy_ticks=0;self.writes=0
-        self.flash=bytes((i*19+7)&255 for i in range(6844))
+        self.flash=bytes((i*19+7)&255 for i in range(flash_size))
     def ctrl_transfer(self,request_type,b_request,w_value,w_index,length,timeout=0):
         assert request_type == 0xC0, 'Only USB vendor IN requests are part of this extension'
         self.calls.append((b_request,w_value,w_index,length))
-        if b_request==0x00: return bytes([0x1a,0xbc,64,5,0x93,0x11,0xe0 if self.ext else 0,0])
+        if b_request==0x00: return len(self.flash).to_bytes(2,'big')+bytes([64,5,0x93,0x11,0xe0 if self.ext else 0,0])
         if not self.ext: return b''
         if b_request==0xB0:
             if not 1<=length<=8 or w_index or w_value<0 or w_value+length>len(self.flash): return b''
@@ -93,6 +93,16 @@ if __name__=='__main__':unittest.main(verbosity=2)
 
 
 class FlashHostTests(unittest.TestCase):
+    def test_twenty_page_loader_capacity_and_last_block(self):
+        device=FakeDevice(flash_size=6908)
+        tool=m.EEPROMTool(device,sleep=lambda _:None);tool.check_device()
+        self.assertEqual(tool.flash_size,6908)
+        self.assertEqual(tool.read_flash(),device.flash)
+        reads=[call for call in device.calls if call[0]==0xb0]
+        self.assertEqual(len(reads),864)
+        self.assertEqual(reads[-1],(0xb0,6904,0,4))
+        with self.assertRaises(m.EEPROMError):tool.read_flash_block(6908,1)
+
     def setup_tool(self):
         dev=FakeDevice()
         tool=m.EEPROMTool(dev, sleep=lambda _:None)

@@ -116,7 +116,12 @@ const damaged=original.slice();damaged[entry.bootloader_image+17]^=1;
 test=run(damaged);assert.equal(test.code,2);assert.equal(test.cpu.operations.length,0);
 test=run(original,{corruptReadback:true});assert.equal(test.code,4);
 assert.equal(test.cpu.rom[0]|test.cpu.rom[1]<<8,0xc03f);
-for(const at of [3,9,23,43,45])verifySuccess(run(original,{restartAt:at}));
+// Two operations install temporary RESET; each payload page adds erase/write.
+// Restart after payload erases and the postscript erase, before the final
+// RESET-page replacement. Derive positions from the selected image size.
+const imagePages=expected.length/64;
+const restartAfter=[3,9,2+2*Math.floor(imagePages/2)+1,2+2*(imagePages-1)+1,2+2*imagePages+1];
+for(const at of restartAfter)verifySuccess(run(original,{restartAt:at}));
 console.log('PASS: MicroMusic CPU + explicit ATtiny88 NVM shim: successful byte-exact update,');
 console.log('      disabled SELFPRGEN, corrupt payload, failed page readback, and five interrupted-operation restarts.');
 console.log('LIMIT: interrupted first-page erase/write can lose RESET; ISP may still be necessary.');

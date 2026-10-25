@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     assert(argc==6||argc==7);
     const char *mode=argc==7?argv[6]:"normal";
     uint32_t boot=strtoul(argv[5],NULL,0),postscript=boot-64;
-    assert(boot>=0x1800&&boot<=0x1ac0&&(boot&63)==0);
+    assert(boot>=0x1800&&boot<=0x1b00&&(boot&63)==0);
     uint32_t complete=strtoul(argv[2],NULL,0), abort_pc=strtoul(argv[3],NULL,0);
     avr_t *avr=avr_make_mcu_by_name("atmega88");assert(avr);
     avr->ramend=0x2ff;avr->e2end=63;avr->frequency=16000000;avr->fuse[2]=0xfe;

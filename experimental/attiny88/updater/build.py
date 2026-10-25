@@ -29,7 +29,7 @@ def main():
         firmware = json.loads(manifest_path.read_text())
         assert firmware['target'] == 'attiny88', 'Wrong target'
         image_address = firmware['image_address']
-        assert 0x1800 <= image_address <= 0x1ac0 and image_address % 64 == 0, 'Invalid boot boundary'
+        assert 0x1800 <= image_address <= 0x1b00 and image_address % 64 == 0, 'Invalid boot boundary'
         image = (manifest_path.parent/firmware['body_file']).read_bytes()
         assert len(image) == firmware['code_bytes'] <= 8192-image_address, 'Invalid code length'
         assert hashlib.sha256(image).hexdigest() == firmware['body_sha256'], 'Body hash mismatch'
