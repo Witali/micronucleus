@@ -1153,13 +1153,25 @@ legacy_led_on_anchor:
  * EEPROM is not modified on unsupported or invalid requests.
  */
 
-/* 0xF0 readiness. Reuse exact busy-status code for EEPE=1. */
+/* 0xF0 readiness shares the busy status and one-byte response tail. */
 ee_ready:
-    /* ATtiny88 halts the CPU while SPM page erase/write is active;
-       only EEPE can be busy when a USB SETUP is processed. */
     ldi     r18, STATUS_ACCEPTED
-    sbic    _SFR_IO_ADDR(EECR), EEPE
+    sbis    _SFR_IO_ADDR(EECR), EEPE
+    rjmp    ee_return_one
+
+ee_busy:
     ldi     r18, STATUS_BUSY
+    /* Fall through to common 1-byte response. */
+
+/* Shared 1-byte USB response buffer at SRAM 0x010A, reused by legacy
+   Micronucleus vendor responses. Fall through to common setup-response code. */
+ee_return_one:
+    std     Y+CTX_REPLY_SCRATCH, r18
+    ldi     r24, 1
+    rjmp    usb_reply_use_scratch_buffer
+
+ee_bad_addr:
+    ldi     r18, STATUS_INVALID_PARAMETER
     rjmp    ee_return_one
 
 /* 0xA0 read EEPROM address. wIndex ignored (as SPI dummy field).
@@ -1206,23 +1218,9 @@ ee_write:
     out     _SFR_IO_ADDR(EECR), r1    /* EECR=0: erase/write, no EERIE */
     sbi     _SFR_IO_ADDR(EECR), EEMPE    /* EEMPE = 1; 2 clocks */
     sbi     _SFR_IO_ADDR(EECR), EEPE    /* EEPE = 1; next instruction, within 4 clocks */
-    clr     r18         /* accepted */
+    /* The page-offset/high-index guard proved r18 == 0. The subsequent
+       loads and bit-I/O preserve it and the accepted-path flags. */
     rjmp    ee_return_one
-
-ee_bad_addr:
-    ldi     r18, STATUS_INVALID_PARAMETER
-    rjmp    ee_return_one
-
-ee_busy:
-    ldi     r18, STATUS_BUSY
-    /* Fall through to common 1-byte response. */
-
-/* Shared 1-byte USB response buffer at SRAM 0x010A, reused by legacy
-   Micronucleus vendor responses. Fall through to common setup-response code. */
-ee_return_one:
-    std     Y+CTX_REPLY_SCRATCH, r18
-    ldi     r24, 1
-    rjmp    usb_reply_use_scratch_buffer
 
 /* ---------------- Read user application Flash ---------------------------
  * Request 0xB0 vendor IN; wValue=byte address, wIndex=0, wLength=1..8.
