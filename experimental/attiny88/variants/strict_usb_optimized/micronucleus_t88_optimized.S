@@ -140,6 +140,7 @@
 #define REQ_FLASH_READ 0xb0
 #define REQ_EEPROM_WRITE 0xc0
 #define REQ_READY_STATUS 0xf0
+#define STATUS_READY 0
 #define STATUS_ACCEPTED 0
 #define STATUS_BUSY 1
 #define STATUS_INVALID_PARAMETER 2
@@ -1167,9 +1168,11 @@ legacy_led_on_anchor:
  * EEPROM is not modified on unsupported or invalid requests.
  */
 
-/* 0xF0 readiness shares the busy status and one-byte response tail. */
+/* Microchip ATtiny48/88 datasheet 5.4.4: EEPE is one while writing and
+   hardware clears it on completion. Return only that state as USB 0/1;
+   do not block USB processing while waiting for EEPROM. */
 ee_ready:
-    ldi     r18, STATUS_ACCEPTED
+    ldi     r18, STATUS_READY
     /* Skip the busy constant when EEPE is clear. Direct write-busy
        callers still enter at ee_busy, preserving their observed status. */
     sbic    _SFR_IO_ADDR(EECR), EEPE
