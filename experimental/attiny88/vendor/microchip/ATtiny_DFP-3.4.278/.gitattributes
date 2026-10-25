@@ -1,0 +1,5 @@
+# Preserve the downloaded files byte for byte across Git checkouts.
+tn88def.inc -text
+LICENSE.txt -text
+tn88def-gas.inc text eol=lf
+LICENSE-APACHE-2.0.txt text eol=lf
