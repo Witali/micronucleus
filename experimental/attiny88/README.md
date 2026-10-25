@@ -16,7 +16,7 @@ The corrected strict build supports standard Micronucleus Flash writes, applicat
 
 For the current hardware target, use `python3 updater/build_verified.py` and `python3 updater/build.py`, followed by the checks documented in the updater directory. The commands below reproduce the original historical Pass7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
 
-Requirements: Python **3.10+**, Clang with the AVR backend, `llvm-objcopy`, `llvm-objdump`, and GNU `avr-ld`. In Ubuntu/WSL these tools are supplied by `clang`, `llvm`, and `binutils-avr`. No external Python packages are needed for offline builds or tests.
+Requirements: Python **3.10+**, Clang with the AVR backend, `llvm-objcopy`, `llvm-objdump`, GNU `avr-ld`, AVR-GCC and AVR-libc headers. In Ubuntu/WSL these tools are supplied by `clang`, `llvm`, `binutils-avr`, `gcc-avr` and `avr-libc`. No external Python packages are needed for offline builds or tests.
 
 From this directory:
 
@@ -63,6 +63,34 @@ it does not add historical aliases to the maintained assembly. The archived
 sources and original handoff remain intact. The corrected strict hardware
 target in `variants/strict_usb_verified/` is a separate source and is unchanged
 by this readability update.
+
+## Named constants and device definitions
+
+The Fast Pass7 source includes `<avr/io.h>` through the C preprocessor. The
+build selects the unmodified official Microchip `iotn88.h` from the pinned
+[ATtiny_DFP 3.4.278 files](vendor/microchip/ATtiny_DFP-3.4.278/README.md).
+Register and bit names such as `DDRD`, `PCIFR`, `WDTCSR`, `EEPE` and `EEMPE`
+come from these device definitions. Standard AVR-libc I/O/CPU macros make
+the header usable from `.S`; `_SFR_IO_ADDR()` is used for bit I/O and IN/OUT,
+and `_SFR_MEM_ADDR()` is used for LDS/STS. No C functions or types are emitted.
+
+Project constants appear at the start of the assembler file, grouped by
+memory layout, SRAM-field offsets, USB IDs/requests/descriptors, SPM commands,
+bootloader commands, EEPROM status, timing and CRC/NRZI encodings. Page size,
+EEPROM size, SRAM start and signature bytes derive from the official header.
+Descriptor bytes have field comments instead of opaque eight-byte chunks.
+Simple arithmetic values such as zero, one and byte bit positions remain
+literal where their meaning is immediate.
+
+These names describe the existing fixed 16 MHz implementation. Timing seeds,
+SRAM offsets and device/protocol values are not independent configuration
+options: changing them requires a fresh audit. Build-time SHA-256 validation
+pins the resulting 1320-byte body to the historical image; symbol addresses
+and the instruction stream remain unchanged by this refactor.
+
+```sh
+python3 tools/import_microchip_device.py --check
+```
 
 ## Files and protocol
 

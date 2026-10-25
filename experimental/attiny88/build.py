@@ -12,6 +12,8 @@ FLASH=8192
 POSTSCRIPT=4
 SOURCE=ROOT/'source/micronucleus_t88_plus.S'
 ORIGINAL=ROOT/'reference/Pass3_1216.S'
+DEVICE_INCLUDE=ROOT/'vendor/microchip/ATtiny_DFP-3.4.278/include'
+EXPECTED_BODY_SHA256='6f573edc063f1e7751d551ac2ee3384ecfc92d807fa2db5e279e1d063327413d'
 
 
 def command(*args):
@@ -31,6 +33,7 @@ def compile_asm(file,boot,outfile,defines=()):
     obj=ROOT/'build'/f'{outfile}.o'
     raw=ROOT/'build'/f'{outfile}.full.bin'
     command('clang','-target','avr','-mmcu=attiny88',f'-DBOOT_AT=0x{boot:04X}',
+            '-I',str(DEVICE_INCLUDE),
             *(f'-D{define}' for define in defines),
             '-c','-x','assembler-with-cpp',str(file),'-o',str(obj))
     # LLVM 18 emits AVR branch relocations even for same-section labels.
@@ -86,6 +89,7 @@ def main():
 
     assert syms['ee_ready'] < syms['ee_read'] < syms['ee_write'] < syms['ee_return_one'] < syms['flash_read']
     assert len(boot)==1320, 'Build size changed; re-audit before release'
+    assert hashlib.sha256(boot).hexdigest()==EXPECTED_BODY_SHA256, 'Historical body changed; re-audit before release'
     print('PASS: code bytes:',len(boot),'range',hex(BOOT_AT),hex(BOOT_AT+len(boot)-1))
     print('PASS: EEPROM bit 0x40 / Flash Read bit 0x80 / MCUSR bit 0x20, version 2.8, app memory',BOOT_AT-POSTSCRIPT,'bytes')
     print('sha256:',hashlib.sha256(boot).hexdigest())

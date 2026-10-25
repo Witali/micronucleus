@@ -51,12 +51,12 @@ class StaticTests(unittest.TestCase):
     def test_bounded_flash_read(self):
         s=(ROOT/'source/micronucleus_t88_plus.S').read_text()
         self.assertIn('flash_read:',s)
-        self.assertIn('((BOOT_AT - 4) & 0xff)',s)
+        self.assertIn('LOW8(APP_LIMIT)',s)
         self.assertIn('    sub     r30, r24',s)
         self.assertIn('    cp      r30, r18',s)
         self.assertIn('    brlo    ee_empty',s)
-        self.assertIn('    std     Y+16, r18',s)
-        self.assertIn('    std     Y+17, r19',s)
+        self.assertIn('    std     Y+CTX_MSG_POINTER_LOW, r18',s)
+        self.assertIn('    std     Y+CTX_MSG_POINTER_HIGH, r19',s)
     def test_disassembled_relative_branch_targets(self):
         import importlib.util, sys
         local=str(ROOT/'tests')

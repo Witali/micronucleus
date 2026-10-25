@@ -1,5 +1,6 @@
 # Preserve the downloaded files byte for byte across Git checkouts.
 tn88def.inc -text
 LICENSE.txt -text
-tn88def-gas.inc text eol=lf
+# Retain upstream whitespace as well as line endings for checksum verification.
+include/avr/iotn88.h -text -whitespace
 LICENSE-APACHE-2.0.txt text eol=lf
