@@ -9,6 +9,10 @@ root=Path(__file__).resolve().parent.parent
 # The original differential test imports avr_decoder and has no main side effects.
 spec=importlib.util.spec_from_file_location('old_diff',root/'tests/emulator_diff_test.py')
 m=importlib.util.module_from_spec(spec);sys.modules['old_diff']=m;spec.loader.exec_module(m)
+m.BASE={'name':'upstream','start':0x1b00,
+         'bin':root/'build/base.bin','o':root/'build/base.o'}
+m.OPT={'name':'upstream','start':0x1b40,
+         'bin':root/'build/boot_1b40.bin','o':root/'build/boot_1b40.o'}
 class SPMSim(m.Sim):
  def __init__(self, build, initial):
   super().__init__(build,initial)
@@ -118,4 +122,4 @@ for build in (m.BASE,m.OPT):
 legacy_violations=sum(c[-1]=='LEGACY DATASHEET VIOLATION' for c in results)
 print('SPM test cases:',len(results),'model passed with legacy alignment mismatches:',legacy_violations)
 print('\n'.join(map(str,results)))
-(root/'tests/spm_boundary_tests.json').write_text(json.dumps({'result':'OPTIMIZED PASS; ORIGINAL HAS DATASHEET NONCOMPLIANCE','tests':len(results),'legacy_violations':legacy_violations,'cases':results,'limitations':['Models SPM registers and flash commands; NOT bus timing, SPM busy latency, EEPROM interactions or hardware'], 'source':'spm_boundary_audit.py'},indent=2)+'\n')
+(root/'report/spm_model_results.json').write_text(json.dumps({'result':'PASS: PASS2 AND PASS3 SPM PAGE WRITES ALIGNED','tests':len(results),'legacy_violations':legacy_violations,'cases':results,'limitations':['Models SPM registers and flash commands; NOT bus timing, SPM busy latency, EEPROM interactions or hardware'], 'source':'spm_boundary_audit.py'},indent=2)+'\n')

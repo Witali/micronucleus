@@ -1,0 +1,199 @@
+{
+  "result": "PASS — static AVR checks; USB hardware untested",
+  "bootloader_address": "0x1b40",
+  "size_bytes": 1216,
+  "app_bytes": 6972,
+  "saved_user_flash_bytes": 64,
+  "sha256": "a872151362af5ff3a64b420ea0f5fc0c8a8a7ad546c3dcc1533268881b25a621",
+  "checks": [
+    {
+      "check": "bootloader length exactly 1216 bytes",
+      "ok": true,
+      "note": "1216"
+    },
+    {
+      "check": "code fills reserved last 19 x 64-byte pages",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "user app capacity 6972 bytes",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "bootloader header contains new user app size",
+      "ok": true,
+      "note": "1b3c"
+    },
+    {
+      "check": "ISP flash 8192 bytes",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "reset RJMP wraps to BOOT_AT",
+      "ok": true,
+      "note": "0xcd9f"
+    },
+    {
+      "check": "user app and postscript erased in fresh ISP image",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "boot area in ISP image matches assembled bytes",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "app exit RJMP reaches 4-byte postscript",
+      "ok": true,
+      "note": "0xcdeb"
+    },
+    {
+      "check": "all executable bytes decode into supported classic AVR instructions",
+      "ok": true,
+      "note": "decoded=570 unknown=[]"
+    },
+    {
+      "check": "relative branch targets align to instruction starts",
+      "ok": true,
+      "note": "count=131, invalid=[]"
+    },
+    {
+      "check": "no unsupported ATtiny88 instructions",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "CRC16 implementation strictly binary-identical",
+      "ok": true,
+      "note": "44 bytes"
+    },
+    {
+      "check": "receive NRZI/bitstuff instruction sequence unchanged",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "TX sequence differs only in two same-cycle SRAM operations after last data bit",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "cycle-neutral 4-cycle replacement of redundant PUSH/POP",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r18, 0x010c",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r18, 0x0114",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r17, 0x0112",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias sts 0x0112, r19",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias sts 0x010d, r18",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r16, 0x0112",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r19, 0x010f",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias sts 0x010f, r16",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias lds r17, 0x0113",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "safe alias sts 0x010c, r17",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "Z base not overwritten until end of USB handler",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "Z displacements all target valid SRAM data addresses",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "LDD/STD 6-bit q encoding consistent with Microchip",
+      "ok": true,
+      "note": "count=49; fails=[]"
+    },
+    {
+      "check": "SPM write-control adjacency 0",
+      "ok": true,
+      "note": "0x1dc6 prev out"
+    },
+    {
+      "check": "SPM write-control adjacency 1",
+      "ok": true,
+      "note": "0x1e54 prev out"
+    },
+    {
+      "check": "SPM write-control adjacency 2",
+      "ok": true,
+      "note": "0x1e76 prev out"
+    },
+    {
+      "check": "SPM write-control adjacency 3",
+      "ok": true,
+      "note": "0x1f7c prev out"
+    },
+    {
+      "check": "explicitly align 64B Flash page on Page Write",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "flash-guard contains lower-byte compare for 0x1B40",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "guard C flag correct for all 65536 pointers",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "check": "Intel HEX record checksums valid",
+      "ok": true,
+      "note": "79 lines"
+    }
+  ],
+  "limits": [
+    "Does not model real D+/D− analog edges, oscillator tolerance, USB hubs, real Flash busy times or power failures.",
+    "Cycle traces verify unchanged instruction-level bit timing on simulated paths, not USB-IF certification."
+  ]
+}

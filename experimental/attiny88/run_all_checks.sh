@@ -1,8 +1,12 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 cd "$(dirname "$0")"
-python3 build.py
-python3 tests/emulator_diff_test.py
-python3 tests/spm_boundary_audit.py
-python3 tests/audit_official.py
-python3 tests/test_extra_cases.py
+mkdir -p report
+python build.py
+python tests/audit_static.py
+python tests/test_vusb_timing.py
+python tests/test_crc_equivalence.py
+python tests/test_protocol_diff.py
+python tests/spm_model.py > report/SPM_MODEL_LOG.txt
+sha256sum firmware/* source/*.S > report/SHA256SUMS.txt
+echo 'PASS: all software checks complete (not a physical USB certification).'
