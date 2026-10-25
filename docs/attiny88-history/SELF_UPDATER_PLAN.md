@@ -1,6 +1,6 @@
 # ATtiny88 self-updater design — not implemented
 
-The proposed updater would let a board running a working Micronucleus bootloader replace that bootloader over USB. A temporary application would contain the updater and the replacement image. Upstream `firmware/upgrade.c` targets ATtiny85 and is a design reference, not a ready ATtiny88 implementation.
+The proposed updater would let a board running a working Micronucleus bootloader replace that bootloader over USB. A temporary application would contain the updater and the replacement image. Upstream already supplies the generic source [`firmware/upgrade.c`](../../firmware/upgrade.c), the Makefile rules for embedding an image, and a precompiled [`upgrade-t88_default.hex`](../../firmware/upgrades/upgrade-t88_default.hex). Its header describes its ATtiny85 origins, but the repository also builds it for ATtiny88. The supplied HEX installs the stock bootloader; our imported assembly image needs a separate, verified adaptation.
 
 ## Proposed sequence
 
@@ -24,6 +24,6 @@ The proposed updater would let a board running a working Micronucleus bootloader
 
 ## Status and provenance
 
-This is a translation of the design in the October 25, 2026 handoff. That work discussed the updater but produced no ATtiny88 updater source or HEX. Importing this plan does not implement or validate self-updating, and does not authorize flashing a board.
+This preserves the design in the October 25, 2026 handoff. That work produced no custom updater for the imported assembly bootloader. The earlier claim that upstream only provides an ATtiny85 updater was corrected after inspecting the actual Makefile and `firmware/upgrades/upgrade-t88_default.hex`. Importing this plan alone does not implement or validate self-updating.
 
-See [the history index](README.md) for provenance and [upstream upgrade.c](../../firmware/upgrade.c) for the ATtiny85 reference. The unmodified handoff ZIP retains the original design.
+See [the history index](README.md) for provenance and [upstream upgrade.c](../../firmware/upgrade.c) for the generic reference. The unmodified handoff ZIP retains the original design.
