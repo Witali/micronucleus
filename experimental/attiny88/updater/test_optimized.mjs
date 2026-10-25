@@ -191,6 +191,19 @@ for(const file of process.argv.slice(2)) {
   assert.deepEqual(cpu.request(0xc0,0xc0),[1]);
   cpu.data[0x3f]&=~2;
   assert.deepEqual(cpu.request(0xc0,0xf0),[0]);
+  for(let control=0;control<256;control++) {
+    cpu.data[0x3f]=control;
+    assert.deepEqual(cpu.request(0xc0,0xf0),[(control>>1)&1],'Ready status depends on unrelated EECR bits');
+  }
+  // Completion immediately after the status test must not change the
+  // captured busy result into a ready indication.
+  const ordinaryStep=cpu.step.bind(cpu);
+  cpu.step=()=> {
+    const at=cpu.pc*2;ordinaryStep();
+    if(at===meta.symbols.ee_ready+2)cpu.data[0x3f]&=~2;
+  };
+  cpu.data[0x3f]=2;assert.deepEqual(cpu.request(0xc0,0xf0),[1]);
+  cpu.step=ordinaryStep;cpu.data[0x3f]=0;
   // Erase/write/read the whole application reservation using real SPM code.
   cpu.rom.fill(0x55,0,cpu.boot);cpu.command(2);
   assert.ok(cpu.rom.slice(0,cpu.boot).every(value=>value===255));

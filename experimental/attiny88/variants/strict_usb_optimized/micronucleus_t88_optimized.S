@@ -1170,8 +1170,9 @@ legacy_led_on_anchor:
 /* 0xF0 readiness shares the busy status and one-byte response tail. */
 ee_ready:
     ldi     r18, STATUS_ACCEPTED
-    sbis    _SFR_IO_ADDR(EECR), EEPE
-    rjmp    ee_return_one
+    /* Skip the busy constant when EEPE is clear. Direct write-busy
+       callers still enter at ee_busy, preserving their observed status. */
+    sbic    _SFR_IO_ADDR(EECR), EEPE
 
 ee_busy:
     ldi     r18, STATUS_BUSY
