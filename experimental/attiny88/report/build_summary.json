@@ -1,0 +1,38 @@
+{
+  "project": "Micronucleus+ ATtiny88 16 MHz",
+  "status": "EXPERIMENTAL, ISP and USB hardware testing outstanding",
+  "bootloader_origin": "0x1A80",
+  "bootloader_size_bytes": 1402,
+  "flash_bytes": 8192,
+  "app_bytes": 6780,
+  "eeprom_bytes": 64,
+  "fuse_change_automatic": false,
+  "features": {
+    "eeprom_read": true,
+    "eeprom_write": true,
+    "eeprom_verify_host": true,
+    "flash_read": true,
+    "flash_verify_host": true,
+    "flash_write_using_original_micronucleus": true
+  },
+  "feature_byte": "0xE0",
+  "version": "2.8",
+  "machine_code_tests": {
+    "unittest_functions": 34,
+    "synchronized_rx_cases": 500,
+    "tx_cycle_traces": 600,
+    "crc_test_vectors": 759,
+    "response_paths": 7,
+    "avr_instructions_decoded": 663,
+    "relative_branch_targets": 166
+  },
+  "sha256": {
+    "bootloader_body": "5b7967e48b3dad09f4c201c88b506a656145a995782c0ee1fc05afe9a0e34479",
+    "full_isp_hex": "372ffaa7e4ea2f33dab95c7064cf389c3ae361fe728d3c94b4934e422fdc3d3b"
+  },
+  "limits": [
+    "No physical USB or ISP test hardware accessed",
+    "Full USB-IF timing/electrical compliance not certified",
+    "Host flash-write delegates to upstream CLI"
+  ]
+}

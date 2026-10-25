@@ -1,9 +1,0 @@
-PASS: Micronucleus ATtiny88 V-USB optimized: 1216B at 0x1B40..0x1FFF; app max 6972B; sha256 a872151362af5ff3a64b420ea0f5fc0c8a8a7ad546c3dcc1533268881b25a621
-NOTE: ISP_FULL images require external ISP and erase the user app. Hardware USB testing not yet performed.
-PASS 37 static checks, 570 AVR instructions, 131 jumps/calls, 49 LDD/STD encodings. SHA256=a872151362af5ff3a64b420ea0f5fc0c8a8a7ad546c3dcc1533268881b25a621
-PASS: 500 receive-sync prologues have identical CPU cycles, SREG and registers (except deliberate Z base).
-PASS: 600 TX-engine traces identical in PORTD/DDRD levels AND exact cycle timestamps, including bit stuffing and EOP (from TX entry).
-PASS: 7 response paths reach TX entry at the EXACT same AVR cycle, and unchanged SRAM effects; the sampled NRZI bit engine itself is unchanged.
-PASS: 759 randomized and edge-vector CRC test cases, sizes 0..32 (including zero length), matching pass2 and independent polynomial. Instruction count difference 0..0 per call.
-LED_ON: False Cases: 1200 Pass: 1200 paths {'exit': 237, 'poll': 963} original_instructions_covered: 147 total_steps: 221159 intentional_reply_updates: 2 errors []
-PASS: all software checks complete (not a physical USB certification).

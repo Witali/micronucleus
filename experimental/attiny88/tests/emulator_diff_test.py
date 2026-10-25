@@ -18,9 +18,9 @@ def symbols(path):
   if m: out[m.group(2)]=int(m.group(1),16)
  return out
 
-BASE={'name':'upstream','start':0x1a40,'bin':ROOT.parent/'reference/upstream_t88_default.bin','o':ROOT.parent/'build/original.o'}
+BASE={'name':'upstream','start':0x1b40,'bin':ROOT.parent/'reference/Pass3_1216.bin','o':ROOT.parent/'build/reference_pass3.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
-OPT={'name':'optimized','start':0x1b00,'bin':ROOT.parent/'build/with_org_zero_prefix_DO_NOT_FLASH.bin','o':ROOT.parent/'build/audited.o'}
+OPT={'name':'optimized','start':0x1a80,'bin':ROOT.parent/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin','o':ROOT.parent/'build/plus_1a80.o'}
 
 class Sim:
  def __init__(self,build,init):

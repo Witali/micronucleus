@@ -1,0 +1,50 @@
+CHECK usb_crc16_append section: 44 identical bytes
+CHECK USB_handler section: 516 identical bytes
+PASS: code bytes: 1402 range 0x1a80 0x1ff9
+PASS: EEPROM bit 0x40 / Flash Read bit 0x80 / MCUSR bit 0x20, version 2.8, app memory 6780 bytes
+sha256: 5b7967e48b3dad09f4c201c88b506a656145a995782c0ee1fc05afe9a0e34479
+WARNING: experimental ISP-only build; USB hardware tests outstanding.
+PASS: 500 receive-sync prologues have identical CPU cycles, SREG and registers (except deliberate Z base).
+PASS: 600 TX-engine traces identical in PORTD/DDRD levels AND exact cycle timestamps, including bit stuffing and EOP (from TX entry).
+PASS: 7 response paths reach TX entry at the EXACT same AVR cycle, and unchanged SRAM effects; the sampled NRZI bit engine itself is unchanged.
+PASS: 759 randomized and edge-vector CRC test cases, sizes 0..32 (including zero length), matching pass2 and independent polynomial. Instruction count difference 0..0 per call.
+
+test_busy_conditions (test_cpu.CPUInstructionTests.test_busy_conditions) ... ok
+test_each_eeprom_address (test_cpu.CPUInstructionTests.test_each_eeprom_address) ... ok
+test_eeprom_write_exact_program_sequence (test_cpu.CPUInstructionTests.test_eeprom_write_exact_program_sequence) ... ok
+test_many_written_values (test_cpu.CPUInstructionTests.test_many_written_values) ... ok
+test_read_out_of_range_returns_zero_length (test_cpu.CPUInstructionTests.test_read_out_of_range_returns_zero_length) ... ok
+test_write_out_of_range_returns_status2 (test_cpu.CPUInstructionTests.test_write_out_of_range_returns_status2) ... ok
+test_write_status_wrong_request_type_cannot_touch_eeprom (test_cpu.CPUInstructionTests.test_write_status_wrong_request_type_cannot_touch_eeprom) ... ok
+test_boundaries_invalid_windex_and_wraparound (test_cpu.FlashCPUInstructionTests.test_boundaries_invalid_windex_and_wraparound) ... ok
+test_every_flash_block (test_cpu.FlashCPUInstructionTests.test_every_flash_block) ... ok
+test_last_byte_and_all_lengths (test_cpu.FlashCPUInstructionTests.test_last_byte_and_all_lengths) ... ok
+test_randomized_address_length_index_machine_code (test_cpu.FlashCPUInstructionTests.test_randomized_address_length_index_machine_code) ... ok
+test_vendor_out_cannot_read_flash (test_cpu.FlashCPUInstructionTests.test_vendor_out_cannot_read_flash) ... ok
+test_flash_bounds (test_host.FlashHostTests.test_flash_bounds) ... ok
+test_flash_dump_full_and_partial (test_host.FlashHostTests.test_flash_dump_full_and_partial) ... ok
+test_flash_verify (test_host.FlashHostTests.test_flash_verify) ... ok
+test_flash_writer_delegates_to_existing_micronucleus (test_host.FlashHostTests.test_flash_writer_delegates_to_existing_micronucleus) ... ok
+test_sparse_flash_hex (test_host.FlashHostTests.test_sparse_flash_hex) ... ok
+test_bounds_and_missing_check (test_host.HostTests.test_bounds_and_missing_check) ... ok
+test_eep_extension (test_host.HostTests.test_eep_extension) ... ok
+test_full_read (test_host.HostTests.test_full_read) ... ok
+test_hex_roundtrip (test_host.HostTests.test_hex_roundtrip) ... ok
+test_info (test_host.HostTests.test_info) ... ok
+test_program_skip_unchanged_and_verify (test_host.HostTests.test_program_skip_unchanged_and_verify) ... ok
+test_sparse_hex_and_bad_checksum (test_host.HostTests.test_sparse_hex_and_bad_checksum) ... ok
+test_transport_error (test_host.HostTests.test_transport_error) ... ok
+test_verify_detects_mismatch (test_host.HostTests.test_verify_detects_mismatch) ... ok
+test_write_force (test_host.HostTests.test_write_force) ... ok
+test_bounded_flash_read (test_static.StaticTests.test_bounded_flash_read) ... ok
+test_capabilities_and_version (test_static.StaticTests.test_capabilities_and_version) ... ok
+test_disassembled_relative_branch_targets (test_static.StaticTests.test_disassembled_relative_branch_targets) ... ok
+test_eeprom_commands_and_clocking (test_static.StaticTests.test_eeprom_commands_and_clocking) ... ok
+test_flash_layout (test_static.StaticTests.test_flash_layout) ... ok
+test_intel_hex (test_static.StaticTests.test_intel_hex) ... ok
+test_no_invalid_bit_io (test_static.StaticTests.test_no_invalid_bit_io) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 6.991s
+
+OK

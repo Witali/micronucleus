@@ -6,7 +6,7 @@ from pathlib import Path
 
 START=0x1a40
 CODE_START=0x1a6e
-raw=Path(sys.argv[1] if len(sys.argv)>1 else str(Path(__file__).resolve().parent.parent/'reference/upstream_t88_default.bin')).read_bytes()
+raw=(Path(__file__).resolve().parent.parent/'reference/Pass3_1216.bin').read_bytes()
 
 @dataclass
 class Insn:
