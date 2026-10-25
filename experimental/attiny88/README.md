@@ -5,12 +5,12 @@ This directory contains the assembly development line imported from the October 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |
 | --- | ---: | --- | ---: | --- |
 | Packet/reset-corrected strict USB, hardware target | 1344 | `0x1AC0` | 6844 | 1–8 bytes/request |
-| Fast Pass7, selected development line | 1320 | `0x1AC0` | 6844 | 1–8 bytes/request |
-| Strict USB Pass7, initial hardware trial candidate | 1328 | `0x1AC0` | 6844 | 1–8 bytes/request |
+| Historical Fast Pass7, uncorrected | 1320 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
+| Historical strict Pass7, uncorrected | 1328 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
 | Historical compact Pass4 | 1344 | `0x1AC0` | 6844 | 1 byte/request |
 | Rejected range-CRC Pass6 experiment | 1554 | `0x19C0` | 6588 | 1–8 bytes/request |
 
-Fast and strict Pass7 support standard Micronucleus Flash writes, application Flash reads, and read/write access to all 64 EEPROM bytes. USB packet CRC remains enabled. The selected line excludes the memory-range CRC experiment; verify readback on the host instead.
+The corrected strict build supports standard Micronucleus Flash writes, application Flash reads, and read/write access to all 64 EEPROM bytes. The historical images declared these extensions but need the packet-level corrections described above. USB packet CRC remains enabled. The current target excludes the memory-range CRC experiment; verify readback on the host instead.
 
 ## Build and check
 
@@ -38,9 +38,10 @@ Strict USB body SHA-256: `fab49bebffe9a03c0db4504313e2af6c67678dde2b2211bf6dfe6d
 
 ## Files and protocol
 
-- `source/micronucleus_t88_plus.S`: selected Fast Pass7 source.
+- `source/micronucleus_t88_plus.S`: historical Fast Pass7 source.
 - `firmware/`: archived fast body, fresh-device ISP HEX, and complete Flash image.
-- `variants/strict_usb_1328/`: conservative source and images; its original 516-byte USB handler and 44-byte CRC routine are unchanged.
+- `variants/strict_usb_1328/`: historical strict source and images; its original 516-byte USB handler and 44-byte CRC routine are unchanged, but packet/reset fixes are needed.
+- `variants/strict_usb_verified/`: corrected 1344-byte target used in the successful USB upgrade and hardware memory tests.
 - `variants/compact_pass4/` and `variants/range_crc_pass6/`: historical alternatives, excluded from the selected build.
 - `host/micronucleus_plus.py`: Flash/EEPROM host utility. Physical use requires PyUSB and a compatible libusb backend; Flash writes delegate to the stock Micronucleus CLI.
 - `reference/`, `tests/`, and `tools/`: comparison binaries, AVR model, timing checks, and provenance verification.

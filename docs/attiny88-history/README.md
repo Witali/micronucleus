@@ -6,7 +6,7 @@ The original upstream history is retained. Historical snapshots from the October
 
 Complete handoff SHA-256: `32a173304db4b43a42219d2f99b0fd283f26d06c2a001c8c1a06bb05c5ada4fc`.
 
-See `import-map.csv` for source archive hashes and imported destinations; [SELF_UPDATER_PLAN.md](SELF_UPDATER_PLAN.md) for the preserved future design. Self-updating is not implemented. No board is flashed during import.
+See `import-map.csv` for source archive hashes and imported destinations; [SELF_UPDATER_PLAN.md](SELF_UPDATER_PLAN.md) for the preserved original design and later implementation. The initial import did not flash a board. The subsequent USB upgrade is documented in [the updater hardware record](../../experimental/attiny88/updater/HARDWARE_TEST.md).
 
 Current documentation:
 

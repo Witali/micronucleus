@@ -1,5 +1,7 @@
 # Import validation — October 25, 2026
 
+This is the initial archive-import record. Later fixes and real-device tests are recorded separately in [the updater hardware report](../../experimental/attiny88/updater/HARDWARE_TEST.md); do not treat the import-only status below as the current installation status.
+
 These checks were rerun during import into the fork. They are separate from the test claims preserved inside the original handoff.
 
 Environment: Ubuntu 24.04 in WSL, Clang/LLVM 18.1.3, GNU AVR binutils 2.26, and Python 3. The selected assembly sources, host utility, and original test logic were imported unchanged. Build scripts now resolve LLVM AVR relocations with `avr-ld` before binary extraction.
