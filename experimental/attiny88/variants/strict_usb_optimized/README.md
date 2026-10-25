@@ -12,27 +12,29 @@ Compared with `build_verified.py`, using the board's default PD0 LED wiring:
 
 | LED mode | Verified code bytes | Optimized code bytes | Boot address | Reserved bytes | Application bytes |
 | --- | ---: | ---: | --- | ---: | ---: |
-| Off | 1344 | 1274 | `0x1B00` | 1280 | 6908 |
-| Active high | 1364 | 1296 | `0x1AC0` | 1344 | 6844 |
-| Active low | 1362 | 1294 | `0x1AC0` | 1344 | 6844 |
+| Off | 1344 | 1262 | `0x1B00` | 1280 | 6908 |
+| Active high | 1364 | 1280 | `0x1B00` | 1280 | 6908 |
+| Active low | 1362 | 1278 | `0x1B00` | 1280 | 6908 |
 
-The no-LED build reaches the 20-page target, freeing another 64 application
-bytes compared with the previous 1314-byte candidate. It saves 70 code bytes
-against the pinned 1344-byte image, with six padding bytes in its reservation.
-LED builds retain 21 pages; the original verified LED builds needed 22 pages.
+All three modes reach the 20-page target. LED builds gain 64 application
+bytes compared with the previous optimized LED candidates; the original
+verified LED builds needed 22 pages. The no-LED build saves 82 code bytes
+against the pinned 1344-byte image, with 18 padding bytes in its reservation.
 For other ports, the shared DDRD exit optimization does not apply. Tested
-custom active-high PB3 with mask `0x80` uses 1294 bytes; active-low PA3 with
-mask `0x03` uses 1296 bytes. Both start at `0x1AC0`. Single-bit PD0 masks
-use 1292 bytes active high or 1290 active low. A single-bit mask automatically
+custom active-high PB3 with mask `0x80` uses 1278 bytes; active-low PA3 with
+mask `0x03` uses 1280 bytes. Both start at `0x1B00`. Single-bit PD0 masks
+use 1276 bytes active high or 1274 active low. A single-bit mask automatically
 selects an eight-byte LED tick instead of the generic twelve-byte tick;
 the default mask `0x4C` and its behavior remain unchanged.
 
-The latest instruction changes remove 36 bytes from the previous
-1314/1332/1330-byte candidates. Moving the no-LED build to `0x1B00` saves
-four more bytes because its Flash-write bound needs only a high-byte compare.
+The preceding stage removed 36 instruction bytes from the
+1314/1332/1330-byte candidates and four more bytes from the no-LED layout.
+The latest four changes remove another 12 instruction bytes. Moving LED
+builds to `0x1B00` saves four more bytes because their Flash-write bound
+now needs only a high-byte compare.
 All profiles retain Flash programming/readback and all EEPROM commands.
 The [current optimization plan](OPTIMIZATION_PLAN.md) records completed work
-and the remaining optional LED page target.
+and the completed 20-page target for all tested profiles.
 
 | Focused change | Code bytes saved | Preserved condition |
 | --- | ---: | --- |
@@ -53,13 +55,18 @@ and the remaining optional LED page target.
 | Clear SRAM backwards through Y and retain its context pointer | 4 | Same 44 SRAM bytes, explicit stack setup and disconnect duration |
 | Merge payload copying with CRC calculation | 24 | Original inverted recurrence, packed byte/bit counter, polynomial low byte from YH, packet length from final XL |
 | Place no-LED loader at the zero-low-byte boundary | 4 | Same Flash protection using the shorter high-byte comparison |
+| Publish the remaining reply length once using CPI/SBCI borrow | 6 | R24 retains the remainder through CRC; short packets publish 0xFF and full packets retain the remainder |
+| Test the Flash page offset in disposable ZL | 2 | Persistent R4:R5 remains intact; full-page replies use the common zero-length tail |
+| Use YH for the SPM buffer-load command | 2 | Compile-time assertion requires the context pointer high byte to equal SPM_BUFFER_LOAD |
+| Skip the busy constant when EEPROM EEPE is clear | 2 | Ready/busy remains 0/1; direct write-busy callers retain their captured status |
+| Place LED loaders at the zero-low-byte boundary | 4 with LED | Same Flash protection and 20-page layout as the no-LED build |
 
 The USB engine shrinks from 516 to 508 bytes through exactly four audited
 substitutions. Every other opcode/operand and logical branch target must match
 the deployed engine. The five-millisecond polling interval,
 SE0/reset detection, pending-edge service latency, receive sample points,
 transmit NRZI/stuffing and EOP timing retain the deployed implementation.
-Reply preparation is at least nine cycles faster than the deployed body in
+Reply preparation is at least thirteen cycles faster than the deployed body in
 9196 Flash/SRAM test vectors; bit periods remain unchanged. Watchdog reset handling,
 RESET-word protection and Flash/EEPROM range checks are retained.
 
@@ -90,6 +97,11 @@ the audited register allocation. The complete preparation/copy/CRC/publication
 block is separately pinned by SHA-256. CP R1,R23 supplies carry-in before
 each byte; eight additions of 32 return the packed byte count unchanged.
 YH is the polynomial low byte, protected by compile-time assertions. Page
+buffer loading also uses YH, with a separate compile-time command check.
+R24 must retain the remaining message length through CRC so the final
+CPI/SBCI borrow can distinguish short and full packets before one length store.
+The [EEPROM readiness contract](../../PROTOCOL.md#eeprom-readiness-and-write-sequencing)
+follows Microchip's EEPE semantics while leaving USB polling nonblocking. Page
 reservation and reported application capacity derive from the resulting
 size. Changes to code paths are recorded as focused commits and must pass
 model checks before considering physical installation.
@@ -109,6 +121,8 @@ MicroMusic ATtiny88 CPU and an explicit local NVM shim. Each of seven profiles
   forced RESET-vector protection and invalid page-write rejection.
 - Pattern write/read/erase through every EEPROM address, invalid addresses,
   high-index rejection, busy status and rejection during partial Flash fill.
+- All 256 EECR values and write completion immediately after the readiness
+  sample; only EEPE determines the captured zero/one status.
 - Entry through the reset trampoline with nonzero registers/SRAM, explicit
   stack initialization, the final disconnect-delay iteration with four
   register patterns, 1024 LED ticks, GPIO isolation and application exit.
@@ -118,7 +132,8 @@ five reset-flag/watchdog cases for all seven profiles.
 
 `test_optimized_usb.py` repeats the machine-code audit for all seven profiles
 and verifies rejection of mutations to the PCIFR bit, token displacement,
-branch condition flag and branch target, plus two CRC/carry mutations. The shared `test_led_config.py` and
+branch condition flag and branch target, plus three CRC/carry mutations
+(seven rejected mutations in total). The shared `test_led_config.py` and
 `test_led_config.mjs` cover 21 profiles, including every single-bit mask in
 both polarities, twelve/eight-byte tick selection, all 256 counter values
 under four GPIO patterns and 11 rejected configurations. Pinned deployed
@@ -133,14 +148,15 @@ audited CRC recurrence/preparation block.
 
 `test_optimized_crc.mjs` executes 9196 independent Flash/SRAM vectors per
 profile: empty/short/full replies, all constant byte values, random data,
-remaining lengths through 254, packed counter/carry, pointer advancement,
+remaining lengths through 254, live R24 remainder, packed counter/carry,
+CPI borrow, pointer advancement,
 packet lengths and preparation-cycle comparison with the deployed body.
 `test_flash_read_bounds.mjs` exhausts 524288 address/length pairs per board
 mode, plus invalid lengths/index fields and unchanged accepted pointers.
 
 `test_optimized_erase.py` runs each board mode with simavr's independent CPU
 and native SPM, using the existing ATmega88 substrate restricted to tiny88
-RAM and 64-byte NORWW pages. All 108 no-LED or 107 LED application-reservation pages
+RAM and 64-byte NORWW pages. All 108 application-reservation pages
 erase correctly, every SPM preserves SREG, loader bytes remain intact and
 invalid page writes are rejected. This check uses no Flash-controller shim.
 
@@ -164,21 +180,23 @@ python3 test_simavr.py /path/to/simavr-source --build-dir build/updater-optimize
 USB updater applications for all three board modes also pass byte-exact
 installation and fuse/CRC/readback failure checks in MicroMusic and simavr.
 MicroMusic additionally checks five interrupted-operation restarts derived
-from the selected image's page count. The no-LED updater ends at `0x07D0`
-and embeds 1280 bytes; LED updaters end at `0x0816` and embed 1344 bytes.
+from the selected image's page count. All three updaters end at `0x07D0`
+and each embeds 1280 bytes.
 The existing updater's first-page power-failure limitation still applies.
 
 Body SHA-256 values:
 
 ```text
-be2035139b301739837b5a214773e0a0421404450b078d40e2bf0c02aafa77c4  optimized-off/bootloader.bin
-f7ede77c38f1debb822b5637ed7664bb9a9a60a888a9ee893c6d875e07544a9f  optimized-on/bootloader.bin
-55d60847192b31055cd35b6845e4beb71dce62e16273ed871835bedf76ad17f9  optimized-active-low/bootloader.bin
+1e6cc5b4c49a97097ecb431045d6f722f5aa80a0e8f570ffa8a362b9123a59ab  optimized-off/bootloader.bin
+a5a374420a5975a37932245ec5e064e0bf00ae7c061ed50bb59965027fd0aa72  optimized-on/bootloader.bin
+9d9533d8a440de545dc0f88024e8a41010d9cc3e43b05fba2026964013acf1e2  optimized-active-low/bootloader.bin
 ```
 
-The 1274-byte no-LED build was subsequently installed over USB and passed
+The preceding 1274-byte no-LED build was installed over USB and passed
 physical Flash/EEPROM cycles, watchdog and cold-power startup, and original
 application/EEPROM preservation. See [the hardware record](HARDWARE_TEST.md).
-LED builds have software/model validation. The default verified builder and
+The current 1262-byte no-LED build and LED builds have software/model
+validation; the board still runs the 1274-byte build. No physical programming
+was performed for these latest four optimizations. The default verified builder and
 released updater stay pinned to the earlier 1344-byte image;
 `build_optimized.py` explicitly selects this implementation.

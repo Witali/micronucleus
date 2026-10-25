@@ -20,13 +20,35 @@
   additional 64 application bytes are erased.
 - [x] Measure USB application readback: 6908 bytes in approximately 2.592 s.
 
-## Optional follow-up
+## Completed follow-up: all tested LED profiles within 20 pages
 
-LED-enabled images still reserve 21 pages. At `0x1B00`, the single-bit-mask
-profiles would need a further eight bytes saved active high or six active low;
-default-mask profiles would need twelve or ten bytes respectively. No further
-safe reductions are confirmed. Keep full memory functionality and the USB
-machine-code/timing audits for any further experiments.
+- [x] Publish remaining reply length once, using the short-packet borrow;
+  preserve the remainder through CRC (six bytes saved).
+- [x] Check the Flash page offset in disposable ZL and use the shared empty
+  reply tail (two bytes saved).
+- [x] Reuse context pointer YH for the SPM buffer-load command, protected by
+  a compile-time assertion and model checks (two bytes saved).
+- [x] Use SBIC to select EEPROM ready/busy status, following Microchip EEPE
+  semantics; check all EECR values and completion after sampling (two bytes saved).
+- [x] Fit default PD0 active-high/low images at `0x1B00`, saving another four
+  bytes in their Flash bounds. Current code sizes: off 1262, high 1280, low 1278.
+- [x] Validate seven LED/port/mask profiles with actual opcode, CRC and USB
+  audit/packet tests; repeat exhaustive bounds, timing and native erase checks
+  for all three board modes.
+- [x] Validate all three 1280-byte updater payloads in MicroMusic and simavr,
+  including failure and interrupted-operation cases.
+
+All seven tested profiles reserve 1280 bytes and expose 6908 application
+bytes. These latest images have software/model validation only; the connected
+board retains the earlier, physically verified 1274-byte no-LED image.
+Installing the latest image and repeating physical memory/preservation tests
+remain a separate hardware step.
+
+## Optional further reduction
+
+No further safe reductions are confirmed. Keep full memory functionality and
+the USB machine-code/timing audits for any further experiments. A 19-page
+reservation would allow only 1216 bytes, requiring another substantial reduction.
 
 An audible application check was offered and deferred by the user. Byte-exact
 application preservation and the start command are verified; audible behavior

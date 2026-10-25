@@ -5,7 +5,9 @@ This directory contains the assembly development line imported from the October 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |
 | --- | ---: | --- | ---: | --- |
 | Earlier packet/reset-corrected strict USB, pinned hardware target | 1344 | `0x1AC0` | 6844 | 1–8 bytes/request |
-| Optimized 20-page loader, LED off, hardware validated | 1274 | `0x1B00` | 6908 | 1–8 bytes/request |
+| Latest optimized 20-page loader, LED off, software validated | 1262 | `0x1B00` | 6908 | 1–8 bytes/request |
+| Latest optimized loader, PD0 LED active high / low, software validated | 1280 / 1278 | `0x1B00` | 6908 | 1–8 bytes/request |
+| Preceding optimized 20-page loader, LED off, installed and hardware validated | 1274 | `0x1B00` | 6908 | 1–8 bytes/request |
 | Historical Fast Pass7, uncorrected | 1320 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
 | Historical strict Pass7, uncorrected | 1328 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
 | Historical compact Pass4 | 1344 | `0x1AC0` | 6844 | 1 byte/request |
@@ -16,15 +18,16 @@ The corrected strict build supports standard Micronucleus Flash writes, applicat
 The separate [strict USB optimization candidate](variants/strict_usb_optimized/README.md)
 retains the corrected behavior and USB timing, with four audited substitutions
 shrinking the engine from 516 to 508 bytes. Single-pass reply copying/CRC now
-uses 1274 code bytes without LED, freeing a page and exposing 6908 application
-bytes at `0x1B00`. Default-mask PD0 LED modes use 1296/1294 bytes and reserve
-21 pages at `0x1AC0`. The no-LED image passed a later
+uses 1262 code bytes without LED; default-mask PD0 LED modes use 1280/1278
+bytes. All three reserve 20 pages at `0x1B00` and expose 6908 application
+bytes. These latest builds have software/model validation. The preceding
+1274-byte no-LED image remains installed and passed a
 [USB upgrade and hardware memory/preservation check](variants/strict_usb_optimized/HARDWARE_TEST.md).
 Default verified/release artifacts remain pinned to the earlier 1344-byte build.
 
 ## Build and check
 
-For the current hardware target, use `python3 updater/build_verified.py` and `python3 updater/build.py`, followed by the checks documented in the updater directory. The commands below reproduce the original historical Pass7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
+Use `python3 updater/build_optimized.py` for the latest optimized implementation and pass its firmware manifest to `updater/build.py`, as documented in the updater directory. `python3 updater/build_verified.py` and the default `python3 updater/build.py` retain the earlier pinned 1344-byte target. The commands below reproduce the original historical Pass7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
 
 Requirements: Python **3.10+**, Clang with the AVR backend, `llvm-objcopy`, `llvm-objdump`, GNU `avr-ld`, AVR-GCC and AVR-libc headers. In Ubuntu/WSL these tools are supplied by `clang`, `llvm`, `binutils-avr`, `gcc-avr` and `avr-libc`. No external Python packages are needed for offline builds or tests.
 
@@ -108,7 +111,7 @@ python3 tools/import_microchip_device.py --check
 - `firmware/`: archived fast body, fresh-device ISP HEX, and complete Flash image.
 - `variants/strict_usb_1328/`: historical strict source and images; its original 516-byte USB handler and 44-byte CRC routine are unchanged, but packet/reset fixes are needed.
 - `variants/strict_usb_verified/`: corrected 1344-byte target used in the successful USB upgrade and hardware memory tests.
-- `variants/strict_usb_optimized/`: 20-page corrected loader with semantic labels/constants and unchanged strict USB timing; no-LED hardware validation and LED model checks.
+- `variants/strict_usb_optimized/`: 20-page corrected loader with semantic labels/constants and audited strict USB timing; current builds have model checks, while the preceding 1274-byte no-LED build has hardware validation.
 - `variants/compact_pass4/` and `variants/range_crc_pass6/`: historical alternatives, excluded from the selected build.
 - `host/micronucleus_plus.py`: Flash/EEPROM host utility. Physical use requires PyUSB and a compatible libusb backend; Flash writes delegate to the stock Micronucleus CLI.
 - `reference/`, `tests/`, and `tools/`: comparison binaries, AVR model, timing checks, and provenance verification.

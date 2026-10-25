@@ -88,14 +88,17 @@ image; `isp-fresh.hex` from the loader builder serves a different purpose.
 The later [strict USB optimization candidate](../variants/strict_usb_optimized/README.md)
 has a separate `build_optimized.py` entry point. It retains packet/reset fixes
 and permits exactly four audited cycle-neutral USB-engine substitutions.
-It uses 1274 bytes without LED at `0x1B00`, reserves 20 pages and exposes
-6908 application bytes. Default-mask PD0 LED modes use 1296/1294 bytes at
-`0x1AC0`, with 6844 application bytes. Its manifests work with the same updater command
+It uses 1262 bytes without LED; default-mask PD0 LED modes use 1280/1278 bytes.
+All three start at `0x1B00`, reserve 20 pages and expose 6908 application
+bytes. Their updaters end at `0x07D0` and each embeds a 1280-byte payload.
+Its manifests work with the same updater command
 above. The candidate's documentation records exact sizes, focused changes,
-cycle comparisons and independent erase/updater model checks. It has been
-installed and memory-tested on the physical board in its no-LED configuration;
+cycle comparisons and independent erase/updater model checks. The preceding
+1274-byte no-LED configuration remains installed and memory-tested on the physical board;
 see the [20-page hardware record](../variants/strict_usb_optimized/HARDWARE_TEST.md).
-LED modes retain model validation; default builds and release files stay pinned.
+The latest optimized images have software/model validation only; no board
+programming was performed for the latest four reductions. Default verified
+builds and release files stay pinned.
 
 ## Hardware memory test and user actions
 
