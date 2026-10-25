@@ -773,7 +773,8 @@ flash_erase_application_page:
     ldi     r24, SPM_PAGE_ERASE
     out     _SFR_IO_ADDR(SPMCSR), r24     /* optimize: I/O address SPMCSR (0x57 - 0x20); 2 B vs 4 B */
     spm
-    sbiw    r30, 0
+    /* SUBI/SBC already report Z==0 for the full 16-bit page address.
+       LDI, OUT and SPM preserve SREG; only Z is live at this branch. */
     brbc    SREG_Z, flash_erase_application_page
     movw    r4, r30 /* erase-loop exit implies Z=0, so R4:R5=0 */
 
