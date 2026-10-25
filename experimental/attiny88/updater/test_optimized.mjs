@@ -160,6 +160,17 @@ for(const file of process.argv.slice(2)) {
   for(const descriptor of [1,2])for(const length of [1,8,9,18,255]) {
     assert.deepEqual(cpu.request(0x80,6,descriptor<<8,0,length),old.request(0x80,6,descriptor<<8,0,length));
   }
+  // A stale EEPROM-write SETUP must never execute for an incomplete packet
+  // or a DATA/OUT token. Cover every possible receive-length byte.
+  for(let length=0;length<256;length++)for(const token of [0,0x2d,0xc3,0xe1]) {
+    const malformed=new LoaderCPU(meta,body);
+    malformed.data[0x112]=length;malformed.data[0x10d]=token;
+    malformed.data.set([0xc0,0xc0,0,0,0x55,0,1,0],0x117);
+    malformed.pc=malformed.entries.setup/2;
+    malformed.untilPC(meta.symbols.usb_tx_prepare_pending_reply);
+    assert.equal(malformed.eeprom[0],length===11&&token===0x2d?0x55:255);
+    assert.equal(malformed.data[0x112],0,'Received buffer was not released');
+  }
   for(let address=0;address<64;address++) {
     assert.deepEqual(cpu.request(0xc0,0xc0,address,(address*37+19)&255),[0]);
     assert.deepEqual(cpu.request(0xc0,0xa0,address),[(address*37+19)&255]);

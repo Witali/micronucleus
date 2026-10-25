@@ -781,12 +781,12 @@ usb_control_process_received_packet:
     ldi     r28, LOW8(USB_CONTEXT_BASE)
     ldi     r29, HIGH8(USB_CONTEXT_BASE)
     ldd     r24, Y+CTX_RX_LENGTH
-    subi    r24, USB_RX_PACKET_OVERHEAD
-    brmi    usb_tx_prepare_pending_reply  /* N from SUBI equals previous r24 bit 7; same predicate */
+    /* Only a complete SETUP may dispatch a memory command. Zero length
+       also releases the already-empty buffer; all malformed lengths drop. */
+    cpi     r24, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
+    brne    usb_rx_release_buffer
     ldd     r25, Y+CTX_RX_TOKEN
     cpi     r25, USB_PID_SETUP
-    brbc    SREG_Z, usb_rx_release_buffer
-    cpi     r24, USB_SETUP_BYTES
     brbc    SREG_Z, usb_rx_release_buffer
     ldi     r24, USB_PID_DATA0
     std     Y+CTX_TX_PID, r24
