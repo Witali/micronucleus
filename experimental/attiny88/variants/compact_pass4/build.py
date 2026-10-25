@@ -32,7 +32,10 @@ def compile_asm(file,boot,outfile):
     raw=ROOT/'build'/f'{outfile}.full.bin'
     command('clang','-target','avr','-mmcu=attiny88',f'-DBOOT_AT=0x{boot:04X}',
             '-c','-x','assembler-with-cpp',str(file),'-o',str(obj))
-    command('llvm-objcopy','-O','binary','-j','.text',str(obj),str(raw))
+    # Resolve AVR branch relocations before extracting the firmware bytes.
+    elf=ROOT/'build'/f'{outfile}.elf'
+    command('avr-ld','--entry=bootloader_start','-Ttext=0',str(obj),'-o',str(elf))
+    command('llvm-objcopy','-O','binary','-j','.text',str(elf),str(raw))
     contents=raw.read_bytes()
     assert all(b==0 for b in contents[:boot]), 'Build did not reserve lower Flash with zeros as expected'
     return contents[boot:],symbols(obj)

@@ -2,6 +2,6 @@
 __pycache__/
 *.py[cod]
 *.elf
-/build/
+build/
 /build_results/
 /upstream/
