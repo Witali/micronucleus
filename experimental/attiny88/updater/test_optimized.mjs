@@ -35,6 +35,11 @@ class LoaderCPU extends AVRCore {
     this.data[0x5d]=255;this.data[0x5e]=2; // Tiny88 SRAM stack top.
   }
   writeIO(io,value) {
+    if(io===0x48) {
+      // PCICR sources are polled, never dispatched as interrupts. The
+      // reference CPU rejects source enables even with global IRQs off.
+      assert.equal(this.i,0);this.data[0x68]=value;return 0;
+    }
     if(io===0x37) {
       this.nvm=value;this.until=this.cyc+4;this.data[0x57]=value;return 0;
     }
@@ -131,6 +136,20 @@ for(const file of process.argv.slice(2)) {
   assert.ok(reset.data.slice(0x100,0x12c).every(value=>value===0));
   assert.equal(reset.data[0x12c],0x55);assert.equal(reset.r[1],0);
   assert.equal(reset.data[0x5d]|reset.data[0x5e]<<8,0x2ff);
+  // Execute the final disconnect-delay iteration instead of millions of
+  // identical countdown steps. Its zero pair must initialize R4:R5 even
+  // when command/pointer registers contain arbitrary values at entry.
+  for(const pattern of [0,255,0x55,0xaa]) {
+    const startup=new LoaderCPU(meta,body);
+    startup.r.fill(pattern);startup.r[1]=0;
+    startup.r[24]=1;startup.r[25]=0;startup.r[18]=1;
+    startup.pc=meta.symbols.usb_disconnect_delay_inner/2;
+    startup.untilPC(meta.symbols.bootloader_poll_begin);
+    for(const reg of [3,4,5,7])assert.equal(startup.r[reg],0,`Startup R${reg}`);
+    assert.equal(startup.data[0x10f],0x5a);assert.equal(startup.data[0x100],255);
+    assert.equal(startup.data[0x68],4);assert.equal(startup.data[0x6d],4);
+    assert.equal(startup.data[0x2a]&2,0,'USB disconnect output was not released');
+  }
   const cpu=new LoaderCPU(meta,body);
   // Every standard request byte, directions and short/long reply limits.
   const baselineBody=fs.readFileSync(path.join(root,'../variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin'));
@@ -215,5 +234,5 @@ for(const file of process.argv.slice(2)) {
     assert.equal(cpu.data[0x68],0);assert.equal(cpu.data[0x6d],0);
   }
   console.log(`PASS: ${path.basename(path.dirname(file))}: 3072 standard-request comparisons, multi-packet descriptors/CRC, full Flash write/read/erase, all EEPROM bytes and memory guards`);
-  console.log('PASS: explicit stack/SRAM startup, 1024 LED ticks, GPIO isolation and application handover');
+  console.log('PASS: stack/SRAM startup, final disconnect initialization, 1024 LED ticks, GPIO isolation and application handover');
 }

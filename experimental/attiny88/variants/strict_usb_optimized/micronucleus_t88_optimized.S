@@ -675,6 +675,9 @@ usb_disconnect_delay_inner:
     dec     r18
     brne    usb_disconnect_delay_outer
     cbi     _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
+    /* The final SBIW leaves r24:r25 == 0. Initialize the Flash pointer
+       after releasing USB so the disconnect duration stays unchanged. */
+    movw    r4, r24
     ldi     r24, USB_PID_NAK
     sts     (USB_CONTEXT_BASE + CTX_TX_LENGTH), r24
     ldi     r24, USB_NO_MESSAGE
@@ -689,8 +692,6 @@ led_init:
 led_init_done:
     mov     r7, r1
     mov     r3, r1
-    mov     r5, r1
-    mov     r4, r1
 
 /* Initialize the five-millisecond USB poll and host-reset counters. */
 bootloader_poll_begin:
