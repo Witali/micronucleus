@@ -1,0 +1,137 @@
+--- Pass5_Fast_1344.S
++++ Pass7_Fast_1320.S
+@@ -244,8 +244,7 @@
+     rjmp    L1ba2
+ 
+ L1ba2:
+-    ldi     r17, 0x04
+-    out     0x1b, r17
++    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
+ 
+ L1ba6:
+     eor     r16, r16
+@@ -256,8 +255,7 @@
+     neg     r19
+     sub     r28, r19
+     sbci    r29, 0x00
+-    ldi     r17, 0x04
+-    out     0x1b, r17
++    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
+     /* Z already initialized without added latency in L1af8. */
+     ldd     r16, Y+0
+     cpi     r16, 0xc3
+@@ -287,7 +285,9 @@
+     brbc    1, L1bda
+ 
+ L1be4:
+-    sts     0x0114, r16
++    /* Z is guaranteed 0x0100 on every path reaching packet commit.
++       STD Z+20 and STS 0x0114 each take two clocks; STD is 2 B shorter. */
++    std     Z+20, r16
+ 
+ L1be8:
+     pop     r19
+@@ -418,8 +418,7 @@
+     std     Z+12, r17
+ 
+ L1cb2:
+-    ldi     r17, 0x04
+-    out     0x1b, r17
++    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
+     ori     r16, 0x02
+     in      r17, 0xa
+     andi    r17, 0xf9
+@@ -454,8 +453,10 @@
+ 
+ main:
+     wdr
+-    lds     r24, 0x0060
+-    ori     r24, 0x18
++    /* WDT unlock: WDCE|WDE=0x18 is sufficient regardless of the
++       previous prescaler and interrupt settings. Next store, immediately,
++       clears WDE/WDCE; timed sequence is unchanged. Saves four bytes. */
++    ldi     r24, 0x18
+     sts     0x0060, r24
+     sts     0x0060, r1
+     sbi     0xa, 1
+@@ -511,8 +512,8 @@
+     sbis    0x1b, 2
+     rjmp    L1e98
+     rcall   USB_handler
+-    ldi     r24, 0x04
+-    out     0x1b, r24
++    sbi     0x1b, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
++                        SBI is 2 cycles vs LDI+OUT 2 cycles. */
+ 
+ L1d5e:
+     wdr
+@@ -535,8 +536,15 @@
+ L1d7e:
+     mov     r24, r3
+     cpi     r24, 0x40
+-    brbs    1, L1d86
+-    rjmp    L1ea0
++    breq    L1d86
++    /* Fold command==4 and application-idle exit dispatch into the
++       previous fallthrough. Both conditional targets are now nearby;
++       the long-path RJMP trampoline is unnecessary. */
++    cpi     r24, 0x04
++    brne    L1d9a
++    or      r28, r29
++    brne    L1d9c
++    rjmp    L1eac
+ 
+ L1d86:
+     movw    r30, r4
+@@ -563,8 +571,7 @@
+     ldi     r29, 0x01
+     ldd     r24, Y+18
+     subi    r24, 0x03
+-    sbrc    r24, 7
+-    rjmp    L1dfc
++    brmi    L1dfc  /* N from SUBI equals previous r24 bit 7; same predicate */
+     ldd     r25, Y+13
+     cpi     r25, 0x2d
+     brbc    1, L1df8
+@@ -660,9 +667,10 @@
+     movw    r24, r6
+     adiw    r24, 1
+     movw    r6, r24
+-    cpi     r24, 0xb0
+-    ldi     r18, 0x04
+-    cpc     r25, r18
++    /* r24:r25 is a disposable copy of r6:r7 here. SUBI/SBCI
++       reproduce CPI/CPC zero flag exactly (including Z propagation). */
++    subi    r24, 0xb0
++    sbci    r25, 0x04
+     brbc    1, L1e7c
+     ldi     r30, ((BOOT_AT - 3) & 0xff)
+     ldi     r31, ((BOOT_AT - 3) >> 8)
+@@ -688,8 +696,8 @@
+     ldi     r24, 0x1c
+     subi    r24, 0x01
+     brbc    1, L1e8a
+-    ldi     r24, 0x04
+-    out     0x1b, r24
++    sbi     0x1b, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
++                        SBI is 2 cycles vs LDI+OUT 2 cycles. */
+     rjmp    L1d3a
+ 
+ L1e98:
+@@ -699,16 +707,6 @@
+ 
+ L1e9e:
+     rjmp    L1d5e
+-
+-L1ea0:
+-    cpi     r24, 0x04
+-    brbs    1, L1ea6
+-    rjmp    L1d9a
+-
+-L1ea6:
+-    or      r28, r29
+-    brbs    1, L1eac
+-    rjmp    L1d9c
+ 
+ L1eac:
+     /* Removed 0x1eac: cbi     0xb, 0 (size-optimized, see CHANGES.md) */

@@ -15,7 +15,7 @@ class StaticTests(unittest.TestCase):
         cls.dump=subprocess.check_output(['llvm-objdump','-d',str(ROOT/'build/plus_1ac0.o')],text=True)
     def test_flash_layout(self):
         self.assertEqual(len(self.image),8192)
-        self.assertEqual(len(self.body),1344)
+        self.assertEqual(len(self.body),1320)
         self.assertEqual(self.image[BOOT:BOOT+len(self.body)],self.body)
         self.assertEqual(self.image[BOOT+len(self.body):],b'\xff'*(8192-BOOT-len(self.body)))
         self.assertEqual(self.image[BOOT-4:BOOT],b'\xff'*4)

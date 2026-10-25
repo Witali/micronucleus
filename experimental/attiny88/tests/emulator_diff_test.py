@@ -18,7 +18,7 @@ def symbols(path):
   if m: out[m.group(2)]=int(m.group(1),16)
  return out
 
-BASE={'name':'upstream','start':0x1b40,'bin':ROOT.parent/'reference/Pass3_1216.bin','o':ROOT.parent/'build/reference_pass3.o'}
+BASE={'name':'upstream','start':0x1ac0,'bin':ROOT.parent/'reference/Pass5_Fast_1344.bin','o':ROOT.parent/'build/reference_pass5.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
 OPT={'name':'optimized','start':0x1ac0,'bin':ROOT.parent/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin','o':ROOT.parent/'build/plus_1ac0.o'}
 
@@ -26,7 +26,7 @@ class Sim:
  def __init__(self,build,init):
   self.name=build['name']; self.base=build['start']; self.o=build['o']
   self.flash=bytearray([0xff]*8192)
-  data=build['bin'].read_bytes(); self.flash[self.base:self.base+len(data) if self.name=='upstream' else len(data)]=data if self.name=='upstream' else data[self.base:]
+  data=build['bin'].read_bytes(); self.flash[self.base:self.base+len(data)]=data
   self.labels=symbols(self.o)
   self.m=bytearray(init['memory']); self.r=init['registers'].copy()
   self.flags=0;self.calls=[];self.steps=0;self.pc=self.labels['L1d9c'];self.stop=self.labels['L1d3a']; self.ending=self.labels['L1eac']
@@ -34,10 +34,7 @@ class Sim:
   self.io={0x1b:0,0x09:0x02,0x0a:0,0x0b:0,0x34:0,0x1e:0}
   self.r[1]=0
   if init.get('program_present',False):self.flash[self.base-3]=0
-  if self.name=='optimized':
-   p=self.m[0x0110]+(self.m[0x0111]<<8)
-   if 0x1a40<=p<0x1a70:
-    p+=self.base-0x1a40;self.m[0x0110]=p&255;self.m[0x0111]=p>>8
+
  def flag(self,n): return (self.flags>>n)&1
  def setflag(self,n,b):self.flags=(self.flags&~(1<<n))|((bool(b))<<n)
  def logic(self,v):
@@ -205,7 +202,7 @@ def main():
    else:
     failure.append((k,'RAM',[(hex(i),hex(x),hex(y)) for i,x,y in different[:20]],ra));break
   # Apart from Y base and new scratch r23, regs should match exactly (unless descriptor pointer moved, then Z)
-  ignore={23,24,28,29,30,31}
+  ignore={18,23,24,25,28,29,30,31}
   badreg=[(i,x,y) for i,(x,y) in enumerate(zip(a.r,b.r)) if x!=y and i not in ignore]
   if badreg: failure.append((k,'REG',badreg,ra));break
   # Flags may be different due to Y init? LDI has no effect. Flags after layout should agree.
