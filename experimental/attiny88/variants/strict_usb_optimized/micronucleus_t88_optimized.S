@@ -386,8 +386,7 @@ usb_rx_advance_bit_pair:
 
 /* Clear the pending USB edge after receive-buffer overflow. */
 usb_rx_overflow:
-    ldi     r17, (1 << PCIF2)
-    out     _SFR_IO_ADDR(PCIFR), r17
+    sbi     _SFR_IO_ADDR(PCIFR), PCIF2 /* W1C; same two cycles as LDI+OUT. */
 
 /* Discard an unsupported or misaddressed packet by clearing its token. */
 usb_rx_ignore_packet:
@@ -400,8 +399,7 @@ usb_rx_end_packet:
     neg     r19
     sub     r28, r19
     sbci    r29, 0x00
-    ldi     r17, (1 << PCIF2)
-    out     _SFR_IO_ADDR(PCIFR), r17
+    sbi     _SFR_IO_ADDR(PCIFR), PCIF2
     /* Z already initialized without added latency in usb_rx_sync_confirmed. */
     ldd     r16, Y+USB_PACKET_PID_OFFSET
     cpi     r16, USB_PID_DATA0
@@ -434,8 +432,9 @@ usb_rx_wait_for_data:
 
 /* Publish the current token in the USB SRAM context. */
 usb_rx_store_token:
-    /* Retain the deployed strict engine's direct SRAM token store. */
-    sts     (USB_CONTEXT_BASE + CTX_CURRENT_TOKEN), r16
+    /* Sync initialization proves Z == USB_CONTEXT_BASE on every path.
+       STD and the former direct STS both take two cycles. */
+    std     Z+CTX_CURRENT_TOKEN, r16
 
 /* Restore the packet counter and receive another pending packet if needed. */
 usb_handler_packet_done:
@@ -585,8 +584,7 @@ usb_tx_send_bit7:
 
 /* Clear the TX-generated pending edge and prepare bus release after SE0. */
 usb_tx_finish_eop:
-    ldi     r17, (1 << PCIF2)
-    out     _SFR_IO_ADDR(PCIFR), r17
+    sbi     _SFR_IO_ADDR(PCIFR), PCIF2
     ori     r16, (1 << USB_MINUS_BIT)
     in      r17, _SFR_IO_ADDR(DDRD)
     andi    r17, USB_LINES_CLEAR_MASK

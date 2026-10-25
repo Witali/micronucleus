@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build an isolated size-optimized candidate; never program hardware.
 
-The deployed verified artifacts remain pinned. Every candidate must retain
-the exact 516-byte USB engine and the 40-byte CRC arithmetic from that image.
+The deployed verified artifacts remain pinned. Candidates permit exactly four
+cycle-neutral USB substitutions and retain the original 40-byte CRC arithmetic.
 """
 from pathlib import Path
 import argparse
@@ -49,8 +49,10 @@ def main():
                                      0x1ac0,'optimized_reference',['LED_MODE=NONE'])
     assert hashlib.sha256(reference).hexdigest() == BASELINE_SHA256
     engine = body[symbols['USB_handler']-boot:symbols['flash_buffer_append_word']-boot]
-    original_engine = reference[ref['USB_handler']-0x1ac0:ref['usb_program_page']-0x1ac0]
-    assert len(engine) == 516 and engine == original_engine, 'USB engine changed'
+    sys.path.insert(0,str(ROOT.parent/'tests'))
+    from source_labels import with_semantic_names
+    from usb_engine_audit import audit_usb_engine
+    audit_usb_engine(reference,0x1ac0,with_semantic_names(ref),body,boot,symbols)
     crc = body[symbols['usb_crc16_append']-boot:symbols['usb_crc16_core_end']-boot]
     original_crc = reference[ref['usb_crc16_append']-0x1ac0:ref['USB_handler']-0x1ac0]
     # The inlined caller initializes X directly. Omit the original leading
@@ -73,7 +75,7 @@ def main():
                 'baseline_sha256':BASELINE_SHA256,'baseline_symbols':ref}
     (output/'firmware.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(f'PASS: {len(body)} code bytes at 0x{boot:04X}; {boot-4} application bytes; LED {args.led}')
-    print('PASS: USB engine and CRC arithmetic byte-identical to deployed strict image')
+    print('PASS: four cycle-neutral USB substitutions audited; CRC arithmetic matches deployed image')
     print('Output:', output/'firmware.json')
 
 
