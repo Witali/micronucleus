@@ -10,13 +10,19 @@ const {AVRCore}=await import(pathToFileURL(path.join(music,'web-player/lib/avr-r
 const manifestPath=path.resolve(process.argv[2]||path.join(root,'build/verified/firmware.json'));
 const manifest=JSON.parse(fs.readFileSync(manifestPath));
 const symbols=manifest.symbols,boot=manifest.image_address,appBytes=manifest.application_bytes;
+function symbol(semantic,historical) {
+  const address=symbols[semantic]??symbols[historical];
+  assert.ok(Number.isInteger(address),`Missing symbol ${semantic}`);return address;
+}
+const setupEntry=symbol('usb_control_process_received_packet','L1d9c');
+const payloadReady=symbol('usb_tx_append_payload_crc','L1e4c');
 const body=fs.readFileSync(path.join(path.dirname(manifestPath),manifest.body_file));
 class PacketCPU extends AVRCore {
   constructor(type,request,address,length,index=0) {
     const flash=Uint8Array.from({length:8192},(_,i)=>(i*17+31)&255);flash.set(body,boot);
     super(flash,null,{target:'attiny88',cpuHz:16000000,fastIdle:false,fastBlocks:false});
     this.eeprom=Uint8Array.from({length:64},(_,i)=>0x80+i);
-    this.pc=symbols.L1d9c/2;this.data[0x112]=11;this.data[0x10d]=0x2d;
+    this.pc=setupEntry/2;this.data[0x112]=11;this.data[0x10d]=0x2d;
     this.data.set([type,request,address&255,address>>8,index&255,index>>8,length&255,length>>8],0x117);
   }
   writeIO(io,value) {
@@ -29,7 +35,7 @@ class PacketCPU extends AVRCore {
   }
   packet() {
     for(let i=0;i<1000;i++) {
-      if(this.pc*2===symbols.L1e4c)return Array.from(this.data.slice(0x102,0x102+this.r[23]));
+      if(this.pc*2===payloadReady)return Array.from(this.data.slice(0x102,0x102+this.r[23]));
       this.step();
     }
     throw new Error('No TX payload prepared');
