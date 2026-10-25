@@ -86,8 +86,10 @@ board as part of this change. The output `updater.hex` is the USB application
 image; `isp-fresh.hex` from the loader builder serves a different purpose.
 
 The later [strict USB optimization candidate](../variants/strict_usb_optimized/README.md)
-has a separate `build_optimized.py` entry point. It keeps the deployed USB
-engine and packet/reset fixes, and its default PD0 LED modes fit at `0x1AC0`
+has a separate `build_optimized.py` entry point. It retains packet/reset fixes
+and permits exactly four audited cycle-neutral USB-engine substitutions.
+It uses 1314 bytes without LED, 1332 active high or 1330 active low with the
+default mask. All default PD0 LED modes fit at `0x1AC0`
 with 6844 application bytes. Its manifests work with the same updater command
 above. The candidate's documentation records exact sizes, focused changes,
 cycle comparisons and independent erase/updater model checks. It has not been

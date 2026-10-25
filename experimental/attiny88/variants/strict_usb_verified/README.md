@@ -35,6 +35,12 @@ LED initializes off, updates while the loader waits, then turns off and
 releases its pin before entering the application. The application's own LED
 behavior is independent.
 
+Single-bit masks (`0x01`, `0x02`, through `0x80`) automatically use an
+eight-byte LED tick, saving four bytes compared with the generic twelve-byte
+tick. Both LED polarities are supported. Other masks, including the default
+`0x4C`, keep their existing code and behavior. This shared macro also applies
+to the separate size-optimized variant.
+
 Build from `experimental/attiny88/updater` with the documented LLVM/AVR tools:
 
 ```sh
@@ -83,7 +89,8 @@ node test_usb_packets.mjs build/led-custom-high/firmware.json
 node test_usb_packets.mjs build/led-custom-low/firmware.json
 ```
 
-The build check covers five profiles and 11 invalid configurations. The CPU
+The build check covers 21 profiles, including all eight single-bit masks in
+both polarities, and 11 invalid configurations. The CPU
 check executes initialization, all 256 counter values with four register
 patterns, and exit for every profile, including GPIO isolation. Packet tests
 use each manifest's actual address/capacity and check Flash/EEPROM replies,
