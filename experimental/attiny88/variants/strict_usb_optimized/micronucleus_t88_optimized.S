@@ -228,43 +228,6 @@ startup_check_sram_end:
     brbc    SREG_Z, startup_clear_sram_byte
     rjmp    main
 
-usb_crc16_append:
-    movw    r26, r24
-    ldi     r24, 0x00
-    ldi     r25, 0x00
-    ldi     r20, LOW8(CRC16_POLYNOMIAL)
-    ldi     r21, HIGH8(CRC16_POLYNOMIAL)
-    com     r22
-    ldi     r19, 0x00
-    rjmp    usb_crc16_check_remaining_bytes
-
-/* Read a byte and mix it into the CRC accumulator. */
-usb_crc16_next_byte:
-    ld      r18, X+
-    eor     r24, r18
-
-/* Shift the CRC and conditionally apply polynomial 0xA001. */
-usb_crc16_shift_bit:
-    ror     r25
-    ror     r24
-    brbs    SREG_C, usb_crc16_advance_bit_count
-    eor     r24, r20
-    eor     r25, r21
-
-/* Advance the packed eight-bit CRC loop counter. */
-usb_crc16_advance_bit_count:
-    subi    r19, LOW8(-CRC_BIT_COUNTER_INCREMENT)
-    brbs    SREG_C, usb_crc16_shift_bit
-
-/* Process remaining bytes or append the two CRC bytes. */
-usb_crc16_check_remaining_bytes:
-    subi    r22, LOW8(-1)
-    brbs    SREG_C, usb_crc16_next_byte
-    st      X+, r24
-    st      X+, r25
-usb_crc16_core_end:
-    ret
-
 USB_handler:
     push    r28
     push    r29
@@ -928,7 +891,43 @@ usb_tx_append_payload_crc:
     mov     r22, r23
     ldi     r24, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
     ldi     r25, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    rcall   usb_crc16_append
+    /* The sole CRC call is inlined. Its computation is byte-identical;
+       only RCALL/RET and their stack traffic are removed. */
+usb_crc16_append:
+    movw    r26, r24
+    ldi     r24, 0x00
+    ldi     r25, 0x00
+    ldi     r20, LOW8(CRC16_POLYNOMIAL)
+    ldi     r21, HIGH8(CRC16_POLYNOMIAL)
+    com     r22
+    ldi     r19, 0x00
+    rjmp    usb_crc16_check_remaining_bytes
+
+/* Read a byte and mix it into the CRC accumulator. */
+usb_crc16_next_byte:
+    ld      r18, X+
+    eor     r24, r18
+
+/* Shift the CRC and conditionally apply polynomial 0xA001. */
+usb_crc16_shift_bit:
+    ror     r25
+    ror     r24
+    brbs    SREG_C, usb_crc16_advance_bit_count
+    eor     r24, r20
+    eor     r25, r21
+
+/* Advance the packed eight-bit CRC loop counter. */
+usb_crc16_advance_bit_count:
+    subi    r19, LOW8(-CRC_BIT_COUNTER_INCREMENT)
+    brbs    SREG_C, usb_crc16_shift_bit
+
+/* Process remaining bytes or append the two CRC bytes. */
+usb_crc16_check_remaining_bytes:
+    subi    r22, LOW8(-1)
+    brbs    SREG_C, usb_crc16_next_byte
+    st      X+, r24
+    st      X+, r25
+usb_crc16_core_end:
     subi    r23, LOW8(-USB_TX_PACKET_OVERHEAD)
     cpi     r23, USB_FULL_TX_PACKET_BYTES
     brbs    SREG_Z, usb_tx_publish_packet_length
