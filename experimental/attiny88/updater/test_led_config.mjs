@@ -20,7 +20,8 @@ class LEDCPU extends AVRCore {
 }
 
 const profiles=process.argv.slice(2);
-if(!profiles.length)profiles.push(...['verified','led-on','led-active-low','led-custom-high','led-custom-low']
+if(!profiles.length)profiles.push(...['verified','led-on','led-active-low','led-custom-high','led-custom-low',
+  ...Array.from({length:8},(_,bit)=>['on','active-low'].map(mode=>`led-bit-${bit}-${mode}`)).flat()]
   .map(name=>path.join(root,'build',name,'firmware.json')));
 for(const file of profiles) {
   const meta=JSON.parse(fs.readFileSync(file)),s=meta.symbols,cfg=meta.led,bit=1<<cfg.pin;

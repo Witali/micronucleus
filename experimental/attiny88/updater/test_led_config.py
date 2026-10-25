@@ -19,6 +19,8 @@ PROFILES = [
                          '-D', 'LED_PORT_IO=5', '-D', 'LED_PIN=3', '-D', 'LED_BLINK_MASK=0x80']),
     ('led-custom-low', ['--led', 'active-low', '-D', 'LED_DDR_IO=0x0d',
                         '-D', 'LED_PORT_IO=0x0e', '-D', 'LED_PIN=3', '-D', 'LED_BLINK_MASK=0x03']),
+    *[(f'led-bit-{bit}-{mode}', ['--led', mode, '-D', f'LED_BLINK_MASK={1 << bit}'])
+      for bit in range(8) for mode in ['on', 'active-low']],
 ]
 
 
@@ -39,6 +41,10 @@ def main():
         assert meta['application_bytes'] == meta['image_address'] - 4
         assert int.from_bytes(body[2:4], 'big') == meta['application_bytes']
         assert meta['application_bytes'] == (6844 if meta['led']['mode'] == 0 else 6780)
+        if name.startswith('led-bit-'):
+            assert meta['symbols']['led_tick_done'] - meta['symbols']['led_tick'] == 8
+        elif meta['led']['mode'] and meta['led']['blink_mask'] & (meta['led']['blink_mask']-1):
+            assert meta['symbols']['led_tick_done'] - meta['symbols']['led_tick'] == 12
     invalid = [
         ['LED_MODE=3'], ['LED_PIN=8'], ['LED_PIN=-1'],
         ['LED_PIN=1'], ['LED_PIN=2'], ['LED_BLINK_MASK=0'], ['LED_BLINK_MASK=256'],
@@ -56,7 +62,8 @@ def main():
         assert result.returncode != 0 and 'error:' in result.stderr, (flags, result)
     for name, data in snapshots.items():
         assert (pinned/name).read_bytes() == data, 'Configured build replaced the pinned no-LED artifact'
-    print('PASS: five LED profiles, page/descriptor limits, 11 rejected configurations, pinned artifacts unchanged')
+    print(f'PASS: {len(PROFILES)} LED profiles, all eight single-bit masks/both polarities, '
+          'page/descriptor limits, 11 rejected configurations, pinned artifacts unchanged')
 
 
 if __name__ == '__main__':
