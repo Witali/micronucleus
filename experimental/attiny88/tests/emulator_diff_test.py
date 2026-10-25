@@ -20,7 +20,7 @@ def symbols(path):
 
 BASE={'name':'upstream','start':0x1a40,'bin':ROOT.parent/'reference/upstream_t88_default.bin','o':ROOT.parent/'build/original.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
-OPT={'name':'optimized','start':0x1b00,'bin':ROOT.parent/'build/full_zero_padded_DO_NOT_FLASH.bin','o':ROOT.parent/'build/audited.o'}
+OPT={'name':'optimized','start':0x1b00,'bin':ROOT.parent/'build/with_org_zero_prefix_DO_NOT_FLASH.bin','o':ROOT.parent/'build/audited.o'}
 
 class Sim:
  def __init__(self,build,init):
@@ -65,6 +65,7 @@ class Sim:
  def memread(self,address):return self.m[address] if address<len(self.m) else 0
  def memwrite(self,address,v):
   if address<len(self.m):self.m[address]=v&255
+  if address==0x57:self.io[0x37]=v&255  # I/O 0x37 aliases data memory 0x57
  def step(self):
   if self.steps>20000:raise RuntimeError((self.name,'too many steps',hex(self.pc)))
   pc=self.pc
@@ -95,7 +96,9 @@ class Sim:
    if v==(op=='sbis'):self.pc+=dec.decode(self.pc).size
   elif op in ('in','out'):
    if op=='in':self.r[reg(args[0])]=self.io.get(num(args[1]),0)
-   else:self.io[num(args[0])]=self.r[reg(args[1])]
+   else:
+    self.io[num(args[0])]=self.r[reg(args[1])]
+    if num(args[0])==0x37:self.memwrite(0x57,self.r[reg(args[1])])
   elif op in ('sbi','cbi'):
    io=num(args[0]);b=num(args[1]);v=self.io.get(io,0)
    self.io[io]=(v|(1<<b)) if op=='sbi' else (v & ~(1<<b))

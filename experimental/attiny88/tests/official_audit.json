@@ -1,18 +1,18 @@
 {
   "audited_binary": "micronucleus_t88_bootloader_body.bin",
-  "code_bytes": 1256,
+  "code_bytes": 1230,
   "start_address": "0x1b00",
   "result": "STATIC PASS; HARDWARE NOT TESTED",
   "checks": [
     {
       "name": "Code length from assembler source",
       "passed": true,
-      "detail": "source end=1FE8, binary end=1FE8"
+      "detail": "source end=1FCE, binary end=1FCE"
     },
     {
       "name": "Loader fits into 1280 reserved bytes",
       "passed": true,
-      "detail": "code=1256, reserved=1280, spare=24"
+      "detail": "code=1230, reserved=1280, spare=50"
     },
     {
       "name": "Bootloader page aligned",
@@ -37,42 +37,42 @@
     {
       "name": "Exit jump targets 4-byte preloader postscript",
       "passed": true,
-      "detail": "addr=0x1f44, opcode=cddb, target=0x1afc"
+      "detail": "addr=0x1f32, opcode=cde4, target=0x1afc"
     },
     {
       "name": "All expected SPM instructions present",
       "passed": true,
-      "detail": "found=4, addresses=['0x1d9a', '0x1e2c', '0x1e52', '0x1f60']"
+      "detail": "found=4, addresses=['0x1d98', '0x1e26', '0x1e44', '0x1f4a']"
     },
     {
-      "name": "SPM write enable is immediately before instruction 0x1d9a",
+      "name": "SPM write enable is immediately before instruction 0x1d98",
       "passed": true,
-      "detail": "sts     0x0057, r18"
+      "detail": "out 0x37, r18"
     },
     {
-      "name": "SPM write enable is immediately before instruction 0x1e2c",
+      "name": "SPM write enable is immediately before instruction 0x1e26",
       "passed": true,
-      "detail": "sts     0x0057, r24"
+      "detail": "out 0x37, r24"
     },
     {
-      "name": "SPM write enable is immediately before instruction 0x1e52",
+      "name": "SPM write enable is immediately before instruction 0x1e44",
       "passed": true,
-      "detail": "sts     0x0057, r24"
+      "detail": "out 0x37, r24"
     },
     {
-      "name": "SPM write enable is immediately before instruction 0x1f60",
+      "name": "SPM write enable is immediately before instruction 0x1f4a",
       "passed": true,
-      "detail": "out     0x37, r24"
+      "detail": "out 0x37, r24"
     },
     {
       "name": "All LDD/STD opcodes match register, base and 6-bit displacement",
       "passed": true,
-      "detail": "tested=41; failures=[]"
+      "detail": "tested=39; failures=[]"
     },
     {
       "name": "All relative jumps/calls land at instruction boundaries",
       "passed": true,
-      "detail": "checked=131, invalid=[]"
+      "detail": "checked=130, invalid=[]"
     },
     {
       "name": "usb_crc16_append binary byte-identical",
@@ -95,7 +95,7 @@
       "detail": ""
     },
     {
-      "name": "SPM CSR addresses used are official 0x57 data / 0x37 IO",
+      "name": "SPM CSR access uses legal OUT I/O 0x37 mapping to data address 0x57",
       "passed": true,
       "detail": ""
     },

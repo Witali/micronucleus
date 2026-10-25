@@ -3,11 +3,11 @@
 from pathlib import Path
 import re, json, hashlib, subprocess, collections
 root=Path(__file__).resolve().parent.parent
-S=root/'source/micronucleus_t88_audited.S'
+S=root/'source/micronucleus_t88_optimized.S'
 BIN=root/'build/bootloader_body.bin'
 BASE=root/'reference/upstream_t88_default.bin'
 BOOT=0x1b00;OLD=0x1a40;FLASH=8192;PAGE=64
-s=S.read_text();b=BIN.read_bytes();original=BASE.read_bytes()
+s=subprocess.check_output(['clang','-target','avr','-mmcu=attiny88','-DBOOT_AT=0x1b00','-E','-x','assembler-with-cpp',str(S)],text=True);b=BIN.read_bytes();original=BASE.read_bytes()
 checks=[]; problems=[]
 def check(name,ok,details=''):
  checks.append(dict(name=name,passed=bool(ok),detail=details))
@@ -98,7 +98,7 @@ pagewrite_source=s[s.find('L1d86:'):s.find('L1d9a:')]
 check('Page write Z address zeroes PCWORD bits before SPM', bool(re.search(r'andi\s+r30,\s*0xc0',pagewrite_source,re.I)),'required by ATtiny88 datasheet §19.3')
 # Change limits and hardware caveats
 check('Program text region ends at flash address < 0x2000',BOOT+len(b)<=FLASH)
-check('SPM CSR addresses used are official 0x57 data / 0x37 IO', bool(re.search(r'\bsts\s+0x0057',s)) and bool(re.search(r'\bout\s+0x37',s)))
+check('SPM CSR access uses legal OUT I/O 0x37 mapping to data address 0x57', bool(re.search(r'\bout\s+0x37',s)) and not bool(re.search(r'\b(out|sts)\s+0x0057',s)))
 check('No unresolved external or pseudocode placeholder',not ('<unknown>' in s or 'TODO' in s))
 # Ensure Intel HEX and ISP image consistent (including postscript FF and correct reset vector)
 isp=(root/'build/ISP_fresh.bin').read_bytes()
@@ -119,3 +119,6 @@ res={ 'audited_binary':'micronucleus_t88_bootloader_body.bin', 'code_bytes':len(
 out=root/'tests/official_audit.json';out.write_text(json.dumps(res,ensure_ascii=False,indent=2)+'\n')
 for c in checks:print(('PASS' if c['passed'] else 'FAIL'),c['name'],c['detail'])
 print('ISSUES',len(problems));print('JSON',out)
+
+if problems:
+ raise SystemExit(1)
