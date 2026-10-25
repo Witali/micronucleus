@@ -889,12 +889,10 @@ usb_tx_copy_flash_payload:
 /* Append CRC16 and mark the end of a short control reply. */
 usb_tx_append_payload_crc:
     mov     r22, r23
-    ldi     r24, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    ldi     r25, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    /* The sole CRC call is inlined. Its computation is byte-identical;
-       only RCALL/RET and their stack traffic are removed. */
+    /* The inlined CRC consumes X directly; no ABI pointer copy is needed. */
+    ldi     r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
+    ldi     r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
 usb_crc16_append:
-    movw    r26, r24
     ldi     r24, 0x00
     ldi     r25, 0x00
     ldi     r20, LOW8(CRC16_POLYNOMIAL)

@@ -2,7 +2,7 @@
 """Build an isolated size-optimized candidate; never program hardware.
 
 The deployed verified artifacts remain pinned. Every candidate must retain
-the exact 516-byte USB engine and the 42-byte CRC computation from that image.
+the exact 516-byte USB engine and the 40-byte CRC arithmetic from that image.
 """
 from pathlib import Path
 import argparse
@@ -53,7 +53,9 @@ def main():
     assert len(engine) == 516 and engine == original_engine, 'USB engine changed'
     crc = body[symbols['usb_crc16_append']-boot:symbols['usb_crc16_core_end']-boot]
     original_crc = reference[ref['usb_crc16_append']-0x1ac0:ref['USB_handler']-0x1ac0]
-    assert len(crc) == 42 and crc == original_crc[:-2], 'CRC computation changed'
+    # The inlined caller initializes X directly. Omit the original leading
+    # MOVW X,R24 and trailing RET; every CRC arithmetic/store byte must match.
+    assert len(crc) == 40 and crc == original_crc[2:-2], 'CRC computation changed'
     assert body[2:4] == (boot-4).to_bytes(2,'big')
     output = (args.output_dir or ROOT/'build'/f'optimized-{args.led}').resolve()
     output.mkdir(parents=True,exist_ok=True)
@@ -71,7 +73,7 @@ def main():
                 'baseline_sha256':BASELINE_SHA256,'baseline_symbols':ref}
     (output/'firmware.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(f'PASS: {len(body)} code bytes at 0x{boot:04X}; {boot-4} application bytes; LED {args.led}')
-    print('PASS: USB engine and CRC computation byte-identical to deployed strict image')
+    print('PASS: USB engine and CRC arithmetic byte-identical to deployed strict image')
     print('Output:', output/'firmware.json')
 
 
