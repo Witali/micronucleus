@@ -1,0 +1,13 @@
+﻿version,code_bytes,boot_start,reserved_flash_bytes,available_app_bytes,capabilities,source_archive,remarks
+upstream_t88_default,1350,0x1A40,1472,6716,flash write only,reference/kit and upstream HEX,baseline; advertised source sizes vary
+ASM_pass1,1254,0x1B00,1280,6908,flash write,micronucleus_t88_asm_optimized.zip,experimental; first assembly rewrite
+ASM_audited,1256,0x1B00,1280,6908,flash write,Micronucleus_ATtiny88_official_instruction_audit_2026-10-25.zip,SPM page alignment correction
+ASM_pass2,1230,0x1B00,1280,6908,flash write,Micronucleus_Tiny88_Asm_Optimization_Pass2_2026-10-25.zip,control-flow optimizations
+VUSB_pass3,1216,0x1B40,1216,6972,flash write,Micronucleus_Tiny88_VUSB_Optimized_Pass3_2026-10-25.zip,V-USB modified; testing model only
+plus_fast_initial,1402,0x1A80,1408,6780,flash read 8B; flash write; EEPROM read/write,Micronucleus_Tiny88_EEPROM_Flash_Read_2026-10-25.zip,new computer host Python
+plus_fast_pass4,1356,0x1A80,1408,6780,flash read 8B; flash write; EEPROM,Micronucleus_Tiny88_Size_Optimization_Pass4_2026-10-25.zip,fast variant
+plus_compact_pass4,1344,0x1AC0,1344,6844,flash read 1B; flash write; EEPROM,Micronucleus_Tiny88_Size_Optimization_Pass4_2026-10-25.zip,compact / slower flash reads
+plus_fast_pass5,1344,0x1AC0,1344,6844,flash read 8B; flash write; EEPROM,Micronucleus_Tiny88_Fast_8byte_Pass5_1344B_2026-10-25.zip,no extra range CRC
+plus_crc_pass6,1554,0x19C0,1600,6588,flash read 8B; flash write; EEPROM; range CRC,Micronucleus_Tiny88_CRC_Shared_Pass6_2026-10-25.zip,"EXPERIMENTAL, user declined range CRC"
+plus_fast_pass7,1320,0x1AC0,1344,6844,flash read 8B; flash write; EEPROM,Micronucleus_Tiny88_Fast_1320B_Pass7_2026-10-25.zip,experimental 4 V-USB instruction substitutions
+plus_strict_usb_pass7,1328,0x1AC0,1344,6844,flash read 8B; flash write; EEPROM,Micronucleus_Tiny88_Fast_1320B_Pass7_2026-10-25.zip,preferred initial hardware testing; original V-USB unchanged

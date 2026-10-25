@@ -18,6 +18,10 @@ The last release of the V1.x can be found here:
 
 https://github.com/micronucleus/micronucleus/tree/v1.11
 
+# Experimental ATtiny88 development
+
+The fork also preserves an experimental assembly implementation with application Flash reads and EEPROM access. See [experimental/attiny88](experimental/attiny88/README.md) for Fast Pass7, the conservative USB variant, build requirements, and validation limits. The [development history](docs/attiny88-history/DEVELOPMENT_HISTORY.md) records the separately committed stages; the [self-updater plan](docs/attiny88-history/SELF_UPDATER_PLAN.md) remains a future design.
+
 # Usage
 
 The bootloader allows uploading of new firmware via USB. In its usual configuration it is invoked at device reset and will identify to the host computer. If no communication is initiated by the host machine within a given time, the bootloader will time out and enter the user program, if one is present. 
