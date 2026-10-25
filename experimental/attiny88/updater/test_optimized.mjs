@@ -191,5 +191,29 @@ for(const file of process.argv.slice(2)) {
   cpu.command(2);
   assert.ok(cpu.rom.slice(0,cpu.boot).every(value=>value===255));
   assert.deepEqual(cpu.rom.slice(cpu.boot,cpu.boot+body.length),new Uint8Array(body));
+  const cfg=meta.led,bit=1<<cfg.pin,ddr=cfg.ddr_io+32,port=cfg.port_io+32;
+  // LED init/ticks isolate the configured bit. At application handover,
+  // the existing DDRD cleanup releases both USB and any Port-D LED.
+  for(const pattern of [0,255,0x55,0xaa]) {
+    cpu.data[ddr]=pattern;cpu.data[port]=pattern;
+    cpu.pc=meta.symbols.led_init/2;cpu.untilPC(meta.symbols.led_init_done);
+    assert.equal(cpu.data[ddr],cfg.mode===0?pattern:cfg.mode===1?pattern|bit:pattern&~bit);
+    assert.equal(cpu.data[port],cfg.mode===0?pattern:pattern&~bit);
+    for(let tick=0;tick<256;tick++) {
+      const beforeDDR=cpu.data[ddr],beforePORT=cpu.data[port];cpu.r[6]=tick;cpu.r[7]=0x55;
+      cpu.pc=meta.symbols.led_tick/2;cpu.untilPC(meta.symbols.led_tick_done);
+      const on=(tick&cfg.blink_mask)===0;
+      assert.equal(cpu.data[ddr],cfg.mode===2?(on?beforeDDR|bit:beforeDDR&~bit):beforeDDR);
+      assert.equal(cpu.data[port],cfg.mode===1?(on?beforePORT|bit:beforePORT&~bit):beforePORT);
+      assert.equal(cpu.r[6],tick);assert.equal(cpu.r[7],0x55);
+    }
+    cpu.data[ddr]=pattern;cpu.data[port]=pattern;cpu.data[0x2a]=pattern;
+    cpu.pc=meta.symbols.bootloader_start_application/2;cpu.untilPC(meta.symbols.app_jump);
+    assert.equal(cpu.data[0x2a],0,'Application entered with DDRD outputs still active');
+    assert.equal(cpu.data[ddr],cfg.ddr_io===0xa?0:cfg.mode===0?pattern:pattern&~bit);
+    assert.equal(cpu.data[port],cfg.mode===1?pattern&~bit:pattern);
+    assert.equal(cpu.data[0x68],0);assert.equal(cpu.data[0x6d],0);
+  }
   console.log(`PASS: ${path.basename(path.dirname(file))}: 3072 standard-request comparisons, multi-packet descriptors/CRC, full Flash write/read/erase, all EEPROM bytes and memory guards`);
+  console.log('PASS: explicit stack/SRAM startup, 1024 LED ticks, GPIO isolation and application handover');
 }

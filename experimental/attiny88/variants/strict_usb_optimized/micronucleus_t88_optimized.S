@@ -996,7 +996,14 @@ bootloader_poll_timeout:
 /* Release USB and preserve reset flags before jumping to the application. */
 bootloader_start_application:
 led_exit:
+#if LED_DDR_IO == 0x0a
+    /* The following unconditional DDRD clear releases this LED too. */
+#if LED_MODE == ACTIVE_HIGH
+    cbi     LED_PORT_IO, LED_PIN
+#endif
+#else
     LED_EXIT
+#endif
 led_exit_done:
     /* Removed 0x1eac: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
     out     _SFR_IO_ADDR(DDRD), r1
