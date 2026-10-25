@@ -28,9 +28,10 @@ class Sim:
   self.name=build['name']; self.base=build['start']; self.o=build['o']
   self.flash=bytearray([0xff]*8192)
   data=build['bin'].read_bytes(); self.flash[self.base:self.base+len(data)]=data
-  self.labels=symbols(self.o)
+  self.labels=build['symbols'] if 'symbols' in build else symbols(self.o)
   self.m=bytearray(init['memory']); self.r=init['registers'].copy()
   self.flags=0;self.calls=[];self.steps=0;self.pc=self.labels['usb_control_process_received_packet'];self.stop=self.labels['bootloader_poll_begin']; self.ending=self.labels['bootloader_start_application']
+  self.step_limit=build.get('step_limit',20000)
   self.events=[];self.visited=set()
   self.io={0x1b:0,0x09:0x02,0x0a:0,0x0b:0,0x34:0,0x1e:0}
   self.r[1]=0
@@ -65,7 +66,7 @@ class Sim:
   if address<len(self.m):self.m[address]=v&255
   if address==0x57:self.io[0x37]=v&255  # I/O 0x37 aliases data memory 0x57
  def step(self):
-  if self.steps>20000:raise RuntimeError((self.name,'too many steps',hex(self.pc)))
+  if self.steps>self.step_limit:raise RuntimeError((self.name,'too many steps',hex(self.pc)))
   pc=self.pc
   self.visited.add(pc)
   dec.START=self.base;dec.raw=bytes(self.flash[self.base:]);ins=dec.decode(pc)
@@ -151,7 +152,7 @@ class Sim:
   elif op in ('spm','wdr','nop'):pass
   else:raise NotImplementedError((self.name,hex(pc),op,arg))
  def run(self):
-  for _ in range(20000):
+  for _ in range(self.step_limit):
    if self.pc==self.stop:return 'poll'
    if self.pc==self.ending:return 'exit'
    self.step()
