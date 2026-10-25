@@ -1,7 +1,7 @@
-# Import ATtiny88 optimization kit
+# Import the initial ATtiny88 assembly rewrite
 
-Pinned upstream references, HEX auditing, and optional LED/MCUSR configuration patches. Flash capacity improvements depend on complete 64-byte pages, not body size alone.
+Initial assembly reconstruction and size optimization. The original scripts retain paths from the earlier development environment; the subsequent audit stage replaces them with portable tooling.
 
-Imported from `micronucleus_t88_optimization_kit.zip` (October 25, 2026). This is an English summary of the historical stage; the unmodified original reports and all intermediate files are preserved in `docs/attiny88-history/original-handoff.zip`.
+Imported from `micronucleus_t88_asm_optimized.zip` (October 25, 2026). This is an English summary of the historical stage; the unmodified original reports and all intermediate files are preserved in `docs/attiny88-history/original-handoff.zip`.
 
-Recorded bootloader body: **1350 bytes**; boot address: **0x1A40**. All images are experimental. Software tests do not establish electrical USB compatibility. No hardware flashing is part of this import.
+Recorded bootloader body: **1254 bytes**; boot address: **0x1B00**. All images are experimental. Software tests do not establish electrical USB compatibility. No hardware flashing is part of this import.

@@ -1,2 +1,3 @@
 stage,source_archive,archive_sha256,destination,code_bytes,boot_start
 Import ATtiny88 optimization kit,micronucleus_t88_optimization_kit.zip,b4e43715b1d08424e5a5bf7decf65eb8a93b788af56472aa0ba3642c9104db4e,experimental/attiny88,1350,0x1A40
+Import the initial ATtiny88 assembly rewrite,micronucleus_t88_asm_optimized.zip,7231eda2eb15a4ebd8a4cde49308ae2a33edd643e7cb1afbf349973afad466ca,experimental/attiny88,1254,0x1B00
