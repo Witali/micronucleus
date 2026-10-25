@@ -8,10 +8,10 @@ sys.path.insert(0,str(SROOT))
 from emulator_diff_test import Sim
 
 def make_build(name):
- boot=0x1A80 if name=='plus_1a80' else 0x1B40
+ boot=0x1AC0 if name=='plus_1ac0' else 0x1B40
  return {'name':'upstream', 'start':boot,
-         'bin':ROOT/('firmware/BOOTLOADER_BODY_1A80_PLUS.bin' if name=='plus_1a80' else 'reference/Pass3_1216.bin'),
-         'o':ROOT/'build'/('plus_1a80.o' if name=='plus_1a80' else 'reference_pass3.o')}
+         'bin':ROOT/('firmware/BOOTLOADER_BODY_1AC0_PLUS.bin' if name=='plus_1ac0' else 'reference/Pass3_1216.bin'),
+         'o':ROOT/'build'/('plus_1ac0.o' if name=='plus_1ac0' else 'reference_pass3.o')}
 
 def run_one(build,seq):
  m=bytearray([0]*0x300);p=0x180
@@ -35,7 +35,7 @@ def crc_ref(seq):
 
 def main():
  rng=random.Random(0x1234BEEF)
- a=make_build('pass3');b=make_build('plus_1a80')
+ a=make_build('pass3');b=make_build('plus_1ac0')
  count=0;stepdelta=[]
  for size in range(0,33):
   seqs=[bytes([0]*size),bytes([255]*size),bytes([0x55]*size),bytes([0xAA]*size),bytes([x*13&255 for x in range(size)])]

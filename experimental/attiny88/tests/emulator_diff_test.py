@@ -20,7 +20,7 @@ def symbols(path):
 
 BASE={'name':'upstream','start':0x1b40,'bin':ROOT.parent/'reference/Pass3_1216.bin','o':ROOT.parent/'build/reference_pass3.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
-OPT={'name':'optimized','start':0x1a80,'bin':ROOT.parent/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin','o':ROOT.parent/'build/plus_1a80.o'}
+OPT={'name':'optimized','start':0x1ac0,'bin':ROOT.parent/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin','o':ROOT.parent/'build/plus_1ac0.o'}
 
 class Sim:
  def __init__(self,build,init):

@@ -12,7 +12,7 @@ sys.path.insert(0,str(ROOT/'tests'))
 from emulator_diff_test import Sim,dec
 
 OLD={'name':'upstream','start':0x1b40,'bin':ROOT/'reference/Pass3_1216.bin','o':ROOT/'build/reference_pass3.o'}
-NEW={'name':'upstream','start':0x1a80,'bin':ROOT/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin','o':ROOT/'build/plus_1a80.o'}
+NEW={'name':'upstream','start':0x1ac0,'bin':ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin','o':ROOT/'build/plus_1ac0.o'}
 
 class Timed(Sim):
  def __init__(self,build,init):

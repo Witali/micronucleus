@@ -8,9 +8,9 @@ import importlib.util, pathlib, random, re, subprocess, sys, unittest
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 spec=importlib.util.spec_from_file_location('avr_decoder',ROOT/'tests/avr_decoder.py')
 dec=importlib.util.module_from_spec(spec);sys.modules['avr_decoder']=dec;spec.loader.exec_module(dec)
-OBJ=ROOT/'build/plus_1a80.o'
-BODY=ROOT/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin'
-BOOT=0x1A80
+OBJ=ROOT/'build/plus_1ac0.o'
+BODY=ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin'
+BOOT=0x1AC0
 
 
 def get_symbols():
@@ -87,6 +87,11 @@ class AVR:
                 d=self.register(ops[0]);b=self.register(ops[1]);self.r[d]|=self.r[b];self.logic(self.r[d])
             elif op=='eor':
                 d=self.register(ops[0]);b=self.register(ops[1]);self.r[d]^=self.r[b];self.logic(self.r[d])
+            elif op=='sub':
+                d=self.register(ops[0]);b=self.register(ops[1]);a=self.r[d];bb=self.r[b]
+                self.r[d]=(a-bb)&255;self.ssub(a,bb)
+            elif op=='cp':
+                self.ssub(self.r[self.register(ops[0])],self.r[self.register(ops[1])])
             elif op=='cpi':self.ssub(self.r[self.register(ops[0])],self.numeric(ops[1]))
             elif op=='cpc':
                 old_zero=self.flag(1)
@@ -177,15 +182,30 @@ class CPUInstructionTests(unittest.TestCase):
         x=AVR(request=0xC0,address=0,index=0x100)
         self.assertEqual(x.run(),('onebyte',2))
     def test_busy_conditions(self):
-        for busy_eep,busy_spm in ((True,False),(False,True),(True,True)):
-            x=AVR(request=0xc0,address=12,index=1,ep_busy=busy_eep,spm_busy=busy_spm)
-            self.assertEqual(x.run(),('onebyte',1));self.assertEqual(x.eeprom_writes,0)
-            y=AVR(request=0xf0,ep_busy=busy_eep,spm_busy=busy_spm)
-            self.assertEqual(y.run(),('onebyte',1))
+        # Active SPM page erase/write halts the ATtiny88 CPU; testing
+        # a simultaneous USB SETUP with SPMCSR busy would be unreachable.
+        x=AVR(request=0xc0,address=12,index=1,ep_busy=True)
+        self.assertEqual(x.run(),('onebyte',1));self.assertEqual(x.eeprom_writes,0)
+        y=AVR(request=0xf0,ep_busy=True)
+        self.assertEqual(y.run(),('onebyte',1))
         z=AVR(request=0xf0)
         self.assertEqual(z.run(),('onebyte',0))
         x=AVR(request=0xa0,address=0,ep_busy=True)
         self.assertEqual(x.run(),('zero',None))
+    def test_write_rejects_partial_flash_buffer(self):
+        for pointer in (1,2,3,31,62,63,0x40+2,0x7f,0xff):
+            with self.subTest(pointer=pointer):
+                a=AVR(request=0xc0,address=5,index=0x5a)
+                a.r[4]=pointer
+                self.assertEqual(a.run(),('onebyte',2))
+                self.assertEqual(a.eeprom_writes,0)
+        for pointer in (0,0x40,0x80,0xC0):
+            with self.subTest(pointer=pointer):
+                a=AVR(request=0xc0,address=5,index=0x5a)
+                a.r[4]=pointer
+                self.assertEqual(a.run(),('onebyte',0))
+                self.assertEqual(a.eeprom[5],0x5a)
+
     def test_write_status_wrong_request_type_cannot_touch_eeprom(self):
         for typ in (0x40,0x80,0x00):
             x=AVR(request=0xc0,address=12,index=1,request_type=typ)
@@ -208,21 +228,21 @@ if __name__=='__main__':unittest.main(verbosity=2)
 class FlashCPUInstructionTests(unittest.TestCase):
     """Actually execute the assembled Flash-read dispatcher on a CPU subset emulator."""
     def test_every_flash_block(self):
-        limit=0x1a80-4
+        limit=0x1ac0-4
         for addr in range(0, limit, 8):
             count=min(8,limit-addr)
             vm=AVR(request=0xb0,address=addr,length=count)
             self.assertEqual(vm.run(),('flash',(addr,count)),hex(addr))
             self.assertEqual(vm.eeprom_writes,0)
     def test_last_byte_and_all_lengths(self):
-        limit=0x1a80-4
+        limit=0x1ac0-4
         for length in range(1,9):
             for addr in (0,3,255,256,limit-length):
                 with self.subTest(length=length,addr=addr):
                     vm=AVR(request=0xb0,address=addr,length=length)
                     self.assertEqual(vm.run(),('flash',(addr,length)))
     def test_boundaries_invalid_windex_and_wraparound(self):
-        limit=0x1a80-4
+        limit=0x1ac0-4
         vectors=[(limit,1,0),(limit-1,2,0),(limit-8,9,0),
                  (65535,8,0),(65534,8,0),(0,0,0),(0,9,0),
                  (0,256,0),(0,1,1),(0,1,256),(0,1,65535),
@@ -242,5 +262,5 @@ class FlashCPUInstructionTests(unittest.TestCase):
             length=rng.choice([0,1,2,3,4,6,8,9,12,128,256,65535])
             idx=rng.choice([0,0,0,1,0x100,0xffff])
             result=AVR(request=0xb0,address=addr,length=length,index=idx).run()
-            expected=('flash',(addr,length)) if (1<=length<=8 and idx==0 and addr+length<=0x1a7c) else ('zero',None)
+            expected=('flash',(addr,length)) if (1<=length<=8 and idx==0 and addr+length<=0x1abc) else ('zero',None)
             self.assertEqual(result,expected,(i,addr,length,idx))

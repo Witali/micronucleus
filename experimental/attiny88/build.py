@@ -7,7 +7,7 @@ from pathlib import Path
 import hashlib, re, subprocess
 
 ROOT=Path(__file__).resolve().parent
-BOOT_AT=0x1A80
+BOOT_AT=0x1AC0
 FLASH=8192
 POSTSCRIPT=4
 SOURCE=ROOT/'source/micronucleus_t88_plus.S'
@@ -45,7 +45,7 @@ def record(addr,data=b'',typ=0):
 
 def main():
     (ROOT/'firmware').mkdir(exist_ok=True)
-    boot,syms=compile_asm(SOURCE,BOOT_AT,'plus_1a80')
+    boot,syms=compile_asm(SOURCE,BOOT_AT,'plus_1ac0')
     assert len(boot)<=FLASH-BOOT_AT, (len(boot),'exceeds reserved Flash')
     assert (len(boot)%2)==0
     assert boot[2:4]==bytes([(BOOT_AT-POSTSCRIPT)>>8,(BOOT_AT-POSTSCRIPT)&255])
@@ -56,11 +56,11 @@ def main():
     image[0:2]=rjmp
     image[BOOT_AT:BOOT_AT+len(boot)]=boot
     assert bytes(image[BOOT_AT-POSTSCRIPT:BOOT_AT])==b'\xff'*4
-    (ROOT/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin').write_bytes(boot)
-    (ROOT/'firmware/ISP_FULL_8192_PLUS_FRESH_ONLY.bin').write_bytes(image)
+    (ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin').write_bytes(boot)
+    (ROOT/'firmware/ISP_FULL_8192_1AC0_FRESH_ONLY.bin').write_bytes(image)
     lines=[record(0,image[:2])]+[record(addr,image[addr:addr+16]) for addr in range(BOOT_AT,FLASH,16) if any(x!=255 for x in image[addr:addr+16])]
     lines.append(record(0,b'',1))
-    (ROOT/'firmware/ISP_FULL_1A80_PLUS_FRESH_ONLY.hex').write_text('\n'.join(lines)+'\n')
+    (ROOT/'firmware/ISP_FULL_1AC0_PLUS_FRESH_ONLY.hex').write_text('\n'.join(lines)+'\n')
     base,bsyms=compile_asm(ORIGINAL,0x1B40,'reference_pass3')
     # All bytes within the USB assembly bit-level handler and CRC remain unchanged.
     for first,last in [('usb_crc16_append','USB_handler'),('USB_handler','usb_program_page')]:

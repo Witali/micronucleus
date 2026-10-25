@@ -3,19 +3,19 @@
 import unittest, pathlib, re, subprocess
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 FLASH=8192
-BOOT=0x1a80
-BODY=ROOT/'firmware/BOOTLOADER_BODY_1A80_PLUS.bin'
-IMAGE=ROOT/'firmware/ISP_FULL_8192_PLUS_FRESH_ONLY.bin'
-HEX=ROOT/'firmware/ISP_FULL_1A80_PLUS_FRESH_ONLY.hex'
+BOOT=0x1ac0
+BODY=ROOT/'firmware/BOOTLOADER_BODY_1AC0_PLUS.bin'
+IMAGE=ROOT/'firmware/ISP_FULL_8192_1AC0_FRESH_ONLY.bin'
+HEX=ROOT/'firmware/ISP_FULL_1AC0_PLUS_FRESH_ONLY.hex'
 
 class StaticTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.image=IMAGE.read_bytes();cls.body=BODY.read_bytes()
-        cls.dump=subprocess.check_output(['llvm-objdump','-d',str(ROOT/'build/plus_1a80.o')],text=True)
+        cls.dump=subprocess.check_output(['llvm-objdump','-d',str(ROOT/'build/plus_1ac0.o')],text=True)
     def test_flash_layout(self):
         self.assertEqual(len(self.image),8192)
-        self.assertLessEqual(len(self.body),1402)
+        self.assertEqual(len(self.body),1344)
         self.assertEqual(self.image[BOOT:BOOT+len(self.body)],self.body)
         self.assertEqual(self.image[BOOT+len(self.body):],b'\xff'*(8192-BOOT-len(self.body)))
         self.assertEqual(self.image[BOOT-4:BOOT],b'\xff'*4)
@@ -52,8 +52,9 @@ class StaticTests(unittest.TestCase):
         s=(ROOT/'source/micronucleus_t88_plus.S').read_text()
         self.assertIn('flash_read:',s)
         self.assertIn('((BOOT_AT - 4) & 0xff)',s)
-        self.assertIn('    brcs    ee_empty',s)
-        self.assertIn('    add     r30, r24',s)
+        self.assertIn('    sub     r30, r24',s)
+        self.assertIn('    cp      r30, r18',s)
+        self.assertIn('    brlo    ee_empty',s)
         self.assertIn('    std     Y+16, r18',s)
         self.assertIn('    std     Y+17, r19',s)
     def test_disassembled_relative_branch_targets(self):
@@ -62,7 +63,7 @@ class StaticTests(unittest.TestCase):
         if local not in sys.path: sys.path.insert(0,local)
         import avr_decoder as decoder
         decoder.START=BOOT;decoder.raw=self.body
-        sym=subprocess.check_output(['llvm-objdump','-t',str(ROOT/'build/plus_1a80.o')],text=True)
+        sym=subprocess.check_output(['llvm-objdump','-t',str(ROOT/'build/plus_1ac0.o')],text=True)
         m=re.search(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+startup$',sym,re.M)
         self.assertIsNotNone(m)
         pc=int(m.group(1),16);stop=BOOT+len(self.body);starts=set();branches=[];unknown=[]

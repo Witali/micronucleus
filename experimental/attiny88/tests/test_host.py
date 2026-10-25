@@ -9,11 +9,11 @@ m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class FakeDevice:
     def __init__(self,ext=True):
         self.e=bytearray(range(64)); self.ext=ext; self.cycles=0; self.calls=[];self.busy_ticks=0;self.writes=0
-        self.flash=bytes((i*19+7)&255 for i in range(6780))
+        self.flash=bytes((i*19+7)&255 for i in range(6844))
     def ctrl_transfer(self,request_type,b_request,w_value,w_index,length,timeout=0):
         assert request_type == 0xC0, 'Only USB vendor IN requests are part of this extension'
         self.calls.append((b_request,w_value,w_index,length))
-        if b_request==0x00: return bytes([0x1a,0x7c,64,5,0x93,0x11,0xe0 if self.ext else 0,0])
+        if b_request==0x00: return bytes([0x1a,0xbc,64,5,0x93,0x11,0xe0 if self.ext else 0,0])
         if not self.ext: return b''
         if b_request==0xB0:
             if not 1<=length<=8 or w_index or w_value<0 or w_value+length>len(self.flash): return b''
@@ -100,7 +100,7 @@ class FlashHostTests(unittest.TestCase):
         return tool,dev
     def test_flash_dump_full_and_partial(self):
         t,d=self.setup_tool()
-        self.assertEqual(t.flash_size,6780)
+        self.assertEqual(t.flash_size,6844)
         self.assertEqual(t.read_flash(),d.flash)
         self.assertEqual(t.read_flash(0x19ff,27),d.flash[0x19ff:0x19ff+27])
         request_lengths=[call[3] for call in d.calls if call[0]==0xb0]
@@ -108,20 +108,20 @@ class FlashHostTests(unittest.TestCase):
         self.assertTrue(all(1<=length<=8 for length in request_lengths))
     def test_flash_verify(self):
         t,d=self.setup_tool()
-        t.verify_flash({8:d.flash[8],13:d.flash[13],6779:d.flash[6779]})
+        t.verify_flash({8:d.flash[8],13:d.flash[13],6843:d.flash[6843]})
         with self.assertRaisesRegex(m.EEPROMError,'Flash mismatch'):
             t.verify_flash({8:(d.flash[8]^0xff)})
         t.verify_flash({0:0x00,1:0x01},skip_reset_vector=True)
     def test_flash_bounds(self):
         t,d=self.setup_tool()
-        for address,length in ((6780,1),(6779,2),(-1,1),(0,9),(0,0)):
+        for address,length in ((6844,1),(6843,2),(-1,1),(0,9),(0,0)):
             with self.assertRaises(m.EEPROMError):t.read_flash_block(address,length)
-        for start,length in ((-1,1),(6779,2),(6781,0)):
+        for start,length in ((-1,1),(6843,2),(6845,0)):
             with self.assertRaises(m.EEPROMError):t.read_flash(start,length)
     def test_sparse_flash_hex(self):
         d=bytes(range(21))
-        self.assertEqual(m.load_hex_bytes(m.write_hex_bytes(d,base=0x1a10),max_size=6780),
-                         dict((i+0x1a10,x) for i,x in enumerate(d)))
+        self.assertEqual(m.load_hex_bytes(m.write_hex_bytes(d,base=0x1a50),max_size=6844),
+                         dict((i+0x1a50,x) for i,x in enumerate(d)))
     def test_flash_writer_delegates_to_existing_micronucleus(self):
         from unittest.mock import patch
         from subprocess import CompletedProcess

@@ -7,7 +7,7 @@
  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
  */
 #ifndef BOOT_AT
-#define BOOT_AT 0x1b00
+#define BOOT_AT 0x1ac0
 #endif
 #if ((BOOT_AT - 3) & 0xff) < 8
 #error Optimized Flash range check assumes boundary low-byte >= 8
@@ -459,18 +459,21 @@ main:
     sts     0x0060, r24
     sts     0x0060, r1
     sbi     0xa, 1
-    ldi     r24, 0xb8
-    ldi     r25, 0x0b
+    /* 300.94 ms initial USB disconnect: 19 x 63355 inner loops.
+       Previous 3000 x 400 countdown cost 4,815,001 cycles;
+       this takes 4,815,056 cycles at 16 MHz (difference 55 cycles),
+       two bytes less while preserving the USB disconnect duration. */
+    ldi     r18, 19
 
 L1d02:
-    ldi     r30, 0x90
-    ldi     r31, 0x01
+    ldi     r24, (63355 & 0xff)
+    ldi     r25, (63355 >> 8)
 
 L1d06:
-    sbiw    r30, 1
-    brbc    1, L1d06
     sbiw    r24, 1
-    brbc    1, L1d02
+    brne    L1d06
+    dec     r18
+    brne    L1d02
     cbi     0xa, 1
     ldi     r24, 0x5a
     sts     0x010f, r24
@@ -812,20 +815,16 @@ L1f3a:
     cpi     r25, 0x06
     brbc    1, L1f62
     ldd     r24, Y+26
+    ldi     r18, ((BOOT_AT + 0x1c) & 0xff)
     cpi     r24, 0x01
-    breq    desc_device
+    breq    desc_ptr
     cpi     r24, 0x02
     brne    L1eca
-    ldi     r24, ((BOOT_AT + 0x0a) & 0xff)
-    rjmp    desc_ptr
-
-desc_device:
-    ldi     r24, ((BOOT_AT + 0x1c) & 0xff)
+    ldi     r18, ((BOOT_AT + 0x0a) & 0xff)
 
 desc_ptr:
     /* Both descriptors are in the same 256-byte Flash window. */
-    ldi     r25, ((BOOT_AT + 0x0a) >> 8)
-    movw    r18, r24
+    ldi     r19, ((BOOT_AT + 0x0a) >> 8)
     ldi     r24, 0x12
     rjmp    L1f22
 
@@ -867,10 +866,11 @@ L1f82:
 
 /* 0xF0 readiness. Reuse exact busy-status code for EEPE=1. */
 ee_ready:
+    /* ATtiny88 halts the CPU while SPM page erase/write is active;
+       only EEPE can be busy when a USB SETUP is processed. */
+    ldi     r18, 0
     sbic    0x1f, 1
-    rjmp    ee_busy
-    in      r18, 0x37
-    andi    r18, 0x01
+    ldi     r18, 1
     rjmp    ee_return_one
 
 /* 0xA0 read EEPROM address. wIndex ignored (as SPI dummy field).
@@ -897,14 +897,20 @@ ee_empty:
 ee_write:
     rcall   ee_validate_addr
     brcc    ee_bad_addr
+    /* Reject high wIndex byte and an unfinished Flash page buffer:
+       ATtiny88 datasheet warns EEPROM writing during SPM page fill
+       destroys staged Flash data. Both nonzero conditions return 2. */
     ldd     r19, Y+28
-    tst     r19
+    mov     r18, r4
+    andi    r18, 0x3f
+    or      r19, r18
     brne    ee_bad_addr
     sbic    0x1f, 1      /* EEPROM write active? */
     rjmp    ee_busy
-    in      r19, 0x37   /* SPMCSR is at I/O 0x37: SBIC cannot address >0x1F! */
-    sbrc    r19, 0      /* SELFPRGEN, no simultaneous SPM */
-    rjmp    ee_busy
+    /* On ATtiny88 a Flash Page Erase/Write SPM stalls the CPU until
+       the operation completes. Page-buffer operations clear SELFPRGEN
+       before another USB SETUP can be processed. Hence reaching this
+       handler already implies SPM cannot be in progress. */
     ldd     r19, Y+27   /* data byte */
     out     0x21, r16   /* EEARL, address 0..63 */
     out     0x20, r19   /* EEDR */
@@ -960,11 +966,11 @@ flash_read:
     cpi     r19, ((BOOT_AT - 3) >> 8)
     brlo    flash_valid
     brne    ee_empty
-    mov     r30, r18
-    add     r30, r24
-    brcs    ee_empty
-    cpi     r30, ((BOOT_AT - 3) & 0xff)
-    brsh    ee_empty
+    /* start+length <= APP_LIMIT, checked without 8-bit overflow. */
+    ldi     r30, ((BOOT_AT - 4) & 0xff)
+    sub     r30, r24
+    cp      r30, r18
+    brlo    ee_empty
 flash_valid:
     /* Reuse two pointer stores in L1f22. The extra RJMP consumes two
        cycles outside the low-level USB sampling/transmit path. */
