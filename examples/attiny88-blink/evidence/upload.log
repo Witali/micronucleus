@@ -1,0 +1,25 @@
+> Please plug in the device (will time out in 30 seconds) ... 
+> Device is found!
+connecting: 16% complete
+connecting: 22% complete
+connecting: 28% complete
+connecting: 33% complete
+> Device has firmware version 2.2
+> Device signature: 0x1e9311 
+> Available space for user applications: 6650 bytes
+> Suggested sleep time between sending pages: 7ms
+> Whole page count: 208  page size: 32
+> Erase function sleep duration: 1456ms
+parsing: 50% complete
+> Erasing the memory ...
+erasing: 55% complete
+erasing: 60% complete
+erasing: 65% complete
+> Starting to upload ...
+writing: 70% complete
+writing: 75% complete
+writing: 80% complete
+> Starting the user app ...
+running: 100% complete
+>> Micronucleus done. Thank you!
+Uploader exit code: 0
