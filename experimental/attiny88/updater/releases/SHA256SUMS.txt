@@ -1,0 +1,4 @@
+7c35513bd50ff7830747aaa2a9edc61c6b92ffc6710599dee67d21aea192b21e  upgrade-t88-verified.hex
+Target: ATtiny88, 16 MHz, 64-byte pages, corrected strict USB at 0x1AC0
+Target body SHA-256: ec49d723147b6cb4eb1fc4ee24b947d46f5dc5274c4a26168c60857ca4b416fc
+Updater application: linked at 0x0080, ends at 0x0816, embedded image CRC-16/CCITT 0x8945
