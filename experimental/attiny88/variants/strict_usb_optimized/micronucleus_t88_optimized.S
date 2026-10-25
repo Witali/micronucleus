@@ -847,11 +847,21 @@ bootloader_handle_vendor_request:
 bootloader_legacy_vendor_request:
     cpse    r25, r1
     rjmp    bootloader_check_set_flash_address
-    ldi     r24, LOW8(BOOT_AT + BOOT_INFO_OFFSET)
-    ldi     r25, HIGH8(BOOT_AT + BOOT_INFO_OFFSET)
-    std     Y+CTX_MSG_POINTER_HIGH, r25
-    std     Y+CTX_MSG_POINTER_LOW, r24
+    ldi     r18, LOW8(BOOT_AT + BOOT_INFO_OFFSET)
+    ldi     r19, HIGH8(BOOT_AT + BOOT_INFO_OFFSET)
     ldi     r24, BOOT_INFO_BYTES
+    rjmp    usb_reply_set_pointer
+
+/* Select the shared response scratch buffer at SRAM 0x010A. */
+usb_reply_use_scratch_buffer:
+    ldi     r18, LOW8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)                        /* repeated 16-bit pointer low */
+    ldi     r19, HIGH8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
+    mov     r2, r19    /* Shared scratch response is SRAM. */
+/* Store the prepared response pointer and continue with length limiting. */
+usb_reply_set_pointer:
+    std     Y+CTX_MSG_POINTER_HIGH, r19                       /* send pointer high */
+    std     Y+CTX_MSG_POINTER_LOW, r18                       /* send pointer low */
+
 
 /* Clamp the prepared reply length to the host-requested wLength. */
 usb_reply_limit_length:
@@ -1079,17 +1089,7 @@ usb_standard_dispatch:
     rjmp    usb_standard_check_set_address
     std     Y+CTX_REPLY_SCRATCH_HIGH, r1
     ldi     r24, USB_STATUS_REPLY_BYTES      /* GET_STATUS reply length. */
-/* Select the shared response scratch buffer at SRAM 0x010A. */
-usb_reply_use_scratch_buffer:
-    ldi     r18, LOW8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)                        /* repeated 16-bit pointer low */
-    ldi     r19, HIGH8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
-    mov     r2, r19    /* Shared scratch response is SRAM. */
-/* Store the prepared response pointer and continue with length limiting. */
-usb_reply_set_pointer:
-    std     Y+CTX_MSG_POINTER_HIGH, r19                       /* send pointer high */
-    std     Y+CTX_MSG_POINTER_LOW, r18                       /* send pointer low */
-    rjmp    usb_reply_limit_length
-
+    rjmp    usb_reply_use_scratch_buffer
 /* Handle SET_ADDRESS or continue standard-request dispatch. */
 usb_standard_check_set_address:
     cpi     r25, USB_REQ_SET_ADDRESS
@@ -1128,17 +1128,16 @@ usb_standard_check_configuration:
 usb_standard_check_get_interface:
     ldi     r24, 0x01
     cpi     r25, USB_REQ_GET_INTERFACE
-    brbs    SREG_Z, usb_reply_use_scratch_buffer
+    brbs    SREG_Z, usb_standard_scratch_reply
     ldi     r24, 0x00
+usb_standard_scratch_reply:
     rjmp    usb_reply_use_scratch_buffer
 
 /* Prepare a one-byte reply pointing at the current USB configuration. */
 usb_standard_get_configuration:
     ldd     r18, Y+CTX_CONFIGURATION
-    std     Y+CTX_REPLY_SCRATCH, r18
-    ldi     r24, 1
 usb_reply_pointer_trampoline:
-    rjmp    usb_reply_use_scratch_buffer
+    rjmp    ee_return_one
 
 /* Retain a zero-byte anchor where the removed LED-on code used to be. */
 legacy_led_on_anchor:
