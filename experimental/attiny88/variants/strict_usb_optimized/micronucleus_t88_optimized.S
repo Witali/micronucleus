@@ -1129,10 +1129,9 @@ usb_standard_check_configuration:
 
 /* Return the default interface byte or an empty unsupported-request reply. */
 usb_standard_check_get_interface:
-    ldi     r24, 0x01
     cpi     r25, USB_REQ_GET_INTERFACE
-    brbs    SREG_Z, usb_standard_scratch_reply
-    ldi     r24, 0x00
+    brne    usb_reply_empty
+    ldi     r24, 0x01
 usb_standard_scratch_reply:
     rjmp    usb_reply_use_scratch_buffer
 
