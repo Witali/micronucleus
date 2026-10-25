@@ -124,6 +124,13 @@ class LoaderCPU extends AVRCore {
 for(const file of process.argv.slice(2)) {
   const meta=JSON.parse(fs.readFileSync(file));
   const body=fs.readFileSync(path.join(path.dirname(file),meta.body_file));
+  const reset=new LoaderCPU(meta,body);
+  reset.data.fill(0x55,0x100);reset.r[1]=0xa5;
+  reset.data[0x5d]=0x10;reset.data[0x5e]=1;reset.pc=reset.boot/2;
+  reset.untilPC(meta.symbols.main);
+  assert.ok(reset.data.slice(0x100,0x12c).every(value=>value===0));
+  assert.equal(reset.data[0x12c],0x55);assert.equal(reset.r[1],0);
+  assert.equal(reset.data[0x5d]|reset.data[0x5e]<<8,0x2ff);
   const cpu=new LoaderCPU(meta,body);
   // Every standard request byte, directions and short/long reply limits.
   const baselineBody=fs.readFileSync(path.join(root,'../variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin'));

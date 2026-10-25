@@ -205,29 +205,6 @@ bootloader_start:
     .byte LOW8(USB_VENDOR_ID), HIGH8(USB_VENDOR_ID), LOW8(USB_PRODUCT_ID), HIGH8(USB_PRODUCT_ID)
     .byte LOW8(BOOT_VERSION_BCD), HIGH8(BOOT_VERSION_BCD), 0, 0, 0, 1
 
-startup:
-    eor     r1, r1
-    out     _SFR_IO_ADDR(SREG), r1
-    ldi     r28, LOW8(RAMEND)
-    ldi     r29, HIGH8(RAMEND)
-    out     _SFR_IO_ADDR(SPL), r28
-    out     _SFR_IO_ADDR(SPH), r29
-    /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
-    ldi     r26, LOW8(USB_CONTEXT_BASE)
-    ldi     r27, HIGH8(USB_CONTEXT_BASE)
-    /* Removed 0x1a80: rjmp    startup_check_sram_end (size-optimized, see CHANGES.md) */
-
-/* Clear the next byte in the bootloader SRAM context. */
-startup_clear_sram_byte:
-    st      X+, r1
-
-/* Repeat SRAM clearing until X reaches 0x012C. */
-startup_check_sram_end:
-    cpi     r26, LOW8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES)
-    /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
-    brbc    SREG_Z, startup_clear_sram_byte
-    rjmp    main
-
 USB_handler:
     push    r28
     push    r29
@@ -644,6 +621,29 @@ flash_buffer_load_word:
     adiw    r30, AVR_WORD_BYTES  /* update page fill pointer in Z; only callers overwrite r24 after return */
     movw    r4, r30
     ret
+
+/* Startup now falls through into main; stack and SRAM setup are retained. */
+startup:
+    eor     r1, r1
+    out     _SFR_IO_ADDR(SREG), r1
+    ldi     r28, LOW8(RAMEND)
+    ldi     r29, HIGH8(RAMEND)
+    out     _SFR_IO_ADDR(SPL), r28
+    out     _SFR_IO_ADDR(SPH), r29
+    /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
+    ldi     r26, LOW8(USB_CONTEXT_BASE)
+    ldi     r27, HIGH8(USB_CONTEXT_BASE)
+    /* Removed 0x1a80: rjmp    startup_check_sram_end (size-optimized, see CHANGES.md) */
+
+/* Clear the next byte in the bootloader SRAM context. */
+startup_clear_sram_byte:
+    st      X+, r1
+
+/* Repeat SRAM clearing until X reaches 0x012C. */
+startup_check_sram_end:
+    cpi     r26, LOW8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES)
+    /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
+    brbc    SREG_Z, startup_clear_sram_byte
 
 main:
     wdr
