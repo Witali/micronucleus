@@ -6,7 +6,7 @@ from pathlib import Path
 
 START=0x1a40
 CODE_START=0x1a6e
-raw=Path(sys.argv[1] if len(sys.argv)>1 else '/mnt/data/micronucleus_t88_optimization/reference/t88_default_upstream.bin').read_bytes()
+raw=Path(sys.argv[1] if len(sys.argv)>1 else str(Path(__file__).resolve().parent.parent/'reference/upstream_t88_default.bin')).read_bytes()
 
 @dataclass
 class Insn:
@@ -83,34 +83,35 @@ def decode(a):
     if w&0xff0f==0x9204:return o('xch',f'Z, r{(w>>4)&31}')
     return Insn(a,(w,),'WORD',f'0x{w:04x}',unknown=True)
 
-ins=[]
-a=CODE_START
-while a<START+len(raw):
-    i=decode(a);ins.append(i);a+=i.size
-unknown=[x for x in ins if x.unknown]
-if unknown:print('UNKNOWN ',[(hex(x.address),hex(x.words[0])) for x in unknown],file=sys.stderr)
-# collect internal branch targets
-labels={x.target:f'L{x.target:04x}' for x in ins if x.target is not None and CODE_START<=x.target<START+len(raw)}
-# specialized marked routine starts
-routines={0x1a40:'bootloader_start',0x1a6e:'startup',0x1a8c:'usb_crc16_append',0x1ab8:'USB_handler',0x1cce:'usb_program_page',0x1cec:'main',0x1f80:'main_tail'}
-labels.update(routines)
-with open('/mnt/data/micronucleus_t88_asm/work/original_decoded.S','w') as f:
-    f.write('/* Original Micronucleus t88_default 16 MHz - derived from official precompiled firmware.\n')
-    f.write(' * Independent readable assembler reconstruction. Binary-equivalent reference build.\n')
-    f.write(' * Copyright original Micronucleus contributors; GPL-2.0-or-later.\n */\n')
-    f.write('.section .text\n.org 0x1a40\n.global bootloader_start\nbootloader_start:\n')
-    f.write('    rjmp startup\n')
-    # USB configuration and descriptors stored immediately before startup
-    f.write('/* Micronucleus device-info and USB descriptors in program memory. */\n')
-    for j in range(2,CODE_START-START,8):
-        bs=raw[j:min(j+8,CODE_START-START)];f.write(f'    .byte '+', '.join(f'0x{b:02x}' for b in bs)+f'  /* {START+j:04x} */\n')
-    for x in ins:
-        if x.address in labels: f.write('\n'+labels[x.address]+':\n')
-        if x.address == 0x1ebe:
-            f.write('    .word 0xcdbe /* RJMP to original application postscript at 0x1a3c */\n')
-            continue
-        arg=x.operands
-        if x.target is not None:
-            arg=(arg+' ' if x.op in ('brbc','brbs') else '')+labels.get(x.target, f'0x{x.target:04x}')
-        f.write(f'    {x.op.lower():7s} {arg:32s} /* 0x{x.address:04x}: '+ ' '.join(f'{w:04x}' for w in x.words)+ ' */\n')
-print('instructions',len(ins),'unknown',len(unknown),'labels',len(labels),'filesize',len(raw))
+if __name__ == "__main__":
+    ins=[]
+    a=CODE_START
+    while a<START+len(raw):
+        i=decode(a);ins.append(i);a+=i.size
+    unknown=[x for x in ins if x.unknown]
+    if unknown:print('UNKNOWN ',[(hex(x.address),hex(x.words[0])) for x in unknown],file=sys.stderr)
+    # collect internal branch targets
+    labels={x.target:f'L{x.target:04x}' for x in ins if x.target is not None and CODE_START<=x.target<START+len(raw)}
+    # specialized marked routine starts
+    routines={0x1a40:'bootloader_start',0x1a6e:'startup',0x1a8c:'usb_crc16_append',0x1ab8:'USB_handler',0x1cce:'usb_program_page',0x1cec:'main',0x1f80:'main_tail'}
+    labels.update(routines)
+    with open(str(Path(__file__).resolve().parent.parent/'reference/regenerated_original.S'),'w') as f:
+        f.write('/* Original Micronucleus t88_default 16 MHz - derived from official precompiled firmware.\n')
+        f.write(' * Independent readable assembler reconstruction. Binary-equivalent reference build.\n')
+        f.write(' * Copyright original Micronucleus contributors; GPL-2.0-or-later.\n */\n')
+        f.write('.section .text\n.org 0x1a40\n.global bootloader_start\nbootloader_start:\n')
+        f.write('    rjmp startup\n')
+        # USB configuration and descriptors stored immediately before startup
+        f.write('/* Micronucleus device-info and USB descriptors in program memory. */\n')
+        for j in range(2,CODE_START-START,8):
+            bs=raw[j:min(j+8,CODE_START-START)];f.write(f'    .byte '+', '.join(f'0x{b:02x}' for b in bs)+f'  /* {START+j:04x} */\n')
+        for x in ins:
+            if x.address in labels: f.write('\n'+labels[x.address]+':\n')
+            if x.address == 0x1ebe:
+                f.write('    .word 0xcdbe /* RJMP to original application postscript at 0x1a3c */\n')
+                continue
+            arg=x.operands
+            if x.target is not None:
+                arg=(arg+' ' if x.op in ('brbc','brbs') else '')+labels.get(x.target, f'0x{x.target:04x}')
+            f.write(f'    {x.op.lower():7s} {arg:32s} /* 0x{x.address:04x}: '+ ' '.join(f'{w:04x}' for w in x.words)+ ' */\n')
+    print('instructions',len(ins),'unknown',len(unknown),'labels',len(labels),'filesize',len(raw))

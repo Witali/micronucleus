@@ -18,9 +18,9 @@ def symbols(path):
   if m: out[m.group(2)]=int(m.group(1),16)
  return out
 
-BASE={'name':'upstream','start':0x1a40,'bin':Path('/mnt/data/micronucleus_t88_optimization/reference/t88_default_upstream.bin'),'o':ROOT/'original_decoded.o'}
+BASE={'name':'upstream','start':0x1a40,'bin':ROOT.parent/'reference/upstream_t88_default.bin','o':ROOT.parent/'build/original.o'}
 LED_ON=os.environ.get('MICRO_LED_ON')=='1'
-OPT={'name':'optimized','start':0x1b00,'bin':ROOT.parent/'deliverables'/('led_on_full.bin' if LED_ON else 'optimized_full.bin'),'o':ROOT.parent/'deliverables'/('micronucleus_t88_LED_ON.o' if LED_ON else 'micronucleus_t88_optimized.o')}
+OPT={'name':'optimized','start':0x1b00,'bin':ROOT.parent/'build/full_zero_padded_DO_NOT_FLASH.bin','o':ROOT.parent/'build/audited.o'}
 
 class Sim:
  def __init__(self,build,init):

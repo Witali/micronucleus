@@ -1,0 +1,203 @@
+{
+  "result": "OPTIMIZED PASS; ORIGINAL HAS DATASHEET NONCOMPLIANCE",
+  "tests": 32,
+  "legacy_violations": 6,
+  "cases": [
+    [
+      "upstream",
+      "buffer word",
+      "0x0",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "buffer word",
+      "0x2",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "buffer word",
+      "0x100",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "buffer word",
+      "0x1a00",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "erase app only",
+      105,
+      "PASS"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x19c0",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x1a00",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x1a3e",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x1a40",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x1a42",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "page write guard",
+      "0x1a80",
+      "PASS"
+    ],
+    [
+      "upstream",
+      "32-word page fill/commit",
+      "0x0",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "upstream",
+      "32-word page fill/commit",
+      "0x40",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "upstream",
+      "32-word page fill/commit",
+      "0x1000",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "upstream",
+      "32-word page fill/commit",
+      "0x19c0",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "upstream",
+      "32-word page fill/commit",
+      "0x1a00",
+      "LEGACY DATASHEET VIOLATION"
+    ],
+    [
+      "optimized",
+      "buffer word",
+      "0x0",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "buffer word",
+      "0x2",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "buffer word",
+      "0x100",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "buffer word",
+      "0x1a00",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "erase app only",
+      108,
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1a80",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1ac0",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1afe",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1b00",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1b02",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "page write guard",
+      "0x1b40",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "32-word page fill/commit",
+      "0x0",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "32-word page fill/commit",
+      "0x40",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "32-word page fill/commit",
+      "0x1000",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "32-word page fill/commit",
+      "0x1a80",
+      "PASS"
+    ],
+    [
+      "optimized",
+      "32-word page fill/commit",
+      "0x1ac0",
+      "PASS"
+    ]
+  ],
+  "limitations": [
+    "Models SPM registers and flash commands; NOT bus timing, SPM busy latency, EEPROM interactions or hardware"
+  ],
+  "source": "spm_boundary_audit.py"
+}

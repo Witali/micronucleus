@@ -3,12 +3,16 @@
  * Copyright original Micronucleus contributors; GPL-2.0-or-later.
  */
 .section .text
-.org 0x1a40
+/* Edit BOOT_AT only after the build audits that the loader fits in flash. */
+#ifndef BOOT_AT
+#define BOOT_AT 0x1b00
+#endif
+.org BOOT_AT
 .global bootloader_start
 bootloader_start:
     rjmp startup
 /* Micronucleus device-info and USB descriptors in program memory. */
-    .byte 0x1a, 0x3c, 0x40, 0x05, 0x93, 0x11, 0x00, 0x00  /* 1a42 */
+    .byte ((BOOT_AT - 4) >> 8), ((BOOT_AT - 4) & 0xff), 0x40, 0x05, 0x93, 0x11, 0x00, 0x00  /* device config: user flash, page, write delay, signature */
     .byte 0x09, 0x02, 0x12, 0x00, 0x01, 0x01, 0x00, 0x80  /* 1a4a */
     .byte 0x32, 0x09, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00  /* 1a52 */
     .byte 0x00, 0x00, 0x12, 0x01, 0x10, 0x01, 0xff, 0x00  /* 1a5a */
@@ -22,17 +26,17 @@ startup:
     ldi     r29, 0x02                        /* 0x1a74: e0d2 */
     out     0x3d, r28                        /* 0x1a76: bfcd */
     out     0x3e, r29                        /* 0x1a78: bfde */
-    ldi     r18, 0x01                        /* 0x1a7a: e021 */
+    /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
     ldi     r26, 0x00                        /* 0x1a7c: e0a0 */
     ldi     r27, 0x01                        /* 0x1a7e: e0b1 */
-    rjmp    L1a84                            /* 0x1a80: c001 */
+    /* Removed 0x1a80: rjmp    L1a84 (size-optimized, see CHANGES.md) */
 
 L1a82:
     st      X+, r1                           /* 0x1a82: 921d */
 
 L1a84:
     cpi     r26, 0x2c                        /* 0x1a84: 32ac */
-    cpc     r27, r18                         /* 0x1a86: 07b2 */
+    /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
     brbc    1, L1a82                         /* 0x1a88: f7e1 */
     rjmp    main                             /* 0x1a8a: c130 */
 
@@ -417,8 +421,8 @@ usb_program_page:
     movw    r30, r4                          /* 0x1cce: 01f2 */
     sbiw    r30, 0                           /* 0x1cd0: 9730 */
     brbc    1, L1cd8                         /* 0x1cd2: f411 */
-    ldi     r24, 0x1f                        /* 0x1cd4: e18f */
-    ldi     r25, 0xcd                        /* 0x1cd6: ec9d */
+    ldi     r24, ((0xc000 + (BOOT_AT / 2) - 1) & 0xff)  /* original at 0x1cd4 */
+    ldi     r25, ((0xc000 + (BOOT_AT / 2) - 1) >> 8)    /* original at 0x1cd6 */
 
 L1cd8:
     ldi     r18, 0x01                        /* 0x1cd8: e021 */
@@ -461,7 +465,7 @@ L1d06:
     lds     r24, 0x0068                      /* 0x1d26: 9180 0068 */
     ori     r24, 0x04                        /* 0x1d2a: 6084 */
     sts     0x0068, r24                      /* 0x1d2c: 9380 0068 */
-    sbi     0xa, 0                           /* 0x1d30: 9a50 */
+    /* Removed 0x1d30: sbi     0xa, 0 (size-optimized, see CHANGES.md) */
     mov     r7, r1                           /* 0x1d32: 2c71 */
     mov     r3, r1                           /* 0x1d34: 2c31 */
     mov     r5, r1                           /* 0x1d36: 2c51 */
@@ -496,8 +500,8 @@ L1d5e:
     ldi     r18, 0x02                        /* 0x1d60: e022 */
     cpse    r3, r18                          /* 0x1d62: 1232 */
     rjmp    L1d7e                            /* 0x1d64: c00c */
-    ldi     r30, 0x40                        /* 0x1d66: e4e0 */
-    ldi     r31, 0x1a                        /* 0x1d68: e1fa */
+    ldi     r30, (BOOT_AT & 0xff)                       /* original at 0x1d66 */
+    ldi     r31, (BOOT_AT >> 8)                         /* original at 0x1d68 */
 
 L1d6a:
     subi    r30, 0x40                        /* 0x1d6a: 54e0 */
@@ -519,10 +523,11 @@ L1d7e:
 L1d86:
     movw    r30, r4                          /* 0x1d86: 01f2 */
     sbiw    r30, 2                           /* 0x1d88: 9732 */
-    cpi     r30, 0x40                        /* 0x1d8a: 34e0 */
-    ldi     r24, 0x1a                        /* 0x1d8c: e18a */
+    cpi     r30, (BOOT_AT & 0xff)                       /* original at 0x1d8a */
+    ldi     r24, (BOOT_AT >> 8)                         /* original at 0x1d8c */
     cpc     r31, r24                         /* 0x1d8e: 07f8 */
     brbc    0, L1d9a                         /* 0x1d90: f420 */
+    andi    r30, 0xc0   /* AUDIT FIX: zero SPM Page Write PCWORD bits, 64-byte Flash page */
     ldi     r24, 0x05                        /* 0x1d92: e085 */
     sts     0x0057, r24                      /* 0x1d94: 9380 0057 */
     spm                                      /* 0x1d98: 95e8 */
@@ -531,22 +536,25 @@ L1d9a:
     mov     r3, r1                           /* 0x1d9a: 2c31 */
 
 L1d9c:
-    lds     r24, 0x0112                      /* 0x1d9c: 9180 0112 */
+    /* Y=0x0100 is a base pointer for usbdrv SRAM globals during command/packet handling. */
+    ldi     r28, 0x00
+    ldi     r29, 0x01
+    ldd     r24, Y+18   /* 1d9c: SRAM compact access */
     subi    r24, 0x03                        /* 0x1da0: 5083 */
     sbrc    r24, 7                           /* 0x1da2: fd87 */
     rjmp    L1dfc                            /* 0x1da4: c02b */
-    lds     r25, 0x010d                      /* 0x1da6: 9190 010d */
+    ldd     r25, Y+13   /* 1da6: SRAM compact access */
     cpi     r25, 0x2d                        /* 0x1daa: 329d */
     brbc    1, L1df8                         /* 0x1dac: f529 */
     cpi     r24, 0x08                        /* 0x1dae: 3088 */
     brbc    1, L1df8                         /* 0x1db0: f519 */
     ldi     r24, 0xc3                        /* 0x1db2: ec83 */
-    sts     0x0101, r24                      /* 0x1db4: 9380 0101 */
+    std     Y+1, r24   /* 1db4: SRAM compact access */
     ldi     r24, 0x5a                        /* 0x1db8: e58a */
-    sts     0x010f, r24                      /* 0x1dba: 9380 010f */
-    lds     r24, 0x0117                      /* 0x1dbe: 9180 0117 */
+    std     Y+15, r24   /* 1dba: SRAM compact access */
+    ldd     r24, Y+23   /* 1dbe: SRAM compact access */
     andi    r24, 0x60                        /* 0x1dc2: 7680 */
-    lds     r25, 0x0118                      /* 0x1dc4: 9190 0118 */
+    ldd     r25, Y+24   /* 1dc4: SRAM compact access */
     and     r24, r24                         /* 0x1dc8: 2388 */
     brbc    1, L1dce                         /* 0x1dca: f409 */
     rjmp    L1f0c                            /* 0x1dcc: c09f */
@@ -555,54 +563,54 @@ L1dce:
     mov     r7, r1                           /* 0x1dce: 2c71 */
     cpse    r25, r1                          /* 0x1dd0: 1191 */
     rjmp    L1ec0                            /* 0x1dd2: c076 */
-    ldi     r24, 0x42                        /* 0x1dd4: e482 */
-    ldi     r25, 0x1a                        /* 0x1dd6: e19a */
-    sts     0x0111, r25                      /* 0x1dd8: 9390 0111 */
-    sts     0x0110, r24                      /* 0x1ddc: 9380 0110 */
+    ldi     r24, ((BOOT_AT + 2) & 0xff)                 /* original at 0x1dd4 */
+    ldi     r25, ((BOOT_AT + 2) >> 8)                   /* original at 0x1dd6 */
+    std     Y+17, r25   /* 1dd8: SRAM compact access */
+    std     Y+16, r24   /* 1ddc: SRAM compact access */
     ldi     r24, 0x08                        /* 0x1de0: e088 */
 
 L1de2:
-    lds     r25, 0x011e                      /* 0x1de2: 9190 011e */
+    ldd     r25, Y+30   /* 1de2: SRAM compact access */
     cpse    r25, r1                          /* 0x1de6: 1191 */
     rjmp    L1df4                            /* 0x1de8: c005 */
-    lds     r25, 0x011d                      /* 0x1dea: 9190 011d */
+    ldd     r25, Y+29   /* 1dea: SRAM compact access */
     cp      r25, r24                         /* 0x1dee: 1798 */
     brbc    0, L1df4                         /* 0x1df0: f408 */
     mov     r24, r25                         /* 0x1df2: 2f89 */
 
 L1df4:
-    sts     0x0100, r24                      /* 0x1df4: 9380 0100 */
+    std     Y+0, r24   /* 1df4: SRAM compact access */
 
 L1df8:
-    sts     0x0112, r1                       /* 0x1df8: 9210 0112 */
+    std     Y+18, r1   /* 1df8: SRAM compact access */
 
 L1dfc:
-    lds     r24, 0x010f                      /* 0x1dfc: 9180 010f */
+    ldd     r24, Y+15   /* 1dfc: SRAM compact access */
     sbrs    r24, 4                           /* 0x1e00: ff84 */
     rjmp    L1e64                            /* 0x1e02: c030 */
-    lds     r24, 0x0100                      /* 0x1e04: 9180 0100 */
+    ldd     r24, Y+0   /* 1e04: SRAM compact access */
     cpi     r24, 0xff                        /* 0x1e08: 3f8f */
     brbs    1, L1e64                         /* 0x1e0a: f161 */
-    mov     r28, r24                         /* 0x1e0c: 2fc8 */
+    mov     r23, r24                                    /* original at 0x1e0c */
     cpi     r24, 0x09                        /* 0x1e0e: 3089 */
     brbs    0, L1e14                         /* 0x1e10: f008 */
-    ldi     r28, 0x08                        /* 0x1e12: e0c8 */
+    ldi     r23, 0x08                                   /* original at 0x1e12 */
 
 L1e14:
     mov     r25, r24                         /* 0x1e14: 2f98 */
-    sub     r25, r28                         /* 0x1e16: 1b9c */
-    sts     0x0100, r25                      /* 0x1e18: 9390 0100 */
-    lds     r25, 0x0101                      /* 0x1e1c: 9190 0101 */
+    sub     r25, r23                                    /* original at 0x1e16 */
+    std     Y+0, r25   /* 1e18: SRAM compact access */
+    ldd     r25, Y+1   /* 1e1c: SRAM compact access */
     ldi     r18, 0x88                        /* 0x1e20: e828 */
     eor     r25, r18                         /* 0x1e22: 2792 */
-    sts     0x0101, r25                      /* 0x1e24: 9390 0101 */
+    std     Y+1, r25   /* 1e24: SRAM compact access */
     and     r24, r24                         /* 0x1e28: 2388 */
     brbs    1, L1e4c                         /* 0x1e2a: f081 */
-    lds     r30, 0x0110                      /* 0x1e2c: 91e0 0110 */
-    lds     r31, 0x0111                      /* 0x1e30: 91f0 0111 */
+    ldd     r30, Y+16   /* 1e2c: SRAM compact access */
+    ldd     r31, Y+17   /* 1e30: SRAM compact access */
     ldi     r26, 0x02                        /* 0x1e34: e0a2 */
     ldi     r27, 0x01                        /* 0x1e36: e0b1 */
-    mov     r24, r28                         /* 0x1e38: 2f8c */
+    mov     r24, r23                                    /* original at 0x1e38 */
 
 L1e3a:
     lpm     r25, Z                           /* 0x1e3a: 9194 */
@@ -610,22 +618,22 @@ L1e3a:
     adiw    r30, 1                           /* 0x1e3e: 9631 */
     subi    r24, 0x01                        /* 0x1e40: 5081 */
     brbc    1, L1e3a                         /* 0x1e42: f7d9 */
-    sts     0x0111, r31                      /* 0x1e44: 93f0 0111 */
-    sts     0x0110, r30                      /* 0x1e48: 93e0 0110 */
+    std     Y+17, r31   /* 1e44: SRAM compact access */
+    std     Y+16, r30   /* 1e48: SRAM compact access */
 
 L1e4c:
-    mov     r22, r28                         /* 0x1e4c: 2f6c */
+    mov     r22, r23                                    /* original at 0x1e4c */
     ldi     r24, 0x02                        /* 0x1e4e: e082 */
     ldi     r25, 0x01                        /* 0x1e50: e091 */
     rcall   usb_crc16_append                 /* 0x1e52: de1c */
-    subi    r28, 0xfc                        /* 0x1e54: 5fcc */
-    cpi     r28, 0x0c                        /* 0x1e56: 30cc */
+    subi    r23, 0xfc                                   /* original at 0x1e54 */
+    cpi     r23, 0x0c                                   /* original at 0x1e56 */
     brbs    1, L1e60                         /* 0x1e58: f019 */
     ldi     r24, 0xff                        /* 0x1e5a: ef8f */
-    sts     0x0100, r24                      /* 0x1e5c: 9380 0100 */
+    std     Y+0, r24   /* 1e5c: SRAM compact access */
 
 L1e60:
-    sts     0x010f, r28                      /* 0x1e60: 93c0 010f */
+    std     Y+15, r23                                   /* original at 0x1e60 */
 
 L1e64:
     movw    r24, r6                          /* 0x1e64: 01c3 */
@@ -635,19 +643,19 @@ L1e64:
     ldi     r18, 0x04                        /* 0x1e6c: e024 */
     cpc     r25, r18                         /* 0x1e6e: 0792 */
     brbc    1, L1e7c                         /* 0x1e70: f429 */
-    ldi     r30, 0x3d                        /* 0x1e72: e3ed */
-    ldi     r31, 0x1a                        /* 0x1e74: e1fa */
+    ldi     r30, ((BOOT_AT - 3) & 0xff)                 /* original at 0x1e72 */
+    ldi     r31, ((BOOT_AT - 3) >> 8)                   /* original at 0x1e74 */
     lpm     r30, Z                           /* 0x1e76: 91e4 */
     cpi     r30, 0xff                        /* 0x1e78: 3fef */
     brbc    1, L1eac                         /* 0x1e7a: f4c1 */
 
 L1e7c:
-    andi    r24, 0x4c                        /* 0x1e7c: 748c */
-    brbc    1, L1e82                         /* 0x1e7e: f409 */
-    rjmp    L1f82                            /* 0x1e80: c080 */
+    /* Removed 0x1e7c: andi    r24, 0x4c (size-optimized, see CHANGES.md) */
+    /* Removed 0x1e7e: brbc    1, L1e82 (size-optimized, see CHANGES.md) */
+    /* Removed 0x1e80: rjmp    L1f82 (size-optimized, see CHANGES.md) */
 
 L1e82:
-    cbi     0xb, 0                           /* 0x1e82: 9858 */
+    /* Removed 0x1e82: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
 
 L1e84:
     sbis    0x1b, 2                          /* 0x1e84: 9bda */
@@ -682,14 +690,15 @@ L1ea6:
     rjmp    L1d9c                            /* 0x1eaa: cf78 */
 
 L1eac:
-    cbi     0xb, 0                           /* 0x1eac: 9858 */
+    /* Removed 0x1eac: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
     out     0xa, r1                          /* 0x1eae: b81a */
     sts     0x0068, r1                       /* 0x1eb0: 9210 0068 */
     sts     0x006d, r1                       /* 0x1eb4: 9210 006d */
     in      r24, 0x34                        /* 0x1eb8: b784 */
     out     0x1e, r24                        /* 0x1eba: bb8e */
     out     0x34, r1                         /* 0x1ebc: be14 */
-    .word 0xcdbe /* RJMP to original application postscript at 0x1a3c */
+app_jump:
+    .word (0xc000 | (((bootloader_start - 4 - app_jump - 2)/2) & 0x0fff)) /* relative RJMP into application postscript */
 
 L1ec0:
     cpi     r25, 0x01                        /* 0x1ec0: 3091 */
@@ -703,10 +712,10 @@ L1eca:
     rjmp    L1de2                            /* 0x1ecc: cf8a */
 
 L1ece:
-    lds     r24, 0x011b                      /* 0x1ece: 9180 011b */
+    ldd     r24, Y+27   /* 1ece: SRAM compact access */
     andi    r24, 0xc0                        /* 0x1ed2: 7c80 */
     mov     r4, r24                          /* 0x1ed4: 2e48 */
-    lds     r5, 0x011c                       /* 0x1ed6: 9050 011c */
+    ldd     r5, Y+28   /* 1ed6: SRAM compact access */
     ldi     r24, 0x11                        /* 0x1eda: e181 */
     out     0x37, r24                        /* 0x1edc: bf87 */
     spm                                      /* 0x1ede: 95e8 */
@@ -715,11 +724,11 @@ L1ece:
 L1ee2:
     cpi     r25, 0x03                        /* 0x1ee2: 3093 */
     brbc    1, L1f06                         /* 0x1ee4: f481 */
-    lds     r24, 0x0119                      /* 0x1ee6: 9180 0119 */
-    lds     r25, 0x011a                      /* 0x1eea: 9190 011a */
+    ldd     r24, Y+25   /* 1ee6: SRAM compact access */
+    ldd     r25, Y+26   /* 1eea: SRAM compact access */
     rcall   usb_program_page                 /* 0x1eee: deef */
-    lds     r24, 0x011b                      /* 0x1ef0: 9180 011b */
-    lds     r25, 0x011c                      /* 0x1ef4: 9190 011c */
+    ldd     r24, Y+27   /* 1ef0: SRAM compact access */
+    ldd     r25, Y+28   /* 1ef4: SRAM compact access */
     rcall   usb_program_page                 /* 0x1ef8: deea */
     mov     r24, r4                          /* 0x1efa: 2d84 */
     andi    r24, 0x3f                        /* 0x1efc: 738f */
@@ -734,24 +743,24 @@ L1f06:
     rjmp    L1eca                            /* 0x1f0a: cfdf */
 
 L1f0c:
-    lds     r18, 0x0119                      /* 0x1f0c: 9120 0119 */
-    sts     0x010a, r1                       /* 0x1f10: 9210 010a */
+    ldd     r18, Y+25   /* 1f0c: SRAM compact access */
+    std     Y+10, r1   /* 1f10: SRAM compact access */
     cpse    r25, r1                          /* 0x1f14: 1191 */
     rjmp    L1f2c                            /* 0x1f16: c00a */
-    sts     0x010b, r1                       /* 0x1f18: 9210 010b */
+    std     Y+11, r1   /* 1f18: SRAM compact access */
     ldi     r18, 0x0a                        /* 0x1f1c: e02a */
     ldi     r19, 0x01                        /* 0x1f1e: e031 */
     ldi     r24, 0x02                        /* 0x1f20: e082 */
 
 L1f22:
-    sts     0x0111, r19                      /* 0x1f22: 9330 0111 */
-    sts     0x0110, r18                      /* 0x1f26: 9320 0110 */
+    std     Y+17, r19   /* 1f22: SRAM compact access */
+    std     Y+16, r18   /* 1f26: SRAM compact access */
     rjmp    L1de2                            /* 0x1f2a: cf5b */
 
 L1f2c:
     cpi     r25, 0x05                        /* 0x1f2c: 3095 */
     brbc    1, L1f3a                         /* 0x1f2e: f429 */
-    sts     0x0113, r18                      /* 0x1f30: 9320 0113 */
+    std     Y+19, r18   /* 1f30: SRAM compact access */
 
 L1f34:
     ldi     r18, 0x0a                        /* 0x1f34: e02a */
@@ -761,15 +770,15 @@ L1f34:
 L1f3a:
     cpi     r25, 0x06                        /* 0x1f3a: 3096 */
     brbc    1, L1f62                         /* 0x1f3c: f491 */
-    lds     r24, 0x011a                      /* 0x1f3e: 9180 011a */
+    ldd     r24, Y+26   /* 1f3e: SRAM compact access */
     cpi     r24, 0x01                        /* 0x1f42: 3081 */
     brbc    1, L1f56                         /* 0x1f44: f441 */
-    ldi     r24, 0x5c                        /* 0x1f46: e58c */
-    ldi     r25, 0x1a                        /* 0x1f48: e19a */
+    ldi     r24, ((BOOT_AT + 0x1c) & 0xff)              /* original at 0x1f46 */
+    ldi     r25, ((BOOT_AT + 0x1c) >> 8)                /* original at 0x1f48 */
 
 L1f4a:
-    sts     0x0111, r25                      /* 0x1f4a: 9390 0111 */
-    sts     0x0110, r24                      /* 0x1f4e: 9380 0110 */
+    std     Y+17, r25   /* 1f4a: SRAM compact access */
+    std     Y+16, r24   /* 1f4e: SRAM compact access */
     ldi     r24, 0x12                        /* 0x1f52: e182 */
     rjmp    L1de2                            /* 0x1f54: cf46 */
 
@@ -779,8 +788,8 @@ L1f56:
     rjmp    L1eca                            /* 0x1f5a: cfb7 */
 
 L1f5c:
-    ldi     r24, 0x4a                        /* 0x1f5c: e48a */
-    ldi     r25, 0x1a                        /* 0x1f5e: e19a */
+    ldi     r24, ((BOOT_AT + 0x0a) & 0xff)              /* original at 0x1f5c */
+    ldi     r25, ((BOOT_AT + 0x0a) >> 8)                /* original at 0x1f5e */
     rjmp    L1f4a                            /* 0x1f60: cff4 */
 
 L1f62:
@@ -788,7 +797,7 @@ L1f62:
     brbs    1, L1f7a                         /* 0x1f64: f051 */
     cpi     r25, 0x09                        /* 0x1f66: 3099 */
     brbc    1, L1f70                         /* 0x1f68: f419 */
-    sts     0x0115, r18                      /* 0x1f6a: 9320 0115 */
+    std     Y+21, r18   /* 1f6a: SRAM compact access */
     rjmp    L1f34                            /* 0x1f6e: cfe2 */
 
 L1f70:
@@ -807,5 +816,5 @@ main_tail:
     rjmp    L1f22                            /* 0x1f80: cfd0 */
 
 L1f82:
-    sbi     0xb, 0                           /* 0x1f82: 9a58 */
-    rjmp    L1e84                            /* 0x1f84: cf7f */
+    /* Removed 0x1f82: sbi     0xb, 0 (size-optimized, see CHANGES.md) */
+    /* Removed 0x1f84: rjmp    L1e84 (size-optimized, see CHANGES.md) */

@@ -1,0 +1,19 @@
+--- preaudit_1254.S
++++ micronucleus_t88_audited.S
+@@ -5,7 +5,7 @@
+ .section .text
+ /* Edit BOOT_AT only after the build audits that the loader fits in flash. */
+ #ifndef BOOT_AT
+-#define BOOT_AT 0x1ac0
++#define BOOT_AT 0x1b00
+ #endif
+ .org BOOT_AT
+ .global bootloader_start
+@@ -527,6 +527,7 @@
+     ldi     r24, (BOOT_AT >> 8)                         /* original at 0x1d8c */
+     cpc     r31, r24                         /* 0x1d8e: 07f8 */
+     brbc    0, L1d9a                         /* 0x1d90: f420 */
++    andi    r30, 0xc0   /* AUDIT FIX: zero SPM Page Write PCWORD bits, 64-byte Flash page */
+     ldi     r24, 0x05                        /* 0x1d92: e085 */
+     sts     0x0057, r24                      /* 0x1d94: 9380 0057 */
+     spm                                      /* 0x1d98: 95e8 */
