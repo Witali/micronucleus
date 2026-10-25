@@ -10,3 +10,4 @@ Preserve the compact one-byte Flash-read variant,Micronucleus_Tiny88_Size_Optimi
 Fit eight-byte Flash reads into 1344 bytes,Micronucleus_Tiny88_Fast_8byte_Pass5_1344B_2026-10-25.zip,1d74fa6e49a4fc357d4cc7ecea22596cd70eea20e69bd7950ec15fd1fe05c71a,experimental/attiny88,1344,0x1AC0
 Preserve the rejected memory-range CRC experiment,Micronucleus_Tiny88_CRC_Shared_Pass6_2026-10-25.zip,df5e83f1cc98437dc4b1731af6bf3d065410de1983e7cd9bef6682309b1ab02b,experimental/attiny88/variants/range_crc_pass6,1554,0x19C0
 Import the 1320-byte ATtiny88 fast pass 7,Micronucleus_Tiny88_Fast_1320B_Pass7_2026-10-25.zip,ebc7eaacf7888a232356bf832114855994b18d248b819178653d37cebda99e5c,experimental/attiny88,1320,0x1AC0
+Add the conservative 1328-byte USB variant,Micronucleus_Tiny88_Fast_1320B_Pass7_2026-10-25.zip,ebc7eaacf7888a232356bf832114855994b18d248b819178653d37cebda99e5c,experimental/attiny88/variants/strict_usb_1328,1328,0x1AC0
