@@ -35,7 +35,11 @@ class PacketCPU extends AVRCore {
   }
   packet() {
     for(let i=0;i<1000;i++) {
-      if(this.pc*2===payloadReady)return Array.from(this.data.slice(0x102,0x102+this.r[23]));
+      if(this.pc*2===payloadReady) {
+        const bytes=Number.isInteger(symbols.usb_crc16_mix_byte)?this.r[26]-2:this.r[23];
+        assert.ok(bytes>=0&&bytes<=8);
+        return Array.from(this.data.slice(0x102,0x102+bytes));
+      }
       this.step();
     }
     throw new Error('No TX payload prepared');

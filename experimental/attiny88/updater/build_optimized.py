@@ -2,7 +2,7 @@
 """Build an isolated size-optimized candidate; never program hardware.
 
 The deployed verified artifacts remain pinned. Candidates permit exactly four
-cycle-neutral USB substitutions and retain the original 40-byte CRC arithmetic.
+cycle-neutral USB substitutions and audit the merged reply-copy/CRC recurrence.
 """
 from pathlib import Path
 import argparse
@@ -51,13 +51,11 @@ def main():
     engine = body[symbols['USB_handler']-boot:symbols['flash_buffer_append_word']-boot]
     sys.path.insert(0,str(ROOT.parent/'tests'))
     from source_labels import with_semantic_names
-    from usb_engine_audit import audit_usb_engine
-    audit_usb_engine(reference,0x1ac0,with_semantic_names(ref),body,boot,symbols)
-    crc = body[symbols['usb_crc16_append']-boot:symbols['usb_crc16_core_end']-boot]
-    original_crc = reference[ref['usb_crc16_append']-0x1ac0:ref['USB_handler']-0x1ac0]
-    # The inlined caller initializes X directly. Omit the original leading
-    # MOVW X,R24 and trailing RET; every CRC arithmetic/store byte must match.
-    assert len(crc) == 40 and crc == original_crc[2:-2], 'CRC computation changed'
+    from usb_engine_audit import audit_usb_engine, audit_reply_crc
+    semantic_ref=with_semantic_names(ref)
+    audit_usb_engine(reference,0x1ac0,semantic_ref,body,boot,symbols)
+    audit_reply_crc(reference,0x1ac0,semantic_ref,body,boot,symbols)
+    crc = body[symbols['usb_crc16_mix_byte']-boot:symbols['usb_crc16_byte_complete']-boot]
     assert body[2:4] == (boot-4).to_bytes(2,'big')
     output = (args.output_dir or ROOT/'build'/f'optimized-{args.led}').resolve()
     output.mkdir(parents=True,exist_ok=True)
@@ -75,7 +73,7 @@ def main():
                 'baseline_sha256':BASELINE_SHA256,'baseline_symbols':ref}
     (output/'firmware.json').write_text(json.dumps(manifest,indent=2)+'\n')
     print(f'PASS: {len(body)} code bytes at 0x{boot:04X}; {boot-4} application bytes; LED {args.led}')
-    print('PASS: four cycle-neutral USB substitutions audited; CRC arithmetic matches deployed image')
+    print('PASS: four cycle-neutral USB substitutions and single-pass CRC recurrence audited')
     print('Output:', output/'firmware.json')
 
 

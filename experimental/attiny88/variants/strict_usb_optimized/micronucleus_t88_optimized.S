@@ -184,6 +184,18 @@
 #if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)
 #error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
 #endif
+#if HIGH8(USB_CONTEXT_BASE) != LOW8(CRC16_POLYNOMIAL)
+#error CRC polynomial low byte must match the context pointer high byte in Y
+#endif
+#if USB_EP0_PAYLOAD_BYTES >= CRC_BIT_COUNTER_INCREMENT
+#error Packed CRC counter requires the payload byte count to fit below the bit phase increment
+#endif
+#if LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD) + 2 != USB_TX_PACKET_OVERHEAD
+#error Final X low byte must equal the complete packet length after appending CRC
+#endif
+#if USB_FULL_TX_PACKET_BYTES > 255
+#error Packet length must not carry out of X low byte
+#endif
 .section .text
 /* Edit BOOT_AT only after the build audits that the loader fits in flash. */
 .org BOOT_AT
@@ -864,75 +876,70 @@ usb_tx_prepare_data_packet:
     ldi     r18, USB_DATA_PID_TOGGLE
     eor     r25, r18
     std     Y+CTX_TX_PID, r25
-    and     r24, r24
-    brbs    SREG_Z, usb_tx_append_payload_crc
+/* Copy and checksum in one pass. Y remains the SRAM context pointer, so
+ * r29 supplies the CRC polynomial's low byte (1). R23 packs remaining
+ * payload bytes (0..8) below the bit counter's 32-step phase. */
+usb_tx_initialize_payload_crc:
+    ldi     r19, 0x00
+    ldi     r25, 0x00
+    ldi     r21, HIGH8(CRC16_POLYNOMIAL)
+    ldi     r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
+    ldi     r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
     ldd     r30, Y+CTX_MSG_POINTER_LOW
     ldd     r31, Y+CTX_MSG_POINTER_HIGH
-    ldi     r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    ldi     r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    mov     r24, r23
 
-/* Copy reply bytes from Flash to the endpoint-zero transmit buffer. */
+/* CP with zero provides C=1 before every nonempty byte, as required by
+ * the inverted CRC recurrence. Loads, stores and skips preserve carry. */
 usb_tx_copy_flash_payload:
+    cp      r1, r23
+    breq    usb_crc16_payload_complete
     sbrc    r2, 0
-    ld      r25, Z+
+    ld      r18, Z+
     sbrs    r2, 0
-    lpm     r25, Z+
-    st      X+, r25
-    subi    r24, 0x01
-    brbc    SREG_Z, usb_tx_copy_flash_payload
-    std     Y+CTX_MSG_POINTER_HIGH, r31
-    std     Y+CTX_MSG_POINTER_LOW, r30
+    lpm     r18, Z+
+    st      X+, r18
 
-/* Append CRC16 and mark the end of a short control reply. */
-usb_tx_append_payload_crc:
-    mov     r22, r23
-    /* The inlined CRC consumes X directly; no ABI pointer copy is needed. */
-    ldi     r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-    ldi     r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-usb_crc16_append:
-    ldi     r24, 0x00
-    ldi     r25, 0x00
-    ldi     r20, LOW8(CRC16_POLYNOMIAL)
-    ldi     r21, HIGH8(CRC16_POLYNOMIAL)
-    com     r22
-    ldi     r19, 0x00
-    rjmp    usb_crc16_check_remaining_bytes
-
-/* Read a byte and mix it into the CRC accumulator. */
-usb_crc16_next_byte:
-    ld      r18, X+
-    eor     r24, r18
+/* Mix the copied byte directly into the CRC accumulator. */
+usb_crc16_mix_byte:
+    eor     r19, r18
 
 /* Shift the CRC and conditionally apply polynomial 0xA001. */
 usb_crc16_shift_bit:
     ror     r25
-    ror     r24
+    ror     r19
     brbs    SREG_C, usb_crc16_advance_bit_count
-    eor     r24, r20
+    eor     r19, r29
     eor     r25, r21
 
-/* Advance the packed eight-bit CRC loop counter. */
+/* Adding 32 eight times returns the original byte count (1..8).
+ * The first seven additions borrow; the eighth ends the bit loop. */
 usb_crc16_advance_bit_count:
-    subi    r19, LOW8(-CRC_BIT_COUNTER_INCREMENT)
+    subi    r23, LOW8(-CRC_BIT_COUNTER_INCREMENT)
     brbs    SREG_C, usb_crc16_shift_bit
 
-/* Process remaining bytes or append the two CRC bytes. */
-usb_crc16_check_remaining_bytes:
-    subi    r22, LOW8(-1)
-    brbs    SREG_C, usb_crc16_next_byte
-    st      X+, r24
+usb_crc16_byte_complete:
+    dec     r23
+    rjmp    usb_tx_copy_flash_payload
+
+/* The zero-length path republishes the unchanged source pointer. */
+usb_crc16_payload_complete:
+    std     Y+CTX_MSG_POINTER_HIGH, r31
+    std     Y+CTX_MSG_POINTER_LOW, r30
+
+/* Append CRC and use final XL as the complete packet length. */
+usb_tx_append_payload_crc:
+usb_crc16_append:
+    st      X+, r19
     st      X+, r25
 usb_crc16_core_end:
-    subi    r23, LOW8(-USB_TX_PACKET_OVERHEAD)
-    cpi     r23, USB_FULL_TX_PACKET_BYTES
+    cpi     r26, USB_FULL_TX_PACKET_BYTES
     brbs    SREG_Z, usb_tx_publish_packet_length
     ldi     r24, USB_NO_MESSAGE
     std     Y+CTX_MSG_LENGTH, r24
 
 /* Publish the prepared TX block length including protocol overhead. */
 usb_tx_publish_packet_length:
-    std     Y+CTX_TX_LENGTH, r23
+    std     Y+CTX_TX_LENGTH, r26
 
 /* Increment idle polls and start the application at timeout if present. */
 bootloader_check_idle_timeout:

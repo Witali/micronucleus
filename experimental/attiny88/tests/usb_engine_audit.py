@@ -6,6 +6,7 @@ SBI PCIFR,PCIF2 affects only that W1C bit. LDI+OUT and SBI each take two
 cycles; STS and STD each take two cycles. No sampling/output rewrite is allowed.
 """
 from collections import deque
+import hashlib
 import re
 
 import avr_decoder as decoder
@@ -17,9 +18,8 @@ def operand(instruction):
     return re.sub(r'\s+', '', instruction.operands).lower()
 
 
-def decode_engine(body, base, symbols):
+def decode_span(body, base, start, end):
     decoder.START, decoder.raw = base, body
-    start, end = symbols['USB_handler'], symbols['flash_buffer_append_word']
     instructions = []
     pc = start
     while pc < end:
@@ -29,6 +29,37 @@ def decode_engine(body, base, symbols):
         pc += instruction.size
     assert pc == end, 'USB engine ends inside an instruction'
     return instructions
+
+
+def decode_engine(body, base, symbols):
+    return decode_span(body,base,symbols['USB_handler'],symbols['flash_buffer_append_word'])
+
+
+def audit_reply_crc(reference, reference_base, reference_symbols, body, base, symbols):
+    """Pin preparation/copy/count/publication and audit the CRC recurrence.
+
+    The recurrence is the original inverted USB CRC with renamed registers.
+    CP R1,R23 supplies its carry-in; adding 32 eight times returns the packed
+    remaining-byte count (0..8). YH supplies polynomial low byte 1. Independent
+    CPU tests check the count/carry invariants and checksum, including empty,
+    short/full and multi-packet Flash/SRAM responses.
+    """
+    reply=body[symbols['usb_tx_prepare_pending_reply']-base:symbols['bootloader_check_idle_timeout']-base]
+    assert hashlib.sha256(reply).hexdigest() == '8746a7f69931451f8eb5f74e6543bfcf2d76aac69976b57122703fd8cfdc5b3d', (
+        'Reply copy/CRC/count code changed; rerun the recurrence and timing audit')
+    old_first=reference_symbols['usb_crc16_next_byte']+2  # Omit the separate SRAM LD.
+    new_first=symbols['usb_crc16_mix_byte']
+    old=decode_span(reference,reference_base,old_first,reference_symbols['usb_crc16_check_remaining_bytes'])
+    new=decode_span(body,base,new_first,symbols['usb_crc16_byte_complete'])
+    assert len(old)==len(new)==8 and sum(item.size for item in new)==16
+    registers={'r24':'r19','r19':'r23','r20':'r29'}
+    for original,actual in zip(old,new):
+        expected=re.sub(r'r\d+',lambda match:registers.get(match[0],match[0]),operand(original))
+        assert (actual.op,operand(actual))==(original.op,expected), 'CRC recurrence changed'
+        if original.target is None:
+            assert actual.target is None
+        else:
+            assert actual.target-new_first==original.target-old_first, 'CRC branch changed target'
 
 
 def successors(instruction, by_address):
