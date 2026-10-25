@@ -21,16 +21,17 @@ def command(*args):
 def symbols(obj):
     result={}
     for line in command('llvm-objdump','-t',str(obj)).splitlines():
-        m=re.match(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+(.+)$',line)
+        m=re.match(r'^([0-9a-f]+)\s+\S+\s+(?:\.text|\*ABS\*)\s+[0-9a-f]+\s+(.+)$',line)
         if m: result[m[2]]=int(m[1],16)
     return result
 
 
-def compile_asm(file,boot,outfile):
+def compile_asm(file,boot,outfile,defines=()):
     (ROOT/'build').mkdir(exist_ok=True)
     obj=ROOT/'build'/f'{outfile}.o'
     raw=ROOT/'build'/f'{outfile}.full.bin'
     command('clang','-target','avr','-mmcu=attiny88',f'-DBOOT_AT=0x{boot:04X}',
+            *(f'-D{define}' for define in defines),
             '-c','-x','assembler-with-cpp',str(file),'-o',str(obj))
     # LLVM 18 emits AVR branch relocations even for same-section labels.
     # Resolve them before extracting bytes; otherwise jumps remain placeholders.

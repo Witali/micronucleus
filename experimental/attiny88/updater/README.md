@@ -27,6 +27,11 @@ python3 test_simavr.py /path/to/simavr-source
 
 Build dependencies: AVR-GCC, avr-libc, AVR binutils and Python 3. Simulation also requires Node, GCC, libelf and a built current simavr library. `test_micromusic.mjs` imports `C:/Work/MicroMusic` read-only by default; set `MICROMUSIC_ROOT` elsewhere as needed.
 
+Optional bootloader LED macros, build commands, output formats and capacity
+changes are documented in the [verified variant configuration](../variants/strict_usb_verified/README.md#optional-bootloader-led).
+`build_verified.py` also requires Clang and LLVM binutils as described by the
+parent experiment. Its default continues to reproduce the pinned no-LED image.
+
 MicroMusic's ATtiny88 CPU currently rejects SPM. The test harness explicitly adds a local 64-byte Flash-controller shim and missing CBI/SBIC/SBIS execution. All remaining updater instructions use the original CPU. The sibling project is unchanged. The simavr test independently uses its CPU and native SPM engine, constraining the ATmega88 substrate to tiny88 RAM, EEPROM and 64-byte NORWW pages; it supplies the missing CTPB command. Neither is presented as a complete native ATtiny88 peripheral model.
 
 Checks pass for the exact resulting image, intact updater memory, late RESET commit, disabled SELFPRGEN, corrupt payload and failed target readback. The MicroMusic test additionally restarts at five operation boundaries. Flash-operation duration is an explicit model parameter, not an electrical timing guarantee. Device behavior was checked against [Microchip ATtiny48/88 datasheet, chapter 19](https://ww1.microchip.com/downloads/en/DeviceDoc/doc8008.pdf).

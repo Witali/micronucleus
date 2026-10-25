@@ -6,6 +6,9 @@
  * Source uses historical mnemonic labels; numeric names do NOT encode relocated addresses.
  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
  */
+#include "led_config.h"
+#include "led_macros.inc"
+
 #ifndef BOOT_AT
 #define BOOT_AT 0x1ac0
 #endif
@@ -489,7 +492,9 @@ L1d06:
     ldi     r24, 0x04
     sts     0x006d, r24
     sts     0x0068, r24
-    /* Removed 0x1d30: sbi     0xa, 0 (size-optimized, see CHANGES.md) */
+led_init:
+    LED_INIT
+led_init_done:
     mov     r7, r1
     mov     r3, r1
     mov     r5, r1
@@ -691,6 +696,9 @@ L1e64:
     brbc    1, L1eac
 
 L1e7c:
+led_tick:
+    LED_TICK
+led_tick_done:
     /* Removed 0x1e7c: andi    r24, 0x4c (size-optimized, see CHANGES.md) */
     /* Removed 0x1e7e: brbc    1, L1e82 (size-optimized, see CHANGES.md) */
     /* Removed 0x1e80: rjmp    L1f82 (size-optimized, see CHANGES.md) */
@@ -721,6 +729,9 @@ L1e9e:
     rjmp    L1d5e
 
 L1eac:
+led_exit:
+    LED_EXIT
+led_exit_done:
     /* Removed 0x1eac: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
     out     0xa, r1
     sts     0x0068, r1
