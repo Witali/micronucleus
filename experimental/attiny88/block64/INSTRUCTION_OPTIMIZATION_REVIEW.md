@@ -73,6 +73,25 @@ This is an instruction-cost comparison, not a newly assembled receiver.
 `LPM ZL,Z` is defined; `LPM ZL,Z+` has an explicitly undefined result and
 cannot be used as a shortcut.
 
+### Table-free CRC candidate
+
+The official [AVR-LibC CRC implementation](https://github.com/avrdudes/avr-libc/blob/main/include/util/crc16.h)
+also provides an optimized table-free `_crc16_update` for polynomial A001.
+Reviewed file blob on 2026-10-26:
+`9d3bc825e2767202b425508067892037696e7a92`.
+Its assembly expression has 23 single-cycle instructions, excluding any
+function boundary and register setup. The current streaming table pipeline
+spends 11 clocks per byte. A direct replacement therefore needs about
+12 additional byte clocks, beyond the padding available in the current
+85/86-clock schedule. This is an instruction-count comparison, not an
+assembled alternative receiver or a proof that every table-free design is
+impossible. R0/scratch liveness and the final EOP pipeline also need review.
+
+A 16-entry, 16-bit nibble table would occupy 32 bytes, with two update steps
+per byte. It is another unimplemented size/timing tradeoff. Removing the
+512-byte tables alone does not remove V2's expanded cooldown code or prove
+that a smaller complete receiver meets the USB sampling schedule.
+
 MicroMusic's flag-neutral CPSE/SBRC and GPIOR backup recipes are useful
 references, but this USB function already avoids a general SREG backup.
 GPIOR0 retains reset causes. Using GPIOR1/2 for Y backup could shorten outer

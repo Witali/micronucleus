@@ -76,11 +76,20 @@ Correctness fixes may increase code first; do not trade them for a size claim.
 
 - [ ] Review common state/response tails without changing externally visible
   result/state behavior or transaction ownership.
+- [ ] Compare table-free AVR-LibC CRC (23 instruction clocks/byte before
+  setup) and a 32-byte nibble table with the current 11-clock table
+  pipeline. Replan the receiver before claiming a table-free size saving;
+  the existing schedule cannot directly absorb the extra clocks.
 - [ ] Measure real linked code size after each focused change.
 - [ ] Move BOOT_AT only after the code fits; rebuild RESET, descriptors,
   postscript, host bounds, reference maps and updater configuration together.
 
 ## Priority 2: independent and physical memory validation
+
+- [x] Compare the installed legacy loader with a restricted streaming-V2
+  application on the same board. Read/write/erase scratch Flash and EEPROM,
+  distinguish native and equal-size transfers, and restore the original
+  application/EEPROM exactly. See the [physical benchmark](prototypes/memory_benchmark/COMPARISON.md).
 
 - [ ] Add independent CPU/peripheral validation of the Block64 workers,
   rather than treating the local strict interpreter as a complete device.

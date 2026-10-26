@@ -1,0 +1,507 @@
+{
+  "comparisons": [
+    {
+      "old_operation": "flash.read.common",
+      "new_operation": "flash.read.common",
+      "old": {
+        "samples": 3,
+        "bytes": 6908,
+        "wall_seconds": {
+          "min": 2.5905363999772817,
+          "median": 2.5918133000377566,
+          "mean": 2.591818733373657,
+          "max": 2.5931065001059324
+        },
+        "mean_verified_bytes_per_second": 2665.3098502024327,
+        "control_transactions": 864,
+        "completion_transactions": 0,
+        "control_payload_bytes": 6908,
+        "usb_seconds": 2.5883293682709336,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.003489365102723241
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 6908,
+        "wall_seconds": {
+          "min": 1.0785576000344008,
+          "median": 1.0798711001407355,
+          "mean": 1.079449566702048,
+          "max": 1.0799199999310076
+        },
+        "mean_verified_bytes_per_second": 6399.557897925175,
+        "control_transactions": 108,
+        "completion_transactions": 0,
+        "control_payload_bytes": 6908,
+        "usb_seconds": 1.0788619329687208,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00058763373332719
+      },
+      "wall_speedup_old_over_new": 2.4010558837799376,
+      "common_flash_contents_identical": false
+    },
+    {
+      "old_operation": "flash.read.controlled",
+      "new_operation": "flash.read.controlled",
+      "old": {
+        "samples": 1,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.190698399906978,
+          "median": 0.190698399906978,
+          "mean": 0.190698399906978,
+          "max": 0.190698399906978
+        },
+        "mean_verified_bytes_per_second": 2684.867834495474,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 512,
+        "usb_seconds": 0.19042499945499003,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.0,
+        "poll_sleep_seconds": 0.0,
+        "host_other_seconds": 0.0002734004519879818
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.0799628000240773,
+          "median": 0.07996530015952885,
+          "mean": 0.07996760006062686,
+          "max": 0.07997469999827445
+        },
+        "mean_verified_bytes_per_second": 6402.593045331245,
+        "control_transactions": 8,
+        "completion_transactions": 0,
+        "control_payload_bytes": 512,
+        "usb_seconds": 0.07992116680058341,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 4.643326004346212e-05
+      },
+      "wall_speedup_old_over_new": 2.3846957988285427,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "eeprom.read",
+      "new_operation": "eeprom.read",
+      "old": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.1916423998773098,
+          "median": 0.19188209995627403,
+          "mean": 0.19181979990874728,
+          "max": 0.191934899892658
+        },
+        "mean_verified_bytes_per_second": 333.6464746102652,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 64,
+        "usb_seconds": 0.19154690019786358,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00027289971088369686
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.009900000179186463,
+          "median": 0.009928200161084533,
+          "mean": 0.009921133440608779,
+          "max": 0.009935199981555343
+        },
+        "mean_verified_bytes_per_second": 6450.875838242212,
+        "control_transactions": 1,
+        "completion_transactions": 0,
+        "control_payload_bytes": 64,
+        "usb_seconds": 0.009909066604450345,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 1.206683615843455e-05
+      },
+      "wall_speedup_old_over_new": 19.334464258246776,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "eeprom.write",
+      "new_operation": "eeprom.write",
+      "old": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.6428784001618624,
+          "median": 0.6429055000189692,
+          "mean": 0.6429739333689213,
+          "max": 0.6431378999259323
+        },
+        "mean_verified_bytes_per_second": 99.53747217195274,
+        "control_transactions": 64,
+        "completion_transactions": 129,
+        "control_payload_bytes": 193,
+        "usb_seconds": 0.18960086558945477,
+        "completion_usb_seconds": 0.378074933309108,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0.07456660076665382,
+        "host_other_seconds": 0.0007315337037046751
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.26982990000396967,
+          "median": 0.26989819994196296,
+          "mean": 0.26989409994954866,
+          "max": 0.2699541999027133
+        },
+        "mean_verified_bytes_per_second": 237.13004475445564,
+        "control_transactions": 1,
+        "completion_transactions": 1,
+        "control_payload_bytes": 72,
+        "usb_seconds": 0.26698366661245626,
+        "completion_usb_seconds": 0.002886566643913587,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 2.3866693178812664e-05
+      },
+      "wall_speedup_old_over_new": 2.382319337433136,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "eeprom.erase_to_ff",
+      "new_operation": "eeprom.erase_to_ff",
+      "old": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.6429521001409739,
+          "median": 0.6439511999487877,
+          "mean": 0.6766220333520323,
+          "max": 0.7429627999663353
+        },
+        "mean_verified_bytes_per_second": 94.58751983428559,
+        "control_transactions": 64,
+        "completion_transactions": 128,
+        "control_payload_bytes": 192,
+        "usb_seconds": 0.19975153310224414,
+        "completion_usb_seconds": 0.39004226626517874,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0.08603899980274339,
+        "host_other_seconds": 0.0007892341818660498
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.2699760999530554,
+          "median": 0.2699769998434931,
+          "mean": 0.2699771332554519,
+          "max": 0.26997829996980727
+        },
+        "mean_verified_bytes_per_second": 237.05711379431276,
+        "control_transactions": 1,
+        "completion_transactions": 1,
+        "control_payload_bytes": 72,
+        "usb_seconds": 0.26706123328767717,
+        "completion_usb_seconds": 0.002897466765716672,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 1.843320205807686e-05
+      },
+      "wall_speedup_old_over_new": 2.5062197868136247,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "flash.write.scratch",
+      "new_operation": "flash.write.scratch",
+      "old": {
+        "samples": 1,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.32122919987887144,
+          "median": 0.32122919987887144,
+          "mean": 0.32122919987887144,
+          "max": 0.32122919987887144
+        },
+        "mean_verified_bytes_per_second": 1593.8775185850604,
+        "control_transactions": 136,
+        "completion_transactions": 0,
+        "control_payload_bytes": 0,
+        "usb_seconds": 0.2624963999260217,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.057971000438556075,
+        "poll_sleep_seconds": 0.0,
+        "host_other_seconds": 0.0007617995142936707
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.23997989995405078,
+          "median": 0.23998160008341074,
+          "mean": 0.23998283338733017,
+          "max": 0.239987000124529
+        },
+        "mean_verified_bytes_per_second": 2133.485936361275,
+        "control_transactions": 8,
+        "completion_transactions": 8,
+        "control_payload_bytes": 576,
+        "usb_seconds": 0.0797774667541186,
+        "completion_usb_seconds": 0.013369233735526601,
+        "program_settle_seconds": 0.14654730012019476,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00028883277749021846
+      },
+      "wall_speedup_old_over_new": 1.3385507427542134,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "flash.write.page",
+      "new_operation": "flash.write.page",
+      "old": {
+        "samples": 8,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.03971950011327863,
+          "median": 0.04000845004338771,
+          "mean": 0.040126125037204474,
+          "max": 0.041171499993652105
+        },
+        "mean_verified_bytes_per_second": 1594.97085603606,
+        "control_transactions": 17,
+        "completion_transactions": 0,
+        "control_payload_bytes": 0,
+        "usb_seconds": 0.03281204999075271,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.007246375054819509,
+        "poll_sleep_seconds": 0.0,
+        "host_other_seconds": 6.769999163225293e-05
+      },
+      "new": {
+        "samples": 24,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.02996349986642599,
+          "median": 0.02997589996084571,
+          "mean": 0.029975149964836117,
+          "max": 0.029989399947226048
+        },
+        "mean_verified_bytes_per_second": 2135.101911919656,
+        "control_transactions": 1,
+        "completion_transactions": 1,
+        "control_payload_bytes": 72,
+        "usb_seconds": 0.009972183344264826,
+        "completion_usb_seconds": 0.0016711542169408251,
+        "program_settle_seconds": 0.018318412515024345,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 1.3399888606121143e-05
+      },
+      "wall_speedup_old_over_new": 1.3386463482009758,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "flash.read.common",
+      "new_operation": "flash.read.common.control8",
+      "old": {
+        "samples": 3,
+        "bytes": 6908,
+        "wall_seconds": {
+          "min": 2.5905363999772817,
+          "median": 2.5918133000377566,
+          "mean": 2.591818733373657,
+          "max": 2.5931065001059324
+        },
+        "mean_verified_bytes_per_second": 2665.3098502024327,
+        "control_transactions": 864,
+        "completion_transactions": 0,
+        "control_payload_bytes": 6908,
+        "usb_seconds": 2.5883293682709336,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.003489365102723241
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 6908,
+        "wall_seconds": {
+          "min": 2.5918163000606,
+          "median": 2.591886800015345,
+          "mean": 2.5918656000867486,
+          "max": 2.5918937001843005
+        },
+        "mean_verified_bytes_per_second": 2665.261655453428,
+        "control_transactions": 864,
+        "completion_transactions": 0,
+        "control_payload_bytes": 6908,
+        "usb_seconds": 2.5884668672612556,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.0033987328254928193
+      },
+      "wall_speedup_old_over_new": 0.9999819177687723,
+      "common_flash_contents_identical": false
+    },
+    {
+      "old_operation": "flash.read.controlled",
+      "new_operation": "flash.read.controlled.control8",
+      "old": {
+        "samples": 1,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.190698399906978,
+          "median": 0.190698399906978,
+          "mean": 0.190698399906978,
+          "max": 0.190698399906978
+        },
+        "mean_verified_bytes_per_second": 2684.867834495474,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 512,
+        "usb_seconds": 0.19042499945499003,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.0,
+        "poll_sleep_seconds": 0.0,
+        "host_other_seconds": 0.0002734004519879818
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 512,
+        "wall_seconds": {
+          "min": 0.19196249986998737,
+          "median": 0.19196309987455606,
+          "mean": 0.19196493326065442,
+          "max": 0.1919692000374198
+        },
+        "mean_verified_bytes_per_second": 2667.1537936816544,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 512,
+        "usb_seconds": 0.19172150067364177,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0.0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00024343258701264858
+      },
+      "wall_speedup_old_over_new": 0.9934022671111672,
+      "common_flash_contents_identical": null
+    },
+    {
+      "old_operation": "eeprom.read",
+      "new_operation": "eeprom.read.control1",
+      "old": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.1916423998773098,
+          "median": 0.19188209995627403,
+          "mean": 0.19181979990874728,
+          "max": 0.191934899892658
+        },
+        "mean_verified_bytes_per_second": 333.6464746102652,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 64,
+        "usb_seconds": 0.19154690019786358,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00027289971088369686
+      },
+      "new": {
+        "samples": 3,
+        "bytes": 64,
+        "wall_seconds": {
+          "min": 0.19188560009934008,
+          "median": 0.191901900107041,
+          "mean": 0.19190436671487987,
+          "max": 0.19192559993825853
+        },
+        "mean_verified_bytes_per_second": 333.4994460813255,
+        "control_transactions": 64,
+        "completion_transactions": 0,
+        "control_payload_bytes": 64,
+        "usb_seconds": 0.1916453669934223,
+        "completion_usb_seconds": 0.0,
+        "program_settle_seconds": 0,
+        "poll_sleep_seconds": 0,
+        "host_other_seconds": 0.00025899972145756084
+      },
+      "wall_speedup_old_over_new": 0.9995593283905925,
+      "common_flash_contents_identical": null
+    }
+  ],
+  "new_scratch_erase": {
+    "samples": 3,
+    "bytes": 512,
+    "wall_seconds": {
+      "min": 0.17587320017628372,
+      "median": 0.17593160015530884,
+      "mean": 0.17591236679193875,
+      "max": 0.17593230004422367
+    },
+    "mean_verified_bytes_per_second": 2910.540113450754,
+    "control_transactions": 8,
+    "completion_transactions": 8,
+    "control_payload_bytes": 64,
+    "usb_seconds": 0.015851200247804325,
+    "completion_usb_seconds": 0.01386096669981877,
+    "program_settle_seconds": 0.14609349984675646,
+    "poll_sleep_seconds": 0,
+    "host_other_seconds": 0.0001066999975591898
+  },
+  "legacy_cli_application_erase": {
+    "wall_seconds": 2.5208970000967383,
+    "scope": "whole application, external official CLI",
+    "silicon_time_measured": false,
+    "direct_scratch_erase_ratio": false,
+    "erased_bytes": 6912,
+    "erased_pages": 108,
+    "advertised_host_wait_seconds": 0.756,
+    "timing_reference": "Flushed official CLI erasing progress 0..1, includes host pacing and software overhead"
+  },
+  "notes": [
+    "USB call time includes host scheduling, retries/NAKs and firmware busy stalls.",
+    "Fixed program-settle waits are reported separately and are not silicon-time measurements.",
+    "Verification is outside each write/erase timer; only passed phases are compared.",
+    "Scratch-write aggregate rows contain page rows; do not sum both levels.",
+    "Legacy Flash has one 512-byte round with eight page samples; new Flash has repeated erased-page rounds.",
+    "Common full reads contain different application images; controlled 512-byte reads use identical payload bytes.",
+    "Legacy whole-application erase and new eight-page erase have different scopes.",
+    "Final original-application restoration and installed-loader integrity are verified by external orchestration."
+  ],
+  "date": "2026-10-26",
+  "target": "ATtiny88, externally clocked at 16 MHz",
+  "execution": "Old loader installed; new protocol in an application-only guarded image",
+  "old_loader_body_sha256": "be2035139b301739837b5a214773e0a0421404450b078d40e2bf0c02aafa77c4",
+  "new_benchmark_body_sha256": "1a4234414d966a91bf8bca82b7c93c16aa5c3d673cdebd498132b2a467eb21f3",
+  "final_restoration": {
+    "application_bytes": 6908,
+    "flash_identical_read_copies": 2,
+    "eeprom_bytes": 64,
+    "eeprom_identical_read_copies": 2,
+    "old_loader_hash_verified_after_mutations": true,
+    "application_start_accepted": true,
+    "audio_evaluated": false
+  },
+  "private_memory_dumps_published": false,
+  "host_flash_settle_ms": {
+    "legacy": 7,
+    "new": 18
+  },
+  "legacy_cursor_preparation": {
+    "seconds": 0.008886600146070123,
+    "control_transactions": 4,
+    "timed_separately_from_page_writes": true
+  }
+}
