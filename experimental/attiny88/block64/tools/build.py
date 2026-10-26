@@ -35,22 +35,22 @@ def build():
     assert len(body)<=1664,('Bootloader exceeds reserved 26 Flash pages:',len(body))
     assert len(body)%2==0
     assert body[2:4]==bytes([APP>>8,APP&255])
-    assert body[2:8]==bytes([APP>>8,APP&255,64,64,0x32,0x03])
-    assert body[8:10]==b'\x09\x02' and body[0x26:0x28]==b'\x02\x03'
+    assert body[2:8]==bytes([APP>>8,APP&255,64,64,0x33,0x03])
+    assert body[8:10]==b'\x09\x02' and body[0x26:0x28]==b'\x03\x03'
     assert binary[BOOT:BOOT+2]!=b'\xff\xff'
     image=bytearray(b'\xff'*FLASH)
     reset=0xC000|(((BOOT//2)-1)&0xFFF)
     image[0:2]=reset.to_bytes(2,'little')
     image[BOOT:BOOT+len(body)]=body
     assert image[APP:BOOT]==b'\xff'*4
-    (FW/'BOOTLOADER_BODY_1980_PASS10.bin').write_bytes(body)
-    (FW/'ISP_FULL_8192_1980_PASS10.bin').write_bytes(image)
+    (FW/'BOOTLOADER_BODY_1980_PASS11.bin').write_bytes(body)
+    (FW/'ISP_FULL_8192_1980_PASS11.bin').write_bytes(image)
     lines=[rec(0,image[:2])]
     for adr in range(BOOT,FLASH,16):
         part=image[adr:adr+16]
         if any(b!=255 for b in part):lines.append(rec(adr,part))
     lines.append(rec(0,b'',1))
-    hexf=FW/'ISP_FULL_1980_PASS10_EXPERIMENTAL.hex'
+    hexf=FW/'ISP_FULL_1980_PASS11_EXPERIMENTAL.hex'
     hexf.write_text('\n'.join(lines)+'\n')
     for line in lines:
         if not line.startswith(':'):continue
@@ -60,7 +60,7 @@ def build():
     manifest={
         'note':'EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.',
         'mcpu':'ATtiny88 16MHz external clock',
-        'protocol_version':'3.2 / Pass10 (GET_STATUS unified)',
+        'protocol_version':'3.3 / Pass11 (GET_STATUS always 8)',
         'bootloader_start':hex(BOOT),
         'bootloader_body_bytes':len(body),
         'reserved_flash_bytes':FLASH-BOOT,
@@ -72,13 +72,16 @@ def build():
         'usb_vid_pid':'16d0:0753',
         'protocol_commands':{'read':'0x10','write':'0x11','get_status':'0x12','run':'0x13','erase_page':'0x14'},
         'get_status_layout':['result','state','app_hi','app_lo','page_bytes','eeprom_bytes','protocol_marker','features'],
-        'get_status_lengths':'1 byte polling, 8 byte full; all requests capped at 8',
+        'get_status_lengths':'8 bytes only (supported host contract; USB EP0 still clips to wLength)',
         'reset_vector_opcode':hex(reset),
         'critical_usb_code_bytes':sym['main']-sym['USB_handler'],
         'crc16_code_bytes':sym['USB_handler']-sym['usb_crc16_append'],
+        'status_reply_bytes':8,
         'sha256_body':hashlib.sha256(body).hexdigest(),
         'sha256_full_binary':hashlib.sha256(image).hexdigest(),
         'sha256_source':hashlib.sha256(SRC.read_bytes()).hexdigest(),
+        'source_modules': sorted(f.name for f in (ROOT/'source').glob('*.inc')),
+        'sha256_source_modules': {f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in (ROOT/'source').glob('*.inc')},
     }
     (FW/'manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+'\n')
     print(json.dumps(manifest,indent=2))

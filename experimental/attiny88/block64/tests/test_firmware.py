@@ -208,8 +208,8 @@ def test_usb_bit_code_crc_binary_identical(firmware):
     assert old[bs['USB_handler']:bs['usb_program_page']]==new[ns['USB_handler']:ns['main']]
 
 def test_correct_version_and_layout(firmware):
-    assert firmware[BOOT+2:BOOT+8]==bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x32,0x03])
-    assert firmware[BOOT+0x26:BOOT+0x28]==b'\x02\x03'
+    assert firmware[BOOT+2:BOOT+8]==bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x33,0x03])
+    assert firmware[BOOT+0x26:BOOT+0x28]==b'\x03\x03'
     assert firmware[BOOT+2:BOOT+4]==bytes([(BOOT-4)>>8,(BOOT-4)&255])
     assert firmware[BOOT:BOOT+2]!=b'\xff\xff'
     assert len(firmware)==8192
@@ -337,11 +337,11 @@ def test_status_report_and_run_request(firmware):
     c.run_from('startup',stop_at=['main'],count=500)
     c.mem[MEM_STATUS]=0
     c.mem[MEM_STATE]=ST_DONE
-    c.set_setup(0x12,length=1,request_type=0xc0)
+    c.set_setup(0x12,length=8,request_type=0xc0)
     c.run_from('block_vendor_dispatch',stop_at=['L1de2'],count=200)
     assert c.r[24]==8 and ((c.r[19]<<8)|c.r[18])==0x8138
     c.run_from('L1de2',stop_at=['L1dfc'],count=100)
-    assert c.mem[0x0100]==1  # Common limiter still honors wLength=1
+    assert c.mem[0x0100]==8  # Single supported GET_STATUS frame
     c.mem[0x010f]=0x5a
     c.mem[0x0101]=0xc3
     c.run_from('L1dfc',stop_at=['L1e64'],count=900,execute_ret=True)
@@ -363,12 +363,12 @@ def test_unified_get_status_usb_payload_and_bounds(firmware,result,state,request
     c.run_from('block_vendor_dispatch',stop_at=['L1de2'],count=200)
     assert c.r[24]==8 and (c.r[19]<<8|c.r[18])==0x8138
     c.run_from('L1de2',stop_at=['L1dfc'],count=100)
-    count=min(8,requested)
+    count=min(8,requested)  # EP0 clips malformed host wLength; supported host requests eight.
     assert c.mem[0x0100]==count
     c.mem[0x010f]=0x5a
     c.mem[0x0101]=0xc3
     c.run_from('L1dfc',stop_at=['L1e64'],count=900,execute_ret=True)
-    expected=bytes([result,state,(BOOT-4)>>8,(BOOT-4)&255,64,64,0x32,0x03])
+    expected=bytes([result,state,(BOOT-4)>>8,(BOOT-4)&255,64,64,0x33,0x03])
     assert c.mem[0x0102:0x0102+count]==expected[:count]
     # The packetizer itself advances FLASH_WAIT_PREP -> SPM_WAIT_SENT after
     # scheduling the outgoing status-stage packet; it must not change the
@@ -462,7 +462,7 @@ def test_cold_start_initializes_all_block64_state(firmware):
         c.mem[addr]=rng.randrange(1,256)
     c.run_from('startup', stop_at=['main'], count=400)
     assert c.mem[0x0100:0x013a] == bytes(0x3a)
-    assert c.mem[0x013a:0x0140] == bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x32,0x03])
+    assert c.mem[0x013a:0x0140] == bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x33,0x03])
     assert c.mem[MEM_STATE] == ST_IDLE
     assert c.mem[MEM_STATUS] == 0
     assert c.mem[MEM_EXPECT_PID] == 0
@@ -503,7 +503,7 @@ def test_usb_standard_descriptors_still_accessible_after_metadata_repack(firmwar
     raw=bytes(c.flash[address:address+18])
     assert raw[:2]==(bytes([18,kind]) if kind==1 else bytes([9,kind]))
     if kind==1:
-        assert raw[12:14]==b'\x02\x03'  # bcdDevice=3.2
+        assert raw[12:14]==b'\x03\x03'  # bcdDevice=3.3
         assert raw[8:12]==b'\xd0\x16\x53\x07'  # VID:PID 16D0:0753
     else:
         assert raw[2:4]==b'\x12\x00'  # total length 18

@@ -1,4 +1,4 @@
-/* Micronucleus ATtiny88 16 MHz Block64 v3.2 unified GET_STATUS (Pass10) ASM.
+/* Micronucleus ATtiny88 16 MHz Block64 v3.3 fixed 8-byte GET_STATUS (Pass11) ASM.
  * BASED ON Optimized Micronucleus t88_default 16 MHz ATtiny88 bootloader, pass 3.
  * Assembler reconstruction of public Micronucleus firmware with conservative code-size
  * SRAM pointer reuse in V-USB with cycle-neutral sync-stage initialization.
@@ -10,57 +10,8 @@
  * a power-failure-safe or hardware-locked RESET word.
  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
  */
-#ifndef BOOT_AT
-#define BOOT_AT 0x1980
-#endif
-#if ((BOOT_AT - 3) & 0xff) < 8
-#error Optimized Flash range check assumes boundary low-byte >= 8
-#endif
-#if ((BOOT_AT + 0x08) >> 8) != ((BOOT_AT + 0x1a) >> 8)
-#error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
-#endif
-
-/* Block64 v3.2 split erase/write, unified GET_STATUS (old CLI incompatible). */
-#define MEM_STATE 0x0139
-#define MEM_TYPE 0x0130
-#define MEM_ADDR_LO 0x0131
-#define MEM_ADDR_HI 0x0132
-#define MEM_REMAIN 0x0133
-#define MEM_INDEX 0x0134
-#define MEM_TOTAL 0x0135
-#define MEM_STATUS 0x0138
-#define MEM_PROGRESS 0x0136
-#define MEM_EXPECT_PID 0x0137  /* USB DATA1 after SETUP, toggles per accepted OUT */
-#define MEM_BUFFER 0x0140   /* one 64-byte SRAM page, 0x0140-0x017f */
-/* Live status response at SRAM 0x0138..0x013F: MEM_STATUS, MEM_STATE,
-   followed by six immutable fields initialized from Flash BOOT_AT+2. */
-/* State values are intentionally clustered for short busy checks:
-   idle/done/error=0..2, run=3, active write phases=4..7. */
-#define ST_IDLE 0
-#define ST_DONE 1
-#define ST_ERROR 2
-#define ST_RUN 3
-#define ST_RECEIVE 4
-#define ST_WRITE_EEPROM 5
-#define ST_FLASH_WAIT_PREP 6
-#define ST_SPM_WAIT_SENT 7
-/* ST_FLASH_WAIT_PREP serves both erase and write. MEM_PROGRESS distinguishes them. */
-#define OP_READ 0x10
-#define OP_WRITE 0x11
-#define OP_STATUS 0x12
-#define OP_RUN 0x13
-#define OP_ERASE_PAGE 0x14
-#define MEM_FLASH 0
-#define MEM_EEPROM 1
-#define RESULT_OK 0
-#define RESULT_BUSY 1
-#define RESULT_BOUNDS 2
-#define RESULT_FAIL 3
-#define EP0_NAK 0x5a
-#define EMPTY_MESSAGE 0xff
-#define EP0_MAX_PACKET 8
-#define BLOCK_MAX 64
-#define RESET_RJMP (0xc000 | (((BOOT_AT/2)-1) & 0x0fff))
+#include "device_attiny88.inc"
+#include "block64_protocol.inc"
 
 .section .text
 /* Edit BOOT_AT only after the build audits that the loader fits in flash. */
@@ -69,23 +20,23 @@
 bootloader_start:
     rjmp startup
 /* Six-byte static status metadata and relocated standard USB descriptors. */
-    .byte ((BOOT_AT - 4) >> 8), ((BOOT_AT - 4) & 0xff), 0x40, 0x40, 0x32, 0x03  /* six metadata bytes; live result/state in SRAM */
+    .byte ((BOOT_AT - 4) >> 8), ((BOOT_AT - 4) & 0xff), T88_FLASH_PAGE_BYTES, T88_EEPROM_BYTES, BLOCK64_PROTO_MARKER, 0x03  /* six metadata bytes; live result/state in SRAM */
     .byte 0x09, 0x02, 0x12, 0x00, 0x01, 0x01, 0x00, 0x80  /* configuration descriptor */
     .byte 0x32, 0x09, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00  /* interface descriptor follows */
     .byte 0x00, 0x00, 0x12, 0x01, 0x10, 0x01, 0xff, 0x00  /* device descriptor follows */
-    .byte 0x00, 0x08, 0xd0, 0x16, 0x53, 0x07, 0x02, 0x03  /* VID/PID, bcdDevice=3.2 */
+    .byte 0x00, 0x08, 0xd0, 0x16, 0x53, 0x07, BLOCK64_VERSION_MINOR, BLOCK64_VERSION_MAJOR  /* VID/PID, bcdDevice=3.3 */
     .byte 0x00, 0x00, 0x00, 0x01  /* 1a6a */
 
 startup:
     eor     r1, r1
-    out     0x3f, r1
-    ldi     r28, 0xff
-    ldi     r29, 0x02
-    out     0x3d, r28
-    out     0x3e, r29
+    out     T88_IO_SREG, r1
+    ldi     r28, (T88_RAMEND & 0xff)
+    ldi     r29, (T88_RAMEND >> 8)
+    out     T88_IO_SPL, r28
+    out     T88_IO_SPH, r29
     /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
-    ldi     r26, 0x00
-    ldi     r27, 0x01
+    ldi     r26, (T88_RAMSTART & 0xff)
+    ldi     r27, (T88_RAMSTART >> 8)
     /* Removed 0x1a80: rjmp    L1a84 (size-optimized, see CHANGES.md) */
 
 L1a82:
@@ -108,389 +59,8 @@ block_init_status_tail:
     brne    block_init_status_tail
     rjmp    main
 
-usb_crc16_append:
-    movw    r26, r24
-    ldi     r24, 0x00
-    ldi     r25, 0x00
-    ldi     r20, 0x01
-    ldi     r21, 0xa0
-    com     r22
-    ldi     r19, 0x00
-    rjmp    L1aae
-
-L1a9c:
-    ld      r18, X+
-    eor     r24, r18
-
-L1aa0:
-    ror     r25
-    ror     r24
-    brbs    0, L1aaa
-    eor     r24, r20
-    eor     r25, r21
-
-L1aaa:
-    subi    r19, 0xe0
-    brbs    0, L1aa0
-
-L1aae:
-    subi    r22, 0xff
-    brbs    0, L1a9c
-    st      X+, r24
-    st      X+, r25
-    ret
-
-USB_handler:
-    push    r28
-    push    r29
-    eor     r28, r28
-
-L1abe:
-    inc     r28
-    sbis    0x9, 1
-    brbc    1, L1abe
-
-L1ac4:
-    sbis    0x9, 1
-    rjmp    L1ade
-    sbis    0x9, 1
-    rjmp    L1ade
-    sbis    0x9, 1
-    rjmp    L1ade
-    sbis    0x9, 1
-    rjmp    L1ade
-    sbis    0x9, 1
-    rjmp    L1ade
-    sbis    0x9, 1
-    rjmp    L1ade
-    rjmp    L1bf0
-
-L1ade:
-    push    r0
-    lds     r28, 0x010e
-    eor     r29, r29
-    subi    r28, 0xea
-    sbci    r29, 0xfe
-    pop     r0
-    ldi     r22, 0x55
-    sbis    0x9, 1
-    rjmp    L1af8
-    push    r0
-    pop     r0
-    rjmp    L1ac4
-
-L1af8:
-    /* Cycle-neutral substitution at sync sampling stage.
-       Former PUSH R16 (2) + POP R16 (2) were an inert 4-cycle delay.
-       Now set Z=0x0100 (1+1) and RJMP-to-next (2): still 4 cycles.
-       The saved register and stack depth remain unchanged; SREG unchanged.
-       All subsequent USB bit sample and output timestamps remain identical. */
-    ldi     r30, 0x00
-    ldi     r31, 0x01
-    rjmp    usb_rx_delay_complete
-usb_rx_delay_complete:
-    push    r16
-    ldi     r18, 0x00
-    ldi     r20, 0x10
-    pop     r16
-    in      r16, 0x9
-    andi    r16, 0x06
-    bst     r16, 1
-    bld     r18, 7
-    push    r19
-    ldi     r21, 0x00
-    ldi     r19, 0x0b
-    rjmp    L1b86
-
-L1b14:
-    andi    r17, 0x06
-    ori     r20, 0x40
-    andi    r18, 0x7f
-    mov     r16, r17
-    subi    r21, 0xff
-    rjmp    L1b5c
-
-L1b20:
-    ori     r20, 0x80
-    in      r17, 0x9
-    andi    r17, 0x06
-    andi    r18, 0x7f
-    subi    r21, 0x02
-    rjmp    L1b6a
-
-L1b2c:
-    ori     r20, 0x40
-    in      r16, 0x9
-    andi    r18, 0x7f
-    andi    r16, 0x06
-    brbs    1, L1baa
-    subi    r21, 0xff
-    rjmp    L1b3a
-
-L1b3a:
-    rjmp    L1b82
-
-L1b3c:
-    ori     r20, 0x20
-    in      r17, 0x9
-    andi    r18, 0x7f
-    andi    r17, 0x06
-    brbs    1, L1baa
-    subi    r21, 0xff
-    rjmp    L1b4a
-
-L1b4a:
-    rjmp    L1b96
-
-L1b4c:
-    andi    r16, 0x06
-    eor     r17, r16
-    subi    r21, 0x01
-    brbc    2, L1b58
-    subi    r21, 0xfd
-    nop
-
-L1b58:
-    subi    r17, 0x01
-    ror     r18
-
-L1b5c:
-    cpi     r18, 0xfc
-    in      r17, 0x9
-    brbc    0, L1b14
-    andi    r17, 0x06
-    eor     r16, r17
-    subi    r16, 0x01
-    ror     r18
-
-L1b6a:
-    cpi     r18, 0xfc
-    brbc    0, L1b20
-    eor     r20, r18
-    st      Y+, r20
-
-L1b72:
-    in      r16, 0x9
-    andi    r16, 0x06
-    eor     r17, r16
-    andi    r20, 0x3f
-    subi    r17, 0x01
-    ror     r18
-    cpi     r18, 0xfc
-    brbc    0, L1b2c
-
-L1b82:
-    lsr     r20
-    lsr     r20
-
-L1b86:
-    in      r17, 0x9
-    andi    r17, 0x06
-    brbs    1, L1baa
-    eor     r16, r17
-    subi    r16, 0x01
-    ror     r18
-    cpi     r18, 0xfc
-    brbc    0, L1b3c
-
-L1b96:
-    subi    r22, 0xab
-    brbs    0, L1b72
-    subi    r19, 0x01
-    in      r16, 0x9
-    brbc    0, L1b4c
-    rjmp    L1ba2
-
-L1ba2:
-    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
-
-L1ba6:
-    eor     r16, r16
-    rjmp    L1be4
-
-L1baa:
-    subi    r19, 0x0b
-    neg     r19
-    sub     r28, r19
-    sbci    r29, 0x00
-    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
-    /* Z already initialized without added latency in L1af8. */
-    ldd     r16, Y+0
-    cpi     r16, 0xc3
-    brbs    1, L1bf6
-    cpi     r16, 0x4b
-    brbs    1, L1bf6
-    ldd     r18, Z+12
-    ldd     r17, Y+1
-    add     r17, r17
-    cpse    r17, r18
-    rjmp    L1ba6
-    cpi     r16, 0x69
-    brbs    1, L1c14
-    cpi     r16, 0x2d
-    brbs    1, L1bd8
-    cpi     r16, 0xe1
-    brbc    1, L1ba6
-
-L1bd8:
-    ldi     r28, 0x0a
-
-L1bda:
-    in      r17, 0x1b
-    sbrc    r17, 2
-    rjmp    L1be4
-    dec     r28
-    brbc    1, L1bda
-
-L1be4:
-    /* Z is guaranteed 0x0100 on every path reaching packet commit.
-       STD Z+20 and STS 0x0114 each take two clocks; STD is 2 B shorter. */
-    std     Z+20, r16
-
-L1be8:
-    pop     r19
-    in      r28, 0x1b
-    sbrc    r28, 2
-    rjmp    L1abe
-
-L1bf0:
-    pop     r29
-    pop     r28
-    ret
-
-L1bf6:
-    ldd     r18, Z+20
-    and     r18, r18
-    brbs    1, L1be8
-    ldd     r17, Z+18
-    and     r17, r17
-    brbc    1, L1c48
-    cpi     r19, 0x04
-    brbs    2, L1c4c
-    std     Z+18, r19
-    std     Z+13, r18
-    rjmp    L1c4c
-
-L1c14:
-    ldd     r16, Z+18
-    cpi     r16, 0x01
-    brbc    4, L1c48
-    ldi     r16, 0x5a
-    ldd     r19, Z+15
-    sbrc    r19, 4
-    rjmp    L1c4e
-    std     Z+15, r16
-    ldi     r28, 0x01
-    ldi     r29, 0x01
-    rjmp    L1c56
-
-L1c30:
-    eor     r16, r21
-    ldi     r17, 0x00
-    rjmp    L1c36
-
-L1c36:
-    nop
-    out     0xb, r16
-    rjmp    L1c70
-
-L1c3c:
-    eor     r16, r21
-    ldi     r17, 0x00
-    adc     r18, r18
-    rjmp    L1c7e
-
-L1c44:
-    ldi     r17, 0x00
-    rjmp    L1c8a
-
-L1c48:
-    ldi     r20, 0x5a
-    rjmp    L1c50
-
-L1c4c:
-    ldi     r19, 0xd2
-
-L1c4e:
-    mov     r20, r19
-
-L1c50:
-    ldi     r28, 0x14
-    ldi     r29, 0x00
-    ldi     r19, 0x02
-
-L1c56:
-    in      r17, 0xa
-    ori     r17, 0x06
-    sbi     0xb, 1
-    in      r16, 0xb
-    out     0xa, r17
-    ldi     r21, 0x06
-    ldi     r18, 0x80
-
-L1c64:
-    ldi     r22, 0x35
-
-L1c66:
-    sbrs    r18, 0
-    eor     r16, r21
-    out     0xb, r16
-    ror     r18
-    ror     r17
-
-L1c70:
-    cpi     r17, 0xfc
-    brbc    0, L1c30
-    lsr     r22
-    brbc    0, L1c66
-    brbc    1, L1c66
-    sbrs    r18, 0
-    eor     r16, r21
-
-L1c7e:
-    out     0xb, r16
-    ror     r18
-    ror     r17
-    cpi     r17, 0xfc
-    brbc    0, L1c3c
-    ror     r18
-
-L1c8a:
-    ror     r17
-    sbrs    r17, 7
-    eor     r16, r21
-    nop
-    cpi     r17, 0xfc
-    out     0xb, r16
-    brbc    0, L1c44
-    ld      r18, Y+
-    dec     r19
-    brbc    1, L1c64
-    andi    r16, 0xf9
-    ldd     r17, Z+19
-    add     r17, r17
-    subi    r28, 0x16
-    sbci    r29, 0x00
-    out     0xb, r16
-    brbs    1, L1cb2
-    std     Z+12, r17
-
-L1cb2:
-    sbi     0x1b, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */
-    ori     r16, 0x02
-    in      r17, 0xa
-    andi    r17, 0xf9
-    mov     r20, r16
-    andi    r20, 0xf9
-    ldi     r21, 0x04
-
-L1cc2:
-    dec     r21
-    brbc    1, L1cc2
-    out     0xb, r16
-    out     0xa, r17
-    out     0xb, r20
-    rjmp    L1be8
+/* Byte-exact AVR USB PHY (NRZI, stuffing, CRC16, packet ACK/NAK). */
+#include "vusb_phy.inc"
 
 main:
     wdr
@@ -498,9 +68,9 @@ main:
        previous prescaler and interrupt settings. Next store, immediately,
        clears WDE/WDCE; timed sequence is unchanged. Saves four bytes. */
     ldi     r24, 0x18
-    sts     0x0060, r24
-    sts     0x0060, r1
-    sbi     0xa, 1
+    sts     T88_MEM_WDTCSR, r24
+    sts     T88_MEM_WDTCSR, r1
+    sbi     T88_IO_DDRD, 1
     /* 300.94 ms initial USB disconnect: 19 x 63355 inner loops.
        Previous 3000 x 400 countdown cost 4,815,001 cycles;
        this takes 4,815,056 cycles at 16 MHz (difference 55 cycles),
@@ -516,7 +86,7 @@ L1d06:
     brne    L1d06
     dec     r18
     brne    L1d02
-    cbi     0xa, 1
+    cbi     T88_IO_DDRD, 1
     ldi     r24, 0x5a
     sts     0x010f, r24
     ldi     r24, 0xff
@@ -524,8 +94,8 @@ L1d06:
     /* After reset both PCMSK2 and PCICR are zero.  Only PCINT18 / PCIE2
        are required: direct writes avoid redundant read-modify-write. */
     ldi     r24, 0x04
-    sts     0x006d, r24
-    sts     0x0068, r24
+    sts     T88_MEM_PCMSK2, r24
+    sts     T88_MEM_PCICR, r24
     /* Removed 0x1d30: sbi     0xa, 0 (size-optimized, see CHANGES.md) */
     mov     r7, r1
     mov     r3, r1
@@ -550,10 +120,10 @@ L1d48:
     sts     0x010c, r1
 
 L1d54:
-    sbis    0x1b, 2
+    sbis    T88_IO_PCIFR, 2
     rjmp    L1e98
     rcall   USB_handler
-    sbi     0x1b, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
+    sbi     T88_IO_PCIFR, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
                         SBI is 2 cycles vs LDI+OUT 2 cycles. */
 
 L1d5e:
@@ -561,128 +131,8 @@ L1d5e:
     rcall   block_memory_service
 
 /* Examine a staged USB packet; SETUP and DATA OUT have distinct handlers. */
-L1d9c:
-    /* Y=0x0100 from the immediately preceding block_memory_service call;
-       every returning path of that routine preserves Y. */
-    ldd     r24, Y+18
-    subi    r24, 3
-    brmi    L1dfc
-    ldd     r25, Y+13
-    cpi     r25, 0xe1            /* OUT token, DATA0/1 already decoded */
-    breq    block_out_packet
-    cpi     r25, 0x2d            /* SETUP token */
-    brne    L1df8
-    cpi     r24, 8
-    brne    L1df8
-    mov     r7, r1               /* extend inactivity timeout */
-    ldi     r24, 0xc3            /* initialize DATA0, TX toggle -> DATA1 */
-    std     Y+1, r24
-    ldi     r24, EP0_NAK
-    std     Y+15, r24
-    ldi     r24, EMPTY_MESSAGE
-    std     Y+0, r24             /* do not send reply until prepared */
-    ldd     r24, Y+23            /* bmRequestType */
-    andi    r24, 0x60
-    ldd     r25, Y+24            /* bRequest */
-    breq    block_standard_setup
-    rjmp    block_vendor_dispatch
-block_standard_setup:
-    rjmp    old_vendor_dispatch
-
-block_out_packet:
-    rcall   block_accept_out
-    rjmp    L1df8
-
-L1de2:
-    ldd     r25, Y+30
-    cpse    r25, r1
-    rjmp    L1df4
-    ldd     r25, Y+29
-    cp      r25, r24
-    brbc    0, L1df4
-    mov     r24, r25
-
-L1df4:
-    std     Y+0, r24
-
-L1df8:
-    std     Y+18, r1
-
-L1dfc:
-    ldd     r24, Y+15
-    sbrs    r24, 4
-    rjmp    L1e64
-    ldd     r24, Y+0
-    cpi     r24, 0xff
-    brbs    1, L1e64
-    mov     r23, r24
-    cpi     r24, 0x09
-    brbs    0, L1e14
-    ldi     r23, 0x08
-
-L1e14:
-    mov     r25, r24
-    sub     r25, r23
-    std     Y+0, r25
-    ldd     r25, Y+1
-    ldi     r18, 0x88
-    eor     r25, r18
-    std     Y+1, r25
-    and     r24, r24
-    brbs    1, L1e4c
-    ldd     r30, Y+16
-    ldd     r31, Y+17
-    /* Shared SRAM/Flash TX copy setup; data-path instructions unchanged. */
-    ldi     r26, 0x02
-    ldi     r27, 0x01
-    mov     r24, r23
-    /* 0x810a denotes a prefilled 8-byte EP0 reply; skip copying. */
-    sbrs    r31, 7
-    rjmp    tx_copy_flash_start
-    cpi     r30, 0x0a
-    breq    L1e4c
-    /* 0x81xx encodes a real SRAM source. Clear marker before LD. */
-    andi    r31, 0x7f
-
-tx_copy_sram_loop:
-    ld      r25, Z+
-    st      X+, r25
-    dec     r24
-    brne    tx_copy_sram_loop
-    ori     r31, 0x80            /* persist SRAM marker */
-    rjmp    tx_update_source_pointer
-
-tx_copy_flash_start:
-L1e3a:
-    lpm     r25, Z+
-    st      X+, r25
-    dec     r24
-    brne    L1e3a
-
-tx_update_source_pointer:
-    std     Y+17, r31
-    std     Y+16, r30
-
-L1e4c:
-    mov     r22, r23
-    ldi     r24, 0x02
-    ldi     r25, 0x01
-    rcall   usb_crc16_append
-    subi    r23, 0xfc
-    cpi     r23, 0x0c
-    brbs    1, L1e60
-    ldi     r24, 0xff
-    std     Y+0, r24
-
-L1e60:
-    std     Y+15, r23
-    /* Only a FLASH_WAIT_PREP request needs the deferred SPM transition.
-       This is the sole caller of the old 12-byte status-prepared helper. */
-    ldd     r18, Y+57
-    cpi     r18, ST_FLASH_WAIT_PREP
-    brne    L1e64
-    ldi     r18, ST_SPM_WAIT_SENT
-    std     Y+57, r18
+/* Control endpoint zero: SETUP/OUT, 8-byte DATA packetization. */
+#include "vusb_ep0.inc"
 
 L1e64:
     movw    r24, r6
@@ -709,16 +159,16 @@ L1e82:
     /* Removed 0x1e82: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
 
 L1e84:
-    sbis    0x1b, 2
+    sbis    T88_IO_PCIFR, 2
     rjmp    L1d3a
     ldi     r24, 0x1c
 
 L1e8a:
-    sbis    0x9, 1
+    sbis    T88_IO_PIND, 1
     ldi     r24, 0x1c
     subi    r24, 0x01
     brbc    1, L1e8a
-    sbi     0x1b, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
+    sbi     T88_IO_PCIFR, 2  /* PCIFR.PCIF2 W1C; reset PCMSK0/1/3 stay zero.
                         SBI is 2 cycles vs LDI+OUT 2 cycles. */
     rjmp    L1d3a
 
@@ -736,12 +186,12 @@ L1e9e:
 
 L1eac:
     /* Removed 0x1eac: cbi     0xb, 0 (size-optimized, see CHANGES.md) */
-    out     0xa, r1
-    sts     0x0068, r1
-    sts     0x006d, r1
+    out     T88_IO_DDRD, r1
+    sts     T88_MEM_PCICR, r1
+    sts     T88_MEM_PCMSK2, r1
     in      r24, 0x34
-    out     0x1e, r24
-    out     0x34, r1
+    out     T88_IO_GPIOR0, r24
+    out     T88_IO_MCUSR, r1
 app_jump:
     .word (0xc000 | (((bootloader_start - 4 - app_jump - 2)/2) & 0x0fff)) /* relative RJMP into application postscript */
 
@@ -749,7 +199,7 @@ app_jump:
  * USB low-speed endpoint zero carries 8 bytes per DATA packet.
  * Control transfer wLength=1..64 uses repeated DATA0/DATA1 packets.
  * The low-level NRZI RX/TX and USB packet CRC implementation is untouched.
- * Vendor IN: READ=0x10, GET_STATUS=0x12 (1 or 8 bytes, no 0x20 INFO).
+ * Vendor IN: READ=0x10, GET_STATUS=0x12 (always request 8 bytes, no 0x20 INFO).
  * Vendor OUT: WRITE=0x11, RUN=0x13.
  * wValue=16-bit byte address, wIndex=memory (0 Flash, 1 EEPROM).
  * Flash WRITE is exactly 64 bytes, aligned at 64. ERASE_PAGE is distinct.
@@ -766,7 +216,7 @@ block_vendor_dispatch:
     rjmp    block_reject
 
 block_vendor_in:
-    cpi     r25, OP_STATUS
+    cpi     r25, OP_GET_STATUS
     breq    block_status
     cpi     r25, OP_READ
     breq    block_read_setup
@@ -785,16 +235,16 @@ block_vendor_is_erase:
 
 /* Live SRAM response overlay at 0x0138:
  * [last_result, state, app_hi, app_lo, page_bytes, eeprom_bytes,
- *  protocol_minor (0x32), feature_flags (0x03)].
+ *  protocol_minor (0x33), feature_flags (0x03)].
  * The six constant bytes are initialized exactly once after reset.
- * GET_STATUS length 1 (polling) or length 8 (full metadata); the generic
- * non-bit-timed endpoint-zero SRAM sender handles both with no copy here. */
+ * GET_STATUS has one supported form: host wLength=8 on every request.
+ * Generic EP0 still clamps any malformed shorter wLength to preserve USB
+ * data-stage correctness. No extra per-command length path is needed. */
 block_status:
-    /* Existing common reply limiter L1de2 already clamps 8 to wLength.
-       Thus wLength=1 returns one status byte and wLength=8 returns all 8. */
+    /* Fixed 8-byte reply. Generic EP0 limiting remains for USB correctness. */
     ldi     r18, 0x38
     ldi     r19, 0x81            /* SRAM pointer marker: 0x0138 */
-    ldi     r24, 8
+    ldi     r24, BLOCK64_STATUS_BYTES
     rjmp    L1f22
 
 block_run:
@@ -818,7 +268,7 @@ block_read_range_ok:
     /* r16=memory type; r22:r23=start address; r24=request size. */
     tst     r16
     breq    block_read_flash
-    sbic    0x1f, 1
+    sbic    T88_IO_EECR, 1
     rjmp    block_reject
     /* Snapshot EEPROM to 64-byte SRAM buffer before starting DATA IN. */
     ldi     r26, 0x40
@@ -826,8 +276,8 @@ block_read_range_ok:
     mov     r20, r24
     mov     r17, r22
 block_snapshot_eeprom_loop:
-    out     0x21, r17
-    sbi     0x1f, 0
+    out     T88_IO_EEARL, r17
+    sbi     T88_IO_EECR, 0
     in      r18, 0x20
     st      X+, r18
     inc     r17
@@ -941,7 +391,7 @@ block_check_idle_for_write:
     cpi     r17, ST_RUN
     brsh    block_idle_return    /* C=0 for state>=3: already busy */
     /* If EEPROM is idle, SBIC skips CLC: CPI left C=1 for state<3. */
-    sbic    0x1f, 1
+    sbic    T88_IO_EECR, 1
     clc
 block_idle_return:
     ret
@@ -1082,7 +532,7 @@ block_service_return:
     ret
 
 block_step_eeprom:
-    sbic    0x1f, 1           /* EEPE active? */
+    sbic    T88_IO_EECR, 1           /* EEPE active? */
     ret
     ldd     r18, Y+54
     ldd     r19, Y+53
@@ -1095,11 +545,11 @@ block_eeprom_more_bytes:
     add     r30, r18
     ldi     r31, 0x01
     ld      r21, Z
-    out     0x21, r20         /* EEARL */
-    out     0x20, r21         /* EEDR */
-    out     0x1f, r1         /* erase-and-write mode */
-    sbi     0x1f, 2          /* EEMPE: master enable */
-    sbi     0x1f, 1          /* EEPE within 4 cycles */
+    out     T88_IO_EEARL, r20         /* EEARL */
+    out     T88_IO_EEDR, r21         /* EEDR */
+    out     T88_IO_EECR, r1         /* erase-and-write mode */
+    sbi     T88_IO_EECR, 2          /* EEMPE: master enable */
+    sbi     T88_IO_EECR, 1          /* EEPE within 4 cycles */
     inc     r18
     std     Y+54, r18
     ret
@@ -1131,7 +581,7 @@ block_flash_erase_only:
        intervening EEPROM commands, so no intervening EEPROM write exists. */
     rcall   block_load_page_z
     ldi     r18, 0x03
-    out     0x37, r18
+    out     T88_IO_SPMCSR, r18
     spm
     rjmp    block_complete_flash
 
@@ -1153,7 +603,7 @@ block_commit_flash:
 block_flash_fill_start:
     /* Clear stale hardware page buffer. Page erase was a separate call. */
     ldi     r18, 0x11
-    out     0x37, r18        /* CTPB|SELFPRGEN */
+    out     T88_IO_SPMCSR, r18        /* CTPB|SELFPRGEN */
     spm
     ldi     r26, 0x40
     ldi     r27, 0x01
@@ -1162,7 +612,7 @@ block_flash_fill_start:
 block_flash_fill_word:
     ld      r0, X+
     ld      r1, X+
-    out     0x37, r18
+    out     T88_IO_SPMCSR, r18
     spm
     adiw    r30, 2
     dec     r20
@@ -1171,7 +621,7 @@ block_flash_fill_word:
     /* Page write must have Z low six address bits zero. */
     rcall   block_load_page_z
     ldi     r18, 0x05
-    out     0x37, r18
+    out     T88_IO_SPMCSR, r18
     spm
     /* Fall through into shared completion; no second USB status. */
 
@@ -1182,71 +632,8 @@ block_complete_flash:
     std     Y+57, r18
     ret
 
-old_vendor_dispatch:
-    ldd     r18, Y+25
-    std     Y+2, r1
-    cpse    r25, r1
-    rjmp    L1f2c
-    std     Y+3, r1
-    ldi     r24, 0x02                        /* USB reply: number of bytes */
-L1f34:
-    ldi     r18, 0x0a                        /* repeated 16-bit pointer low */
-    ldi     r19, 0x81                        /* prepared EP0 buffer marker */
-L1f22:
-    std     Y+17, r19                       /* send pointer high */
-    std     Y+16, r18                       /* send pointer low */
-    rjmp    L1de2
-
-L1f2c:
-    cpi     r25, 0x05
-    brbc    1, L1f3a
-    std     Y+19, r18
-    rjmp    L1f34                           /* preserve fallthrough semantics */
-
-L1f3a:
-    cpi     r25, 0x06
-    brbc    1, L1f62
-    ldd     r24, Y+26
-    ldi     r18, ((BOOT_AT + 0x1a) & 0xff)
-    cpi     r24, 0x01
-    breq    desc_ptr
-    cpi     r24, 0x02
-    brne    L1f70
-    ldi     r18, ((BOOT_AT + 0x08) & 0xff)
-
-desc_ptr:
-    /* Both descriptors are in the same 256-byte Flash window. */
-    ldi     r19, ((BOOT_AT + 0x08) >> 8)
-    ldi     r24, 0x12
-    rjmp    L1f22
-
-L1f62:
-    cpi     r25, 0x08
-    brbs    1, L1f7a
-    cpi     r25, 0x09
-    brbc    1, L1f70
-    std     Y+21, r18
-    rjmp    L1f34
-
-L1f70:
-    ldi     r24, 0x01
-    cpi     r25, 0x0a
-    brbs    1, L1f34
-    ldi     r24, 0x00
-    rjmp    L1f34
-
-L1f7a:
-    ldd     r18, Y+21
-    std     Y+2, r18
-    ldi     r24, 0x01
-
-main_tail:
-    rjmp    L1f34
-
-L1f82:
-    /* Removed 0x1f82: sbi     0xb, 0 (size-optimized, see CHANGES.md) */
-    /* Removed 0x1f84: rjmp    L1e84 (size-optimized, see CHANGES.md) */
-
+/* Standard USB Chapter 9 request handlers (not Block64 vendor commands). */
+#include "vusb_standard.inc"
 
 /* Shared non-USB address builder for both Flash SPM operations and
    the page-buffer refill. Saves 4 bytes despite RCALL/RET overhead.

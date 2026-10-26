@@ -4,7 +4,7 @@ from pathlib import Path
 import random, subprocess, pytest
 from avr_sim import *
 ROOT=Path(__file__).resolve().parent.parent
-FW=ROOT/'firmware/ISP_FULL_8192_1980_PASS10.bin'
+FW=ROOT/'firmware/ISP_FULL_8192_1980_PASS11.bin'
 
 
 def fresh():

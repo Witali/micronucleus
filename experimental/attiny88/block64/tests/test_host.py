@@ -8,7 +8,7 @@ BOOT=0x1980
 APP=BOOT-4
 
 class MockUSB:
-    bcdDevice=0x0302
+    bcdDevice=0x0303
     def __init__(self):
         self.flash=bytearray(b'\xff'*8192)
         self.eeprom=bytearray(b'\xff'*64)
@@ -20,8 +20,8 @@ class MockUSB:
         self.log.append((request_type,request,value,index,data_or_wlength))
         if request_type==IN_VENDOR:
             if request==REQ_STATUS:
-                assert data_or_wlength in (1,8)
-                reply=[self.status,0,(APP>>8)&255,APP&255,64,64,0x32,0x03]
+                assert data_or_wlength == 8
+                reply=[self.status,0,(APP>>8)&255,APP&255,64,64,0x33,0x03]
                 return reply[:data_or_wlength]
             assert request==REQ_READ
             size=data_or_wlength
@@ -65,7 +65,7 @@ def make():
 def test_connection_and_geometry():
     d,h=make();i=h.info
     assert i.app_size==APP and i.boot_start==BOOT and i.page_size==64 and i.eeprom_size==64
-    assert i.version==0x0302 and i.features&BOOT_FEATURE_SPLIT_ERASE
+    assert i.version==0x0303 and i.features&BOOT_FEATURE_SPLIT_ERASE
     assert i.status==0 and i.state==0
 
 def test_flash_read_256_one_transfer_per_64():
@@ -205,10 +205,10 @@ def test_host_preserves_application_selected_isr_vectors():
     assert d.flash[:2]==(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
 
 
-def test_unified_status_host_short_and_extended_commands():
+def test_fixed_eight_byte_get_status_for_connection_and_polling():
     device,prog=make()
     assert prog.status()==0
-    assert device.log[-1][1]==REQ_STATUS and device.log[-1][-1]==1
+    assert device.log[-1][1]==REQ_STATUS and device.log[-1][-1]==8
     assert device.log[0][1]==REQ_STATUS and device.log[0][-1]==8
     device.status=1
     assert prog.status()==1
@@ -224,3 +224,24 @@ def test_unified_status_bad_geometry_rejected():
             return result
     with pytest.raises(Block64Error,match='geometry'):
         Programmer(BadInfo()).connect()
+
+
+def test_status_poll_always_requests_eight_bytes():
+    device,prog=make()
+    for code in (0,1,2,3):
+        device.status=code
+        assert prog.status()==code
+    requests=[row for row in device.log if row[1]==REQ_STATUS]
+    assert len(requests)==5  # one connect, four polls
+    assert all(row[4]==8 for row in requests)
+
+def test_status_poll_rejects_truncated_eight_byte_response():
+    class Truncated(MockUSB):
+        def ctrl_transfer(self,request_type,request,value,index,data_or_wlength,timeout=6000):
+            packet=super().ctrl_transfer(request_type,request,value,index,data_or_wlength,timeout)
+            if request==REQ_STATUS and len(self.log)>1:
+                return packet[:1]
+            return packet
+    dev=Truncated();prog=Programmer(dev);prog.connect()
+    with pytest.raises(Block64Error, match='8-byte'):
+        prog.status()

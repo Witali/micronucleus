@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Micronucleus ATtiny88 Block64 USB control-transfer programmer, protocol v3.2 (unified GET_STATUS).
+"""Micronucleus ATtiny88 Block64 USB control-transfer programmer, protocol v3.3 (fixed 8-byte GET_STATUS).
 
 UNTESTED ON REAL HARDWARE. Requires PyUSB/libusb when talking to a board.
 The code does not use the legacy Micronucleus 2.x host write format.
@@ -9,7 +9,7 @@ All memory commands are USB vendor control transfers:
                   wLength=1..64, result is binary memory data.
   OUT  0x11 WRITE; Flash: aligned page, exactly 64 data bytes; EEPROM: 1..64.
   OUT  0x14 ERASE_PAGE; Flash page address, 0 data bytes; independent from WRITE.
-  IN   0x12 GET_STATUS; wLength 1 = result byte, 8 = result/state/geometry/version.
+  IN   0x12 GET_STATUS; wLength=8 always: result/state/geometry/version.
   OUT  0x13 RUN; zero DATA length, status stage finishes before entering app.
   (legacy INFO 0x20 has been removed).
 
@@ -68,8 +68,8 @@ class Programmer:
 
     def connect(self)->Info:
         version=int(getattr(self.dev,'bcdDevice',0))
-        if version!=0x0302:
-            raise Block64Error(f'Expected Block64 v3.2 (bcdDevice=0x0302), got 0x{version:04X}')
+        if version!=0x0303:
+            raise Block64Error(f'Expected Block64 v3.3 (bcdDevice=0x0303), got 0x{version:04X}')
         head=bytes(self._ctrl(IN_VENDOR,REQ_STATUS,data=8))
         if len(head)!=8:
             raise Block64Error(f'GET_STATUS(8) returned {len(head)} bytes, expected 8')
@@ -78,13 +78,13 @@ class Programmer:
         result,state,app_hi,app_lo,pagesz,eeprom,protocol,feature=head
         if result not in (0,1,2,3) or state>7:
             raise Block64Error(f'Invalid GET_STATUS state/result: {result}/{state}')
-        if protocol!=0x32:
+        if protocol!=0x33:
             raise Block64Error(f'Unsupported GET_STATUS protocol marker 0x{protocol:02X}')
         appsz=(app_hi<<8)|app_lo
         if pagesz!=FLASH_PAGE or eeprom!=EEPROM_TOTAL or appsz<2048 or appsz>=FLASH_TOTAL or (appsz+4)%64:
             raise Block64Error(f'Unexpected memory geometry app={appsz}, page={pagesz}, EEPROM={eeprom}')
         if (feature & (BOOT_FEATURE_V3|BOOT_FEATURE_SPLIT_ERASE))!=(BOOT_FEATURE_V3|BOOT_FEATURE_SPLIT_ERASE):
-            raise Block64Error('Block64 v3.2 split ERASE/WRITE feature bits missing')
+            raise Block64Error('Block64 v3.3 split ERASE/WRITE feature bits missing')
         self.info=Info(appsz,pagesz,eeprom,appsz+4,version,feature,result,state)
         return self.info
 
@@ -107,9 +107,10 @@ class Programmer:
         return bytes(result)
 
     def status(self)->int:
-        result=bytes(self._ctrl(IN_VENDOR,REQ_STATUS,data=1))
-        if len(result)!=1 or result[0] not in (0,1,2,3):
-            raise Block64Error(f'Invalid status reply {result.hex()}')
+        """Single fixed-format GET_STATUS(8); byte 0 is the operation result."""
+        result=bytes(self._ctrl(IN_VENDOR,REQ_STATUS,data=8))
+        if len(result)!=8 or result[0] not in (0,1,2,3) or result[1]>7:
+            raise Block64Error(f'Invalid 8-byte status reply {result.hex()}')
         return result[0]
 
     def _wait_for_result(self,max_seconds:float=2.0):
@@ -316,7 +317,7 @@ def discover():
     return device
 
 def main(argv=None)->int:
-    p=argparse.ArgumentParser(description='Experimental ATtiny88 Micronucleus Block64 v3.2 unified GET_STATUS host')
+    p=argparse.ArgumentParser(description='Experimental ATtiny88 Micronucleus Block64 v3.3 fixed GET_STATUS(8) host')
     subs=p.add_subparsers(dest='cmd',required=True)
     subs.add_parser('info')
     subs.add_parser('status')

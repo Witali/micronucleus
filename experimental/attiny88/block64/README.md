@@ -1,6 +1,6 @@
-# ATtiny88 Block64: Pass10
+# ATtiny88 Block64: Pass11
 
-Imported source snapshot from `04_HISTORY_EXTRACTED/05_Pass10_1662B` in the October 26 handoff.
+Imported source snapshot from `04_HISTORY_EXTRACTED/07_Pass11_Modular` in the October 26 handoff.
 See [the provenance index](/docs/attiny88-block64-history/README.md) and
 the immutable original archive for stage documents, binaries, logs and checksums.
 This historical snapshot is experimental and has not been independently
