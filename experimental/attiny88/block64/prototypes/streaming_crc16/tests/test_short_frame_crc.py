@@ -103,5 +103,5 @@ def short_frame_matrix(build):
 
 def test_short_data_crc_and_count_at_every_nominal_phase():
     manifest = os.environ.get('STREAMING_CRC_MANIFEST',
-                              str(PROTOTYPE/'build/streaming/manifest.json'))
+                              str(PROTOTYPE/'build/streaming-v2/manifest.json'))
     short_frame_matrix(V.load_build(manifest))

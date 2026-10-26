@@ -1,0 +1,93 @@
+# Isolated 16 MHz streaming CRC receiver
+
+This directory builds an ordinary, read-only diagnostic application at
+`0x0800`. It does not replace the maintained Block64 receiver or program
+hardware. Both prototypes check DATA CRC16 before selecting ACK. V1 retains
+an inverted bit-mask decoder; V2 uses a rolling byte and five-bit cooldown
+continuations after stuffed zeros.
+
+## Build and verify
+
+Use the project's LLVM AVR / GNU AVR linker environment and Python pytest:
+
+```sh
+python3 prototypes/streaming_crc16/tools/build.py
+python3 prototypes/streaming_crc16/tools/verify_streaming.py --suite smoke
+python3 -m pytest -q prototypes/streaming_crc16/tests
+python3 prototypes/streaming_crc16/tools/verify_streaming.py --suite dribble-full --report prototypes/streaming_crc16/build/dribble.json --quiet
+python3 prototypes/streaming_crc16/tools/verify_streaming.py --suite tolerance-full --report prototypes/streaming_crc16/build/tolerance.json --quiet
+```
+
+Run from `experimental/attiny88/block64`. The default receiver is
+`streaming-v2`; `--receiver streaming` retains the V1 experiment and
+`--receiver baseline` builds the maintained decoder in the same diagnostic
+wrapper. Neither alternate is a claimed fix for streaming CRC at 16 MHz.
+`STREAMING_CRC_MANIFEST` selects a frozen build for pytest; the verifier
+accepts `--manifest`. Byte hashes and symbols are frozen when a run starts.
+
+Generated build products stay ignored. Diagnostic commands print
+`DIAGNOSTIC ONLY`, even when all tested cases happen to pass. Inspect every
+failure count, and the legal-tail subset separately: arbitrary seven-bit
+transition-free tails exceed the specification's six-total-interval limit.
+The strict pytest regressions do not silently accept known late responses.
+
+## Application and NVM boundary
+
+- The stock loader remains at `0x1B00`; every HEX data record ends before
+  its four-byte application postscript at `0x1AFC`.
+- The source RESET points to a trampoline at `0x0080`, then `0x0800`.
+  The installed stock loader performs its normal RESET/postscript patching.
+- Vendor WRITE, ERASE and RUN are rejected. All three SPM instructions and
+  the EEPROM EEPE trigger are replaced with NOP in the generated wrapper.
+- The inherited inactivity autojump is disabled; its decision does not
+  depend on the contents of an unrelated postscript at `0x07FC`.
+- The application permits diagnostic Flash reads through all 8192 bytes.
+  Metadata still describes its local `0x0800` origin, so the normal Block64
+  programmer's geometry/range checks are unsuitable for those full reads.
+- CRC tables occupy `0x1600` and `0x1700`. The body file spans 4096 bytes
+  including alignment gaps; this is not a 4096-byte bootloader-size claim.
+
+Private board backups, Flash/EEPROM dumps, restore HEX and hardware logs
+must remain outside Git. Any physical trial must restore the backed-up
+application and verify EEPROM afterward. Operator instructions must say
+explicitly whether RESET or complete USB power removal is required.
+
+## Evidence and remaining defect at the initial V2 checkpoint
+
+V1's shortened EOP path passes 6528 normal/stuffed DATA cases and accepts
+9360 legal dribble cases within the deadline, but drops 6288 other legal
+dribble cases due to partial-byte CRC pipeline state. It is retained as
+experimental history, not a hardware candidate.
+
+The initial direct-EOP V2 source hash is
+`1c4ea43d38713247fbee8d04d2310cc318480ce4f07676974a399dca00b48384`.
+Its rehearsal body hash is
+`3dcfca8e6e73ba1ebed0d7735d6c5da10d1b4f7c785eb3cdba70b595f19b9233`.
+It passes 6528 positive frames, 768 targeted stuffing/arrival cases covering
+all 40 cooldown sample sites, 41472 payload/trailer bit corruptions, and
+48864 short-frame/CRC-counter cases. Varying all non-USB PIND bits does not
+change decoding. CRC table arithmetic is independently checked for all
+16777216 state/byte pairs.
+
+All 15648 legal cases in the full dribble matrix decode and validate CRC,
+but **56 rows remain late**: empty DATA1 plus three extra ones can respond
+at 70 cycles, exceeding the detachable-cable 69 1/3-cycle limit. Repeated
+empty-pattern rows account for some duplication. This checkpoint must not
+be uploaded. The dedicated all-phase empty-tail regression exposes it.
+
+The source's bit periods are 10,10,11/12,11,11,11,11,10 clocks. Checks cover
+PID, ordinary, stuffed and cooldown samples, actual transmitted ACK PID,
+publication and SE0-to-J EOP through J-to-K SOP. DATA tests accept empty
+DATA1 and both DATA PIDs for payload lengths 1..8; inherited empty-DATA0
+suppression remains explicit.
+
+The optional source-rate/jitter diagnostics separate nominal/500-ppm host
+clock changes from constrained receiver interval jitter. USB frequency error
+is already allocated in the jitter budgets. Ideal two-bit SE0 is used;
+minimum-width EOP, analog rise/fall, noise, measured oscillator accuracy,
+continuous foreground service and electrical USB certification remain
+outside these isolated digital traces.
+
+See the [upstream review](../../VUSB_UPSTREAM_REVIEW.md),
+[design investigation](../../STREAMING_CRC_DESIGN.md), and
+[instruction alternatives](../../INSTRUCTION_OPTIMIZATION_REVIEW.md).
