@@ -265,7 +265,8 @@ def receive(build,packet,phase_thirds=0,*,prior_token=0xe1,tx_length=0x5a,
         pins=HostPins(cpu,levels,metadata,phase_thirds)
     cpu.io=pins
     selected=None;crc_snapshots=[];lpm_reads=0
-    terminals={cpu.labels[name]:name for name in ('L1be8','L1bf0','prototype_done','prototype_drop') if name in cpu.labels}
+    done = 'stream_publication_done' if build['manifest'].get('ack_mode') == 'deferred' else 'L1be8'
+    terminals={cpu.labels[name]:name for name in (done,'L1bf0','prototype_done','prototype_drop') if name in cpu.labels}
     for _ in range(20000):
         if cpu.pc in terminals:
             stop=terminals[cpu.pc];break

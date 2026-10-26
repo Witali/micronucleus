@@ -14,6 +14,7 @@ PROJECT = BASE.parents[1]
 sys.path.insert(0, str(PROJECT/'tools'))
 from avr_build import assemble
 from crc_tables import render_assembly
+from ack_optimizations import MODES, FROZEN_V2, transform
 
 ORIGIN = 0x0800
 PROTECTED_BOOT = 0x1B00
@@ -25,7 +26,9 @@ def record(address, data, kind=0):
     return ':'+(raw+bytes([(-sum(raw))&255])).hex().upper()
 
 
-def build(receiver, output):
+def build(receiver, output, ack_mode='immediate'):
+    if ack_mode not in MODES or (ack_mode != 'immediate' and receiver != 'streaming-v2'):
+        raise ValueError('ACK experiments require the streaming-v2 receiver')
     output.mkdir(parents=True, exist_ok=True)
     for path in (PROJECT/'source').glob('*.inc'):
         shutil.copyfile(path, output/path.name)
@@ -53,6 +56,8 @@ def build(receiver, output):
         sampler = BASE/'source'/('streaming_rx_v2.inc' if receiver == 'streaming-v2' else 'streaming_rx.inc')
         if not sampler.exists():
             raise RuntimeError('Streaming receiver prototype source is not ready')
+        if ack_mode != 'immediate' and hashlib.sha256(sampler.read_bytes()).hexdigest() != FROZEN_V2:
+            raise RuntimeError('ACK experiments require the audited frozen V2 source')
         shutil.copyfile(sampler, output/'streaming_rx.inc')
         phy = (output/'vusb_phy.inc').read_text()
         first, last = phy.index('USB_handler:\n'), phy.index('L1baa:\n')
@@ -76,9 +81,17 @@ def build(receiver, output):
         # With exact CRC/counter agreement, a FFFF-seeded B001 residual is
         # impossible with fewer than two post-PID bytes. The caller enters
         # here only for count<4, so count==3 follows. The arithmetic and
-        # 48,864 actual short-frame cases establish this V1-only implication.
-        # V2 must independently pass the same invariant before hardware use.
+        # 48,864 actual short-frame cases establish this implication in V2;
+        # the context/deferred modes independently verify normalized Y=0100.
         empty = empty.replace(minimum_length, '    /* Full DATA residual proves decoded count >=3. */')
+        if ack_mode != 'immediate':
+            sampler_text, phy, empty = transform(sampler.read_text(), phy, empty, ack_mode)
+            (output/'streaming_rx.inc').write_text(sampler_text)
+            (output/'vusb_phy.inc').write_text(phy)
+            if ack_mode == 'deferred':
+                shutil.copyfile(BASE/'source/streaming_ack_publish.inc', output/'streaming_ack_publish.inc')
+            elif ack_mode == 'eop':
+                shutil.copyfile(BASE/'source/streaming_ack_eop.inc', output/'streaming_ack_eop.inc')
         (output/'vusb_empty_data.inc').write_text(empty)
         main += '\n.org 0x1600\n'+render_assembly()
     source = output/'application.S'
@@ -109,7 +122,7 @@ def build(receiver, output):
     lines.append(record(0,b'',1))
     (output/'application.hex').write_text('\n'.join(lines)+'\n')
     (output/'symbols.txt').write_text('\n'.join(f'{n} 0x{a:04X}' for n,a in symbols.items())+'\n')
-    manifest = {'receiver':receiver,'image_address':ORIGIN,'body_file':'application.bin',
+    manifest = {'receiver':receiver,'ack_mode':ack_mode,'image_address':ORIGIN,'body_file':'application.bin',
                 'full_image_file':'application-full.bin','symbols':symbols,
                 'body_bytes':len(body),'executable_end':symbols['prototype_code_end'],
                 'sha256_body':hashlib.sha256(body).hexdigest(),
@@ -128,5 +141,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--receiver', choices=['baseline','streaming','streaming-v2'], default='streaming-v2')
     parser.add_argument('--output-dir', type=Path)
+    parser.add_argument('--ack-mode', choices=MODES, default='immediate')
     args = parser.parse_args()
-    build(args.receiver, args.output_dir or BASE/'build'/args.receiver)
+    suffix = '' if args.ack_mode == 'immediate' else '-'+args.ack_mode
+    build(args.receiver, args.output_dir or BASE/'build'/(args.receiver+suffix), args.ack_mode)

@@ -33,23 +33,28 @@ def short_frame_matrix(build):
                 if self.pc == self.labels.get(name):
                     pointer = self.r[28] | self.r[29] << 8
                     # Older EOP code leaves Y at the end of RX and R19 as
-                    # remaining capacity. Refactored code restores Y and
-                    # converts R19 to the decoded count before CRC cleanup.
+                    # remaining capacity. Refactored code normalizes Y to
+                    # RX base 0x0116 or context base 0x0100 and converts R19
+                    # to the decoded count before CRC cleanup. The RX bytes
+                    # stay at 0x0116 in all three pointer conventions.
                     if pointer > 0x0116:
                         count = pointer - 0x0116
                         assert count == 11 - self.r[19]
                     else:
-                        assert pointer == 0x0116
+                        assert pointer in (0x0100, 0x0116), (
+                            'Unexpected normalized EOP pointer', hex(pointer),
+                        )
                         count = self.r[19]
                     self.short_crc_snapshot = (
                         name, count, bytes(self.m[0x0116:0x0116+count]),
-                        self.r[25] << 8 | self.r[30],
+                        self.r[25] << 8 | self.r[30], pointer,
                     )
             return super().step()
 
     frames = 0
     seen_crc = 0
     counts = {}
+    pointers = {}
     V.TraceCPU = CountCPU
     try:
         def check(packet, phase, dribble):
@@ -61,10 +66,12 @@ def short_frame_matrix(build):
             snapshot = getattr(cpu, 'short_crc_snapshot', None)
             if snapshot:
                 seen_crc += 1
-                name, count, decoded, remainder = snapshot
+                name, count, decoded, remainder, pointer = snapshot
                 assert 1 <= count <= 11
                 assert decoded[0] in (0xC3, 0x4B)
                 counts[count] = counts.get(count, 0) + 1
+                key = f'0x{pointer:04x}'
+                pointers[key] = pointers.get(key, 0) + 1
                 expected = crc_bitwise(decoded[1:])
                 assert remainder == expected, (
                     'CRC/counter mismatch', packet.hex(), phase, dribble,
@@ -97,6 +104,7 @@ def short_frame_matrix(build):
     return {'sha256': build['sha256'], 'frames': frames,
             'crc_counter_snapshots': seen_crc,
             'decoded_length_counts': counts,
+            'eop_y_pointer_counts': pointers,
             'entry_phase_thirds': '-47..0', 'dribble_bits': '0..6',
             'short_data_acknowledged': 0, 'crc_counter_mismatches': 0}
 
@@ -104,4 +112,9 @@ def short_frame_matrix(build):
 def test_short_data_crc_and_count_at_every_nominal_phase():
     manifest = os.environ.get('STREAMING_CRC_MANIFEST',
                               str(PROTOTYPE/'build/streaming-v2/manifest.json'))
-    short_frame_matrix(V.load_build(manifest))
+    report = short_frame_matrix(V.load_build(manifest))
+    expected = os.environ.get('STREAMING_CRC_EXPECT_NORMALIZED_Y')
+    if expected:
+        # A frozen candidate can require its intended normalization, rather
+        # than merely passing because another supported convention remains.
+        assert set(report['eop_y_pointer_counts']) == {f'0x{int(expected, 0):04x}'}
