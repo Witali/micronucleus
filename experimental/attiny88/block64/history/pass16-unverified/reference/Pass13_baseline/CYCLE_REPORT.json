@@ -1,0 +1,25 @@
+{
+  "baseline": "Pass12, same corrected software AVR model",
+  "measurement": "instruction execution cycles only",
+  "hardware_memory_programming_delay_included": false,
+  "physical_usb_timing_verified": false,
+  "base_cycles": {
+    "eeprom_read64": 700,
+    "eeprom_write64_worker": 1920,
+    "flash_64_program_logic_excluding_hardware_wait": 500,
+    "main_loop_idle_to_ep0": 17
+  },
+  "new_cycles": {
+    "eeprom_read64": 636,
+    "eeprom_write64_worker": 1856,
+    "flash_64_program_logic_excluding_hardware_wait": 468,
+    "main_loop_idle_to_ep0": 8
+  },
+  "saved_cycles": {
+    "eeprom_read64": 64,
+    "eeprom_write64_worker": 64,
+    "flash_64_program_logic_excluding_hardware_wait": 32,
+    "main_loop_idle_to_ep0": 9
+  },
+  "firmware_sha256": "6920fef34f5686763a3c984e07ded4d7b2161e602fdc2102fcd3b137d7ffb424"
+}

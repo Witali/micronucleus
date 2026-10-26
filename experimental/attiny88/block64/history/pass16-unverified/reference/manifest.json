@@ -1,0 +1,53 @@
+{
+  "note": "EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.",
+  "mcpu": "ATtiny88 16MHz external clock",
+  "protocol_version": "3.3 / Pass14 (unified SPM, compact dispatcher, protocol unchanged)",
+  "bootloader_start": "0x19c0",
+  "bootloader_body_bytes": 1596,
+  "reserved_flash_bytes": 1600,
+  "application_bytes": 6588,
+  "flash_page_bytes": 64,
+  "eeprom_bytes": 64,
+  "flash_page_protocol": "separate ERASE_PAGE and 64-byte WRITE",
+  "spm_guard": "defer until zero-length status TX and next quiet polling interval",
+  "usb_vid_pid": "16d0:0753",
+  "protocol_commands": {
+    "read": "0x10",
+    "write": "0x11",
+    "get_status": "0x12",
+    "run": "0x13",
+    "erase_page": "0x14"
+  },
+  "get_status_layout": [
+    "result",
+    "state",
+    "app_hi",
+    "app_lo",
+    "page_bytes",
+    "eeprom_bytes",
+    "protocol_marker",
+    "features"
+  ],
+  "get_status_lengths": "8 bytes only (supported host contract; USB EP0 still clips to wLength)",
+  "reset_vector_opcode": "0xccdf",
+  "critical_usb_code_bytes": 508,
+  "crc16_code_bytes": 44,
+  "status_reply_bytes": 8,
+  "sha256_body": "369a0270f4151577198b6cda2a14e7c6e34cf96b37ec56c70d332f5db03c7a72",
+  "sha256_full_binary": "cd7d93e5e3e2c94196e1862cdda74498288b060b13f801e20f28fe6a0183a860",
+  "sha256_source": "8722e131e3fdc75ad6374f9cba58ba97a1e67317ae72058616974a5697673217",
+  "source_modules": [
+    "block64_protocol.inc",
+    "device_attiny88.inc",
+    "vusb_ep0.inc",
+    "vusb_phy.inc",
+    "vusb_standard.inc"
+  ],
+  "sha256_source_modules": {
+    "vusb_phy.inc": "42504367dfb058c28afc17b7b7b55b13557e63911d1d489b3f600c11f89df0dd",
+    "block64_protocol.inc": "11a2d737ac85e7fcbc989754cc0388ec8d61a2afb0b0f71287c27ff6e5227c52",
+    "vusb_ep0.inc": "b05b82e916731298544525bae35d89362ef4e6f2c096d3e9c3020c24ddfb5401",
+    "vusb_standard.inc": "50ace45dd4ac9ce789ec2e912707ffa5f72877ddbc7c06d025ef33e271384f8b",
+    "device_attiny88.inc": "708545e1faca59582b74df6dd0b7606fcbb9f7932c3e7cb670b5e3d7c246bc2b"
+  }
+}
