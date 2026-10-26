@@ -323,6 +323,9 @@ def require_data(obs,packet,valid=True):
         # Quarter-bit boundaries are reported separately. Exact same-bit
         # sampling is mandatory; electrical jitter margins need more than it.
     else:
+        # Empty DATA0 is suppressed later by inherited packet classification.
+        # Check CRC rejection itself so that suppression cannot mask a bad gate.
+        assert not any(item[0]=='stream_crc_valid' for item in obs.crc_snapshots),('corrupt CRC gate',asdict(obs))
         assert obs.selected is None and obs.response_pid is None,('corrupt ACK',asdict(obs))
         assert obs.published_length==0,('corrupt publication',asdict(obs))
 

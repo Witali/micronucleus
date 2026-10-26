@@ -75,6 +75,15 @@ at 70 cycles, exceeding the detachable-cable 69 1/3-cycle limit. Repeated
 empty-pattern rows account for some duplication. This checkpoint must not
 be uploaded. The dedicated all-phase empty-tail regression exposes it.
 
+The follow-up source `fcc0ad6f463dd0e133808065e8db3d1aa2e4a1762158666dadfc2231205dbd2c`
+moves the unchanged residual comparison immediately after index cleanup.
+This saves two clocks on the late path and adds two to the full cleanup,
+whose prior worst case had enough margin. The body is
+`e5b06459481658af1f0b4296000a97dbd7f0226502caf5dd86c234a4407aba82`.
+Sampling code, instruction count and all CRC gates remain unchanged. The
+dedicated all-phase empty-tail regression and fast negative tests pass;
+full-tail and expanded jitter results must be reviewed before a trial.
+
 The source's bit periods are 10,10,11/12,11,11,11,11,10 clocks. Checks cover
 PID, ordinary, stuffed and cooldown samples, actual transmitted ACK PID,
 publication and SE0-to-J EOP through J-to-K SOP. DATA tests accept empty

@@ -6,7 +6,7 @@
  * Normal bit periods: 10,10,11/12,11,11,11,11,10 = 85/86 clocks.
  * True rolling-byte assembly permits a two-instruction six-one test.
  * Stuffed zeros enter five-bit cooldown paths without altering real data.
- * SE0 guards cover every even bit plus the first cooldown sample.
+ * SE0 guards cover every even bit, bit1 and the first cooldown sample.
  */
 #ifndef STREAM_CRC_TABLE_LOW_PAGE
 #define STREAM_CRC_TABLE_LOW_PAGE 0x16
@@ -972,7 +972,9 @@ stream_cooldown_eop7_finish:
     rjmp    stream_eop_finish
 stream_cooldown_eop7_drop:
     rjmp    stream_drop
-/* Direct EOP tails avoid a stage variable on the ACK-critical path. */
+/* Direct EOP tails avoid a stage variable on the ACK-critical path.
+ * The partial-byte index tail falls into the residual comparison because
+ * legal three-bit dribble has less turnaround margin than the full tail. */
 stream_eop_before_store:
     subi    r19, 1
     brcs    stream_eop_overflow
@@ -997,19 +999,7 @@ stream_eop_full_data:
     ldi     r31, STREAM_CRC_TABLE_LOW_PAGE
     lpm     r30, Z
     eor     r30, r24
-stream_crc_compare:
-    cpi     r30, 1
-    brne    stream_crc_drop
-    cpi     r25, 0xb0
-    brne    stream_crc_drop
-stream_crc_valid:
-    ldi     r30, 0
-    ldi     r31, 1
-    rjmp    L1bf6
-stream_crc_drop:
-    rjmp    stream_drop
-stream_eop_overflow:
-    rjmp    stream_drop
+    rjmp    stream_crc_compare
 stream_eop_index:
     mov     r24, r25
     subi    r19, 11
@@ -1027,7 +1017,19 @@ stream_eop_index_data:
     ldi     r31, STREAM_CRC_TABLE_LOW_PAGE
     lpm     r30, Z
     eor     r30, r24
-    rjmp    stream_crc_compare
+stream_crc_compare:
+    cpi     r30, 1
+    brne    stream_crc_drop
+    cpi     r25, 0xb0
+    brne    stream_crc_drop
+stream_crc_valid:
+    ldi     r30, 0
+    ldi     r31, 1
+    rjmp    L1bf6
+stream_crc_drop:
+    rjmp    stream_drop
+stream_eop_overflow:
+    rjmp    stream_drop
 stream_eop_nondata:
     ldi     r30, 0
     ldi     r31, 1
