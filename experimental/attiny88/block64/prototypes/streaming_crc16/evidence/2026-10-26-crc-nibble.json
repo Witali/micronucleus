@@ -1,0 +1,63 @@
+{
+  "result": "PASS",
+  "purpose": "isolated CRC arithmetic and cycle feasibility",
+  "physical_device_programmed": false,
+  "usb_receiver_modified": false,
+  "source_sha256": "9155b4744c852c32c9ab486c4ecf4514cbcd3387d9a47d0cc680a7185e0c70d9",
+  "linked_code_sha256": "0c6f847b063a46dba29e8ac9c70f080ca0e21afcfdf38286344482d093611e5c",
+  "requested_table_sha256": "2e0b1a6cdf0d730a385761e636aaaf06433f89e2367e847eb3584e73a0d573c3",
+  "favorable_table_placement": "page offsets00/10; folded table offset00 on another page",
+  "alignment_padding_included_in_table_bytes": false,
+  "current_usb_byte_period_clocks": [
+    85,
+    86
+  ],
+  "current_streaming_crc_inline_clocks": 11,
+  "ret_clocks": 4,
+  "rcall_clocks": 3,
+  "candidates": [
+    {
+      "name": "crc_nibble_update",
+      "table_data_bytes": 32,
+      "code_bytes_including_setup_and_ret": 58,
+      "inline_code_bytes_preloaded_page": 54,
+      "inline_clocks_preloaded_page": 35,
+      "inline_clocks_including_page_setup": 36,
+      "function_clocks_including_ret": 40,
+      "call_clocks_including_rcall_ret": 43,
+      "lpm_reads_per_byte": 4,
+      "opcode_state_byte_vectors": 73728,
+      "opcode_wire_residual_vectors": 36,
+      "extra_inline_clocks_vs_current_pipeline": 24
+    },
+    {
+      "name": "crc_fold_update",
+      "table_data_bytes": 16,
+      "code_bytes_including_setup_and_ret": 38,
+      "inline_code_bytes_preloaded_page": 34,
+      "inline_clocks_preloaded_page": 19,
+      "inline_clocks_including_page_setup": 20,
+      "function_clocks_including_ret": 24,
+      "call_clocks_including_rcall_ret": 27,
+      "lpm_reads_per_byte": 1,
+      "opcode_state_byte_vectors": 73728,
+      "opcode_wire_residual_vectors": 36,
+      "extra_inline_clocks_vs_current_pipeline": 8
+    },
+    {
+      "name": "crc_avrlibc_update",
+      "table_data_bytes": 0,
+      "code_bytes_including_setup_and_ret": 48,
+      "inline_code_bytes_preloaded_page": 46,
+      "inline_clocks_preloaded_page": 23,
+      "inline_clocks_including_page_setup": 23,
+      "function_clocks_including_ret": 27,
+      "call_clocks_including_rcall_ret": 30,
+      "lpm_reads_per_byte": 0,
+      "opcode_state_byte_vectors": 73728,
+      "opcode_wire_residual_vectors": 36,
+      "extra_inline_clocks_vs_current_pipeline": 12
+    }
+  ],
+  "integration_limit": "No sampling schedule or EOP/ACK path is changed or proved by this measurement."
+}
