@@ -1,6 +1,6 @@
-# ATtiny88 Block64: v3.0
+# ATtiny88 Block64: v3.1
 
-Imported source snapshot from `04_HISTORY_EXTRACTED/01_Block64_v3_0` in the October 26 handoff.
+Imported source snapshot from `04_HISTORY_EXTRACTED/02_SplitEraseWrite_v3_1` in the October 26 handoff.
 See [the provenance index](/docs/attiny88-block64-history/README.md) and
 the immutable original archive for stage documents, binaries, logs and checksums.
 This historical snapshot is experimental and has not been independently

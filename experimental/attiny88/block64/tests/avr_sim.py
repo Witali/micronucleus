@@ -6,7 +6,7 @@ from pathlib import Path
 import importlib.util, re, subprocess, sys
 from dataclasses import dataclass
 ROOT=Path(__file__).resolve().parent.parent
-BOOT=0x1980
+BOOT=0x1940
 spec=importlib.util.spec_from_file_location('block_decoder',Path(__file__).with_name('avr_decoder.py'))
 D=importlib.util.module_from_spec(spec)
 sys.modules[spec.name]=D
@@ -14,6 +14,7 @@ spec.loader.exec_module(D)
 MEM_STATE=0x0130;MEM_TYPE=0x0131;MEM_ADDR_LO=0x0132;MEM_ADDR_HI=0x0133
 MEM_REMAIN=0x0134;MEM_INDEX=0x0135;MEM_TOTAL=0x0136;MEM_STATUS=0x0137
 MEM_PROGRESS=0x0138;MEM_EXPECT_PID=0x0139;MEM_BUFFER=0x0140
+ST_IDLE=0;ST_DONE=1;ST_ERROR=2;ST_RUN=3;ST_RECEIVE=4;ST_WRITE_EEPROM=5;ST_FLASH_WAIT_PREP=6;ST_SPM_WAIT_SENT=7
 
 def syms(obj=ROOT/'build/block64.o'):
     out={}
@@ -38,6 +39,7 @@ class CPU:
         self.ep_busy_cycles=0
         self.spm_buffer=bytearray([0xff]*64)
         self.spm_oplog=[]
+        self.lpm_oplog=[]
         self.eeprom_oplog=[]
         self.usb_timing_trace=[]
         self.stack=[]
@@ -190,6 +192,7 @@ class CPU:
             elif op=='lpm':
                 d=self.reg(a[0]);post=a[1]=='Z+';addr=self.r[30]|self.r[31]<<8
                 val=self.flash[addr];self.r[d]=val
+                self.lpm_oplog.append(addr)
                 if post:
                     addr=(addr+1)&0xffff;self.r[30]=addr&255;self.r[31]=addr>>8
                 self.cycles+=2

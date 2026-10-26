@@ -18,7 +18,7 @@ def make(fw):return CPU(image=fw)
 def prepare(cpu, address, length, memtype, request=0x11, request_type=0x40):
     cpu.set_setup(request, address, length, memtype, request_type)
     cpu.run_from('block_write_setup',stop_at=['L1df8','block_reject'], execute_ret=True,count=3000)
-    assert cpu.mem[MEM_STATE]==1, (cpu.mem[MEM_STATE],hex(address),length,memtype)
+    assert cpu.mem[MEM_STATE]==ST_RECEIVE, (cpu.mem[MEM_STATE],hex(address),length,memtype)
 
 def usb_crc(data):
     crc=0xffff
@@ -38,6 +38,39 @@ def out(cpu, payload, pid, corrupt=False):
 
 def service(cpu):
     cpu.run_from('block_memory_service',count=2000)
+
+def usb_status_and_spm(cpu,operation):
+    """Simulate hardware sending USB status, followed by 5ms quiet poll.
+
+    The behavioral test deliberately checks NO SPM occurs before both phases.
+    """
+    assert cpu.mem[MEM_STATE]==ST_FLASH_WAIT_PREP
+    previous=list(cpu.spm_oplog)
+    service(cpu)
+    assert cpu.spm_oplog==previous
+    # ZLP has now been prepared by the regular TX packetizer.
+    cpu.mem[0x0100]=0xff
+    cpu.mem[0x010f]=4
+    cpu.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    assert cpu.mem[MEM_STATE]==ST_SPM_WAIT_SENT
+    service(cpu)
+    assert cpu.spm_oplog==previous
+    cpu.run_from('block_spm_after_quiet',execute_ret=True,count=500)
+    assert cpu.spm_oplog==previous  # Not yet actually sent.
+    cpu.mem[0x010f]=0x5a  # USB_handler has emitted status DATA1 ZLP.
+    cpu.run_from('block_spm_after_quiet',execute_ret=True,count=1200)
+    assert cpu.mem[MEM_STATE]==ST_DONE
+    assert cpu.mem[MEM_STATUS]==0
+    assert cpu.mem[0x0100]==0xff  # Must not schedule another status transfer.
+    assert cpu.spm_oplog!=previous
+    assert cpu.spm_oplog[-1][0]==operation
+
+def erase_flash(cpu,address):
+    cpu.set_setup(0x14,address,0,0,0x40)
+    cpu.run_from('block_erase_setup',stop_at=['L1df8','block_reject'],execute_ret=True,count=500)
+    assert cpu.mem[MEM_STATE]==ST_FLASH_WAIT_PREP
+    assert cpu.mem[MEM_PROGRESS]==1
+    usb_status_and_spm(cpu,'erase')
 
 @pytest.mark.parametrize('memtype', [0,1])
 def test_range_validation(firmware, memtype):
@@ -78,53 +111,56 @@ def test_eeprom_read_snapshot_64(firmware):
         assert c.r[24]==length
         assert c.mem[0x0140:0x0140+length]==eeprom[start:start+length]
 
-def test_write_flash_partial_and_repeat_pid(firmware):
+def test_write_flash_full_page_no_rmw_and_repeat_pid(firmware):
     rng=random.Random(678)
     image=bytearray(firmware)
     initial=bytes(rng.randrange(256) for _ in range(64))
-    image[0x0100:0x0140]=initial
+    image[0x100:0x140]=initial
     c=make(bytes(image))
-    data=bytes(range(1,37))
-    prepare(c,0x100+7,len(data),0)
-    assert c.mem[MEM_INDEX]==7
-    assert c.mem[MEM_BUFFER:MEM_BUFFER+64]==initial
-    chunks=[data[i:i+8] for i in range(0,len(data),8)]
-    for idx,chunk in enumerate(chunks):
-        pid=(0x4b if idx%2==0 else 0xc3)
-        out(c,chunk,pid)
-        # Repeated packet with identical DATA PID must not advance pointer.
+    erase_flash(c,0x100)
+    assert c.flash[0x100:0x140]==bytes([0xff]*64)
+    prepare(c,0x100,64,0)
+    assert c.mem[MEM_INDEX]==0
+    assert c.mem[MEM_BUFFER:MEM_BUFFER+64]==bytes(64) # no preload of old Flash
+    assert not c.lpm_oplog # Flash setup did not read the page
+    data=bytes((i*3+1)&255 for i in range(64))
+    for idx in range(8):
+        payload=data[idx*8:idx*8+8]; pid=0x4b if idx%2==0 else 0xc3
+        out(c,payload,pid)
         if idx==0:
             saved=(c.mem[MEM_INDEX],c.mem[MEM_REMAIN])
-            out(c,chunk,pid)
+            out(c,payload,pid)
             assert (c.mem[MEM_INDEX],c.mem[MEM_REMAIN])==saved
-    assert c.mem[MEM_STATE]==3
-    assert c.mem[MEM_REMAIN]==0
-    service(c)
-    assert c.flash[0x0100:0x0140]==initial[:7]+data+initial[7+len(data):]
-    assert c.mem[MEM_STATUS]==0 and c.mem[MEM_STATE]==4
-    assert c.mem[0x0100]==0 # ZLP status ready
-    assert [x[0] for x in c.spm_oplog].count('load')==32
-    assert [x for x in c.spm_oplog if x[0]=='write']==[('write',0x0100)]
+    assert c.mem[MEM_STATE]==ST_FLASH_WAIT_PREP and c.mem[MEM_REMAIN]==0
+    assert c.flash[0x100:0x140]==bytes([0xff]*64)  # No SPM in DATA stage.
+    usb_status_and_spm(c,'write')
+    assert c.flash[0x100:0x140]==data
+    assert len([x for x in c.spm_oplog if x[0]=='erase'])==1
+    assert len([x for x in c.spm_oplog if x[0]=='write'])==1
+    assert len([x for x in c.spm_oplog if x[0]=='load'])==32
+    assert not c.lpm_oplog # No MCU RMW anywhere in the Flash write sequence
+
 
 def test_flash_64_byte_page_and_reset_protection(firmware):
     c=make(firmware)
+    erase_flash(c,0)
     prepare(c,0,64,0)
-    for i in range(8): out(c,bytes(range(i*8,i*8+8)),0x4b if i%2==0 else 0xc3)
-    assert c.mem[MEM_STATE]==3
-    service(c)
+    for i in range(8):out(c,bytes(range(i*8,i*8+8)),0x4b if i%2==0 else 0xc3)
+    usb_status_and_spm(c,'write')
     expected=(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
     assert c.flash[:2]==expected
     assert c.flash[2:64]==bytes(range(2,64))
-    assert c.spm_oplog[0]==('erase',0)
+    assert [x[0] for x in c.spm_oplog].count('erase')==1
+
 
 def test_write_eeprom_64_bytes_one_usb_transfer(firmware):
     eep=bytes([0xFF]*64);c=CPU(firmware,eep)
     prepare(c,0,64,1)
     for i in range(8):
         out(c,bytes([(i*8+j)*3&255 for j in range(8)]),0x4b if i%2==0 else 0xc3)
-    assert c.mem[MEM_STATE]==2
+    assert c.mem[MEM_STATE]==ST_WRITE_EEPROM
     for step in range(65): service(c)
-    assert c.mem[MEM_STATUS]==0 and c.mem[MEM_STATE]==4
+    assert c.mem[MEM_STATUS]==0 and c.mem[MEM_STATE]==ST_DONE
     assert c.eeprom==bytes((i*3)&255 for i in range(64))
     assert len(c.eeprom_oplog)==64
     assert c.mem[0x0100]==0
@@ -162,8 +198,8 @@ def test_usb_bit_code_crc_binary_identical(firmware):
     assert old[bs['USB_handler']:bs['usb_program_page']]==new[ns['USB_handler']:ns['main']]
 
 def test_correct_version_and_layout(firmware):
-    assert firmware[BOOT+8]==0xe1
-    assert firmware[BOOT+0x28:BOOT+0x2a]==b'\x00\x03'
+    assert firmware[BOOT+8]==0xe3
+    assert firmware[BOOT+0x28:BOOT+0x2a]==b'\x01\x03'
     assert firmware[BOOT+2:BOOT+4]==bytes([(BOOT-4)>>8,(BOOT-4)&255])
     assert firmware[BOOT:BOOT+2]!=b'\xff\xff'
     assert len(firmware)==8192
@@ -208,29 +244,27 @@ def test_usb_standard_scratch_reply_does_not_read_flash(firmware):
     assert c.mem[0x010f]==6
 
 
-def test_randomized_flash_page_rmw(firmware):
+def test_randomized_flash_complete_page_write_without_rmw(firmware):
     rng=random.Random(6701)
-    for _ in range(70):
-        page=rng.randrange(0,BOOT//64)
-        offset=rng.randrange(0,64)
-        count=rng.randrange(1,65-offset)
-        base=page*64
-        original=bytes(rng.randrange(256) for _ in range(64))
-        incoming=bytes(rng.randrange(256) for _ in range(count))
-        image=bytearray(firmware)
-        image[base:base+64]=original
+    for _ in range(90):
+        page=rng.randrange(0,BOOT//64); base=page*64
+        initial=bytes(rng.randrange(256) for _ in range(64))
+        incoming=bytes(rng.randrange(256) for _ in range(64))
+        image=bytearray(firmware);image[base:base+64]=initial
         c=make(bytes(image))
-        prepare(c,base+offset,count,0)
-        for packet_i,packet_start in enumerate(range(0,count,8)):
-            chunk=incoming[packet_start:packet_start+8]
+        erase_flash(c,base)
+        assert c.flash[base:base+64]==b'\xff'*64
+        prepare(c,base,64,0)
+        for packet_i in range(8):
+            chunk=incoming[packet_i*8:(packet_i+1)*8]
             out(c,chunk,0x4b if packet_i%2==0 else 0xc3)
-        assert c.mem[MEM_STATE]==3
-        service(c)
-        expected=bytearray(original)
-        expected[offset:offset+count]=incoming
-        if page==0:
-            expected[:2]=(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
-        assert bytes(c.flash[base:base+64])==bytes(expected), (page,offset,count)
+        usb_status_and_spm(c,'write')
+        expected=bytearray(incoming)
+        if page==0: expected[:2]=(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
+        assert bytes(c.flash[base:base+64])==bytes(expected)
+        assert len([x for x in c.spm_oplog if x[0]=='erase'])==1
+        assert len([x for x in c.spm_oplog if x[0]=='write'])==1
+
 
 
 def test_randomized_eeprom_writes(firmware):
@@ -251,17 +285,16 @@ def test_randomized_eeprom_writes(firmware):
 
 def test_bad_usb_data_crc_is_not_programmed(firmware):
     c=make(firmware)
-    prepare(c,0x100,8,0)
+    prepare(c,0x100,64,0)
     before=bytes(c.mem[MEM_BUFFER:MEM_BUFFER+64])
     out(c,bytes(range(8)),0x4b,corrupt=True)
-    assert c.mem[MEM_REMAIN]==8
-    assert c.mem[MEM_INDEX]==0
+    assert c.mem[MEM_REMAIN]==64 and c.mem[MEM_INDEX]==0
     assert c.mem[MEM_BUFFER:MEM_BUFFER+64]==before
-    assert c.mem[MEM_STATE]==1
-    # A subsequent correctly checksummed retry is accepted.
-    out(c,bytes(range(8)),0x4b)
-    assert c.mem[MEM_REMAIN]==0
-    assert c.mem[MEM_STATE]==3
+    assert c.mem[MEM_STATE]==ST_RECEIVE
+    for i in range(8):out(c,bytes(range(i*8,i*8+8)),0x4b if i%2==0 else 0xc3)
+    assert c.mem[MEM_REMAIN]==0 and c.mem[MEM_STATE]==ST_FLASH_WAIT_PREP
+    assert not c.spm_oplog  # No data written until USB status and quiet interval.
+
 
 
 def test_static_instruction_decoder_and_branch_boundaries(firmware):
@@ -295,6 +328,72 @@ def test_status_report_and_run_request(firmware):
     c.r[25]=0x12
     c.run_from('block_status',stop_at=['L1f34'],count=100)
     assert c.r[24]==1 and c.mem[0x0102]==0
-    c.mem[MEM_STATE]=4
+    c.mem[MEM_STATE]=ST_DONE
     c.run_from('block_run',stop_at=['L1de2'],count=100)
-    assert c.mem[MEM_STATE]==5 and c.r[24]==0
+    assert c.mem[MEM_STATE]==ST_RUN and c.r[24]==0
+
+
+def test_flash_rejects_partial_and_unaligned_without_touching_flash(firmware):
+    for addr,length in [(0,1),(0,63),(1,64),(63,1),(65,64),(BOOT-32,64)]:
+        c=make(firmware)
+        c.set_setup(0x11,addr,length,0,0x40)
+        c.run_from('block_write_setup',stop_at=['L1df8','block_reject'],execute_ret=True,count=500)
+        assert c.mem[MEM_STATE]!=ST_RECEIVE,(addr,length)
+        assert not c.spm_oplog
+
+
+def test_flash_erase_command_range_and_zero_data(firmware):
+    for addr,length,memtype,valid in [(0,0,0,True),(BOOT-64,0,0,True),
+                                      (0x100,0,0,True),(1,0,0,False),
+                                      (BOOT,0,0,False),(0,1,0,False),
+                                      (0,0,1,False),(0x100,0,256,False)]:
+        c=make(firmware)
+        c.set_setup(0x14,addr,length,memtype,0x40)
+        c.run_from('block_erase_setup',stop_at=['L1df8','block_reject'],execute_ret=True,count=500)
+        assert (c.mem[MEM_STATE]==ST_FLASH_WAIT_PREP)==valid,(addr,length,memtype,c.mem[MEM_STATE])
+        assert not c.spm_oplog
+
+
+def test_spm_begins_only_after_status_sent_and_quiet_interval(firmware):
+    c=make(firmware)
+    c.set_setup(0x14,0x100,0,0,0x40)
+    c.run_from('block_erase_setup',stop_at=['L1df8'],execute_ret=True,count=500)
+    old=bytes(c.flash[0x100:0x140]);assert not c.spm_oplog
+    # status queued but NOT transmitted
+    c.mem[0x010f]=4
+    c.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
+    for _ in range(4):
+        service(c)
+        c.run_from('block_spm_after_quiet',execute_ret=True,count=300)
+        assert not c.spm_oplog
+    c.mem[0x010f]=0x5a
+    c.run_from('block_spm_after_quiet',execute_ret=True,count=300)
+    assert c.spm_oplog==[('erase',0x100)]
+    assert c.flash[0x100:0x140]==b'\xff'*64
+
+
+def test_rejected_request_does_not_cancel_pending_erase(firmware):
+    c=make(firmware)
+    c.set_setup(0x14,0x100,0,0,0x40)
+    c.run_from('block_erase_setup',stop_at=['L1df8'],execute_ret=True,count=500)
+    c.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
+    c.run_from('block_reject',stop_at=['L1df8'],count=300)
+    assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
+    assert c.mem[MEM_STATUS]==1
+
+
+def test_all_101_page_erase_addresses_and_loader_boundary(firmware):
+    for addr in range(0,BOOT,64):
+        c=make(firmware)
+        c.set_setup(0x14,addr,0,0,0x40)
+        c.run_from('block_erase_setup',stop_at=['L1df8','block_reject'],count=350,execute_ret=True)
+        assert c.mem[MEM_STATE]==ST_FLASH_WAIT_PREP,hex(addr)
+        assert not c.spm_oplog
+    for addr in [BOOT,BOOT+64,0x1fc0,0xffff]:
+        c=make(firmware)
+        c.set_setup(0x14,addr,0,0,0x40)
+        c.run_from('block_erase_setup',stop_at=['L1df8','block_reject'],count=350,execute_ret=True)
+        assert c.mem[MEM_STATE]!=ST_FLASH_WAIT_PREP,hex(addr)
+        assert not c.spm_oplog
