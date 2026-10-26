@@ -203,8 +203,9 @@ def test_usb_bit_code_crc_binary_identical(firmware):
     source=ROOT/'reference/previous_bulk8_1344.S'
     base_obj=ROOT/'build/previous_bulk8.o'
     base_bin=ROOT/'build/previous_bulk8.full.bin'
-    subprocess.run(['clang','-target','avr','-mmcu=attiny88','-c','-x','assembler-with-cpp',str(source),'-o',str(base_obj)],check=True)
-    subprocess.run(['llvm-objcopy','-O','binary','-j','.text',str(base_obj),str(base_bin)],check=True)
+    sys.path.insert(0, str(ROOT/'tools'))
+    from avr_build import assemble
+    assemble(source, base_obj, base_bin)
     bs=syms(base_obj); ns=syms()
     old=base_bin.read_bytes();new=(ROOT/'build/block64.full.bin').read_bytes()
     assert old[bs['usb_crc16_append']:bs['USB_handler']]==new[ns['usb_crc16_append']:ns['USB_handler']]

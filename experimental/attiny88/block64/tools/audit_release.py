@@ -5,6 +5,7 @@ Build is relocatable within the page-aligned BOOT_AT address; release must
 contain no unresolved ELF relocations before binary extraction.
 """
 from pathlib import Path
+from avr_build import assemble
 import json,hashlib,subprocess,re,random
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
@@ -34,8 +35,7 @@ def symbols(obj):
 # Compile preserved Pass8 independently to compare exact CRC and bit engine code.
 refsrc=ROOT/'reference/Pass8_1720B_micronucleus_t88_block64.S'
 refobj=BLD/'reference_pass8.o';refbin=BLD/'reference_pass8.bin'
-subprocess.run(['clang','-target','avr','-mmcu=attiny88','-c','-x','assembler-with-cpp',str(refsrc),'-o',str(refobj)],check=True)
-subprocess.run(['llvm-objcopy','-O','binary','-j','.text',str(refobj),str(refbin)],check=True)
+assemble(refsrc, refobj, refbin)
 a=symbols(refobj);b=symbols(obj)
 r=refbin.read_bytes();c=(BLD/'block64.full.bin').read_bytes()
 crc_ref=r[a['usb_crc16_append']:a['USB_handler']]

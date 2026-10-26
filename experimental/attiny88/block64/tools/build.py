@@ -2,6 +2,7 @@
 """Reproducible assembler build and Intel HEX generation; NEVER flashes hardware."""
 from pathlib import Path
 import subprocess, json, hashlib, re
+from avr_build import assemble
 ROOT=Path(__file__).resolve().parent.parent
 BOOT=0x19c0;FLASH=8192;APP=BOOT-4
 SRC=ROOT/'source/micronucleus_t88_block64.S'
@@ -23,12 +24,11 @@ def symbols(path):
 def build():
     BUILD.mkdir(exist_ok=True); FW.mkdir(exist_ok=True)
     obj=BUILD/'block64.o';raw=BUILD/'block64.full.bin'
-    run('clang','-target','avr','-mmcu=attiny88','-c','-x','assembler-with-cpp',str(SRC),'-o',str(obj))
+    assemble(SRC, obj, raw)
     # llvm-objcopy extracts sections without resolving unknown ELF symbols.
     # Refuse to produce a supposedly flashable image with unresolved branches.
     relocation_report=run('llvm-objdump','-r',str(obj))
     assert 'R_AVR_' not in relocation_report, ('Unresolved AVR relocations:',relocation_report)
-    run('llvm-objcopy','-O','binary','-j','.text',str(obj),str(raw))
     binary=raw.read_bytes()
     assert binary[:BOOT]==bytes(BOOT),'Nonempty .text before loader region'
     body=binary[BOOT:]
