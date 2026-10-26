@@ -287,7 +287,9 @@ L1bf6:
     and     r17, r17
     brbc    1, L1c48
     cpi     r19, 0x04
-    brbs    2, L1c4c
+    brsh    usb_rx_publish_data
+    rjmp    usb_rx_empty_data
+usb_rx_publish_data:
     std     Z+18, r19
     std     Z+13, r18
     rjmp    L1c4c

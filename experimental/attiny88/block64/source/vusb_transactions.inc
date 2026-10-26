@@ -43,3 +43,19 @@ usb_abort_unacknowledged_control:
     std     Y+56, r18
 usb_control_abort_done:
     ret
+
+/* A CRC-valid DATA1 empty OUT completes a control read even if the host's
+   last IN ACK was lost. It never acknowledges an outstanding mutation. */
+usb_control_read_status:
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    tst     r18
+    breq    usb_control_read_complete
+    sbrs    r18, 7
+    rjmp    L1df8
+usb_control_read_complete:
+    std     Y+CTX_TX_ACK_WINDOW, r1
+    ldi     r18, EP0_NAK
+    std     Y+15, r18
+    ldi     r18, EMPTY_MESSAGE
+    std     Y+0, r18
+    rjmp    L1df8

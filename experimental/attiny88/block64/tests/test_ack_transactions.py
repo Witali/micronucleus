@@ -180,8 +180,37 @@ def dispatch_received(cpu):
     cpu.run_from('L1d9c', stop_at=['L1e64'], count=3000, execute_ret=True)
 
 
+def test_valid_read_status_out_completes_even_when_last_in_ack_was_lost(cpu):
+    read_reply(cpu, 8)
+    transmit(cpu)
+    classify(cpu, token(0xE1))
+    classify(cpu, bytes([DATA1, 0, 0]))
+    assert cpu.mem[0x0112] == 3
+    dispatch_received(cpu)
+    assert cpu.mem[0x010F] == NAK and cpu.mem[0x0100] == 0xFF
+    assert not cpu.spm_oplog
+
+    # Repeated status after a lost device ACK remains harmless and valid.
+    classify(cpu, token(0xE1))
+    classify(cpu, bytes([DATA1, 0, 0]))
+    dispatch_received(cpu)
+    assert cpu.mem[0x010F] == NAK and cpu.mem[0x0100] == 0xFF
+    assert not cpu.spm_oplog
 
 
+@pytest.mark.parametrize('frame', [bytes([DATA1]), bytes([DATA1, 0]),
+                                  bytes([DATA1, 1, 0]), bytes([DATA1, 0, 1]),
+                                  bytes([DATA1, 1, 1]), bytes([DATA0, 0, 0])])
+def test_invalid_read_status_out_cannot_complete_lost_ack_transfer(cpu, frame):
+    read_reply(cpu, 8)
+    first = queued(cpu)
+    transmit(cpu)
+    classify(cpu, token(0xE1))
+    classify(cpu, frame)
+    assert cpu.mem[0x0112] == 0
+    dispatch_received(cpu)
+    assert queued(cpu) == first
+    assert not cpu.spm_oplog
 
 
 @pytest.mark.parametrize('frame', [b''] + [bytes([ACK]) + b'\x00' * count for count in range(1, 11)]

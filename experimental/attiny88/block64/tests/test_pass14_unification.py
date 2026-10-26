@@ -23,7 +23,7 @@ def test_relief_and_usb_phy_identical():
     b=read_symbols(ROOT/'build/block64.o')
     o=old.read_bytes();n=new.read_bytes()
     assert b['bootloader_start']==BOOT
-    assert len(n)-BOOT==1746  # Pointer reuse plus the shared SETUP/OUT CRC gate.
+    assert len(n)-BOOT==1804  # Pointer reuse plus the shared SETUP/OUT CRC gate.
     assert len(o)-0x1980==1610
     assert n[b['usb_crc16_append']:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
     from usb_transaction_audit import audit_timed_instructions

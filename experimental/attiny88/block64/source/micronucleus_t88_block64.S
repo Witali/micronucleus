@@ -663,3 +663,4 @@ block_load_page_z:
 
 /* Transaction bookkeeping is outside the NRZI sampler/transmitter loops. */
 #include "vusb_transactions.inc"
+#include "vusb_empty_data.inc"

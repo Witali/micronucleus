@@ -44,6 +44,10 @@ block_standard_setup:
 block_out_packet:
     /* Tail dispatch instead of RCALL + RJMP: the DATA OUT parser
        returns directly to the common EP0 path. */
+    tst     r24
+    brne    block_out_payload
+    rjmp    usb_control_read_status
+block_out_payload:
     rjmp    block_accept_out
 
 L1de2:
