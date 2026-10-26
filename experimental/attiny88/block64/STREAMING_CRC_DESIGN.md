@@ -13,6 +13,11 @@ CRC update across received bits, but its twelve-cycle slots are not directly
 usable at 16 MHz. This proposal reschedules those operations instead of
 changing the oscillator.
 
+The [official upstream comparison](VUSB_UPSTREAM_REVIEW.md) confirms that
+the current official V-USB dispatcher still provides RX CRC checking only
+at 18 MHz. Updating the bundled library alone does not supply this feature
+at 16 MHz, and the local function calling convention must be preserved.
+
 ## Why the existing foreground routine cannot move before ACK
 
 The current 44-byte routine was executed on 4608 archived-opcode vectors:
