@@ -1,5 +1,10 @@
 # Isolated 16 MHz streaming CRC receiver
 
+The verified 512-byte table and sampler are frozen in the
+[table512 checkpoint](checkpoints/table512/README.md). The
+[smaller-table experiment](CRC_TABLE_TRADEOFFS.md) measures 32-byte,
+16-byte and table-free alternatives against the available receive slots.
+
 The later [opt-in ACK experiments](ACK_EXPERIMENTS.md) evaluate MOVW and
 publication during/after ACK. Their recommended EOP candidate saves three
 clocks without changing the default image or its NVM protection.

@@ -1,0 +1,39 @@
+{
+  "format_version": 1,
+  "purpose": "Preserved working 512-byte streaming CRC table and sampler",
+  "complete_source_git_checkpoint": "1affaacdb423b25c180e5423d46a6d1477b1f971",
+  "sampler_file": "streaming_rx_v2.inc",
+  "sampler_sha256_utf8_lf": "fcc0ad6f463dd0e133808065e8db3d1aa2e4a1762158666dadfc2231205dbd2c",
+  "table_file": "crc_tables.inc",
+  "table_assembly_sha256_utf8_lf": "c667b3c9a7e425b13889d4f874786f74aa2ba642d559abdc3f02c120bfb144d2",
+  "table_data_bytes": 512,
+  "table_data_sha256": "dccb1cc40fd2840e8faf4cc8a64f8474afae71fe30eb395baf1d2978ac5a65ab",
+  "table_low_address": 5632,
+  "table_high_address": 5888,
+  "cpu_hz": 16000000,
+  "crc_inline_cycles_per_byte": 11,
+  "crc_inline_microseconds_per_byte": 0.6875,
+  "unstuffed_receive_byte_cycles": [
+    85,
+    86
+  ],
+  "diagnostic_body_address": 2048,
+  "diagnostic_body_bytes": 4096,
+  "diagnostic_code_and_static_bytes_before_tables": 3262,
+  "diagnostic_padding_bytes": 322,
+  "diagnostic_body_sha256": "e5b06459481658af1f0b4296000a97dbd7f0226502caf5dd86c234a4407aba82",
+  "nominal_legal_tail_ack_cycles": [
+    50.666666666666664,
+    68
+  ],
+  "bounded_rate_jitter_ack_max_cycles": 68.66666666666667,
+  "ack_limit_cycles": 69.33333333333333,
+  "physical_application_read_trial_completed": true,
+  "checkpoint_operation_programmed_hardware": false,
+  "limits": [
+    "CRC update cycles exclude EOP cleanup and ACK dispatch.",
+    "The diagnostic body is not a production bootloader-size claim.",
+    "Foreground minimum-gap token loss and busy-RX payload ownership remain open.",
+    "Analog electrical compliance is not established."
+  ]
+}

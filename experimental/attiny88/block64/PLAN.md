@@ -83,10 +83,15 @@ Correctness fixes may increase code first; do not trade them for a size claim.
 
 - [ ] Review common state/response tails without changing externally visible
   result/state behavior or transaction ownership.
-- [ ] Compare table-free AVR-LibC CRC (23 instruction clocks/byte before
-  setup) and a 32-byte nibble table with the current 11-clock table
-  pipeline. Replan the receiver before claiming a table-free size saving;
-  the existing schedule cannot directly absorb the extra clocks.
+- [x] Assemble and measure smaller CRC alternatives: the 32-byte nibble
+  table needs 35 inline clocks, a separate 16-byte folded table needs 19,
+  and AVR-LibC needs 23. None directly fits the unchanged 14-clock budget.
+  Preserve the working 512-byte/11-clock variant and its evidence.
+  See [the comparison](prototypes/streaming_crc16/CRC_TABLE_TRADEOFFS.md).
+- [ ] Replan the receiver before integrating a reduced CRC table. The
+  16-byte folded candidate is closest, but still needs at least five
+  regular clocks beyond the unchanged sampler budget plus liveness and
+  EOP/ACK proofs. Measure the complete linked image before claiming a saving.
 - [ ] Measure real linked code size after each focused change.
 - [ ] Move BOOT_AT only after the code fits; rebuild RESET, descriptors,
   postscript, host bounds, reference maps and updater configuration together.
