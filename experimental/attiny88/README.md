@@ -1,5 +1,12 @@
 # Experimental Micronucleus+ for ATtiny88
 
+The separate [Block64 development line](block64/README.md) imports the complete
+October 26 handoff and develops its 64-byte control-transfer protocol on
+`feature/attiny88-block64`. It has its own host, plan and software validation;
+it is incompatible with the stock upload protocol and retains known USB
+transaction defects. The verified/optimized Micronucleus+ variants below
+remain separate, and the installed board has not been changed by this import.
+
 This directory contains the assembly development line imported from the October 25, 2026 handoff. Upstream C firmware and the original command-line tool remain in their existing directories. The original imported images are historical experiments. A subsequent real-board trial uncovered vendor-dispatch, SRAM-reply and watchdog-startup defects; the [corrected strict USB version](variants/strict_usb_verified/README.md) and [USB updater](updater/README.md) address them without changing the low-level USB handler.
 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |

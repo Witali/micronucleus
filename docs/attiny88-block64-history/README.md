@@ -32,7 +32,7 @@ optimized/verified variants and the installed board are not changed.
 | Additional Pass10 worktree | See archived artifacts | Parallel working snapshot, preserved independently |
 | Pass11 | 1662 | Fixed eight-byte GET_STATUS; modular PHY/EP0/standard code |
 | Pass12 | 1606 | DATA OUT and dispatch compaction |
-| Pass13 | 1600 or 1610 in conflicting handoff reports | Faster EEPROM/Flash paths; verify actual artifact |
+| Pass13 | 1610 in the original stage; a later nested reference has 1600 | Faster EEPROM/Flash paths; distinct artifacts remain preserved |
 | Pass14 | 1596 | Shared SPM and 25-page layout at 0x19C0 |
 | Pass15 | 1580 | Shared mutation setup and DATA OUT tail dispatch |
 | Pass16 WIP | 1576, unverified | CRC pointer reuse and a timing-changing PHY experiment |
@@ -47,7 +47,31 @@ protocol and is not evidence of Block64 hardware compatibility.
 The handoff prioritizes USB correctness (CRC before ACK, lost ACK/retries,
 DATA PID deduplication and status-stage/SPM ordering), followed by a size
 target of 1536 bytes without removing memory functionality. See the current
-Block64 development plan after the chronological imports.
+Block64 [development plan](../../experimental/attiny88/block64/PLAN.md).
+
+The original Pass13 stage's body and manifest both report 1610 bytes. A later
+`Pass13_baseline` reference is a different 1600-byte artifact. They are not
+silently treated as one build. The current development image is 1588 bytes;
+its [validation record](../../experimental/attiny88/block64/VALIDATION.md)
+separates new checks from handoff reports.
+
+## Reconstructed commit map
+
+| Snapshot | Commit |
+| --- | --- |
+| Complete archive and index | `ce1c43b` |
+| v3.0 | `5726ce6` |
+| SplitEraseWrite | `4a74dc5` |
+| RESET-only Pass8 | `7949a69` |
+| Pass9 | `7d562ec` |
+| Pass10 | `90b1895` |
+| Additional Pass10 tree | `3967da0` |
+| Pass11 | `49714f6` |
+| Pass12 | `0d0c97f` |
+| Pass13 | `c3b8ffc` |
+| Pass14 | `493c8d5` |
+| Pass15 | `37e762a` |
+| Unverified Pass16 tree | `08ff346` |
 
 Before import, all 1776 archive entries including nested ZIP contents were
 locally inspected for credential signatures and private contact patterns;
