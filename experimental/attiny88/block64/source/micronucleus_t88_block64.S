@@ -132,6 +132,13 @@ L1d54:
 
 L1d5e:
     wdr
+    /* Common IDLE/DONE/ERROR path bypasses RCALL/RET altogether.
+       On active operations the preloaded state r18 is reused below. */
+    ldi     r28, 0x00
+    ldi     r29, 0x01
+    ldd     r18, Y+57
+    cpi     r18, ST_RUN
+    brlo    L1d9c
     rcall   block_memory_service
 
 /* Examine a staged USB packet; SETUP and DATA OUT have distinct handlers. */
@@ -233,7 +240,8 @@ block_vendor_in:
     breq    block_status
     cpi     r25, OP_READ
     breq    block_read_setup
-    rjmp    block_vendor_reject
+    /* Do not chain two RJMP instructions through block_vendor_reject. */
+    rjmp    block_reject
 
 /* Live SRAM response overlay at 0x0138:
  * [last_result, state, app_hi, app_lo, page_bytes, eeprom_bytes,
@@ -277,9 +285,14 @@ block_read_range_ok:
     ldi     r27, 0x01
     mov     r20, r24
     mov     r17, r22
+    /* EEPROM is idle and EECR uses erase/write mode with no ready IRQ.
+       Preload the EERE strobe once; OUT is one cycle vs SBI's two.
+       This changes EERE only, and all other EECR bits are deliberately 0. */
+    /* The range validator guarantees memory-type r16 == 1 here, so it
+       doubles as the EEPROM read strobe without loading another register. */
 block_snapshot_eeprom_loop:
     out     T88_IO_EEARL, r17
-    sbi     T88_IO_EECR, 0
+    out     T88_IO_EECR, r16
     in      r18, 0x20
     st      X+, r18
     inc     r17
@@ -501,20 +514,19 @@ block_out_return:
  * EEPROM programming progresses one byte whenever EEPE clears. Flash
  * erase/fill/write executes only after the entire control OUT payload.
  */
+/* The active states enter with Y=0x0100 and r18=MEM_STATE preloaded.
+   The shared service_return is the RET at end of block_complete_flash. */
 block_memory_service:
-    ldi     r28, 0x00
-    ldi     r29, 0x01
-    ldd     r18, Y+57
     cpi     r18, ST_WRITE_EEPROM
     breq    block_step_eeprom
     cpi     r18, ST_RUN
-    brne    block_service_return
-    /* Inline the sole RUN dispatch, remove RCALL trampoline and a RET. */
+    brne    block_memory_service_return
     ldd     r18, Y+15
     cpi     r18, EP0_NAK
-    brne    block_service_return
+    brne    block_memory_service_return
     rjmp    L1eac
-block_service_return:
+
+block_memory_service_return:
     ret
 
 block_step_eeprom:
@@ -533,9 +545,12 @@ block_eeprom_more_bytes:
     ld      r21, Z
     out     T88_IO_EEARL, r20         /* EEARL */
     out     T88_IO_EEDR, r21         /* EEDR */
-    out     T88_IO_EECR, r1         /* erase-and-write mode */
-    sbi     T88_IO_EECR, 2          /* EEMPE: master enable */
-    sbi     T88_IO_EECR, 1          /* EEPE within 4 cycles */
+    /* EEDR's old r21 value is no longer needed. Set EEMPE using one-cycle
+       OUT instead of OUT+SBI; the subsequent two-cycle SBI(EEPE) meets
+       the <=4-cycle window. Mode EEPM=00 and interrupt EERIE=0. */
+    ldi     r21, (1 << 2)
+    out     T88_IO_EECR, r21
+    sbi     T88_IO_EECR, 1
     inc     r18
     std     Y+54, r18
     ret
@@ -600,7 +615,11 @@ block_flash_fill_word:
     ld      r1, X+
     out     T88_IO_SPMCSR, r18
     spm
-    adiw    r30, 2
+    /* The 64-byte page is aligned: only the low six Z bits select a word.
+       SUBI adds 2 in one cycle, whereas ADIW costs two. An overflow of
+       ZL can happen only after the *last* word of a page at xxC0; Z is
+       reloaded before PAGE WRITE, so ZH need not be incremented here. */
+    subi    r30, 0xfe
     cpi     r26, 0x80
     brne    block_flash_fill_word
     clr     r1
@@ -616,6 +635,7 @@ block_complete_flash:
     std     Y+56, r1
     ldi     r18, ST_DONE
     std     Y+57, r18
+block_service_return:
     ret
 
 /* Standard USB Chapter 9 request handlers (not Block64 vendor commands). */

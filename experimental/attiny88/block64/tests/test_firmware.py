@@ -37,6 +37,9 @@ def out(cpu, payload, pid, corrupt=False):
     cpu.run_from('block_accept_out', count=2000, execute_ret=True)
 
 def service(cpu):
+    # The active-state helper is called only after main preloads Y and r18.
+    cpu.r[28]=0;cpu.r[29]=1
+    cpu.r[18]=cpu.mem[MEM_STATE]
     cpu.run_from('block_memory_service',count=2000)
 
 def prepare_status_zlp(cpu):

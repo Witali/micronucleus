@@ -88,8 +88,14 @@ class CPU:
         if addr == 0x1f and self.ep_busy_cycles>0:return self.io.get(addr,0)|2
         return self.io.get(addr,0)
     def write_io(self, addr,val):
-        val&=255
-        self.io[addr]=val
+        val &= 255
+        # EECR.EERE is a write-one strobe. ATtiny88 permits OUT as well as
+        # SBI to trigger the read; hardware clears EERE automatically.
+        if addr == 0x1f and (val & 1):
+            assert not (self.read_io(addr) & 2), 'EERE during EEPROM write'
+            self.io[0x20] = self.eeprom[self.io[0x21]]
+            val &= 0xfe
+        self.io[addr] = val
     def ram(self,addr):return self.mem[addr]
     def set_setup(self,request,addr=0,length=1,memtype=0,request_type=0xc0):
         self.r[28]=0; self.r[29]=1;self.r[25]=request
@@ -140,6 +146,8 @@ class CPU:
                 d=self.reg(a[0]);v=(self.r[d]+(1 if op=='inc' else -1))&255
                 self.r[d]=v;self.znvs(v, v==(0x80 if op=='inc' else 0x7f))
             elif op in ('adiw','sbiw'):
+                # Official AVRrc timing: ADIW/SBIW = 2 clocks, not 1.
+                self.cycles += 1
                 d=self.reg(a[0]);v=self.imm(a[1]);old=self.r[d]|self.r[d+1]<<8
                 new=(old+(v if op=='adiw' else -v))&0xffff
                 self.r[d]=new&255;self.r[d+1]=new>>8
@@ -158,7 +166,7 @@ class CPU:
             elif op=='sbi':
                 addr=self.imm(a[0]);bit=self.imm(a[1]);self.cycles+=1
                 if addr==0x1f and bit==0:
-                    self.io[0x20]=self.eeprom[self.io[0x21]]
+                    self.write_io(addr, self.read_io(addr) | (1 << bit))
                 elif addr==0x1f and bit==1:
                     assert self.io.get(0x1f,0)&4, 'EEMPE not set'
                     aa=self.io[0x21];bb=self.io[0x20]

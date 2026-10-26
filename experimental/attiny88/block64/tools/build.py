@@ -43,14 +43,14 @@ def build():
     image[0:2]=reset.to_bytes(2,'little')
     image[BOOT:BOOT+len(body)]=body
     assert image[APP:BOOT]==b'\xff'*4
-    (FW/'BOOTLOADER_BODY_1980_PASS11.bin').write_bytes(body)
-    (FW/'ISP_FULL_8192_1980_PASS11.bin').write_bytes(image)
+    (FW/'BOOTLOADER_BODY_1980_PASS13.bin').write_bytes(body)
+    (FW/'ISP_FULL_8192_1980_PASS13.bin').write_bytes(image)
     lines=[rec(0,image[:2])]
     for adr in range(BOOT,FLASH,16):
         part=image[adr:adr+16]
         if any(b!=255 for b in part):lines.append(rec(adr,part))
     lines.append(rec(0,b'',1))
-    hexf=FW/'ISP_FULL_1980_PASS11_EXPERIMENTAL.hex'
+    hexf=FW/'ISP_FULL_1980_PASS13_EXPERIMENTAL.hex'
     hexf.write_text('\n'.join(lines)+'\n')
     for line in lines:
         if not line.startswith(':'):continue
@@ -60,7 +60,7 @@ def build():
     manifest={
         'note':'EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.',
         'mcpu':'ATtiny88 16MHz external clock',
-        'protocol_version':'3.3 / Pass11 (GET_STATUS always 8)',
+        'protocol_version':'3.3 / Pass13 (cycle-optimized, protocol unchanged)',
         'bootloader_start':hex(BOOT),
         'bootloader_body_bytes':len(body),
         'reserved_flash_bytes':FLASH-BOOT,
