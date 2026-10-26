@@ -208,8 +208,8 @@ def test_usb_bit_code_crc_binary_identical(firmware):
     assert old[bs['USB_handler']:bs['usb_program_page']]==new[ns['USB_handler']:ns['main']]
 
 def test_correct_version_and_layout(firmware):
-    assert firmware[BOOT+8]==0xe3
-    assert firmware[BOOT+0x28:BOOT+0x2a]==b'\x01\x03'
+    assert firmware[BOOT+2:BOOT+8]==bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x32,0x03])
+    assert firmware[BOOT+0x26:BOOT+0x28]==b'\x02\x03'
     assert firmware[BOOT+2:BOOT+4]==bytes([(BOOT-4)>>8,(BOOT-4)&255])
     assert firmware[BOOT:BOOT+2]!=b'\xff\xff'
     assert len(firmware)==8192
@@ -334,13 +334,57 @@ def test_static_instruction_decoder_and_branch_boundaries(firmware):
 
 def test_status_report_and_run_request(firmware):
     c=make(firmware)
+    c.run_from('startup',stop_at=['main'],count=500)
     c.mem[MEM_STATUS]=0
-    c.r[25]=0x12
-    c.run_from('block_status',stop_at=['L1f34'],count=100)
-    assert c.r[24]==1 and c.mem[0x0102]==0
     c.mem[MEM_STATE]=ST_DONE
+    c.set_setup(0x12,length=1,request_type=0xc0)
+    c.run_from('block_vendor_dispatch',stop_at=['L1de2'],count=200)
+    assert c.r[24]==8 and ((c.r[19]<<8)|c.r[18])==0x8138
+    c.run_from('L1de2',stop_at=['L1dfc'],count=100)
+    assert c.mem[0x0100]==1  # Common limiter still honors wLength=1
+    c.mem[0x010f]=0x5a
+    c.mem[0x0101]=0xc3
+    c.run_from('L1dfc',stop_at=['L1e64'],count=900,execute_ret=True)
+    assert c.mem[0x0102]==0
     c.run_from('block_run',stop_at=['L1de2'],count=100)
     assert c.mem[MEM_STATE]==ST_RUN and c.r[24]==0
+
+
+@pytest.mark.parametrize('result,state',[(0,0),(0,1),(1,5),(1,6),(2,2),(3,2)])
+@pytest.mark.parametrize('requested', [1,2,7,8,16,255])
+def test_unified_get_status_usb_payload_and_bounds(firmware,result,state,requested):
+    c=make(firmware)
+    # Ensure no stale SRAM bytes survive an arbitrary power-on state.
+    c.mem[0x0100:0x0140]=bytes(((i*13+3)%255+1) for i in range(0x40))
+    c.run_from('startup',stop_at=['main'],count=500)
+    c.mem[MEM_STATUS]=result
+    c.mem[MEM_STATE]=state
+    c.set_setup(0x12,length=requested,request_type=0xc0)
+    c.run_from('block_vendor_dispatch',stop_at=['L1de2'],count=200)
+    assert c.r[24]==8 and (c.r[19]<<8|c.r[18])==0x8138
+    c.run_from('L1de2',stop_at=['L1dfc'],count=100)
+    count=min(8,requested)
+    assert c.mem[0x0100]==count
+    c.mem[0x010f]=0x5a
+    c.mem[0x0101]=0xc3
+    c.run_from('L1dfc',stop_at=['L1e64'],count=900,execute_ret=True)
+    expected=bytes([result,state,(BOOT-4)>>8,(BOOT-4)&255,64,64,0x32,0x03])
+    assert c.mem[0x0102:0x0102+count]==expected[:count]
+    # The packetizer itself advances FLASH_WAIT_PREP -> SPM_WAIT_SENT after
+    # scheduling the outgoing status-stage packet; it must not change the
+    # already snapshotted GET_STATUS payload.
+    new_state=ST_SPM_WAIT_SENT if state==ST_FLASH_WAIT_PREP else state
+    assert c.mem[MEM_STATUS]==result and c.mem[MEM_STATE]==new_state
+    assert c.mem[0x013a:0x0140]==expected[2:]
+
+
+def test_removed_legacy_info_request_is_rejected(firmware):
+    c=make(firmware)
+    c.r[28],c.r[29]=0,1
+    c.set_setup(0x20,length=8,request_type=0xc0)
+    c.run_from('block_vendor_dispatch',stop_at=['L1df8'],count=250)
+    assert c.mem[0x0100]==0xff
+    assert c.mem[MEM_STATUS]==2
 
 
 def test_flash_rejects_partial_and_unaligned_without_touching_flash(firmware):
@@ -418,6 +462,7 @@ def test_cold_start_initializes_all_block64_state(firmware):
         c.mem[addr]=rng.randrange(1,256)
     c.run_from('startup', stop_at=['main'], count=400)
     assert c.mem[0x0100:0x013a] == bytes(0x3a)
+    assert c.mem[0x013a:0x0140] == bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x32,0x03])
     assert c.mem[MEM_STATE] == ST_IDLE
     assert c.mem[MEM_STATUS] == 0
     assert c.mem[MEM_EXPECT_PID] == 0
@@ -440,3 +485,34 @@ def test_page_zero_uses_app_supplied_interrupt_vectors(firmware):
     reset=(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
     assert c.flash[:2]==reset
     assert c.flash[2:64]==page[2:]
+
+
+@pytest.mark.parametrize('descriptor,offset',[('device',0x1a),('configuration',0x08)])
+def test_usb_standard_descriptors_still_accessible_after_metadata_repack(firmware,descriptor,offset):
+    """Two unneeded info/signature bytes were removed before the descriptors.
+
+    Standard USB descriptor pointers must follow this two-byte relocation.
+    """
+    c=make(firmware)
+    kind=1 if descriptor=='device' else 2
+    c.set_setup(6,addr=kind<<8,length=18,memtype=0,request_type=0x80)
+    c.run_from('old_vendor_dispatch',stop_at=['L1de2'],count=180)
+    address=(c.r[19]<<8)|c.r[18]
+    assert address==BOOT+offset
+    assert c.r[24]==18
+    raw=bytes(c.flash[address:address+18])
+    assert raw[:2]==(bytes([18,kind]) if kind==1 else bytes([9,kind]))
+    if kind==1:
+        assert raw[12:14]==b'\x02\x03'  # bcdDevice=3.2
+        assert raw[8:12]==b'\xd0\x16\x53\x07'  # VID:PID 16D0:0753
+    else:
+        assert raw[2:4]==b'\x12\x00'  # total length 18
+
+
+def test_usb_standard_get_status_remains_distinct_from_vendor_get_status(firmware):
+    c=make(firmware)
+    c.set_setup(0x00,length=2,request_type=0x80)
+    c.run_from('old_vendor_dispatch',stop_at=['L1de2'],count=150)
+    assert c.r[24]==2  # USB standard GET_STATUS, not Block64 status
+    assert (c.r[19]<<8)|c.r[18]==0x810a
+    assert c.mem[0x0102:0x0104]==b'\x00\x00'

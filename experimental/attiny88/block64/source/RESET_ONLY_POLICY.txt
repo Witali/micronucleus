@@ -1,1 +1,0 @@
-Application ISR vectors are unchanged by bootloader. Only reset word at 0x0000-0x0001 is patched during page-0 WRITE. Hardware erase of page 0 still erases RESET; cannot prevent power-loss window on ATtiny88.

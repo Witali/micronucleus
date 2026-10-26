@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pass 9 independent release checks, with no hardware operations.
+"""Pass 10 independent release checks, with no hardware operations.
 
 Build is relocatable within the page-aligned BOOT_AT address; release must
 contain no unresolved ELF relocations before binary extraction.
@@ -9,8 +9,8 @@ import json,hashlib,subprocess,re,random
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
 BOOT=0x1980; FLASH=8192; PAGE=64; APP=BOOT-4
-body=(FW/'BOOTLOADER_BODY_1980_PASS9.bin').read_bytes()
-whole=(FW/'ISP_FULL_8192_1980_PASS9.bin').read_bytes()
+body=(FW/'BOOTLOADER_BODY_1980_PASS10.bin').read_bytes()
+whole=(FW/'ISP_FULL_8192_1980_PASS10.bin').read_bytes()
 manifest=json.loads((FW/'manifest.json').read_text())
 assert len(body)<=1664 and len(body)%2==0 and len(whole)==FLASH
 assert len(body)==manifest['bootloader_body_bytes']
@@ -21,7 +21,7 @@ assert whole[APP:BOOT]==b'\xff'*4
 assert whole[2:APP]==b'\xff'*(APP-2)
 reset=0xc000|(((BOOT//2)-1)&0xfff)
 assert whole[:2]==reset.to_bytes(2,'little')
-assert body[2:4]==bytes([APP>>8,APP&255])
+assert body[2:8]==bytes([APP>>8,APP&255,64,64,0x32,0x03])
 assert manifest['application_bytes']==APP
 obj=BLD/'block64.o'
 reloc=subprocess.check_output(['llvm-objdump','-r',str(obj)],text=True)
@@ -46,7 +46,7 @@ assert crc_ref==crc_new and len(crc_new)==44
 assert engine_ref==engine_new and len(engine_new)==508
 
 # Intel HEX checksums and complete sparse-image reconstruction.
-records=(FW/'ISP_FULL_1980_PASS9_EXPERIMENTAL.hex').read_text().strip().splitlines()
+records=(FW/'ISP_FULL_1980_PASS10_EXPERIMENTAL.hex').read_text().strip().splitlines()
 img=bytearray(b'\xff'*FLASH)
 for record in records:
     assert record.startswith(':'),record

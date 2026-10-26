@@ -1,4 +1,4 @@
-/* Micronucleus ATtiny88 16 MHz Block64 v3.1-compatible Reset-only Pass8 ASM.
+/* Micronucleus ATtiny88 16 MHz Block64 v3.2 unified GET_STATUS (Pass10) ASM.
  * BASED ON Optimized Micronucleus t88_default 16 MHz ATtiny88 bootloader, pass 3.
  * Assembler reconstruction of public Micronucleus firmware with conservative code-size
  * SRAM pointer reuse in V-USB with cycle-neutral sync-stage initialization.
@@ -16,22 +16,24 @@
 #if ((BOOT_AT - 3) & 0xff) < 8
 #error Optimized Flash range check assumes boundary low-byte >= 8
 #endif
-#if ((BOOT_AT + 0x0a) >> 8) != ((BOOT_AT + 0x1c) >> 8)
+#if ((BOOT_AT + 0x08) >> 8) != ((BOOT_AT + 0x1a) >> 8)
 #error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
 #endif
 
-/* Block64 split erase/write v3.1 (incompatible with old Micronucleus CLI). */
-#define MEM_STATE 0x0130
-#define MEM_TYPE 0x0131
-#define MEM_ADDR_LO 0x0132
-#define MEM_ADDR_HI 0x0133
-#define MEM_REMAIN 0x0134
-#define MEM_INDEX 0x0135
-#define MEM_TOTAL 0x0136
-#define MEM_STATUS 0x0137
-#define MEM_PROGRESS 0x0138
-#define MEM_EXPECT_PID 0x0139  /* USB DATA1 after SETUP, toggles per accepted OUT */
+/* Block64 v3.2 split erase/write, unified GET_STATUS (old CLI incompatible). */
+#define MEM_STATE 0x0139
+#define MEM_TYPE 0x0130
+#define MEM_ADDR_LO 0x0131
+#define MEM_ADDR_HI 0x0132
+#define MEM_REMAIN 0x0133
+#define MEM_INDEX 0x0134
+#define MEM_TOTAL 0x0135
+#define MEM_STATUS 0x0138
+#define MEM_PROGRESS 0x0136
+#define MEM_EXPECT_PID 0x0137  /* USB DATA1 after SETUP, toggles per accepted OUT */
 #define MEM_BUFFER 0x0140   /* one 64-byte SRAM page, 0x0140-0x017f */
+/* Live status response at SRAM 0x0138..0x013F: MEM_STATUS, MEM_STATE,
+   followed by six immutable fields initialized from Flash BOOT_AT+2. */
 /* State values are intentionally clustered for short busy checks:
    idle/done/error=0..2, run=3, active write phases=4..7. */
 #define ST_IDLE 0
@@ -47,7 +49,6 @@
 #define OP_WRITE 0x11
 #define OP_STATUS 0x12
 #define OP_RUN 0x13
-#define OP_INFO 0x20
 #define OP_ERASE_PAGE 0x14
 #define MEM_FLASH 0
 #define MEM_EEPROM 1
@@ -67,12 +68,12 @@
 .global bootloader_start
 bootloader_start:
     rjmp startup
-/* Micronucleus device-info and USB descriptors in program memory. */
-    .byte ((BOOT_AT - 4) >> 8), ((BOOT_AT - 4) & 0xff), 0x40, 0x05, 0x93, 0x11, 0xe3, 0x00  /* device config: user flash, page, write delay, signature */
-    .byte 0x09, 0x02, 0x12, 0x00, 0x01, 0x01, 0x00, 0x80  /* 1a4a */
-    .byte 0x32, 0x09, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00  /* 1a52 */
-    .byte 0x00, 0x00, 0x12, 0x01, 0x10, 0x01, 0xff, 0x00  /* 1a5a */
-    .byte 0x00, 0x08, 0xd0, 0x16, 0x53, 0x07, 0x01, 0x03  /* 1a62 */
+/* Six-byte static status metadata and relocated standard USB descriptors. */
+    .byte ((BOOT_AT - 4) >> 8), ((BOOT_AT - 4) & 0xff), 0x40, 0x40, 0x32, 0x03  /* six metadata bytes; live result/state in SRAM */
+    .byte 0x09, 0x02, 0x12, 0x00, 0x01, 0x01, 0x00, 0x80  /* configuration descriptor */
+    .byte 0x32, 0x09, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00  /* interface descriptor follows */
+    .byte 0x00, 0x00, 0x12, 0x01, 0x10, 0x01, 0xff, 0x00  /* device descriptor follows */
+    .byte 0x00, 0x08, 0xd0, 0x16, 0x53, 0x07, 0x02, 0x03  /* VID/PID, bcdDevice=3.2 */
     .byte 0x00, 0x00, 0x00, 0x01  /* 1a6a */
 
 startup:
@@ -94,8 +95,17 @@ L1a84:
     /* 0x0100..0x0139 includes USB variables AND Block64 state.
        The original limit 0x012C left the state machine uninitialized. */
     cpi     r26, 0x3a
-    /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
+    /* SRAM 0x0100..0x0139 is cleared, including both live status bytes. */
     brbc    1, L1a82
+    /* X == 0x013A; preload constant tail once, not on every status poll. */
+    ldi     r30, ((BOOT_AT + 2) & 0xff)
+    ldi     r31, ((BOOT_AT + 2) >> 8)
+    ldi     r20, 6
+block_init_status_tail:
+    lpm     r18, Z+
+    st      X+, r18
+    dec     r20
+    brne    block_init_status_tail
     rjmp    main
 
 usb_crc16_append:
@@ -668,11 +678,11 @@ L1e60:
     std     Y+15, r23
     /* Only a FLASH_WAIT_PREP request needs the deferred SPM transition.
        This is the sole caller of the old 12-byte status-prepared helper. */
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_FLASH_WAIT_PREP
     brne    L1e64
     ldi     r18, ST_SPM_WAIT_SENT
-    std     Y+48, r18
+    std     Y+57, r18
 
 L1e64:
     movw    r24, r6
@@ -681,7 +691,7 @@ L1e64:
     subi    r24, 0xb0
     sbci    r25, 0x04
     brne    L1e7c
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_IDLE
     brne    L1e7c
     ldi     r30, ((BOOT_AT - 3) & 0xff)
@@ -739,7 +749,7 @@ app_jump:
  * USB low-speed endpoint zero carries 8 bytes per DATA packet.
  * Control transfer wLength=1..64 uses repeated DATA0/DATA1 packets.
  * The low-level NRZI RX/TX and USB packet CRC implementation is untouched.
- * Vendor IN:  READ=0x10, STATUS=0x12, INFO=0x20.
+ * Vendor IN: READ=0x10, GET_STATUS=0x12 (1 or 8 bytes, no 0x20 INFO).
  * Vendor OUT: WRITE=0x11, RUN=0x13.
  * wValue=16-bit byte address, wIndex=memory (0 Flash, 1 EEPROM).
  * Flash WRITE is exactly 64 bytes, aligned at 64. ERASE_PAGE is distinct.
@@ -756,8 +766,6 @@ block_vendor_dispatch:
     rjmp    block_reject
 
 block_vendor_in:
-    cpi     r25, OP_INFO
-    breq    block_info
     cpi     r25, OP_STATUS
     breq    block_status
     cpi     r25, OP_READ
@@ -767,34 +775,36 @@ block_vendor_in:
 block_vendor_out:
     cpi     r25, OP_WRITE
     breq    block_write_setup
-    cpi     r25, OP_ERASE_PAGE
-    brne    block_vendor_not_erase
-    rjmp    block_erase_setup
-block_vendor_not_erase:
     cpi     r25, OP_RUN
     breq    block_run
+    cpi     r25, OP_ERASE_PAGE
+    breq    block_vendor_is_erase
     rjmp    block_reject
+block_vendor_is_erase:
+    rjmp    block_erase_setup
 
-block_info:
-    ldi     r18, ((BOOT_AT + 2) & 0xff)
-    ldi     r19, ((BOOT_AT + 2) >> 8)
+/* Live SRAM response overlay at 0x0138:
+ * [last_result, state, app_hi, app_lo, page_bytes, eeprom_bytes,
+ *  protocol_minor (0x32), feature_flags (0x03)].
+ * The six constant bytes are initialized exactly once after reset.
+ * GET_STATUS length 1 (polling) or length 8 (full metadata); the generic
+ * non-bit-timed endpoint-zero SRAM sender handles both with no copy here. */
+block_status:
+    /* Existing common reply limiter L1de2 already clamps 8 to wLength.
+       Thus wLength=1 returns one status byte and wLength=8 returns all 8. */
+    ldi     r18, 0x38
+    ldi     r19, 0x81            /* SRAM pointer marker: 0x0138 */
     ldi     r24, 8
     rjmp    L1f22
 
-block_status:
-    ldd     r18, Y+55
-    std     Y+2, r18
-    ldi     r24, 1
-    rjmp    L1f34
-
 block_run:
     /* Only run when EEPROM/Flash modification is fully complete. */
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_ERROR /* 0=IDLE, 1=DONE allow run; others reject */
     brsh    block_reject
 block_run_ready:
     ldi     r18, ST_RUN
-    std     Y+48, r18
+    std     Y+57, r18
     ldi     r24, 0
     rjmp    L1de2
 
@@ -828,8 +838,7 @@ block_snapshot_eeprom_loop:
     rjmp    L1f22
 
 block_read_flash:
-    mov     r18, r22
-    mov     r19, r23
+    movw    r18, r22
     rjmp    L1f22
 
 block_write_setup:
@@ -848,20 +857,20 @@ block_write_validated:
     rcall   block_check_idle_for_write
     brcc    block_write_bad
     ldi     r17, ST_RECEIVE
-    std     Y+48, r17
-    std     Y+49, r16
-    std     Y+50, r22
-    std     Y+51, r23
-    std     Y+52, r24
-    std     Y+54, r24
-    std     Y+56, r1
-    ldi     r17, 0x4b            /* USB DATA1 first after SETUP */
     std     Y+57, r17
-    ldi     r17, RESULT_BUSY
+    std     Y+48, r16
+    std     Y+49, r22
+    std     Y+50, r23
+    std     Y+51, r24
+    std     Y+53, r24
+    std     Y+54, r1
+    ldi     r17, 0x4b            /* USB DATA1 first after SETUP */
     std     Y+55, r17
+    ldi     r17, RESULT_BUSY
+    std     Y+56, r17
     /* Incoming DATA1..DATA0 fills the SRAM 64-byte buffer at index 0.
        No Flash LPM/RMW and no SPM inside SETUP or bit-level USB code. */
-    std     Y+53, r1
+    std     Y+52, r1
     ldi     r17, EMPTY_MESSAGE
     std     Y+0, r17
     rjmp    L1df8
@@ -869,13 +878,13 @@ block_write_bad:
 block_reject:
     /* A malformed or overlapping command may not cancel an in-progress
        operation; otherwise a hostile SETUP could interrupt a pending SPM. */
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_RECEIVE
     brsh    block_reject_no_state
     /* Both RESULT_BOUNDS and ST_ERROR are value 2. */
     ldi     r18, RESULT_BOUNDS
-    std     Y+55, r18
-    std     Y+48, r18
+    std     Y+56, r18
+    std     Y+57, r18
 block_reject_no_state:
     ldi     r24, EMPTY_MESSAGE
     std     Y+0, r24
@@ -915,20 +924,20 @@ block_erase_setup:
     rcall   block_check_idle_for_write
     brcc    block_reject
     ldi     r18, ST_FLASH_WAIT_PREP
-    std     Y+48, r18
+    std     Y+57, r18
     /* MEM_TYPE is not used during standalone ERASE. */
-    std     Y+50, r22
-    std     Y+51, r23
+    std     Y+49, r22
+    std     Y+50, r23
     ldi     r18, RESULT_BUSY
-    std     Y+56, r18  /* SPM operation flag: 1=erase, 0=page-write */
-    std     Y+55, r18
+    std     Y+54, r18  /* SPM operation flag: 1=erase, 0=page-write */
+    std     Y+56, r18
     /* Prepare ZLP for the control OUT status stage. */
     std     Y+0, r1
     rjmp    L1df8
 
 /* Returns C=1 if no other memory operation is active and EEPE is clear. */
 block_check_idle_for_write:
-    ldd     r17, Y+48
+    ldd     r17, Y+57
     cpi     r17, ST_RUN
     brsh    block_idle_return    /* C=0 for state>=3: already busy */
     /* If EEPROM is idle, SBIC skips CLC: CPI left C=1 for state<3. */
@@ -984,12 +993,12 @@ block_invalid_range:
  * RX data already ACKed by USB_handler; buffer stays NAK until consumed.
  */
 block_accept_out:
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_RECEIVE
     brne    block_out_return
     /* ACK may have been lost at the host; ignore repeated DATA0/DATA1. */
     ldd     r17, Y+22            /* received PID */
-    ldd     r18, Y+57
+    ldd     r18, Y+55
     cp      r17, r18
     brne    block_out_return
     /* r24 = rxLength - 3, valid length 1..8 and <= remaining */
@@ -1015,12 +1024,12 @@ block_accept_out:
     cpc     r25, r17  /* combine 16-bit equality with propagated Z */
     brne    block_out_return
     mov     r24, r23
-    ldd     r18, Y+52
+    ldd     r18, Y+51
     cp      r18, r24
     brlo    block_out_return
     sub     r18, r24
-    std     Y+52, r18
-    ldd     r19, Y+53
+    std     Y+51, r18
+    ldd     r19, Y+52
     ldi     r26, 0x17            /* RX payload at 0x0117 */
     ldi     r27, 0x01
     ldi     r30, 0x40            /* SRAM block data 0x0140 + index */
@@ -1032,19 +1041,19 @@ block_out_copy_byte:
     inc     r19
     dec     r24
     brne    block_out_copy_byte
-    std     Y+53, r19
-    ldd     r17, Y+57
+    std     Y+52, r19
+    ldd     r17, Y+55
     ldi     r20, 0x88            /* DATA0/DATA1 PID XOR mask */
     eor     r17, r20
-    std     Y+57, r17
+    std     Y+55, r17
     tst     r18
     brne    block_out_return
     /* Received full wLength. Queue asynchronous memory commit. */
     /* For type 0/1 select 6=FLASH_WAIT_PREP or 5=WRITE_EEPROM. */
-    ldd     r17, Y+49
+    ldd     r17, Y+48
     ldi     r20, ST_FLASH_WAIT_PREP
     sub     r20, r17
-    std     Y+48, r20
+    std     Y+57, r20
     tst     r17
     brne    block_out_return
     /* The last FLASH DATA OUT byte queues the status-stage ZLP. */
@@ -1059,7 +1068,7 @@ block_out_return:
 block_memory_service:
     ldi     r28, 0x00
     ldi     r29, 0x01
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_WRITE_EEPROM
     breq    block_step_eeprom
     cpi     r18, ST_RUN
@@ -1075,12 +1084,12 @@ block_service_return:
 block_step_eeprom:
     sbic    0x1f, 1           /* EEPE active? */
     ret
-    ldd     r18, Y+56
-    ldd     r19, Y+54
+    ldd     r18, Y+54
+    ldd     r19, Y+53
     cp      r18, r19
     breq    block_complete
 block_eeprom_more_bytes:
-    ldd     r20, Y+50
+    ldd     r20, Y+49
     add     r20, r18
     ldi     r30, 0x40
     add     r30, r18
@@ -1092,7 +1101,7 @@ block_eeprom_more_bytes:
     sbi     0x1f, 2          /* EEMPE: master enable */
     sbi     0x1f, 1          /* EEPE within 4 cycles */
     inc     r18
-    std     Y+56, r18
+    std     Y+54, r18
     ret
 
 block_complete:
@@ -1107,13 +1116,13 @@ block_complete:
 block_spm_after_quiet:
     ldi     r28, 0x00
     ldi     r29, 0x01
-    ldd     r18, Y+48
+    ldd     r18, Y+57
     cpi     r18, ST_SPM_WAIT_SENT
     brne    block_service_return
     ldd     r18, Y+15
     cpi     r18, EP0_NAK
     brne    block_service_return
-    ldd     r18, Y+56
+    ldd     r18, Y+54
     tst     r18
     breq    block_commit_flash
 
@@ -1168,9 +1177,9 @@ block_flash_fill_word:
 
 block_complete_flash:
     /* The control transfer has already completed; never queue another ZLP. */
-    std     Y+55, r1
+    std     Y+56, r1
     ldi     r18, ST_DONE
-    std     Y+48, r18
+    std     Y+57, r18
     ret
 
 old_vendor_dispatch:
@@ -1198,16 +1207,16 @@ L1f3a:
     cpi     r25, 0x06
     brbc    1, L1f62
     ldd     r24, Y+26
-    ldi     r18, ((BOOT_AT + 0x1c) & 0xff)
+    ldi     r18, ((BOOT_AT + 0x1a) & 0xff)
     cpi     r24, 0x01
     breq    desc_ptr
     cpi     r24, 0x02
     brne    L1f70
-    ldi     r18, ((BOOT_AT + 0x0a) & 0xff)
+    ldi     r18, ((BOOT_AT + 0x08) & 0xff)
 
 desc_ptr:
     /* Both descriptors are in the same 256-byte Flash window. */
-    ldi     r19, ((BOOT_AT + 0x0a) >> 8)
+    ldi     r19, ((BOOT_AT + 0x08) >> 8)
     ldi     r24, 0x12
     rjmp    L1f22
 
@@ -1243,7 +1252,7 @@ L1f82:
    the page-buffer refill. Saves 4 bytes despite RCALL/RET overhead.
    Must execute before SPMCSR timing-critical write, not after it. */
 block_load_page_z:
-    ldd     r30, Y+50
+    ldd     r30, Y+49
     andi    r30, 0xc0
-    ldd     r31, Y+51
+    ldd     r31, Y+50
     ret

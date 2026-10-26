@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Micronucleus ATtiny88 Block64 USB control-transfer programmer, protocol v3.1.
+"""Micronucleus ATtiny88 Block64 USB control-transfer programmer, protocol v3.2 (unified GET_STATUS).
 
 UNTESTED ON REAL HARDWARE. Requires PyUSB/libusb when talking to a board.
 The code does not use the legacy Micronucleus 2.x host write format.
@@ -9,9 +9,9 @@ All memory commands are USB vendor control transfers:
                   wLength=1..64, result is binary memory data.
   OUT  0x11 WRITE; Flash: aligned page, exactly 64 data bytes; EEPROM: 1..64.
   OUT  0x14 ERASE_PAGE; Flash page address, 0 data bytes; independent from WRITE.
-  IN   0x12 STATUS; returns 0 OK, 1 busy, 2 bad address, 3 error.
+  IN   0x12 GET_STATUS; wLength 1 = result byte, 8 = result/state/geometry/version.
   OUT  0x13 RUN; zero DATA length, status stage finishes before entering app.
-  IN   0x20 INFO; 8-byte Micronucleus info layout (v3.1 descriptor).
+  (legacy INFO 0x20 has been removed).
 
 USB low-speed EP0 still sends <=8 bytes per physical DATA packet.
 """
@@ -24,7 +24,7 @@ import time
 from typing import Protocol
 
 VID=0x16D0;PID=0x0753
-REQ_READ=0x10;REQ_WRITE=0x11;REQ_STATUS=0x12;REQ_RUN=0x13;REQ_ERASE_PAGE=0x14;REQ_INFO=0x20
+REQ_READ=0x10;REQ_WRITE=0x11;REQ_STATUS=0x12;REQ_RUN=0x13;REQ_ERASE_PAGE=0x14
 IN_VENDOR=0xC0;OUT_VENDOR=0x40
 FLASH=0;EEPROM=1
 FLASH_TOTAL=8192;EEPROM_TOTAL=64;FLASH_PAGE=64;MAX_CHUNK=64
@@ -41,7 +41,8 @@ class Info:
     boot_start:int
     version:int
     features:int
-    signature:tuple[int,int,int]
+    status:int             # result code at GET_STATUS(8) snapshot time
+    state:int              # internal state at GET_STATUS(8) snapshot time
 
     @property
     def flash_rw_end(self)->int:
@@ -67,21 +68,24 @@ class Programmer:
 
     def connect(self)->Info:
         version=int(getattr(self.dev,'bcdDevice',0))
-        if version!=0x0301:
-            raise Block64Error(f'Expected split Block64 firmware bcdDevice=0x0301, got 0x{version:04X}')
-        head=bytes(self._ctrl(IN_VENDOR,REQ_INFO,data=8))
+        if version!=0x0302:
+            raise Block64Error(f'Expected Block64 v3.2 (bcdDevice=0x0302), got 0x{version:04X}')
+        head=bytes(self._ctrl(IN_VENDOR,REQ_STATUS,data=8))
         if len(head)!=8:
-            raise Block64Error(f'INFO length {len(head)} instead of 8')
-        appsz=(head[0]<<8)|head[1]
-        pagesz=head[2]
-        feature=head[6]
-        if pagesz!=FLASH_PAGE or appsz<2048 or appsz>=FLASH_TOTAL or (appsz+4)%64:
-            raise Block64Error(f'Unexpected Flash geometry app={appsz}, page={pagesz}')
-        if head[4:6]!=bytes((0x93,0x11)):
-            raise Block64Error(f'Not an ATtiny88: 1E-{head[4]:02X}-{head[5]:02X}')
+            raise Block64Error(f'GET_STATUS(8) returned {len(head)} bytes, expected 8')
+        # Wire format: result, state, application_hi, application_lo,
+        # Flash_page_bytes, EEPROM_bytes, protocol_marker, feature_bits.
+        result,state,app_hi,app_lo,pagesz,eeprom,protocol,feature=head
+        if result not in (0,1,2,3) or state>7:
+            raise Block64Error(f'Invalid GET_STATUS state/result: {result}/{state}')
+        if protocol!=0x32:
+            raise Block64Error(f'Unsupported GET_STATUS protocol marker 0x{protocol:02X}')
+        appsz=(app_hi<<8)|app_lo
+        if pagesz!=FLASH_PAGE or eeprom!=EEPROM_TOTAL or appsz<2048 or appsz>=FLASH_TOTAL or (appsz+4)%64:
+            raise Block64Error(f'Unexpected memory geometry app={appsz}, page={pagesz}, EEPROM={eeprom}')
         if (feature & (BOOT_FEATURE_V3|BOOT_FEATURE_SPLIT_ERASE))!=(BOOT_FEATURE_V3|BOOT_FEATURE_SPLIT_ERASE):
-            raise Block64Error('Block64 v3.1 split ERASE/WRITE feature bits missing')
-        self.info=Info(appsz,pagesz,EEPROM_TOTAL,appsz+4,version,feature,(0x1E,head[4],head[5]))
+            raise Block64Error('Block64 v3.2 split ERASE/WRITE feature bits missing')
+        self.info=Info(appsz,pagesz,eeprom,appsz+4,version,feature,result,state)
         return self.info
 
     def _require(self,kind:int,addr:int,size:int):
@@ -312,9 +316,10 @@ def discover():
     return device
 
 def main(argv=None)->int:
-    p=argparse.ArgumentParser(description='Experimental ATtiny88 Micronucleus Block64 v3.1 split erase/write host')
+    p=argparse.ArgumentParser(description='Experimental ATtiny88 Micronucleus Block64 v3.2 unified GET_STATUS host')
     subs=p.add_subparsers(dest='cmd',required=True)
     subs.add_parser('info')
+    subs.add_parser('status')
     for name in ('flash-read','eeprom-read'):
         a=subs.add_parser(name)
         a.add_argument('path',type=pathlib.Path)
@@ -340,7 +345,9 @@ def main(argv=None)->int:
     args=p.parse_args(argv)
     tool=Programmer(discover());inf=tool.connect()
     if args.cmd=='info':
-        print(f'ATtiny88: Block64 v{inf.version>>8}.{inf.version&255}, boot @ 0x{inf.boot_start:04X}, app {inf.app_size} B, Flash page {inf.page_size} B, EEPROM {inf.eeprom_size} B')
+        print(f'ATtiny88: Block64 v{inf.version>>8}.{inf.version&255}, boot @ 0x{inf.boot_start:04X}, app {inf.app_size} B, Flash page {inf.page_size} B, EEPROM {inf.eeprom_size} B; status={inf.status}, state={inf.state}')
+    elif args.cmd=='status':
+        print(f'Status: {tool.status()}')
     elif args.cmd in ('flash-read','eeprom-read'):
         kind=FLASH if args.cmd=='flash-read' else EEPROM
         maxlen=inf.app_size if kind==FLASH else inf.eeprom_size

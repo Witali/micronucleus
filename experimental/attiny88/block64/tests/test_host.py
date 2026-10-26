@@ -8,7 +8,7 @@ BOOT=0x1980
 APP=BOOT-4
 
 class MockUSB:
-    bcdDevice=0x0301
+    bcdDevice=0x0302
     def __init__(self):
         self.flash=bytearray(b'\xff'*8192)
         self.eeprom=bytearray(b'\xff'*64)
@@ -19,10 +19,10 @@ class MockUSB:
     def ctrl_transfer(self,request_type,request,value,index,data_or_wlength,timeout=6000):
         self.log.append((request_type,request,value,index,data_or_wlength))
         if request_type==IN_VENDOR:
-            if request==REQ_INFO:
-                assert data_or_wlength==8
-                return [(APP>>8)&255,APP&255,64,5,0x93,0x11,0xe3,0]
-            if request==REQ_STATUS:return [self.status]
+            if request==REQ_STATUS:
+                assert data_or_wlength in (1,8)
+                reply=[self.status,0,(APP>>8)&255,APP&255,64,64,0x32,0x03]
+                return reply[:data_or_wlength]
             assert request==REQ_READ
             size=data_or_wlength
             assert 1<=size<=64
@@ -65,7 +65,8 @@ def make():
 def test_connection_and_geometry():
     d,h=make();i=h.info
     assert i.app_size==APP and i.boot_start==BOOT and i.page_size==64 and i.eeprom_size==64
-    assert i.version==0x0301 and i.features&BOOT_FEATURE_SPLIT_ERASE
+    assert i.version==0x0302 and i.features&BOOT_FEATURE_SPLIT_ERASE
+    assert i.status==0 and i.state==0
 
 def test_flash_read_256_one_transfer_per_64():
     d,h=make();d.flash[:256]=bytes(range(256))
@@ -114,7 +115,7 @@ def test_flash_write_page_rejects_non_page_or_bad_addresses():
     with pytest.raises(Block64Error):h.write_page(0x101,b'X'*64)
     with pytest.raises(Block64Error):h.erase_page(BOOT)
     with pytest.raises(Block64Error):h.erase_page(BOOT-1)
-    assert not d.log or all(x[1]==REQ_INFO for x in d.log)
+    assert not d.log or all(x[1]==REQ_STATUS for x in d.log)
 
 def test_upload_reset_vector_and_final_postscript():
     d,h=make()
@@ -202,3 +203,24 @@ def test_host_preserves_application_selected_isr_vectors():
         word=0xc000|((n*13+5)&0xfff)
         assert d.flash[2*n:2*n+2]==word.to_bytes(2,'little')
     assert d.flash[:2]==(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
+
+
+def test_unified_status_host_short_and_extended_commands():
+    device,prog=make()
+    assert prog.status()==0
+    assert device.log[-1][1]==REQ_STATUS and device.log[-1][-1]==1
+    assert device.log[0][1]==REQ_STATUS and device.log[0][-1]==8
+    device.status=1
+    assert prog.status()==1
+    assert all(req!=0x20 for _,req,_,_,_ in device.log)
+
+
+def test_unified_status_bad_geometry_rejected():
+    class BadInfo(MockUSB):
+        def ctrl_transfer(self,reqtype,request,value,index,data_or_wlength,timeout=6000):
+            result=super().ctrl_transfer(reqtype,request,value,index,data_or_wlength,timeout)
+            if request==REQ_STATUS and data_or_wlength==8:
+                result[5]=32  # invalid EEPROM capacity
+            return result
+    with pytest.raises(Block64Error,match='geometry'):
+        Programmer(BadInfo()).connect()
