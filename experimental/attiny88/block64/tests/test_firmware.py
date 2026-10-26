@@ -466,7 +466,9 @@ def test_cold_start_initializes_all_block64_state(firmware):
     for addr in range(0x0100,0x0140):
         c.mem[addr]=rng.randrange(1,256)
     c.run_from('startup', stop_at=['main'], count=400)
-    assert c.mem[0x0100:0x013a] == bytes(0x3a)
+    expected = bytearray(0x3a)
+    expected[0x2e] = 0x10  # Precomputed address-zero EP0 token CRC5.
+    assert c.mem[0x0100:0x013a] == expected
     assert c.mem[0x013a:0x0140] == bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x33,0x03])
     assert c.mem[MEM_STATE] == ST_IDLE
     assert c.mem[MEM_STATUS] == 0

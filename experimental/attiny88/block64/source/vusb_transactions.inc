@@ -13,7 +13,14 @@ usb_host_ack:
     /* An aborted SET_ADDRESS was reset by the next validated SETUP. */
     ldd     r18, Z+19
     add     r18, r18
+    ldd     r17, Z+12
+    cp      r17, r18
+    breq    usb_host_address_unchanged
     std     Z+12, r18
+    /* SET_ADDRESS has a 2 ms host recovery interval. Cache once here,
+       rather than computing CRC5 in every timing-critical token response. */
+    rcall   usb_update_token_crc5
+usb_host_address_unchanged:
     /* DATA-stage ACKs cannot authorize memory operations or application exit. */
     cpi     r16, 4
     brne    usb_host_ack_done

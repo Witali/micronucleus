@@ -29,6 +29,7 @@ def cpu():
     instance.run_from('startup', stop_at=['main'], count=1000)
     instance.mem[0x010C] = DEVICE_ADDRESS << 1
     instance.mem[0x0113] = DEVICE_ADDRESS
+    instance.mem[0x012E] = token(0x69)[2]
     instance.mem[0x010F] = NAK
     instance.mem[0x0100] = 0xFF
     return instance

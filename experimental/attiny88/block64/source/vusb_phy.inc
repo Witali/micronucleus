@@ -228,7 +228,8 @@ usb_rx_token:
     cpse    r17, r18
     rjmp    L1ba6
     ldd     r17, Y+2
-    andi    r17, 0x07         /* The other three endpoint bits must also be zero. */
+    ldd     r18, Z+CTX_TOKEN_CRC5
+    cp      r17, r18          /* EP0 endpoint bits AND all five CRC bits. */
     brne    L1ba6
     cpi     r16, 0x69
     brbs    1, L1c14

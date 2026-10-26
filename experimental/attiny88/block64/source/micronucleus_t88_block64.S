@@ -61,6 +61,9 @@ block_init_status_tail:
     st      X+, r18
     cpi     r26, 0x40
     brne    block_init_status_tail
+    /* EP0 token byte 2 for address zero: CRC5(11 zero bits) << 3. */
+    ldi     r18, 0x10
+    sts     USB_TOKEN_CRC5, r18
     rjmp    main
 
 /* Byte-exact AVR USB PHY (NRZI, stuffing, CRC16, packet ACK/NAK). */
@@ -664,3 +667,4 @@ block_load_page_z:
 /* Transaction bookkeeping is outside the NRZI sampler/transmitter loops. */
 #include "vusb_transactions.inc"
 #include "vusb_empty_data.inc"
+#include "vusb_token_crc5.inc"

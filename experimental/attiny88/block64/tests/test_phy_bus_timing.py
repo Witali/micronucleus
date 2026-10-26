@@ -17,6 +17,7 @@ import zipfile
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+TOKEN_CRC5_CACHE = 0x012e
 ARCHIVE = ROOT.parents[2] / 'docs/attiny88-block64-history/archives/Micronucleus_ATtiny88_Block64_ALL_CODE_AGENT_HANDOFF_2026-10-26.zip'
 ARCHIVE_ROOT = 'Micronucleus_ATtiny88_Block64_COMPLETE_HANDOFF_2026-10-26/02_CURRENT_PASS15_EXPERIMENTAL/firmware/'
 # Reuse a separate, older instruction interpreter, including PUSH/POP/BST/BLD.
@@ -125,6 +126,7 @@ def receive(build, packet, phase, *, prior_token=0xe1, tx_length=0x5a, address=0
     memory[0x114] = prior_token
     memory[0x10f] = tx_length
     memory[0x10c] = address << 1
+    memory[TOKEN_CRC5_CACHE] = token(0x69, address)[2]
     payload = bytes(range(8 if tx_length == 0x5a else tx_length - 4))
     tx_packet = bytes([0x4b]) + payload + crc16(payload)
     memory[0x101:0x101 + len(tx_packet)] = tx_packet
@@ -395,3 +397,36 @@ def test_timely_ack_sop_can_finish_decoding_after_the_sop_deadline(builds):
             assert cpu.t-end_j > 192  # Deadline applies to SOP, not ACK completion.
         else:
             assert cpu.m[0x10f] == 12
+
+
+
+def test_corrupt_token_crc5_has_no_response_or_published_token(builds):
+    current = builds[1]
+    for phase in range(-15, 1):
+        for address in (0, 17, 127):
+            for pid in (0x69, 0xe1, 0x2d):
+                for crc_bit in range(3, 8):
+                    packet = bytearray(token(pid, address))
+                    packet[2] ^= 1 << crc_bit
+                    cpu, sop, delay = receive(current, bytes(packet), phase,
+                                              prior_token=0, tx_length=4,
+                                              address=address)
+                    assert sop is None and delay is None
+                    assert cpu.m[0x114] == 0
+                    assert cpu.m[0x112] == 0
+                    assert cpu.m[0x10f] == 4  # No queued DATA was consumed.
+                    assert cpu.m[ACK_WINDOW] == 0
+
+
+def test_valid_out_and_setup_token_crc5_are_published(builds):
+    current = builds[1]
+    for phase in range(-15, 1):
+        for address in (0, 17, 127):
+            for pid in (0xe1, 0x2d):
+                cpu, sop, delay = receive(current, token(pid, address), phase,
+                                          prior_token=0, tx_length=4,
+                                          address=address)
+                assert sop is None and delay is None
+                assert cpu.m[0x114] == pid
+                assert cpu.m[0x112] == 0
+                assert cpu.m[0x10f] == 4
