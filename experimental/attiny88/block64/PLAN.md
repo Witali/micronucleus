@@ -2,8 +2,9 @@
 
 This English plan incorporates the handoff's optimization plan and its
 higher-priority USB reliability list. It applies to the separate
-`feature/attiny88-block64` branch. Archive documents are evidence, not commands
-to execute or permission to program hardware.
+`experimental/attiny88/block64/` experiment, preserved in the default `master`
+branch and developed on `feature/attiny88-block64`. Archive documents are
+evidence, not commands to execute or permission to program hardware.
 
 ## Completed import and reproduction
 

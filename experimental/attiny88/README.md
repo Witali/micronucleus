@@ -2,10 +2,19 @@
 
 The separate [Block64 development line](block64/README.md) imports the complete
 October 26 handoff and develops its 64-byte control-transfer protocol on
-`feature/attiny88-block64`. It has its own host, plan and software validation;
+`feature/attiny88-block64`. It is also preserved in the default `master`
+branch under its own `block64/` directory. It has its own host, plan and software validation;
 it is incompatible with the stock upload protocol and retains known USB
 transaction defects. The verified/optimized Micronucleus+ variants below
 remain separate, and the installed board has not been changed by this import.
+
+Within that experiment, [streaming CRC](block64/prototypes/streaming_crc16/README.md)
+is an isolated application prototype. Its [table512 checkpoint](block64/prototypes/streaming_crc16/checkpoints/table512/README.md)
+preserves the 512-byte table and 11-clock-per-byte sampler. The
+[32-byte/16-byte comparison](block64/prototypes/streaming_crc16/CRC_TABLE_TRADEOFFS.md)
+records alternatives that do not yet fit the sampling schedule. Build these
+explicitly from their own directories; the earlier optimized firmware and
+default updater targets retain their existing build commands.
 
 This directory contains the assembly development line imported from the October 25, 2026 handoff. Upstream C firmware and the original command-line tool remain in their existing directories. The original imported images are historical experiments. A subsequent real-board trial uncovered vendor-dispatch, SRAM-reply and watchdog-startup defects; the [corrected strict USB version](variants/strict_usb_verified/README.md) and [USB updater](updater/README.md) address them without changing the low-level USB handler.
 

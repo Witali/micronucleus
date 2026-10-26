@@ -1,10 +1,23 @@
-# ATtiny88 Block64 development branch
+# Isolated ATtiny88 Block64 experiment
 
 This is a separate experimental protocol line based on the October 26, 2026
 handoff. It transfers up to 64 application bytes per USB control transfer;
 each physical low-speed DATA packet still carries at most eight payload bytes.
 It is not compatible with the stock Micronucleus upload protocol. The existing
 verified/optimized Micronucleus+ implementations remain separate.
+
+The experiment is integrated into the default `master` branch under this
+directory, alongside the earlier ATtiny88 implementation. Its complete
+50-commit development history through `8ce91a5` is preserved by a merge;
+`feature/attiny88-block64` remains available for continued development.
+
+| Component | Location | Scope |
+| --- | --- | --- |
+| Block64 loader development | `source/`, `host/`, `tests/` | 1852-byte loader with documented USB defects |
+| Streaming CRC receiver | [prototypes/streaming_crc16](prototypes/streaming_crc16/README.md) | Separate 4096-byte diagnostic body; software traces and application-only USB trial |
+| Preserved working CRC variant | [table512 checkpoint](prototypes/streaming_crc16/checkpoints/table512/README.md) | 512 table bytes and 11 CRC clocks per byte |
+| Reduced CRC table experiments | [table tradeoffs](prototypes/streaming_crc16/CRC_TABLE_TRADEOFFS.md) | 32/16-byte tables measured separately; not integrated into USB |
+| Restricted memory benchmark | [prototypes/memory_benchmark](prototypes/memory_benchmark/README.md) | Physical legacy/new comparison with application/EEPROM restoration |
 
 The branch preserves the complete handoff archive and each available source
 stage as chronological Git commits. See the [history and provenance index](../../../docs/attiny88-block64-history/README.md).
@@ -80,8 +93,11 @@ tested 1274-byte Micronucleus+ loader and its application.
 
 The [streaming CRC design](STREAMING_CRC_DESIGN.md) records a concrete candidate
 that distributes table lookup and CRC updates across received bits at 16 MHz.
-It is not assembled or enabled. Its stuffed-bit, EOP, register and sample-phase
-proofs must precede integration.
+Its separate [V2 prototype](prototypes/streaming_crc16/README.md) is assembled,
+passes the documented digital timing matrices and completed an application-only
+physical read trial. It remains separate from the 1852-byte loader. The
+[ACK experiments](prototypes/streaming_crc16/ACK_EXPERIMENTS.md) and remaining
+foreground/ownership defects must be considered before integration.
 
 The [continuation plan](PLAN.md) prioritizes these transaction fixes before
 further size work or physical installation. The inherited first-page power-loss

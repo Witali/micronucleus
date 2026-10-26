@@ -1,13 +1,42 @@
 # Block64 software validation, October 26, 2026
 
-## Current ACK/CRC5 development iteration
+## Maintained loader ACK/CRC5 checkpoint
 
 The final unchanged body was checked by 1315 functional cases and eight
 independent waveform/timing tests: **1323 passed checks and one strict expected
 failure**. The functional total combines its full run with the focused rerun
 of the updated address-zero CRC5 initialization expectation. No instruction
 changed after that run. The expected failure is nonempty DATA ACK before
-foreground CRC validation; streaming RX CRC remains unimplemented.
+foreground CRC validation; streaming RX CRC remains unimplemented in that
+1852-byte loader. The separately assembled V2 application, its physical trial,
+ACK optimizations and CRC-table experiments have their own
+[prototype evidence](prototypes/streaming_crc16/README.md).
+
+## Default-branch integration check
+
+The merge of `feature/attiny88-block64` through `8ce91a5` preserves all 50
+development commits under the separate `experimental/attiny88/block64/`
+directory. Original default-branch parent: `49ba54b`; merge commit: `d4e0d0f`.
+The shared ATtiny88 assembly change outside this folder only corrects a
+datasheet-section comment; its instructions are unchanged.
+
+Fresh checks from the integration worktree completed on 2026-10-26:
+
+- `bash verify.sh`: 1323 passed, one strict expected failure, followed by
+  passing linked-release/timed-instruction and worker-cycle audits.
+- Default V2, optional EOP V2 and guarded benchmark applications rebuild to
+  their previously verified hashes. The default V2 smoke suite passes.
+- CRC arithmetic, application boundaries, ACK continuation, protected NVM,
+  exact historical cursor and host benchmark tests: 75 passed and three
+  strict expected failures for inherited continuation/ownership defects.
+- The actual-opcode audit confirms 11 CRC clocks and 14 available regular
+  slots per receive byte. Saved table512 bytes and sampler match exactly.
+- The preceding optimized Micronucleus+ loader rebuilds to 1262 bytes at
+  `0x1B00`; its USB substitutions and reply CRC audit pass.
+
+The four expected failures above retain their existing strict trackers;
+this merge does not resolve or hide them. No board was programmed during
+integration. Private hardware backups and raw device logs remain outside Git.
 
 | Result | Value |
 | --- | --- |
