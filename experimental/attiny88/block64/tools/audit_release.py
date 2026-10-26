@@ -32,15 +32,16 @@ def symbols(obj):
     text=subprocess.check_output(['llvm-objdump','-t',str(obj)],text=True)
     return {m.group(2):int(m.group(1),16) for m in re.finditer(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+(.+)$',text,re.M)}
 
-# Compile preserved Pass8 independently to compare exact CRC and bit engine code.
-refsrc=ROOT/'reference/Pass8_1720B_micronucleus_t88_block64.S'
-refobj=BLD/'reference_pass8.o';refbin=BLD/'reference_pass8.bin'
-assemble(refsrc, refobj, refbin)
-a=symbols(refobj);b=symbols(obj)
-r=refbin.read_bytes();c=(BLD/'block64.full.bin').read_bytes()
-crc_ref=r[a['usb_crc16_append']:a['USB_handler']]
+# Compare immutable archived Pass8 fragments. Its historical full source has
+# an undefined L1eca outside these fragments; extracting a relocatable object
+# would hide that defect and cannot establish a valid reference.
+b=symbols(obj)
+c=(BLD/'block64.full.bin').read_bytes()
+crc_ref=(ROOT/'reference/Pass8_usb_crc.bin').read_bytes()
+engine_ref=(ROOT/'reference/Pass8_usb_phy.bin').read_bytes()
+assert hashlib.sha256(crc_ref).hexdigest()=='e2ca1be4e1c0ee222eff4eee87df39afe91b36e68feb8b756625efcf2fd142ec'
+assert hashlib.sha256(engine_ref).hexdigest()=='f9a6c9bb587fc6123a384c68f8ae897c228e1bf11fd93cc64dcb168df5b0d63a'
 crc_new=c[b['usb_crc16_append']:b['USB_handler']]
-engine_ref=r[a['USB_handler']:a['main']]
 engine_new=c[b['USB_handler']:b['main']]
 assert crc_ref==crc_new and len(crc_new)==44
 assert engine_ref==engine_new and len(engine_new)==508
