@@ -15,6 +15,14 @@ MEM_STATE=0x0139;MEM_TYPE=0x0130;MEM_ADDR_LO=0x0131;MEM_ADDR_HI=0x0132
 MEM_REMAIN=0x0133;MEM_INDEX=0x0134;MEM_TOTAL=0x0135;MEM_STATUS=0x0138
 MEM_PROGRESS=0x0136;MEM_EXPECT_PID=0x0137;MEM_BUFFER=0x0140
 ST_IDLE=0;ST_DONE=1;ST_ERROR=2;ST_RUN=3;ST_RECEIVE=4;ST_WRITE_EEPROM=5;ST_FLASH_WAIT_PREP=6;ST_SPM_WAIT_SENT=7
+# Deterministic strict-mode assumptions at 16 MHz, not measured device times.
+# Microchip Table 5-4 gives 3.4 ms typical atomic EEPROM programming;
+# Table 19-1 gives 3.7..4.5 ms for Flash erase/write.
+MODEL_EEPROM_PROGRAM_CYCLES = 54_400
+MODEL_FLASH_PROGRAM_CYCLES = 72_000
+EEPROM_READ_STALL_CYCLES = 4
+EEPROM_WRITE_START_STALL_CYCLES = 2
+NVM_ENABLE_WINDOW_CYCLES = 4
 
 def syms(obj=ROOT/'build/block64.o'):
     out={}
@@ -24,7 +32,14 @@ def syms(obj=ROOT/'build/block64.o'):
     return out
 
 class CPU:
-    def __init__(self, image:bytes|None=None, EEPROM:bytes|None=None):
+    def __init__(self, image:bytes|None=None, EEPROM:bytes|None=None, *,
+                 strict_nvm=False, selfprgen_fuse_programmed=None,
+                 eeprom_program_cycles=MODEL_EEPROM_PROGRAM_CYCLES,
+                 flash_program_cycles=MODEL_FLASH_PROGRAM_CYCLES):
+        if strict_nvm and selfprgen_fuse_programmed is None:
+            raise ValueError('Strict NVM mode requires an explicit SELFPRGEN fuse assumption')
+        if eeprom_program_cycles <= 0 or flash_program_cycles <= 0:
+            raise ValueError('Modeled NVM durations must be positive')
         self.labels=syms()
         self.flash=bytearray([0xff]*8192 if image is None else image)
         self.io={0x1f:0,0x20:0,0x21:0,0x37:0}
@@ -47,6 +62,16 @@ class CPU:
         self.ops=0
         self.done_at=None
         self.started = False
+        self.strict_nvm = strict_nvm
+        self.selfprgen_fuse_programmed = selfprgen_fuse_programmed
+        self.eeprom_program_cycles = eeprom_program_cycles
+        self.flash_program_cycles = flash_program_cycles
+        self.nvm_events = []
+        self._spm_armed_at = None
+        self._eempe_armed_at = None
+        self._eeprom_pending = None
+        self._eeprom_ready_at = None
+        self._spm_loaded_words = set()
     def decode(self, addr):
         D.START=BOOT
         D.raw=self.codebody
@@ -85,10 +110,15 @@ class CPU:
     @staticmethod
     def imm(s):return int(s,0)
     def read_io(self, addr):
+        if self.strict_nvm:
+            self._nvm_tick()
         if addr == 0x1f and self.ep_busy_cycles>0:return self.io.get(addr,0)|2
         return self.io.get(addr,0)
     def write_io(self, addr,val):
         val &= 255
+        if self.strict_nvm and addr in (0x1f,0x20,0x21,0x37):
+            self._strict_write_io(addr,val)
+            return
         # EECR.EERE is a write-one strobe. ATtiny88 permits OUT as well as
         # SBI to trigger the read; hardware clears EERE automatically.
         if addr == 0x1f and (val & 1):
@@ -96,6 +126,111 @@ class CPU:
             self.io[0x20] = self.eeprom[self.io[0x21]]
             val &= 0xfe
         self.io[addr] = val
+    def _nvm_tick(self):
+        if self._eeprom_pending is not None and self.cycles >= self._eeprom_ready_at:
+            address,value = self._eeprom_pending
+            self.eeprom[address] = value
+            self.eeprom_oplog.append((address,value))
+            self.nvm_events.append(('eeprom_complete',self.cycles,address,value))
+            self._eeprom_pending = None
+            self._eeprom_ready_at = None
+            self.io[0x1f] &= ~2
+        if self._eempe_armed_at is not None and self.cycles-self._eempe_armed_at > NVM_ENABLE_WINDOW_CYCLES:
+            self.io[0x1f] &= ~4
+            self._eempe_armed_at = None
+        if self._spm_armed_at is not None and self.cycles-self._spm_armed_at > NVM_ENABLE_WINDOW_CYCLES:
+            self.io[0x37] = 0
+            self._spm_armed_at = None
+    def advance_nvm_cycles(self, cycles):
+        """Advance assumed peripheral time without executing AVR instructions."""
+        assert self.strict_nvm and cycles >= 0
+        self.cycles += cycles
+        self._nvm_tick()
+    def _clear_spm_buffer(self):
+        self.spm_buffer[:] = b'\xff'*64
+        self._spm_loaded_words.clear()
+    def _strict_write_io(self, addr,val):
+        self._nvm_tick()
+        busy = bool(self.io.get(0x1f,0)&2)
+        if addr == 0x37:
+            # EEPROM programming blocks writes to SPMCSR (datasheet19.1.1).
+            if busy:
+                self.nvm_events.append(('spmcsr_blocked',self.cycles,val))
+                return
+            self.io[addr] = val
+            self._spm_armed_at = self.cycles if val&1 else None
+            return
+        if addr in (0x20,0x21):
+            assert not busy, 'Changing EEPROM address/data during programming is unsupported'
+            self.io[addr] = val
+            return
+        if busy:
+            assert not val&1, 'EERE during EEPROM write'
+            # Mode bits cannot be changed while programming. No new write starts.
+            return
+        if val&1:
+            address = self.io[0x21]
+            assert address < len(self.eeprom)
+            self.io[0x20] = self.eeprom[address]
+            self.io[addr] = val&~1
+            self.nvm_events.append(('eeprom_read',self.cycles,address))
+            self.advance_nvm_cycles(EEPROM_READ_STALL_CYCLES)
+            return
+        if val&2:
+            if self._eempe_armed_at is None or self.cycles-self._eempe_armed_at > NVM_ENABLE_WINDOW_CYCLES:
+                self.io[addr] = val&~6
+                self.nvm_events.append(('eeprom_enable_expired',self.cycles))
+                return
+            assert not self.io.get(0x37,0)&1, 'EEPROM start while SELFPRGEN is active'
+            assert val&0x30 == 0, 'Strict model implements atomic erase+write mode only'
+            address,value = self.io[0x21],self.io[0x20]
+            assert address < len(self.eeprom)
+            self.io[addr] = (val&~4)|2
+            self._eempe_armed_at = None
+            self._eeprom_pending = (address,value)
+            self._eeprom_ready_at = self.cycles+self.eeprom_program_cycles
+            self._clear_spm_buffer()  # EEPROM write destroys staged Flash words.
+            self.nvm_events.append(('eeprom_start',self.cycles,address,value))
+            self.advance_nvm_cycles(EEPROM_WRITE_START_STALL_CYCLES)
+            return
+        self.io[addr] = val
+        self._eempe_armed_at = self.cycles if val&4 else None
+    def _strict_spm(self, address, command):
+        self._nvm_tick()
+        if not self.selfprgen_fuse_programmed or self.io.get(0x1f,0)&2 or not self.io.get(0x37,0)&1:
+            self.nvm_events.append(('spm_ignored',self.cycles,command))
+            self.io[0x37] = 0
+            self._spm_armed_at = None
+            return
+        page = address&~63
+        assert 0 <= page and page+64 <= len(self.flash)
+        if command == 0x11:
+            self._clear_spm_buffer()
+            self.spm_oplog.append(('buffer_clear',page))
+        elif command == 1:
+            word = (address&63)&~1  # Hardware ignores Z0 for SPM page loading.
+            assert word not in self._spm_loaded_words, 'Duplicate temporary-buffer word load'
+            self._spm_loaded_words.add(word)
+            self.spm_buffer[word:word+2] = bytes(self.r[0:2])
+            self.spm_oplog.append(('load',page+word,self.r[0],self.r[1]))
+        elif command == 3:
+            self.flash[page:page+64] = b'\xff'*64
+            self.spm_oplog.append(('erase',page))
+            self.advance_nvm_cycles(self.flash_program_cycles)
+        elif command == 5:
+            assert address%64 == 0, 'Unaligned SPM Page Write'
+            # The documented algorithm requires erase first. Repeated writes
+            # without erase are unsupported; do not invent 0->1 or AND results.
+            assert self.flash[page:page+64] == b'\xff'*64, 'Flash Page Write requires an erased page'
+            self.flash[page:page+64] = self.spm_buffer
+            self.spm_oplog.append(('write',page))
+            self._clear_spm_buffer()
+            self.advance_nvm_cycles(self.flash_program_cycles)
+        else:
+            assert command not in (0x09,), 'Fuse/lock access is outside this strict model'
+            self.nvm_events.append(('spm_ignored',self.cycles,command))
+        self.io[0x37] = 0
+        self._spm_armed_at = None
     def ram(self,addr):return self.mem[addr]
     def set_setup(self,request,addr=0,length=1,memtype=0,request_type=0xc0):
         self.r[28]=0; self.r[29]=1;self.r[25]=request
@@ -113,6 +248,7 @@ class CPU:
             self.pc+=i.size
             op=i.op; a=i.operands.split(', ') if i.operands else []
             self.ops+=1;self.cycles+=1
+            if self.strict_nvm:self._nvm_tick()
             if op=='ret':
                 self.cycles+=3
                 if not self.stack or not execute_ret:return self.pc
@@ -165,7 +301,9 @@ class CPU:
                 if skip:skipi=self.decode(self.pc);self.pc+=skipi.size;self.cycles+=1+(skipi.size==4)
             elif op=='sbi':
                 addr=self.imm(a[0]);bit=self.imm(a[1]);self.cycles+=1
-                if addr==0x1f and bit==0:
+                if self.strict_nvm:
+                    self.write_io(addr, self.read_io(addr)|(1<<bit))
+                elif addr==0x1f and bit==0:
                     self.write_io(addr, self.read_io(addr) | (1 << bit))
                 elif addr==0x1f and bit==1:
                     assert self.io.get(0x1f,0)&4, 'EEMPE not set'
@@ -208,6 +346,10 @@ class CPU:
                 self.cycles+=2
             elif op=='spm':
                 addr=self.r[30]|self.r[31]<<8;ctrl=self.io.get(0x37,0)
+                if self.strict_nvm:
+                    self._strict_spm(addr,ctrl)
+                    self.cycles+=3
+                    continue
                 page=addr&~63
                 if ctrl==3:
                     self.flash[page:page+64]=b'\xff'*64
