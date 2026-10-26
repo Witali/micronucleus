@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from avr_sim import CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_STATE, MEM_STATUS, MEM_REMAIN
+from avr_sim import BOOT, CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_STATE, MEM_STATUS, MEM_REMAIN
 
 ROOT=Path(__file__).resolve().parents[1]
 FW=ROOT/'firmware/isp-full.bin'
@@ -21,7 +21,7 @@ def test_compact_code_and_usb_engine_identity():
     import sys
     sys.path.insert(0,str(ROOT/'tests'))
     from avr_sim import BOOT
-    assert BOOT==0x19c0
+    assert BOOT%64==0
     a=symbols()
     b=(ROOT/'build/block64.full.bin').read_bytes()
     assert len(b)-BOOT==1588
@@ -63,6 +63,6 @@ def test_page_zero_protection_still_applied():
     c.mem[MEM_ADDR_HI]=0
     c.mem[0x0140:0x0180]=bytes([0x42]*64)
     c.run_from('block_commit_flash',execute_ret=True,count=1300)
-    opcode=0xc000|(((0x19c0//2)-1)&0xfff)
+    opcode=0xc000|(((BOOT//2)-1)&0xfff)
     assert c.flash[:2]==opcode.to_bytes(2,'little')
     assert c.flash[2:64]==bytes([0x42]*62)

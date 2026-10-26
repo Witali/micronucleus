@@ -8,7 +8,7 @@ import sys
 import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'tests'))
-from avr_sim import CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_BUFFER, MEM_STATE, MEM_PROGRESS, MEM_INDEX, ST_WRITE_EEPROM
+from avr_sim import BOOT, CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_BUFFER, MEM_STATE, MEM_PROGRESS, MEM_INDEX, ST_WRITE_EEPROM
 
 @pytest.fixture(scope='module')
 def firmware():
@@ -57,7 +57,7 @@ def test_eeprom_write_64_cycle_budget(firmware):
 def test_flash_word_loading_no_16bit_overflow_dependency(firmware):
     # Exercises every address low-byte (0x00,0x40,0x80,0xC0), including
     # ZL=0xFE -> 0x00 at the final fill operation, before Z is reloaded.
-    for page in range(0,0x19c0,64):
+    for page in range(0,BOOT,64):
         data = bytes(((page//64)*7 +i*11)&255 for i in range(64))
         cpu = CPU(image=firmware)
         cpu.r[28],cpu.r[29] = 0,1
@@ -66,7 +66,7 @@ def test_flash_word_loading_no_16bit_overflow_dependency(firmware):
         cpu.run_from('block_commit_flash', count=1500, execute_ret=True)
         expected = bytearray(data)
         if page == 0:
-            reset = 0xC000|(((0x19c0//2)-1)&0xFFF)
+            reset = 0xC000|(((BOOT//2)-1)&0xFFF)
             expected[:2]=reset.to_bytes(2,'little')
         assert cpu.flash[page:page+64]==expected, hex(page)
         loads=[rec for rec in cpu.spm_oplog if rec[0]=='load']

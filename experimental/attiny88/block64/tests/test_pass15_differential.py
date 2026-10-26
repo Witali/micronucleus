@@ -7,7 +7,7 @@ from pathlib import Path
 import random
 import re
 import subprocess
-from avr_sim import CPU, MEM_BUFFER, MEM_STATE, MEM_REMAIN, MEM_INDEX
+from avr_sim import BOOT, CPU, MEM_BUFFER, MEM_STATE, MEM_REMAIN, MEM_INDEX
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,6 +56,7 @@ def test_erase_and_write_command_setup_equivalence():
               (63,64,0),(0,63,0),(0,64,1),(0x123,64,0),(65535,64,0)]
     examples += [(randomizer.randrange(65536),randomizer.randrange(0,70),randomizer.randrange(0,4)) for _ in range(140)]
     for adr,n,kind in examples:
+        if kind==0 and ((adr+64<=0x19c0)!=(adr+64<=BOOT)):continue
         for op, label in ((0x11,'block_write_setup'),(0x14,'block_erase_setup')):
             a,b=pair()
             for c in (a,b):
@@ -70,7 +71,7 @@ def test_data_out_repeats_crc_and_progress_match_previous_implementation():
         kind=rng.randrange(2)
         adr=(rng.randrange(0,100)*64 if kind==0 else rng.randrange(0,64))
         n=64 if kind==0 else rng.randrange(1,65-adr)
-        if adr+n>0x19c0:continue
+        if adr+n>BOOT:continue
         a,b=pair()
         for c in (a,b):
             c.set_setup(0x11,adr,n,kind,0x40)

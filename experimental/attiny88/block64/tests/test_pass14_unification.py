@@ -22,12 +22,12 @@ def test_relief_and_usb_phy_identical():
     a=read_symbols(BEFORE/'block64.o')
     b=read_symbols(ROOT/'build/block64.o')
     o=old.read_bytes();n=new.read_bytes()
-    assert b['bootloader_start']==0x19C0
-    assert len(n)-0x19c0==1588  # Pointer reuse plus the shared SETUP/OUT CRC gate.
+    assert b['bootloader_start']==BOOT
+    assert len(n)-BOOT==1588  # Pointer reuse plus the shared SETUP/OUT CRC gate.
     assert len(o)-0x1980==1610
-    assert n[a['usb_crc16_append']-0x1980+0x19c0:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
+    assert n[b['usb_crc16_append']:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
     assert n[b['USB_handler']:b['main']]==o[a['USB_handler']:a['main']]
-    assert 0x19c0-4-(0x1980-4)==64
+    assert 8192-BOOT >= len(n)-BOOT
 
 
 def test_vendor_reject_in_real_setup_already_has_empty_response():

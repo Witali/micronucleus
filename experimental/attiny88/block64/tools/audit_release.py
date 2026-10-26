@@ -6,13 +6,13 @@ contain no unresolved ELF relocations before binary extraction.
 """
 from pathlib import Path
 import json,hashlib,subprocess,re,random
+from layout import BOOT, FLASH, PAGE, APP, RESERVED
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
-BOOT=0x19c0; FLASH=8192; PAGE=64; APP=BOOT-4
 body=(FW/'bootloader.bin').read_bytes()
 whole=(FW/'isp-full.bin').read_bytes()
 manifest=json.loads((FW/'manifest.json').read_text())
-assert len(body)<=1600 and len(body)%2==0 and len(whole)==FLASH
+assert len(body)<=RESERVED and len(body)%2==0 and len(whole)==FLASH
 assert len(body)==manifest['bootloader_body_bytes']
 assert len(body)<=FLASH-BOOT
 assert whole[BOOT:BOOT+len(body)]==body

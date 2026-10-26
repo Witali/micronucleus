@@ -3,8 +3,8 @@
 from pathlib import Path
 import subprocess, json, hashlib, re
 from avr_build import assemble
+from layout import BOOT, FLASH, APP, RESERVED
 ROOT=Path(__file__).resolve().parent.parent
-BOOT=0x19c0;FLASH=8192;APP=BOOT-4
 SRC=ROOT/'source/micronucleus_t88_block64.S'
 BUILD=ROOT/'build';FW=ROOT/'firmware'
 
@@ -32,7 +32,7 @@ def build():
     binary=raw.read_bytes()
     assert binary[:BOOT]==bytes(BOOT),'Nonempty .text before loader region'
     body=binary[BOOT:]
-    assert len(body)<=1600,('Bootloader exceeds reserved 25 Flash pages:',len(body))
+    assert len(body)<=RESERVED,('Bootloader exceeds its explicit Flash reservation:',len(body),RESERVED)
     assert len(body)%2==0
     assert body[2:4]==bytes([APP>>8,APP&255])
     assert body[2:8]==bytes([APP>>8,APP&255,64,64,0x33,0x03])

@@ -6,7 +6,8 @@ from pathlib import Path
 import importlib.util, re, subprocess, sys
 from dataclasses import dataclass
 ROOT=Path(__file__).resolve().parent.parent
-BOOT=0x19c0
+sys.path.insert(0, str(ROOT/'tools'))
+from layout import BOOT
 spec=importlib.util.spec_from_file_location('block_decoder',Path(__file__).with_name('avr_decoder.py'))
 D=importlib.util.module_from_spec(spec)
 sys.modules[spec.name]=D

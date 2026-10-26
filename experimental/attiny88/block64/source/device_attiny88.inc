@@ -4,7 +4,8 @@
 #define T88_DEVICE_CONFIG_INC
 
 #ifndef BOOT_AT
-#define BOOT_AT 0x19c0
+/* Explicit development room for ACK/replay and control-transfer ownership. */
+#define BOOT_AT 0x1880
 #endif
 #define T88_FLASH_BYTES 8192
 #define T88_FLASH_PAGE_BYTES 64
