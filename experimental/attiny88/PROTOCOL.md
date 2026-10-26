@@ -18,7 +18,7 @@ EEPROM writes carry the payload in wIndex and have no USB OUT data stage. Poll r
 
 ## EEPROM readiness and write sequencing
 
-The hardware readiness rule comes from the [Microchip ATtiny48/88 datasheet, sections 5.3.4 and 5.4.4](https://ww1.microchip.com/downloads/en/DeviceDoc/doc8008.pdf): `EECR.EEPE` is one during a write and hardware clears it when the operation completes. The optimized handler samples this bit with `SBIC`, returning exactly `0x00` when ready or `0x01` when busy. Other EECR bits do not affect the reply. This is a nonblocking snapshot; the host polls again if busy. A write completing just after the sample may produce one final busy reply.
+The hardware readiness rule comes from the [Microchip ATtiny48/88 datasheet, sections 5.3.4 and 5.4.3](https://ww1.microchip.com/downloads/en/DeviceDoc/doc8008.pdf): `EECR.EEPE` is one during a write and hardware clears it when the operation completes. The optimized handler samples this bit with `SBIC`, returning exactly `0x00` when ready or `0x01` when busy. Other EECR bits do not affect the reply. This is a nonblocking snapshot; the host polls again if busy. A write completing just after the sample may produce one final busy reply.
 
 Request `0xF0` is this project's USB vendor extension. Its request number borrows an AVR ISP opcode; it does not make the USB transfer a standard USB request or an ISP transaction. The ready/busy values above are the explicit host contract.
 

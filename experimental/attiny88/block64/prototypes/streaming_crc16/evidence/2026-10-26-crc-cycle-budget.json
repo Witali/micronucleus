@@ -1,0 +1,231 @@
+{
+  "sha256": "e5b06459481658af1f0b4296000a97dbd7f0226502caf5dd86c234a4407aba82",
+  "source": "prototypes/streaming_crc16/source/streaming_rx_v2.inc",
+  "bytes": [
+    {
+      "byte": 1,
+      "period": 86,
+      "crc": 11,
+      "padding": 4,
+      "non_crc": 71
+    },
+    {
+      "byte": 2,
+      "period": 85,
+      "crc": 11,
+      "padding": 3,
+      "non_crc": 71
+    },
+    {
+      "byte": 3,
+      "period": 85,
+      "crc": 11,
+      "padding": 3,
+      "non_crc": 71
+    },
+    {
+      "byte": 4,
+      "period": 86,
+      "crc": 11,
+      "padding": 4,
+      "non_crc": 71
+    },
+    {
+      "byte": 5,
+      "period": 85,
+      "crc": 11,
+      "padding": 3,
+      "non_crc": 71
+    },
+    {
+      "byte": 6,
+      "period": 85,
+      "crc": 11,
+      "padding": 3,
+      "non_crc": 71
+    },
+    {
+      "byte": 7,
+      "period": 86,
+      "crc": 11,
+      "padding": 4,
+      "non_crc": 71
+    }
+  ],
+  "bits": [
+    {
+      "bit": 0,
+      "source_line": 216,
+      "period_range": [
+        10,
+        10
+      ],
+      "crc_cycles": 0,
+      "useful_non_crc_cycles": 10,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 0
+    },
+    {
+      "bit": 1,
+      "source_line": 228,
+      "period_range": [
+        10,
+        10
+      ],
+      "crc_cycles": 0,
+      "useful_non_crc_cycles": 10,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 0
+    },
+    {
+      "bit": 2,
+      "source_line": 239,
+      "period_range": [
+        11,
+        12
+      ],
+      "crc_cycles": 0,
+      "useful_non_crc_cycles": 11,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 1,
+      "regular_crc_slots": 0
+    },
+    {
+      "bit": 3,
+      "source_line": 253,
+      "period_range": [
+        11,
+        11
+      ],
+      "crc_cycles": 2,
+      "useful_non_crc_cycles": 9,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 2
+    },
+    {
+      "bit": 4,
+      "source_line": 170,
+      "period_range": [
+        11,
+        11
+      ],
+      "crc_cycles": 2,
+      "useful_non_crc_cycles": 8,
+      "unconditional_padding": 1,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 3
+    },
+    {
+      "bit": 5,
+      "source_line": 183,
+      "period_range": [
+        11,
+        11
+      ],
+      "crc_cycles": 4,
+      "useful_non_crc_cycles": 7,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 4
+    },
+    {
+      "bit": 6,
+      "source_line": 194,
+      "period_range": [
+        11,
+        11
+      ],
+      "crc_cycles": 3,
+      "useful_non_crc_cycles": 8,
+      "unconditional_padding": 0,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 3
+    },
+    {
+      "bit": 7,
+      "source_line": 205,
+      "period_range": [
+        10,
+        10
+      ],
+      "crc_cycles": 0,
+      "useful_non_crc_cycles": 8,
+      "unconditional_padding": 2,
+      "conditional_padding_max": 0,
+      "regular_crc_slots": 2
+    }
+  ],
+  "crc_pipeline_cycles": 11,
+  "useful_non_crc_cycles": 71,
+  "unconditional_padding_cycles": 3,
+  "direct_replacement_crc_cycles": 14,
+  "crc_instructions": [
+    {
+      "at": 214,
+      "pc": 2572,
+      "op": "eor",
+      "operands": "r30, r24",
+      "cycles": 1,
+      "target": null
+    },
+    {
+      "at": 215,
+      "pc": 2574,
+      "op": "eor",
+      "operands": "r30, r20",
+      "cycles": 1,
+      "target": null
+    },
+    {
+      "at": 226,
+      "pc": 2436,
+      "op": "mov",
+      "operands": "r24, r25",
+      "cycles": 1,
+      "target": null
+    },
+    {
+      "at": 227,
+      "pc": 2438,
+      "op": "ldi",
+      "operands": "r31, 0x17",
+      "cycles": 1,
+      "target": null
+    },
+    {
+      "at": 236,
+      "pc": 2456,
+      "op": "lpm",
+      "operands": "r25, Z",
+      "cycles": 3,
+      "target": null
+    },
+    {
+      "at": 239,
+      "pc": 2458,
+      "op": "ldi",
+      "operands": "r31, 0x16",
+      "cycles": 1,
+      "target": null
+    },
+    {
+      "at": 248,
+      "pc": 2476,
+      "op": "lpm",
+      "operands": "r30, Z",
+      "cycles": 3,
+      "target": null
+    }
+  ],
+  "scope": [
+    "A fixed byte updater must fit the 85-cycle path, not only an average over stuffed inputs.",
+    "Bit 2 has one extra NOP only on the long fractional-correction path; it is not free on every byte.",
+    "Bit 3 RJMP is the byte-loop control, included in useful non-CRC work.",
+    "Replacing the existing CRC and unconditional delays leaves slots 0,0,0,2,3,4,3,2 across bits 0..7.",
+    "This is a bound for the unchanged sampler/control flow, not a universal impossibility theorem for a redesigned PHY.",
+    "Register preservation, lookup-address placement, stuffing cooldowns and EOP cleanup need separate integration proofs."
+  ]
+}

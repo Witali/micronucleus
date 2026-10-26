@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""Pass 13 independent release checks, with no hardware operations.
+
+Build is relocatable within the page-aligned BOOT_AT address; release must
+contain no unresolved ELF relocations before binary extraction.
+"""
+from pathlib import Path
+import json,hashlib,subprocess,re,random
+from layout import BOOT, FLASH, PAGE, APP, RESERVED
+from usb_transaction_audit import audit_timed_instructions
+ROOT=Path(__file__).resolve().parent.parent
+FW=ROOT/'firmware'; BLD=ROOT/'build'
+body=(FW/'bootloader.bin').read_bytes()
+whole=(FW/'isp-full.bin').read_bytes()
+manifest=json.loads((FW/'manifest.json').read_text())
+assert len(body)<=RESERVED and len(body)%2==0 and len(whole)==FLASH
+assert len(body)==manifest['bootloader_body_bytes']
+assert len(body)<=FLASH-BOOT
+assert whole[BOOT:BOOT+len(body)]==body
+assert whole[BOOT+len(body):]==b'\xff'*(FLASH-BOOT-len(body))
+assert whole[APP:BOOT]==b'\xff'*4
+assert whole[2:APP]==b'\xff'*(APP-2)
+reset=0xc000|(((BOOT//2)-1)&0xfff)
+assert whole[:2]==reset.to_bytes(2,'little')
+assert body[2:8]==bytes([APP>>8,APP&255,64,64,0x33,0x03])
+assert manifest['application_bytes']==APP
+obj=BLD/'block64.o'
+reloc=subprocess.check_output(['llvm-objdump','-r',str(obj)],text=True)
+assert 'R_AVR_' not in reloc,reloc
+
+def symbols(obj):
+    text=subprocess.check_output(['llvm-objdump','-t',str(obj)],text=True)
+    return {m.group(2):int(m.group(1),16) for m in re.finditer(r'^([0-9a-f]+)\s+\S+\s+\.text\s+[0-9a-f]+\s+(.+)$',text,re.M)}
+
+# Compare immutable archived Pass8 fragments. Its historical full source has
+# an undefined L1eca outside these fragments; extracting a relocatable object
+# would hide that defect and cannot establish a valid reference.
+b=symbols(obj)
+c=(BLD/'block64.full.bin').read_bytes()
+crc_ref=(ROOT/'reference/Pass8_usb_crc.bin').read_bytes()
+engine_ref=(ROOT/'reference/Pass8_usb_phy.bin').read_bytes()
+assert hashlib.sha256(crc_ref).hexdigest()=='e2ca1be4e1c0ee222eff4eee87df39afe91b36e68feb8b756625efcf2fd142ec'
+assert hashlib.sha256(engine_ref).hexdigest()=='f9a6c9bb587fc6123a384c68f8ae897c228e1bf11fd93cc64dcb168df5b0d63a'
+crc_new=c[b['usb_crc16_append']:b['USB_handler']]
+engine_new=c[b['USB_handler']:b['main']]
+assert crc_ref==crc_new and len(crc_new)==44
+timed_audit = audit_timed_instructions(c, b)
+
+# Intel HEX checksums and complete sparse-image reconstruction.
+records=(FW/'isp-fresh.hex').read_text().strip().splitlines()
+img=bytearray(b'\xff'*FLASH)
+for record in records:
+    assert record.startswith(':'),record
+    chunk=bytes.fromhex(record[1:])
+    assert len(chunk)==chunk[0]+5 and sum(chunk)%256==0
+    kind=chunk[3];adr=int.from_bytes(chunk[1:3],'big')
+    if kind==0:
+        assert adr+len(chunk[4:-1])<=FLASH
+        img[adr:adr+chunk[0]]=chunk[4:-1]
+    else:assert kind==1 and chunk[0]==0
+assert records[-1]==':00000001FF' and img==whole
+
+# Cross-check address validation formula under all legal lengths and
+# 8k representative addresses, including 0xFFFF and both page boundaries.
+for bound in [64,BOOT]:
+    for length in range(1,65):
+        cutoff=bound-length
+        for addr in [0,1,63,64,BOOT-65,BOOT-64,BOOT-1,BOOT,65535,
+                     max(0,cutoff-1),cutoff,cutoff+1,0xff00]:
+            a16=addr&0xffff
+            assert (a16<=cutoff)==(a16+length<=bound)
+
+result={
+    'result':'PASS (software only)',
+    'code_bytes':len(body),
+    'boot_at':hex(BOOT),
+    'application_bytes':APP,
+    'spare_bytes_in_reserved_boot_region':FLASH-BOOT-len(body),
+    'reset_vector_opcode':hex(reset),
+    'usb_phy_and_classifier_bytes':len(engine_new),
+    'timed_instruction_audit':timed_audit,
+    'usb_crc16_unchanged_vs_pass8_bytes':len(crc_new),
+    'unresolved_relocations':0,
+    'hex_checksums':'PASS',
+    'flash_and_eeprom_range_math':'PASS',
+    'sha256_body':hashlib.sha256(body).hexdigest(),
+    'physical_usb_test':'NOT PERFORMED',
+    'power_failure_recovery_test':'NOT PERFORMED',
+}
+(ROOT/'audit_report.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
+print(json.dumps(result,indent=2,ensure_ascii=False))

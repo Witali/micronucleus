@@ -1,0 +1,53 @@
+{
+  "note": "EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.",
+  "mcpu": "ATtiny88 16MHz external clock",
+  "protocol_version": "3.3 / Pass13 (cycle-optimized, protocol unchanged)",
+  "bootloader_start": "0x1980",
+  "bootloader_body_bytes": 1610,
+  "reserved_flash_bytes": 1664,
+  "application_bytes": 6524,
+  "flash_page_bytes": 64,
+  "eeprom_bytes": 64,
+  "flash_page_protocol": "separate ERASE_PAGE and 64-byte WRITE",
+  "spm_guard": "defer until zero-length status TX and next quiet polling interval",
+  "usb_vid_pid": "16d0:0753",
+  "protocol_commands": {
+    "read": "0x10",
+    "write": "0x11",
+    "get_status": "0x12",
+    "run": "0x13",
+    "erase_page": "0x14"
+  },
+  "get_status_layout": [
+    "result",
+    "state",
+    "app_hi",
+    "app_lo",
+    "page_bytes",
+    "eeprom_bytes",
+    "protocol_marker",
+    "features"
+  ],
+  "get_status_lengths": "8 bytes only (supported host contract; USB EP0 still clips to wLength)",
+  "reset_vector_opcode": "0xccbf",
+  "critical_usb_code_bytes": 508,
+  "crc16_code_bytes": 44,
+  "status_reply_bytes": 8,
+  "sha256_body": "ba732a0cc2cdcd60df4649dfda09a55e3490c03b280e6fcbda381de973d2a8dd",
+  "sha256_full_binary": "6920fef34f5686763a3c984e07ded4d7b2161e602fdc2102fcd3b137d7ffb424",
+  "sha256_source": "06408acbc90d6d496de417b26e78b868ccca92cb7ce68143be079f2dd62458e5",
+  "source_modules": [
+    "block64_protocol.inc",
+    "device_attiny88.inc",
+    "vusb_ep0.inc",
+    "vusb_phy.inc",
+    "vusb_standard.inc"
+  ],
+  "sha256_source_modules": {
+    "vusb_phy.inc": "42504367dfb058c28afc17b7b7b55b13557e63911d1d489b3f600c11f89df0dd",
+    "block64_protocol.inc": "11a2d737ac85e7fcbc989754cc0388ec8d61a2afb0b0f71287c27ff6e5227c52",
+    "vusb_ep0.inc": "b05b82e916731298544525bae35d89362ef4e6f2c096d3e9c3020c24ddfb5401",
+    "vusb_standard.inc": "50ace45dd4ac9ce789ec2e912707ffa5f72877ddbc7c06d025ef33e271384f8b",
+    "device_attiny88.inc": "2dc5522727700c86462838f1f038202cbc2602a702dabb28afb2e39eef65aa2f"
+  }
+}

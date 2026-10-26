@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-26",
+  "scope": "Digital actual-opcode ACK experiment; no hardware programming",
+  "variants": {
+    "immediate": {
+      "body_sha256": "e5b06459481658af1f0b4296000a97dbd7f0226502caf5dd86c234a4407aba82",
+      "body_bytes": 4096,
+      "executable_and_static_bytes_before_tables": 3262
+    },
+    "context": {
+      "body_sha256": "326d2998448eaa5579b513c915d324fbc09f77a1cd36e9d96ec9eafef1081c86",
+      "body_bytes": 4096,
+      "executable_and_static_bytes_before_tables": 3258
+    },
+    "deferred": {
+      "body_sha256": "3c7e88006cfaa522fad420d4c5d7d3817414bcec3c346437f87039bd66ea41c2",
+      "body_bytes": 4096,
+      "executable_and_static_bytes_before_tables": 3268,
+      "legal_tail": {
+        "cases": 15648,
+        "failed": {
+          "decoded_failures": 0,
+          "crc_gate_failures": 0,
+          "ack_failures": 0,
+          "publication_failures": 0,
+          "sample_bit_failures": 0,
+          "turnaround_failures": 0
+        },
+        "turnaround_thirds": [
+          143,
+          195
+        ]
+      },
+      "rate_jitter": {
+        "cases": 11664,
+        "failed": {
+          "decoded_failures": 0,
+          "ack_failures": 0,
+          "crc_gate_failures": 0,
+          "publication_failures": 0,
+          "sample_bit_failures": 0,
+          "turnaround_failures": 0
+        },
+        "turnaround_thirds": [
+          167.0,
+          197.0
+        ]
+      }
+    },
+    "eop": {
+      "body_sha256": "377b63ac5ef9d5d5cf077f24fa2706914a4bb972f8c7be17fa222a758d3b42f6",
+      "body_bytes": 4096,
+      "executable_and_static_bytes_before_tables": 3282,
+      "legal_tail": {
+        "cases": 15648,
+        "failed": {
+          "decoded_failures": 0,
+          "crc_gate_failures": 0,
+          "ack_failures": 0,
+          "publication_failures": 0,
+          "sample_bit_failures": 0,
+          "turnaround_failures": 0
+        },
+        "turnaround_thirds": [
+          143,
+          195
+        ]
+      },
+      "rate_jitter": {
+        "cases": 11664,
+        "failed": {
+          "decoded_failures": 0,
+          "ack_failures": 0,
+          "crc_gate_failures": 0,
+          "publication_failures": 0,
+          "sample_bit_failures": 0,
+          "turnaround_failures": 0
+        },
+        "turnaround_thirds": [
+          167.0,
+          197.0
+        ]
+      }
+    }
+  },
+  "baseline_unchanged": true,
+  "physical_device_programmed": false,
+  "next_packet_checks": {
+    "pipeline-fast.json": {
+      "cases": 108,
+      "new_regression_cases": 0,
+      "matched_transmissions": 136,
+      "waveform_mismatches": 0,
+      "flag_mismatches": 0,
+      "wait_counter_mismatches": 0,
+      "inherited_failure_counts": {
+        "consumer_has_complete_owned_packet": 12,
+        "eop_wait_counter_zero": 0,
+        "following_tokens_validated": 52,
+        "foreground_copied_expected_bytes": 8,
+        "metadata_released": 0,
+        "pending_metadata_is_reserved": 0,
+        "publication_after_crc": 0,
+        "publication_in_ack_eop": 0,
+        "response_sequence": 48,
+        "turnaround": 0
+      }
+    },
+    "pipeline-out-retry-full.json": {
+      "cases": 480,
+      "new_regression_cases": 0,
+      "matched_transmissions": 624,
+      "waveform_mismatches": 0,
+      "flag_mismatches": 0,
+      "wait_counter_mismatches": 0,
+      "inherited_failure_counts": {
+        "consumer_has_complete_owned_packet": 0,
+        "eop_wait_counter_zero": 0,
+        "following_tokens_validated": 432,
+        "foreground_copied_expected_bytes": 0,
+        "metadata_released": 0,
+        "pending_metadata_is_reserved": 0,
+        "publication_after_crc": 0,
+        "publication_in_ack_eop": 0,
+        "response_sequence": 336,
+        "token_publication_after_crc": 0,
+        "turnaround": 0
+      }
+    },
+    "pipeline-in-ack-full.json": {
+      "cases": 480,
+      "new_regression_cases": 0,
+      "matched_transmissions": 864,
+      "waveform_mismatches": 0,
+      "flag_mismatches": 0,
+      "wait_counter_mismatches": 0,
+      "inherited_failure_counts": {
+        "consumer_has_complete_owned_packet": 0,
+        "eop_wait_counter_zero": 0,
+        "following_tokens_validated": 96,
+        "foreground_copied_expected_bytes": 0,
+        "metadata_released": 0,
+        "pending_metadata_is_reserved": 0,
+        "publication_after_crc": 0,
+        "publication_in_ack_eop": 0,
+        "response_sequence": 96,
+        "token_publication_after_crc": 0,
+        "turnaround": 0
+      }
+    }
+  },
+  "short_frame_cases_each": 48864,
+  "short_frame_proven_modes": [
+    "original Y=0116",
+    "context Y=0100",
+    "deferred Y=0100"
+  ],
+  "pipeline_pytest": {
+    "passed": 9,
+    "strict_inherited_xfails": 3
+  },
+  "notes": [
+    "EOP publication follows ACK PID bits but precedes return-to-J; it is not after a completed ACK.",
+    "Ordinary post-ACK publication adds seven post-TX clocks and regresses four bounded retry response cases.",
+    "EOP reuses the existing twelve-clock wait without changing TX waveform timing.",
+    "Baseline minimum-gap token losses and busy-RX payload overwrite remain tracked, not accepted as correct.",
+    "Default V2 and the guarded memory benchmark remain byte-identical to their earlier builds."
+  ]
+}
