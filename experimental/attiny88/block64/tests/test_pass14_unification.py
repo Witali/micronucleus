@@ -1,6 +1,7 @@
 """Pass14 consolidation checks (AVR instruction interpreter, no physical USB)."""
 from pathlib import Path
 import subprocess, re, hashlib
+from test_firmware import usb_crc
 from avr_sim import CPU, BOOT, MEM_STATE, ST_FLASH_WAIT_PREP
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -22,7 +23,7 @@ def test_relief_and_usb_phy_identical():
     b=read_symbols(ROOT/'build/block64.o')
     o=old.read_bytes();n=new.read_bytes()
     assert b['bootloader_start']==0x19C0
-    assert len(n)-0x19c0==1578  # CRC pointer reuse after Pass15 (Pass14 was 1596).
+    assert len(n)-0x19c0==1588  # Pointer reuse plus the shared SETUP/OUT CRC gate.
     assert len(o)-0x1980==1610
     assert n[a['usb_crc16_append']-0x1980+0x19c0:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
     assert n[b['USB_handler']:b['main']]==o[a['USB_handler']:a['main']]
@@ -34,6 +35,7 @@ def test_vendor_reject_in_real_setup_already_has_empty_response():
     for initial_length in (0,1,8,64,255):
         c=CPU(image=raw)
         c.set_setup(0x20,addr=0,length=8,memtype=0,request_type=0xc0)
+        c.mem[0x011f:0x0121]=usb_crc(c.mem[0x0117:0x011f])
         c.mem[0x0100]=initial_length
         c.mem[0x0112]=11  # USB RX packet's 8 setup bytes + 3 low-level bytes
         c.mem[0x010d]=0x2d  # SETUP PID, not OUT

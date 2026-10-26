@@ -96,7 +96,9 @@ def test_crc_pointer_reuse_matches_original_for_every_constant_and_length(cpu_fa
         old = cpu_factory('pass15')
         new = cpu_factory('current')
         assert accept(new, payload, corrupt, previous, kind) == accept(old, payload, corrupt, previous, kind)
-        assert new.cycles == old.cycles - 1, (len(payload), corrupt, previous, kind)
+        # Pointer reuse saves one cycle; sharing the CRC gate with SETUP
+        # adds a seven-cycle RCALL/RET outside the timed PHY path.
+        assert new.cycles == old.cycles + 6, (len(payload), corrupt, previous, kind)
 
 
 def flag_wait(cpu, arrival):

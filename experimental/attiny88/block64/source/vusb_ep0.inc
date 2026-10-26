@@ -13,6 +13,12 @@ L1d9c:
     brne    L1df8
     cpi     r24, 8
     brne    L1df8
+    /* A damaged SETUP must not reset EP0 state or dispatch a command.
+       The PHY has already selected its handshake; this application gate
+       protects command fields but does not fix premature USB ACK. */
+    ldi     r23, 8
+    rcall   block_verify_rx_crc
+    brne    L1df8
     mov     r7, r1               /* extend inactivity timeout */
     ldi     r24, 0xc3            /* initialize DATA0, TX toggle -> DATA1 */
     std     Y+1, r24

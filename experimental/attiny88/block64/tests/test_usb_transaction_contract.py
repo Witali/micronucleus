@@ -156,8 +156,6 @@ def test_corrupt_out_packet_is_not_acknowledged(cpu):
     require_contract(selected != ACK, "Invalid DATA CRC selected the ACK handshake")
 
 
-@pytest.mark.xfail(strict=True, raises=USBContractViolation,
-                   reason="SETUP dispatch has no CRC validation gate")
 def test_corrupt_setup_does_not_start_eeprom_receive(cpu):
     payload = bytes([0x40, 0x11, 0, 0, 1, 0, 1, 0])
     receive_to_handshake_selection(cpu, payload, pid=DATA0,
@@ -165,8 +163,7 @@ def test_corrupt_setup_does_not_start_eeprom_receive(cpu):
     context(cpu)
     cpu.run_from("L1d9c", stop_at=["L1df8"],
                  count=1000, execute_ret=True)
-    require_contract(cpu.mem[MEM_STATE] == ST_IDLE,
-                     "CRC-invalid SETUP started the EEPROM receive operation")
+    assert cpu.mem[MEM_STATE] == ST_IDLE
 
 
 @pytest.mark.xfail(strict=True, raises=USBContractViolation,
@@ -205,6 +202,7 @@ def test_lost_status_ack_cannot_start_flash_erase(cpu):
 def test_get_status_data_packet_cannot_complete_prior_erase_status_stage(cpu):
     begin_erase(cpu)
     cpu.set_setup(0x12, 0, 8, 0, 0xC0)
+    cpu.mem[0x011F:0x0121] = crc16(cpu.mem[0x0117:0x011F])
     cpu.mem[0x0112] = 11
     cpu.mem[0x010D] = 0x2D
     context(cpu)

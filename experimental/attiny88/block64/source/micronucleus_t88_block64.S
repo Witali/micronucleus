@@ -431,6 +431,25 @@ block_invalid_range:
     clc
     ret
 
+/* Validate a decoded RX payload at 0x0117, with its length in R23.
+   Capture the received trailer before the CRC routine overwrites it with
+   the calculated value. Return Z=1 on equality; preserve R23 and Y.
+   This shared check runs after the PHY handshake, not inside USB timing. */
+block_verify_rx_crc:
+    /* One pointer initializes both the trailer load and CRC input. With
+       at most eight payload bytes, adding R23 cannot wrap XL. */
+    ldi     r24, 0x17
+    ldi     r25, 0x01
+    movw    r26, r24
+    add     r26, r23
+    ld      r16, X+            /* received CRC low */
+    ld      r17, X             /* received CRC high */
+    mov     r22, r23
+    rcall   usb_crc16_append
+    cp      r24, r16
+    cpc     r25, r17           /* retain low-byte equality in Z */
+    ret
+
 /* One incoming OUT DATA0/1 packet containing 1..8 payload bytes.
  * RX data already ACKed by USB_handler; buffer stays NAK until consumed.
  */
@@ -453,18 +472,7 @@ block_accept_out:
        Discard corrupted payload and force a host timeout rather than
        silently writing Flash/EEPROM. */
     mov     r23, r24
-    /* Share the packet-start pointer with the following CRC call. The
-       trailer is at most eight bytes later, so XL cannot wrap here. */
-    ldi     r24, 0x17
-    ldi     r25, 0x01
-    movw    r26, r24
-    add     r26, r23
-    ld      r16, X+            /* received CRC low */
-    ld      r17, X             /* received CRC high */
-    mov     r22, r23
-    rcall   usb_crc16_append
-    cp      r24, r16
-    cpc     r25, r17  /* combine 16-bit equality with propagated Z */
+    rcall   block_verify_rx_crc
     brne    block_out_return
     /* Subtraction both checks packet count and updates bytes remaining. */
     ldd     r18, Y+51

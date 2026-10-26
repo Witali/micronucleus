@@ -17,14 +17,14 @@ def symbols():
 def test_compact_code_and_usb_engine_identity():
     from hashlib import sha256
     body=(ROOT/'firmware/BOOTLOADER_BODY_19C0_PASS15.bin').read_bytes()
-    assert len(body)==1578
+    assert len(body)==1588
     import sys
     sys.path.insert(0,str(ROOT/'tests'))
     from avr_sim import BOOT
     assert BOOT==0x19c0
     a=symbols()
     b=(ROOT/'build/block64.full.bin').read_bytes()
-    assert len(b)-BOOT==1578
+    assert len(b)-BOOT==1588
     assert len(b[a['usb_crc16_append']:a['USB_handler']])==44
     assert len(b[a['USB_handler']:a['main']])==508
     assert sha256((ROOT/'source/vusb_phy.inc').read_bytes()).hexdigest() == sha256((ROOT/'reference/Pass14_vusb_phy.inc').read_bytes()).hexdigest()
