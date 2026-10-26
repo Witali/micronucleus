@@ -12,7 +12,7 @@ from avr_sim import CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_BUFFER, MEM_STATE, MEM_PR
 
 @pytest.fixture(scope='module')
 def firmware():
-    return (ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+    return (ROOT/'firmware/isp-full.bin').read_bytes()
 
 
 def test_idle_dispatch_cycles_and_state(firmware):

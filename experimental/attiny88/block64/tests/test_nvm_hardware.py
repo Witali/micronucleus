@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def cpu(*, fuse=True, strict=True):
-    image = (ROOT / 'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+    image = (ROOT / 'firmware/isp-full.bin').read_bytes()
     return CPU(image=image, strict_nvm=strict,
                selfprgen_fuse_programmed=fuse if strict else None)
 

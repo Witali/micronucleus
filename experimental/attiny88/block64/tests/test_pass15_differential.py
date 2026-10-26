@@ -23,7 +23,7 @@ def syms(obj):
 def pair(eeprom=None):
     old=CPU(image=(ROOT/'reference/Pass14_full.bin').read_bytes(),EEPROM=eeprom)
     old.labels=syms(ROOT/'reference/Pass14_block64.o')
-    new=CPU(image=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes(),EEPROM=eeprom)
+    new=CPU(image=(ROOT/'firmware/isp-full.bin').read_bytes(),EEPROM=eeprom)
     return old,new
 
 

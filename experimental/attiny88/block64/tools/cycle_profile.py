@@ -9,7 +9,7 @@ import hashlib, json, sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tests'))
 from avr_sim import CPU, MEM_BUFFER, MEM_STATE, MEM_ADDR_LO, MEM_ADDR_HI, MEM_PROGRESS, MEM_INDEX
-ROM=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+ROM=(ROOT/'firmware/isp-full.bin').read_bytes()
 
 
 def new(eeprom=None):return CPU(image=ROM,EEPROM=eeprom)

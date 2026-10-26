@@ -43,14 +43,14 @@ def build():
     image[0:2]=reset.to_bytes(2,'little')
     image[BOOT:BOOT+len(body)]=body
     assert image[APP:BOOT]==b'\xff'*4
-    (FW/'BOOTLOADER_BODY_19C0_PASS15.bin').write_bytes(body)
-    (FW/'ISP_FULL_8192_19C0_PASS15.bin').write_bytes(image)
+    (FW/'bootloader.bin').write_bytes(body)
+    (FW/'isp-full.bin').write_bytes(image)
     lines=[rec(0,image[:2])]
     for adr in range(BOOT,FLASH,16):
         part=image[adr:adr+16]
         if any(b!=255 for b in part):lines.append(rec(adr,part))
     lines.append(rec(0,b'',1))
-    hexf=FW/'ISP_FULL_19C0_PASS15_EXPERIMENTAL.hex'
+    hexf=FW/'isp-fresh.hex'
     hexf.write_text('\n'.join(lines)+'\n')
     for line in lines:
         if not line.startswith(':'):continue
@@ -58,9 +58,16 @@ def build():
     sym=symbols(obj)
     (FW/'symbols.txt').write_text('\n'.join(f'{name:42s} 0x{addr:04X}' for name,addr in sorted(sym.items(),key=lambda pair:pair[1]))+'\n')
     manifest={
-        'note':'EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.',
+        'note':'EXPERIMENTAL DEVELOPMENT. Known USB transaction defects; not hardware verified.',
         'mcpu':'ATtiny88 16MHz external clock',
-        'protocol_version':'3.3 / Pass15 (shared ERASE/WRITE setup; DATA OUT tail dispatch; protocol unchanged)',
+        'protocol_version':'3.3',
+        'development_stage':'post-Pass15; SETUP CRC gate and watchdog-reset correction',
+        'release_ready':False,
+        'hardware_verified':False,
+        'known_usb_contract_failures':['rx_ack_before_crc','in_retry_without_ack','spm_without_status_ack','unrelated_status_completion'],
+        'body_file':'bootloader.bin',
+        'isp_binary_file':'isp-full.bin',
+        'isp_hex_file':'isp-fresh.hex',
         'bootloader_start':hex(BOOT),
         'bootloader_body_bytes':len(body),
         'reserved_flash_bytes':FLASH-BOOT,
@@ -68,7 +75,7 @@ def build():
         'flash_page_bytes':64,
         'eeprom_bytes':64,
         'flash_page_protocol':'separate ERASE_PAGE and 64-byte WRITE',
-        'spm_guard':'defer until zero-length status TX and next quiet polling interval',
+        'spm_guard':'experimental status markers and quiet interval; host ACK is not tracked',
         'usb_vid_pid':'16d0:0753',
         'protocol_commands':{'read':'0x10','write':'0x11','get_status':'0x12','run':'0x13','erase_page':'0x14'},
         'get_status_layout':['result','state','app_hi','app_lo','page_bytes','eeprom_bytes','protocol_marker','features'],

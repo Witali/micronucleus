@@ -31,7 +31,7 @@ def test_relief_and_usb_phy_identical():
 
 
 def test_vendor_reject_in_real_setup_already_has_empty_response():
-    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+    raw=(ROOT/'firmware/isp-full.bin').read_bytes()
     for initial_length in (0,1,8,64,255):
         c=CPU(image=raw)
         c.set_setup(0x20,addr=0,length=8,memtype=0,request_type=0xc0)
@@ -47,7 +47,7 @@ def test_vendor_reject_in_real_setup_already_has_empty_response():
 
 def test_shared_erase_and_write_spm_instruction_window():
     # Hardware rule: the SPM must be the immediate next opcode after OUT SPMCSR.
-    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+    raw=(ROOT/'firmware/isp-full.bin').read_bytes()
     c=CPU(image=raw)
     start=c.labels['block_execute_spm']
     from avr_sim import D

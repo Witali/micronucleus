@@ -26,7 +26,7 @@ def test_source_modules_present_and_included():
 
 def test_pass12_dispatch_optimized_and_protocol_header_unchanged():
     old = (ROOT / 'reference/Pass10_1662B_body.bin').read_bytes()
-    new = (ROOT / 'firmware/BOOTLOADER_BODY_19C0_PASS15.bin').read_bytes()
+    new = (ROOT / 'firmware/bootloader.bin').read_bytes()
     assert len(old) == 1662
     assert len(new) <= 1600
     assert len(new) < len(old)

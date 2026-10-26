@@ -6,7 +6,7 @@ import subprocess
 from avr_sim import CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_STATE, MEM_STATUS, MEM_REMAIN
 
 ROOT=Path(__file__).resolve().parents[1]
-FW=ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin'
+FW=ROOT/'firmware/isp-full.bin'
 
 
 def symbols():
@@ -16,7 +16,7 @@ def symbols():
 
 def test_compact_code_and_usb_engine_identity():
     from hashlib import sha256
-    body=(ROOT/'firmware/BOOTLOADER_BODY_19C0_PASS15.bin').read_bytes()
+    body=(ROOT/'firmware/bootloader.bin').read_bytes()
     assert len(body)==1588
     import sys
     sys.path.insert(0,str(ROOT/'tests'))

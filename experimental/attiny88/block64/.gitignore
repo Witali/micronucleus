@@ -3,3 +3,5 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+/audit_report.json
+/CYCLE_REPORT.json

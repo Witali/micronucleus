@@ -5,13 +5,12 @@ Build is relocatable within the page-aligned BOOT_AT address; release must
 contain no unresolved ELF relocations before binary extraction.
 """
 from pathlib import Path
-from avr_build import assemble
 import json,hashlib,subprocess,re,random
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
 BOOT=0x19c0; FLASH=8192; PAGE=64; APP=BOOT-4
-body=(FW/'BOOTLOADER_BODY_19C0_PASS15.bin').read_bytes()
-whole=(FW/'ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+body=(FW/'bootloader.bin').read_bytes()
+whole=(FW/'isp-full.bin').read_bytes()
 manifest=json.loads((FW/'manifest.json').read_text())
 assert len(body)<=1600 and len(body)%2==0 and len(whole)==FLASH
 assert len(body)==manifest['bootloader_body_bytes']
@@ -47,7 +46,7 @@ assert crc_ref==crc_new and len(crc_new)==44
 assert engine_ref==engine_new and len(engine_new)==508
 
 # Intel HEX checksums and complete sparse-image reconstruction.
-records=(FW/'ISP_FULL_19C0_PASS15_EXPERIMENTAL.hex').read_text().strip().splitlines()
+records=(FW/'isp-fresh.hex').read_text().strip().splitlines()
 img=bytearray(b'\xff'*FLASH)
 for record in records:
     assert record.startswith(':'),record

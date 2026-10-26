@@ -63,7 +63,7 @@ class ResetCPU(CPU):
 
 @pytest.mark.parametrize('flags', range(16))
 def test_reset_flags_saved_and_cleared_before_watchdog_disable(flags):
-    image = (ROOT / 'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
+    image = (ROOT / 'firmware/isp-full.bin').read_bytes()
     cpu = ResetCPU(image, flags)
     # General-purpose registers and SRAM are undefined after power-on.
     cpu.r[:] = [(index * 37 + 11) & 0xFF for index in range(32)]
