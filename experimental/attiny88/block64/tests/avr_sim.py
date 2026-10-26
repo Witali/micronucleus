@@ -374,6 +374,8 @@ class CPU:
             elif op=='bclr':self.flagset(self.imm(a[0]),False)
             elif op=='com':
                 d=self.reg(a[0]);v=(~self.r[d])&255;self.r[d]=v;self.flagset(0,True);self.logic(v)
+            elif op=='neg':
+                d=self.reg(a[0]);self.r[d]=self.subtract(0,self.r[d])
             elif op=='ror':
                 d=self.reg(a[0]);v=self.r[d];prior=self.flag(0)
                 self.r[d]=((v>>1)|(0x80 if prior else 0))&255
