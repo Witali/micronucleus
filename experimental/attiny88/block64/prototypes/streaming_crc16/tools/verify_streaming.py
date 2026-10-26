@@ -549,6 +549,7 @@ def main():
     if args.quiet and 'rows' in report:
         fields=('decoded_failures','crc_gate_failures','ack_failures','publication_failures',
                 'sample_bit_failures','turnaround_failures','quarter_window_failures')
+        fields=tuple(name for name in fields if any(name in row for row in report['rows']))
         visible={name:report[name] for name in ('result','sha256','cases')}
         visible['failure_counts']={name:sum(row.get(name,0) for row in report['rows']) for name in fields}
         if args.suite.startswith('dribble'):

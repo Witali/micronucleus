@@ -50,9 +50,15 @@ to execute or permission to program hardware.
   isolated-packet turnaround and a bounded ACK-to-next-IN probe.
 - [x] Validate all token CRC5 bits with a cached per-address value; compute
   only during SET_ADDRESS recovery. Reject truncated or corrupt empty DATA.
-- [ ] Assemble the private standalone receiver prototype described in
-  [the streaming CRC design](STREAMING_CRC_DESIGN.md). Prove every normal,
-  stuffed and EOP path before enabling nonempty DATA CRC before ACK.
+- [x] Assemble isolated streaming-CRC receiver prototypes described in
+  [the streaming CRC design](STREAMING_CRC_DESIGN.md). V2 passes the
+  nominal/all-stuff/legal-tail and bounded rate/jitter matrices and an
+  application-only USB read trial with exact application/EEPROM restoration.
+- [ ] Integrate the receiver into the maintained loader, preserving full
+  transaction ownership and measuring the resulting reservation. Resolve
+  the inherited empty-DATA0 suppression explicitly during integration.
+- [ ] Extend digital PHY checks to minimum EOP width/skew and obtain
+  physical waveform/clock evidence before claiming electrical compliance.
 
 The normative reference is the [USB-IF USB 2.0 specification](https://www.usb.org/document-library/usb-20-specification),
 particularly packet errors, control transfers and data synchronization in
@@ -85,5 +91,8 @@ Correctness fixes may increase code first; do not trade them for a size claim.
 - [ ] Assess the page-zero erase/write power-loss window explicitly; a local
   backup alone cannot make RESET updates power-failure safe.
 
-No hardware programming is part of the completed import/software work.
+The import/software work did not program hardware. A later authorized
+application-only trial is recorded in the
+[prototype report](prototypes/streaming_crc16/README.md); it preserved the
+installed 1274-byte loader and restored the backed-up application/EEPROM.
 Operator instructions must explicitly distinguish RESET from removal of power.

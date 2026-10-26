@@ -1,5 +1,12 @@
 # Candidate 16 MHz streaming RX CRC schedule
 
+This records the initial schedule investigation. The subsequent
+[standalone V2 prototype](prototypes/streaming_crc16/README.md) uses rolling
+byte assembly, bit-3 CRC index preparation and stage-specific EOP tails.
+It completed digital waveform checks and an application-only hardware
+trial; the maintained loader is unchanged. The original proposal below is
+retained to explain the design and its constraints.
+
 This is a design investigation, not an enabled receiver or a completed timing
 proof. The board's external oscillator is confirmed as 16 MHz. Incoming DATA
 CRC can be accumulated while the bits arrive; checking the entire payload

@@ -82,7 +82,39 @@ whose prior worst case had enough margin. The body is
 `e5b06459481658af1f0b4296000a97dbd7f0226502caf5dd86c234a4407aba82`.
 Sampling code, instruction count and all CRC gates remain unchanged. The
 dedicated all-phase empty-tail regression and fast negative tests pass;
-full-tail and expanded jitter results must be reviewed before a trial.
+the full legal-tail and expanded jitter gates subsequently passed too.
+
+## Completed software and application-only trial
+
+Final body `e5b06459...` passes 6528 positive frames, 768 targeted stuffing
+frames, 64 varying-PIND frames, all 15648 legal tails in 22848 total tail
+probes, and 11664 source-rate/jitter cases. Legal-tail turnaround is
+50 2/3..68 clocks; the rate/jitter maximum is 68 2/3, below the nominal
+69 1/3-clock limit. The worst bounded digital margin is 2/3 clock (about
+41.7 ns); this is not a measured analog margin.
+
+The exhaustive 41472 corruption and 48864 short-frame matrices ran on
+`02ef7948...`, before the same-size inactivity NOP and comparison-tail
+relocation. CRC arithmetic, length accounting, pin samples and CRC checks
+are unchanged. Final-image fast corruption, random-payload, token
+CRC5/address, overflow and malformed-stuffing tests also passed.
+
+On 2026-10-26 the final image was loaded through the installed 1274-byte
+Micronucleus+ 2.8 into the application region. Fresh Flash/EEPROM still
+matched the verified backup before upload. It enumerated as 3.3, passed
+962 memory reads with every length 1..64 plus 64 status polls, and returned
+two identical copies of all 8192 Flash bytes. A complete Flash read with
+64-byte control requests took 1.27993 seconds in this run. EEPROM matched
+its backup and the installed bootloader body hash matched.
+
+The original Lumiere Stereo was then restored through the unchanged old
+loader. Two reads of all 6908 application bytes and two reads of all 64
+EEPROM bytes matched their backups exactly; the loader accepted the
+application-start request. Audio was not evaluated. No NVM programming
+request was sent through the diagnostic application. Private backup/restore
+material and raw hardware dumps remain outside Git. The maintained
+Block64 loader still has its separate nonempty-DATA ACK defect and has not
+been installed on the board.
 
 The source's bit periods are 10,10,11/12,11,11,11,11,10 clocks. Checks cover
 PID, ordinary, stuffed and cooldown samples, actual transmitted ACK PID,
