@@ -39,6 +39,16 @@ def out(cpu, payload, pid, corrupt=False):
 def service(cpu):
     cpu.run_from('block_memory_service',count=2000)
 
+def prepare_status_zlp(cpu):
+    """Execute the REAL inline EP0 status-queue path in the compact build.
+
+    Earlier tests called the removed block_note_status_prepared subroutine
+    directly; test the actual call site instead of testing a dead helper.
+    """
+    cpu.r[28],cpu.r[29]=0,1
+    cpu.r[23]=4  # zero USB payload + SYNC/PID/CRC framing bytes
+    cpu.run_from('L1e60',stop_at=['L1e64'],count=100)
+
 def usb_status_and_spm(cpu,operation):
     """Simulate hardware sending USB status, followed by 5ms quiet poll.
 
@@ -51,7 +61,7 @@ def usb_status_and_spm(cpu,operation):
     # ZLP has now been prepared by the regular TX packetizer.
     cpu.mem[0x0100]=0xff
     cpu.mem[0x010f]=4
-    cpu.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    prepare_status_zlp(cpu)
     assert cpu.mem[MEM_STATE]==ST_SPM_WAIT_SENT
     service(cpu)
     assert cpu.spm_oplog==previous
@@ -361,7 +371,7 @@ def test_spm_begins_only_after_status_sent_and_quiet_interval(firmware):
     old=bytes(c.flash[0x100:0x140]);assert not c.spm_oplog
     # status queued but NOT transmitted
     c.mem[0x010f]=4
-    c.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    prepare_status_zlp(c)
     assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
     for _ in range(4):
         service(c)
@@ -377,7 +387,7 @@ def test_rejected_request_does_not_cancel_pending_erase(firmware):
     c=make(firmware)
     c.set_setup(0x14,0x100,0,0,0x40)
     c.run_from('block_erase_setup',stop_at=['L1df8'],execute_ret=True,count=500)
-    c.run_from('block_note_status_prepared',execute_ret=True,count=100)
+    prepare_status_zlp(c)
     assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
     c.run_from('block_reject',stop_at=['L1df8'],count=300)
     assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT

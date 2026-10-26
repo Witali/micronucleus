@@ -4,7 +4,7 @@ ROOT=pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT/'host'))
 from micronucleus_block64 import *
 
-BOOT=0x1940
+BOOT=0x1980
 APP=BOOT-4
 
 class MockUSB:

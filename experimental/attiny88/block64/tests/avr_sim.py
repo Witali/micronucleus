@@ -6,7 +6,7 @@ from pathlib import Path
 import importlib.util, re, subprocess, sys
 from dataclasses import dataclass
 ROOT=Path(__file__).resolve().parent.parent
-BOOT=0x1940
+BOOT=0x1980
 spec=importlib.util.spec_from_file_location('block_decoder',Path(__file__).with_name('avr_decoder.py'))
 D=importlib.util.module_from_spec(spec)
 sys.modules[spec.name]=D
@@ -62,13 +62,15 @@ class CPU:
         self.flagset(4,bool(result&128)^overflow)
     def logic(self,v):self.znvs(v,False)
     def subtract(self,d,r,borrow=0,zerochain=False):
-        v=(r+borrow)&255;result=(d-v)&255
-        overflow=bool(((d&~v&~result)|(~d&v&result))&128)
-        carry=bool(((~d&v)|(v&result)|(result&~d))&128)
+        # Keep the borrow as a ninth bit: Rr=0xFF with carry-in 1
+        # must not wrap to zero before computing C/H/V for SBC/CPC.
+        result=(d-r-borrow)&255
+        overflow=bool(((d^r)&(d^result))&128)
+        carry=(d < r+borrow)
         self.flagset(0,carry)
         zprev=self.flag(1) if zerochain else None
         self.znvs(result,overflow,zprev)
-        self.flagset(5, bool(((~d&v)|(v&result)|(result&~d))&8))
+        self.flagset(5, (d&15) < ((r&15)+borrow))
         return result
     def add(self,d,r,carry=0,zerochain=False):
         v=d+r+carry;result=v&255

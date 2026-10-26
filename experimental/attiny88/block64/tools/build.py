@@ -3,7 +3,7 @@
 from pathlib import Path
 import subprocess, json, hashlib, re
 ROOT=Path(__file__).resolve().parent.parent
-BOOT=0x1940;FLASH=8192;APP=BOOT-4
+BOOT=0x1980;FLASH=8192;APP=BOOT-4
 SRC=ROOT/'source/micronucleus_t88_block64.S'
 BUILD=ROOT/'build';FW=ROOT/'firmware'
 
@@ -24,11 +24,15 @@ def build():
     BUILD.mkdir(exist_ok=True); FW.mkdir(exist_ok=True)
     obj=BUILD/'block64.o';raw=BUILD/'block64.full.bin'
     run('clang','-target','avr','-mmcu=attiny88','-c','-x','assembler-with-cpp',str(SRC),'-o',str(obj))
+    # llvm-objcopy extracts sections without resolving unknown ELF symbols.
+    # Refuse to produce a supposedly flashable image with unresolved branches.
+    relocation_report=run('llvm-objdump','-r',str(obj))
+    assert 'R_AVR_' not in relocation_report, ('Unresolved AVR relocations:',relocation_report)
     run('llvm-objcopy','-O','binary','-j','.text',str(obj),str(raw))
     binary=raw.read_bytes()
     assert binary[:BOOT]==bytes(BOOT),'Nonempty .text before loader region'
     body=binary[BOOT:]
-    assert len(body)<=1728,('Bootloader exceeds reserved 27 Flash pages:',len(body))
+    assert len(body)<=1664,('Bootloader exceeds reserved 26 Flash pages:',len(body))
     assert len(body)%2==0
     assert body[2:4]==bytes([APP>>8,APP&255])
     assert body[8]==0xE3 and body[0x28:0x2A]==b'\x01\x03'
@@ -38,14 +42,14 @@ def build():
     image[0:2]=reset.to_bytes(2,'little')
     image[BOOT:BOOT+len(body)]=body
     assert image[APP:BOOT]==b'\xff'*4
-    (FW/'BOOTLOADER_BODY_1940_SPLIT.bin').write_bytes(body)
-    (FW/'ISP_FULL_8192_1940_SPLIT.bin').write_bytes(image)
+    (FW/'BOOTLOADER_BODY_1980_PASS9.bin').write_bytes(body)
+    (FW/'ISP_FULL_8192_1980_PASS9.bin').write_bytes(image)
     lines=[rec(0,image[:2])]
     for adr in range(BOOT,FLASH,16):
         part=image[adr:adr+16]
         if any(b!=255 for b in part):lines.append(rec(adr,part))
     lines.append(rec(0,b'',1))
-    hexf=FW/'ISP_FULL_1940_SPLIT_EXPERIMENTAL.hex'
+    hexf=FW/'ISP_FULL_1980_PASS9_EXPERIMENTAL.hex'
     hexf.write_text('\n'.join(lines)+'\n')
     for line in lines:
         if not line.startswith(':'):continue
@@ -55,7 +59,7 @@ def build():
     manifest={
         'note':'EXPERIMENTAL. Not verified on hardware. ISP recovery REQUIRED.',
         'mcpu':'ATtiny88 16MHz external clock',
-        'protocol_version':'3.1',
+        'protocol_version':'3.1 / Pass9',
         'bootloader_start':hex(BOOT),
         'bootloader_body_bytes':len(body),
         'reserved_flash_bytes':FLASH-BOOT,

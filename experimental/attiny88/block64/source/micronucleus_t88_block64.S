@@ -11,7 +11,7 @@
  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
  */
 #ifndef BOOT_AT
-#define BOOT_AT 0x1940
+#define BOOT_AT 0x1980
 #endif
 #if ((BOOT_AT - 3) & 0xff) < 8
 #error Optimized Flash range check assumes boundary low-byte >= 8
@@ -552,8 +552,8 @@ L1d5e:
 
 /* Examine a staged USB packet; SETUP and DATA OUT have distinct handlers. */
 L1d9c:
-    ldi     r28, 0x00
-    ldi     r29, 0x01
+    /* Y=0x0100 from the immediately preceding block_memory_service call;
+       every returning path of that routine preserves Y. */
     ldd     r24, Y+18
     subi    r24, 3
     brmi    L1dfc
@@ -666,9 +666,13 @@ L1e4c:
 
 L1e60:
     std     Y+15, r23
-    /* Once a zero-length STATUS packet has been queued, arm deferred SPM.
-       Neither erase nor page-write may run during control OUT data/status. */
-    rcall   block_note_status_prepared
+    /* Only a FLASH_WAIT_PREP request needs the deferred SPM transition.
+       This is the sole caller of the old 12-byte status-prepared helper. */
+    ldd     r18, Y+48
+    cpi     r18, ST_FLASH_WAIT_PREP
+    brne    L1e64
+    ldi     r18, ST_SPM_WAIT_SENT
+    std     Y+48, r18
 
 L1e64:
     movw    r24, r6
@@ -787,8 +791,7 @@ block_run:
     /* Only run when EEPROM/Flash modification is fully complete. */
     ldd     r18, Y+48
     cpi     r18, ST_ERROR /* 0=IDLE, 1=DONE allow run; others reject */
-    brlo    block_run_ready
-    rjmp    block_reject
+    brsh    block_reject
 block_run_ready:
     ldi     r18, ST_RUN
     std     Y+48, r18
@@ -800,8 +803,7 @@ block_run_ready:
    EEPROM bound is 64 bytes. No wraparound is permitted. */
 block_read_setup:
     rcall   block_validate_range
-    brcs    block_read_range_ok
-    rjmp    block_reject
+    brcc    block_reject
 block_read_range_ok:
     /* r16=memory type; r22:r23=start address; r24=request size. */
     tst     r16
@@ -852,8 +854,7 @@ block_write_validated:
     std     Y+51, r23
     std     Y+52, r24
     std     Y+54, r24
-    clr     r17
-    std     Y+56, r17
+    std     Y+56, r1
     ldi     r17, 0x4b            /* USB DATA1 first after SETUP */
     std     Y+57, r17
     ldi     r17, RESULT_BUSY
@@ -865,12 +866,26 @@ block_write_validated:
     std     Y+0, r17
     rjmp    L1df8
 block_write_bad:
-    rjmp    block_reject
+block_reject:
+    /* A malformed or overlapping command may not cancel an in-progress
+       operation; otherwise a hostile SETUP could interrupt a pending SPM. */
+    ldd     r18, Y+48
+    cpi     r18, ST_RECEIVE
+    brsh    block_reject_no_state
+    /* Both RESULT_BOUNDS and ST_ERROR are value 2. */
+    ldi     r18, RESULT_BOUNDS
+    std     Y+55, r18
+    std     Y+48, r18
+block_reject_no_state:
+    ldi     r24, EMPTY_MESSAGE
+    std     Y+0, r24
+    rjmp    L1df8
+
 
 /* ERASE_PAGE uses a zero-length Vendor OUT control request.
    Host is responsible for waiting for completion before WRITE_PAGE.
    Must not erase any bootloader byte; 0x1900 is the final writable page
-   for BOOT_AT=0x1940 (other layouts derive it from BOOT_AT). */
+   for BOOT_AT=0x1980 (other layouts derive it from BOOT_AT). */
 block_erase_setup:
     ldd     r22, Y+25
     ldd     r23, Y+26
@@ -904,9 +919,8 @@ block_erase_setup:
     /* MEM_TYPE is not used during standalone ERASE. */
     std     Y+50, r22
     std     Y+51, r23
-    ldi     r18, 1
-    std     Y+56, r18  /* SPM operation flag: 1=erase, 0=page-write */
     ldi     r18, RESULT_BUSY
+    std     Y+56, r18  /* SPM operation flag: 1=erase, 0=page-write */
     std     Y+55, r18
     /* Prepare ZLP for the control OUT status stage. */
     std     Y+0, r1
@@ -916,67 +930,48 @@ block_erase_setup:
 block_check_idle_for_write:
     ldd     r17, Y+48
     cpi     r17, ST_RUN
-    brsh    block_not_idle
+    brsh    block_idle_return    /* C=0 for state>=3: already busy */
+    /* If EEPROM is idle, SBIC skips CLC: CPI left C=1 for state<3. */
     sbic    0x1f, 1
-    rjmp    block_not_idle
-    sec
-    ret
-block_not_idle:
     clc
+block_idle_return:
     ret
 
-block_reject:
-    /* A malformed or overlapping command may not cancel an in-progress
-       operation; otherwise a hostile SETUP could interrupt a pending SPM. */
-    ldd     r18, Y+48
-    cpi     r18, ST_RECEIVE
-    brsh    block_reject_no_state
-    ldi     r18, RESULT_BOUNDS
-    std     Y+55, r18
-    ldi     r18, ST_ERROR
-    std     Y+48, r18
-block_reject_no_state:
-    ldi     r24, EMPTY_MESSAGE
-    std     Y+0, r24
-    rjmp    L1df8
 
 /* Validate wValue+wLength against selected memory bounds. Carry set
  * on success; r16 type, r22:r23 address, r24 length; r18:r19 scratch. */
 block_validate_range:
     ldd     r16, Y+27
+    /* Combine the reserved high byte of wIndex and wLength. */
     ldd     r18, Y+28
-    tst     r18
+    ldd     r19, Y+30
+    or      r18, r19
     brne    block_invalid_range
     cpi     r16, 2
     brsh    block_invalid_range
     ldd     r24, Y+29
-    ldd     r18, Y+30
-    tst     r18
-    brne    block_invalid_range
     tst     r24
     breq    block_invalid_range
     cpi     r24, 65
     brsh    block_invalid_range
     ldd     r22, Y+25
     ldd     r23, Y+26
-    /* Address + length = 17-bit sum, reject carry and upper bounds. */
-    mov     r18, r22
-    mov     r19, r23
-    add     r18, r24
-    adc     r19, r1
-    brcs    block_invalid_range
+    /* Avoid 17-bit address+length arithmetic: compare address <= bound-length.
+       Both memory bounds are >=64, and 1<=length<=64 was checked above. */
+    /* Select the exclusive end: EEPROM=64, Flash=BOOT_AT. */
+    ldi     r20, 64
+    ldi     r21, 0
     tst     r16
-    breq    block_validate_flash
-    tst     r19
-    brne    block_invalid_range
-    cpi     r18, 65
-    brsh    block_invalid_range
-    rjmp    block_valid_range
-block_validate_flash:
+    brne    block_check_selected_bound
+#if (BOOT_AT & 0xff) != 64
     ldi     r20, (BOOT_AT & 0xff)
+#endif
     ldi     r21, (BOOT_AT >> 8)
-    cp      r20, r18
-    cpc     r21, r19
+block_check_selected_bound:
+    sub     r20, r24
+    sbc     r21, r1
+    cp      r20, r22
+    cpc     r21, r23
     brcs    block_invalid_range
 block_valid_range:
     sec
@@ -1017,8 +1012,7 @@ block_accept_out:
     mov     r22, r23
     rcall   usb_crc16_append
     cp      r24, r16
-    brne    block_out_return
-    cp      r25, r17
+    cpc     r25, r17  /* combine 16-bit equality with propagated Z */
     brne    block_out_return
     mov     r24, r23
     ldd     r18, Y+52
@@ -1046,17 +1040,15 @@ block_out_copy_byte:
     tst     r18
     brne    block_out_return
     /* Received full wLength. Queue asynchronous memory commit. */
-    ldd     r20, Y+49
-    tst     r20
-    breq    block_out_flash
-    ldi     r20, ST_WRITE_EEPROM
-    rjmp    block_out_set_state
-block_out_flash:
+    /* For type 0/1 select 6=FLASH_WAIT_PREP or 5=WRITE_EEPROM. */
+    ldd     r17, Y+49
     ldi     r20, ST_FLASH_WAIT_PREP
-    /* The last DATA OUT byte only queues the status-stage ZLP. */
-    std     Y+0, r1
-block_out_set_state:
+    sub     r20, r17
     std     Y+48, r20
+    tst     r17
+    brne    block_out_return
+    /* The last FLASH DATA OUT byte queues the status-stage ZLP. */
+    std     Y+0, r1
 block_out_return:
     ret
 
@@ -1072,7 +1064,11 @@ block_memory_service:
     breq    block_step_eeprom
     cpi     r18, ST_RUN
     brne    block_service_return
-    rjmp    block_service_run
+    /* Inline the sole RUN dispatch, remove RCALL trampoline and a RET. */
+    lds     r18, 0x010f
+    cpi     r18, EP0_NAK
+    brne    block_service_return
+    rjmp    L1eac
 block_service_return:
     ret
 
@@ -1082,8 +1078,7 @@ block_step_eeprom:
     ldd     r18, Y+56
     ldd     r19, Y+54
     cp      r18, r19
-    brne    block_eeprom_more_bytes
-    rjmp    block_complete
+    breq    block_complete
 block_eeprom_more_bytes:
     ldd     r20, Y+50
     add     r20, r18
@@ -1100,6 +1095,11 @@ block_eeprom_more_bytes:
     std     Y+56, r18
     ret
 
+block_complete:
+    /* Finish EEPROM control-OUT with a ZLP; Flash finishes separately. */
+    sts     0x0100, r1
+    rjmp    block_complete_flash
+
 /* This hook runs only when the main USB polling window has expired.
    The control OUT status ZLP must have been physically emitted first,
    i.e. its TX length returned to EP0_NAK. The host waits after the
@@ -1115,18 +1115,7 @@ block_spm_after_quiet:
     brne    block_service_return
     ldd     r18, Y+56
     tst     r18
-    brne    block_flash_erase_only
-    rjmp    block_commit_flash
-
-/* Called when zero-length status DATA1 has been queued on EP0. */
-block_note_status_prepared:
-    ldd     r18, Y+48
-    cpi     r18, ST_FLASH_WAIT_PREP
-    brne    block_service_return
-block_status_pending:
-    ldi     r18, ST_SPM_WAIT_SENT
-    std     Y+48, r18
-    ret
+    breq    block_commit_flash
 
 block_flash_erase_only:
     /* EEPE was checked when command was accepted. Busy states block
@@ -1179,24 +1168,9 @@ block_flash_fill_word:
 
 block_complete_flash:
     /* The control transfer has already completed; never queue another ZLP. */
-    ldi     r18, RESULT_OK
-    std     Y+55, r18
+    std     Y+55, r1
     ldi     r18, ST_DONE
     std     Y+48, r18
-    ret
-
-block_complete:
-    /* R1 is maintained zero; reuse it directly to queue the ZLP. */
-    sts     0x0100, r1
-    rjmp    block_complete_flash
-
-block_service_run:
-    /* TX length reverts to NAK (0x5A) when status packet has been sent. */
-    lds     r18, 0x010f
-    cpi     r18, EP0_NAK
-    brne    block_run_wait
-    rjmp    L1eac
-block_run_wait:
     ret
 
 old_vendor_dispatch:
@@ -1228,7 +1202,7 @@ L1f3a:
     cpi     r24, 0x01
     breq    desc_ptr
     cpi     r24, 0x02
-    brne    L1eca
+    brne    L1f70
     ldi     r18, ((BOOT_AT + 0x0a) & 0xff)
 
 desc_ptr:
