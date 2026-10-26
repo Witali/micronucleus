@@ -35,6 +35,10 @@
 #define USB_PID_OUT 0xe1
 /* Bounded SOP wait; exact end-EOP deadline is checked by bus timing tests. */
 #define USB_ACK_WAIT_POLLS 35
+#define OWNER_FLASH 1
+#define OWNER_RUN 2
+#define OWNER_EEPROM 3
+#define OWNER_ACKED 0x80
 #define BLOCK_MAX 64
 #define RESET_RJMP (0xc000 | (((BOOT_AT/2)-1) & 0x0fff))
 #endif /* BLOCK64_PROTOCOL_INC */

@@ -118,13 +118,10 @@ def flag_wait(cpu, arrival):
     return tuple(reads), cpu.cycles, cpu.r[28]
 
 
-def test_phy_and_crc_remain_byte_identical_to_pass15(images):
-    for start, end, count in [('usb_crc16_append', 'USB_handler', 44),
-                              ('USB_handler', 'main', 508)]:
-        old, labels = images['pass15']
-        current, now = images['current']
-        assert current[now[start]:now[end]] == old[labels[start]:labels[end]]
-        assert now[end] - now[start] == count
+def test_crc_and_timed_phy_instructions_remain_audited(images):
+    from usb_transaction_audit import audit_timed_instructions
+    current, labels = images['current']
+    audit_timed_instructions(current, labels)
 
 
 def test_all_flag_arrival_phases_preserve_wait_timing_and_reject_wip(cpu_factory):

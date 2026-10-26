@@ -7,11 +7,39 @@ usb_host_ack:
     brne    usb_host_ack_done
     tst     r18
     breq    usb_host_ack_done
+    ldd     r16, Z+15
     ldi     r18, EP0_NAK
     std     Z+15, r18
     /* An aborted SET_ADDRESS was reset by the next validated SETUP. */
     ldd     r18, Z+19
     add     r18, r18
     std     Z+12, r18
+    /* DATA-stage ACKs cannot authorize memory operations or application exit. */
+    cpi     r16, 4
+    brne    usb_host_ack_done
+    ldd     r18, Z+CTX_CONTROL_OWNER
+    tst     r18
+    breq    usb_host_ack_done
+    ori     r18, OWNER_ACKED
+    std     Z+CTX_CONTROL_OWNER, r18
 usb_host_ack_done:
     rjmp    L1be8
+
+/* A validated new SETUP aborts the previous unacknowledged control transfer.
+   Already ACKed Flash/RUN is committed. EEPROM already writing is allowed to
+   finish, but loses ownership of the previous transfer's status response. */
+usb_abort_unacknowledged_control:
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    sbrc    r18, 7
+    ret
+    std     Y+CTX_CONTROL_OWNER, r1
+    ldd     r18, Y+57
+    cpi     r18, ST_WRITE_EEPROM
+    breq    usb_control_abort_done
+    cpi     r18, ST_RUN
+    brlo    usb_control_abort_done
+    std     Y+57, r1
+    ldi     r18, RESULT_FAIL
+    std     Y+56, r18
+usb_control_abort_done:
+    ret

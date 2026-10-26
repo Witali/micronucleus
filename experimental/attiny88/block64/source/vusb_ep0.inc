@@ -20,6 +20,7 @@ L1d9c:
     rcall   block_verify_rx_crc
     brne    L1df8
     std     Y+CTX_TX_ACK_WINDOW, r1
+    rcall   usb_abort_unacknowledged_control
     /* Pending address defaults to the active address for every transfer.
        SET_ADDRESS may replace it, including with valid address zero. */
     ldd     r18, Y+12
@@ -128,8 +129,12 @@ L1e4c:
 
 L1e60:
     std     Y+15, r23
-    /* Only a FLASH_WAIT_PREP request needs the deferred SPM transition.
-       This is the sole caller of the old 12-byte status-prepared helper. */
+    /* Only the owning mutation's ZLP may advance its preparation state. */
+    cpi     r23, 4
+    brne    L1e64
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    cpi     r18, OWNER_FLASH
+    brne    L1e64
     ldd     r18, Y+57
     cpi     r18, ST_FLASH_WAIT_PREP
     brne    L1e64

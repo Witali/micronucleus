@@ -166,6 +166,7 @@ def test_eeprom_master_enable_expires_after_four_clocks(delay, accepted):
 def test_actual_eeprom_worker_waits_for_every_byte_and_last_completion():
     c = cpu()
     c.mem[MEM_STATE] = ST_WRITE_EEPROM
+    c.mem[0x012d] = 3  # This worker still owns the EEPROM control status.
     c.mem[MEM_STATUS] = 1
     c.mem[MEM_ADDR_LO] = 62
     c.mem[MEM_PROGRESS] = 0

@@ -193,8 +193,6 @@ def test_lost_status_ack_cannot_start_flash_erase(cpu):
                      "Flash erase started without the status-stage host ACK")
 
 
-@pytest.mark.xfail(strict=True, raises=USBContractViolation,
-                   reason="Any prepared reply can satisfy mutation status marker")
 def test_get_status_data_packet_cannot_complete_prior_erase_status_stage(cpu):
     begin_erase(cpu)
     cpu.set_setup(0x12, 0, 8, 0, 0xC0)

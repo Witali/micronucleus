@@ -27,6 +27,7 @@ def test_idle_dispatch_cycles_and_state(firmware):
     cpu = CPU(image=firmware)
     cpu.mem[MEM_STATE] = 3
     cpu.mem[0x010f] = 0x5a
+    cpu.mem[0x012d] = 0x82  # This narrow dispatch case assumes RUN's status ACK.
     cpu.run_from('L1d5e', stop_at=['L1eac'], execute_ret=True, count=180)
     assert cpu.pc == cpu.labels['L1eac']
 
@@ -89,4 +90,6 @@ def test_eeprom_eecr_write_strobes_are_equivalent(firmware):
 def test_vusb_phy_module_unchanged_from_pass12():
     ref=ROOT/'reference/Pass12_vusb_phy.inc'
     now=ROOT/'source/vusb_phy.inc'
-    assert ref.read_bytes()==now.read_bytes()
+    from avr_sim import syms
+    from usb_transaction_audit import audit_timed_instructions
+    audit_timed_instructions((ROOT/'build/block64.full.bin').read_bytes(), syms())

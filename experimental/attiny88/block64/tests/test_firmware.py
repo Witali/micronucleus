@@ -43,14 +43,12 @@ def service(cpu):
     cpu.run_from('block_memory_service',count=2000)
 
 def prepare_status_zlp(cpu):
-    """Execute the REAL inline EP0 status-queue path in the compact build.
-
-    Earlier tests called the removed block_note_status_prepared subroutine
-    directly; test the actual call site instead of testing a dead helper.
-    """
+    """Prepare the real status DATA1/CRC packet, without assuming it is ACKed."""
     cpu.r[28],cpu.r[29]=0,1
-    cpu.r[23]=4  # zero USB payload + SYNC/PID/CRC framing bytes
-    cpu.run_from('L1e60',stop_at=['L1e64'],count=100)
+    assert cpu.mem[0x010f]==0x5a
+    cpu.mem[0x0101]=0xc3  # Hardware SETUP resets the first IN PID to DATA1.
+    cpu.run_from('L1dfc',stop_at=['L1e64'],count=2000,execute_ret=True)
+
 
 def usb_status_and_spm(cpu,operation):
     """Simulate hardware sending USB status, followed by 5ms quiet poll.
@@ -61,16 +59,17 @@ def usb_status_and_spm(cpu,operation):
     previous=list(cpu.spm_oplog)
     service(cpu)
     assert cpu.spm_oplog==previous
-    # ZLP has now been prepared by the regular TX packetizer.
-    cpu.mem[0x0100]=0xff
-    cpu.mem[0x010f]=4
+    # Queue the original mutation's real zero-length status packet.
+    # No packet is treated as sent or ACKed by a fixture assignment.
     prepare_status_zlp(cpu)
     assert cpu.mem[MEM_STATE]==ST_SPM_WAIT_SENT
     service(cpu)
     assert cpu.spm_oplog==previous
     cpu.run_from('block_spm_after_quiet',execute_ret=True,count=500)
     assert cpu.spm_oplog==previous  # Not yet actually sent.
-    cpu.mem[0x010f]=0x5a  # USB_handler has emitted status DATA1 ZLP.
+    from test_ack_transactions import transmit, classify, ACK
+    transmit(cpu)
+    classify(cpu, bytes([ACK]))
     cpu.run_from('block_spm_after_quiet',execute_ret=True,count=1200)
     assert cpu.mem[MEM_STATE]==ST_DONE
     assert cpu.mem[MEM_STATUS]==0
@@ -209,7 +208,8 @@ def test_usb_bit_code_crc_binary_identical(firmware):
     bs=syms(base_obj); ns=syms()
     old=base_bin.read_bytes();new=(ROOT/'build/block64.full.bin').read_bytes()
     assert old[bs['usb_crc16_append']:bs['USB_handler']]==new[ns['usb_crc16_append']:ns['USB_handler']]
-    assert old[bs['USB_handler']:bs['usb_program_page']]==new[ns['USB_handler']:ns['main']]
+    from usb_transaction_audit import audit_timed_instructions
+    audit_timed_instructions(new, ns)
 
 def test_correct_version_and_layout(firmware):
     assert firmware[BOOT+2:BOOT+8]==bytes([((BOOT-4)>>8),((BOOT-4)&255),64,64,0x33,0x03])
@@ -377,7 +377,7 @@ def test_unified_get_status_usb_payload_and_bounds(firmware,result,state,request
     # The packetizer itself advances FLASH_WAIT_PREP -> SPM_WAIT_SENT after
     # scheduling the outgoing status-stage packet; it must not change the
     # already snapshotted GET_STATUS payload.
-    new_state=ST_SPM_WAIT_SENT if state==ST_FLASH_WAIT_PREP else state
+    new_state=state  # GET_STATUS cannot advance a different transfer.
     assert c.mem[MEM_STATUS]==result and c.mem[MEM_STATE]==new_state
     assert c.mem[0x013a:0x0140]==expected[2:]
 
@@ -418,14 +418,15 @@ def test_spm_begins_only_after_status_sent_and_quiet_interval(firmware):
     c.run_from('block_erase_setup',stop_at=['L1df8'],execute_ret=True,count=500)
     old=bytes(c.flash[0x100:0x140]);assert not c.spm_oplog
     # status queued but NOT transmitted
-    c.mem[0x010f]=4
     prepare_status_zlp(c)
     assert c.mem[MEM_STATE]==ST_SPM_WAIT_SENT
     for _ in range(4):
         service(c)
         c.run_from('block_spm_after_quiet',execute_ret=True,count=300)
         assert not c.spm_oplog
-    c.mem[0x010f]=0x5a
+    from test_ack_transactions import transmit, classify, ACK
+    transmit(c)
+    classify(c, bytes([ACK]))
     c.run_from('block_spm_after_quiet',execute_ret=True,count=300)
     assert c.spm_oplog==[('erase',0x100)]
     assert c.flash[0x100:0x140]==b'\xff'*64

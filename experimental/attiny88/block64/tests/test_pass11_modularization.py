@@ -14,7 +14,8 @@ from avr_sim import BOOT as BOOT_AT
 def test_source_modules_present_and_included():
     source = (ROOT / 'source/micronucleus_t88_block64.S').read_text()
     modules = ['device_attiny88.inc', 'block64_protocol.inc',
-               'vusb_phy.inc', 'vusb_ep0.inc', 'vusb_standard.inc']
+               'vusb_phy.inc', 'vusb_ep0.inc', 'vusb_standard.inc',
+               'vusb_transactions.inc']
     for module in modules:
         assert (ROOT / 'source' / module).is_file()
         assert f'#include "{module}"' in source
@@ -41,4 +42,5 @@ def test_manifest_tracks_all_modules_and_fixed_reply():
     assert meta['bootloader_body_bytes'] <= 8192-BOOT_AT
     assert meta['get_status_lengths'].startswith('8 bytes only')
     assert set(meta['source_modules']) == {'device_attiny88.inc', 'block64_protocol.inc',
-                                          'vusb_phy.inc', 'vusb_ep0.inc', 'vusb_standard.inc'}
+                                          'vusb_phy.inc', 'vusb_ep0.inc', 'vusb_standard.inc',
+                                          'vusb_transactions.inc'}

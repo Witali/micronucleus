@@ -272,6 +272,8 @@ block_erase_setup:
     ldi     r17, ST_FLASH_WAIT_PREP
     ldi     r18, RESULT_BUSY
     std     Y+54, r18  /* 1=erase, 0=page-write */
+    ldi     r18, OWNER_FLASH
+    std     Y+CTX_CONTROL_OWNER, r18
     mov     r24, r1     /* Zero-length status response */
     rjmp    block_begin_mutation
 
@@ -289,6 +291,8 @@ block_run:
     cpi     r18, ST_ERROR /* 0=IDLE, 1=DONE allow run; others reject */
     brsh    block_reject
 block_run_ready:
+    ldi     r18, OWNER_RUN
+    std     Y+CTX_CONTROL_OWNER, r18
     ldi     r18, ST_RUN
     std     Y+57, r18
     ldi     r24, 0
@@ -345,6 +349,12 @@ block_write_setup:
     cpi     r24, 64
     brne    block_write_bad
 block_write_validated:
+    ldi     r18, OWNER_FLASH
+    tst     r16
+    breq    block_write_set_owner
+    ldi     r18, OWNER_EEPROM
+block_write_set_owner:
+    std     Y+CTX_CONTROL_OWNER, r18
     std     Y+48, r16
     std     Y+51, r24
     std     Y+54, r1
@@ -522,8 +532,8 @@ block_memory_service:
     breq    block_step_eeprom
     cpi     r18, ST_RUN
     brne    block_memory_service_return
-    ldd     r18, Y+15
-    cpi     r18, EP0_NAK
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    cpi     r18, (OWNER_RUN | OWNER_ACKED)
     brne    block_memory_service_return
     rjmp    L1eac
 
@@ -557,22 +567,24 @@ block_eeprom_more_bytes:
     ret
 
 block_complete:
-    /* Finish EEPROM control-OUT with a ZLP; Flash finishes separately. */
+    /* An intervening SETUP detaches a running EEPROM worker's old status.
+       Finish its accepted writes, without injecting a ZLP into the new transfer. */
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    cpi     r18, OWNER_EEPROM
+    brne    block_complete_flash
     std     Y+0, r1
     rjmp    block_complete_flash
 
-/* This hook runs only when the main USB polling window has expired.
-   The control OUT status ZLP must have been physically emitted first,
-   i.e. its TX length returned to EP0_NAK. The host waits after the
-   successful control transfer, because ATtiny88 stalls during SPM. */
+/* Only the owning control OUT status ZLP's host ACK authorizes blocking SPM.
+   An unrelated response or new SETUP can never supply that authorization. */
 block_spm_after_quiet:
     ldi     r28, 0x00
     ldi     r29, 0x01
     ldd     r18, Y+57
     cpi     r18, ST_SPM_WAIT_SENT
     brne    block_service_return
-    ldd     r18, Y+15
-    cpi     r18, EP0_NAK
+    ldd     r18, Y+CTX_CONTROL_OWNER
+    cpi     r18, (OWNER_FLASH | OWNER_ACKED)
     brne    block_service_return
     ldd     r18, Y+54
     tst     r18
@@ -631,6 +643,7 @@ block_execute_spm:
 block_complete_flash:
     /* The control transfer has already completed; never queue another ZLP. */
     std     Y+56, r1
+    std     Y+CTX_CONTROL_OWNER, r1
     ldi     r18, ST_DONE
     std     Y+57, r18
 block_service_return:
