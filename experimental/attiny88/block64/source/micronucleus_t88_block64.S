@@ -1,9 +1,13 @@
-/* Micronucleus ATtiny88 16 MHz Block64 v3.1 ASM: host-managed Flash ERASE/WRITE.
+/* Micronucleus ATtiny88 16 MHz Block64 v3.1-compatible Reset-only Pass8 ASM.
  * BASED ON Optimized Micronucleus t88_default 16 MHz ATtiny88 bootloader, pass 3.
  * Assembler reconstruction of public Micronucleus firmware with conservative code-size
  * SRAM pointer reuse in V-USB with cycle-neutral sync-stage initialization.
  * RX/TX sampler and sender timings preserved by cycle tests; CRC-16 unchanged.
  * Source uses historical mnemonic labels; numeric names do NOT encode relocated addresses.
+ * The normal AVR interrupt vector table is fully application-owned except RESET.
+ * Page 0 updates erase the entire 64-byte page; only the rewritten RESET word
+ * is forcibly redirected to Micronucleus. This is SOFTWARE protection, not
+ * a power-failure-safe or hardware-locked RESET word.
  * Original Micronucleus contributors and modifications: GPL-2.0-or-later.
  */
 #ifndef BOOT_AT
@@ -87,7 +91,9 @@ L1a82:
     st      X+, r1
 
 L1a84:
-    cpi     r26, 0x2c
+    /* 0x0100..0x0139 includes USB variables AND Block64 state.
+       The original limit 0x012C left the state machine uninitialized. */
+    cpi     r26, 0x3a
     /* Removed 0x1a86: cpc     r27, r18 (size-optimized, see CHANGES.md) */
     brbc    1, L1a82
     rjmp    main
@@ -965,14 +971,14 @@ block_validate_range:
     brne    block_invalid_range
     cpi     r18, 65
     brsh    block_invalid_range
-    sec
-    ret
+    rjmp    block_valid_range
 block_validate_flash:
     ldi     r20, (BOOT_AT & 0xff)
     ldi     r21, (BOOT_AT >> 8)
     cp      r20, r18
     cpc     r21, r19
     brcs    block_invalid_range
+block_valid_range:
     sec
     ret
 block_invalid_range:
@@ -1125,9 +1131,7 @@ block_status_pending:
 block_flash_erase_only:
     /* EEPE was checked when command was accepted. Busy states block
        intervening EEPROM commands, so no intervening EEPROM write exists. */
-    ldd     r30, Y+50
-    andi    r30, 0xc0
-    ldd     r31, Y+51
+    rcall   block_load_page_z
     ldi     r18, 0x03
     out     0x37, r18
     spm
@@ -1135,11 +1139,10 @@ block_flash_erase_only:
 
 block_commit_flash:
     /* Same interlock as standalone ERASE_PAGE, no duplicate EEPE check. */
-    ldd     r30, Y+50
-    andi    r30, 0xc0
-    ldd     r31, Y+51
-    /* Keep the reset vector pointing to the bootloader even if the host
-       mistakenly sends a raw page 0. The host also patches it itself. */
+    rcall   block_load_page_z
+    /* Patch ONLY 0x0000..0x0001 on page 0. Leave 0x0002..0x003f
+       exactly as supplied by the application, including all ISR vectors.
+       This does NOT keep RESET valid between ERASE_PAGE and WRITE. */
     mov     r18, r30
     or      r18, r31
     brne    block_flash_fill_start
@@ -1157,10 +1160,10 @@ block_flash_fill_start:
     ldi     r26, 0x40
     ldi     r27, 0x01
     ldi     r20, 32          /* 32 words in one 64-byte page */
+    ldi     r18, 0x01
 block_flash_fill_word:
     ld      r0, X+
     ld      r1, X+
-    ldi     r18, 0x01
     out     0x37, r18
     spm
     adiw    r30, 2
@@ -1168,9 +1171,7 @@ block_flash_fill_word:
     brne    block_flash_fill_word
     clr     r1
     /* Page write must have Z low six address bits zero. */
-    ldd     r30, Y+50
-    andi    r30, 0xc0
-    ldd     r31, Y+51
+    rcall   block_load_page_z
     ldi     r18, 0x05
     out     0x37, r18
     spm
@@ -1185,10 +1186,8 @@ block_complete_flash:
     ret
 
 block_complete:
-    /* Only EEPROM needs to queue a fresh zero-length STATUS packet.
-       Both memory types share the status/state completion epilogue. */
-    ldi     r18, 0
-    sts     0x0100, r18
+    /* R1 is maintained zero; reuse it directly to queue the ZLP. */
+    sts     0x0100, r1
     rjmp    block_complete_flash
 
 block_service_run:
@@ -1265,3 +1264,12 @@ L1f82:
     /* Removed 0x1f82: sbi     0xb, 0 (size-optimized, see CHANGES.md) */
     /* Removed 0x1f84: rjmp    L1e84 (size-optimized, see CHANGES.md) */
 
+
+/* Shared non-USB address builder for both Flash SPM operations and
+   the page-buffer refill. Saves 4 bytes despite RCALL/RET overhead.
+   Must execute before SPMCSR timing-critical write, not after it. */
+block_load_page_z:
+    ldd     r30, Y+50
+    andi    r30, 0xc0
+    ldd     r31, Y+51
+    ret

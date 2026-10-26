@@ -188,3 +188,17 @@ def test_full_upload_never_reads_old_flash_when_verify_disabled():
     host.upload({0:7,1:0xc0,0x100:0x44,0x101:0x55},full_erase=True,verify=False)
     assert all(req!=REQ_READ for _,req,_,_,_ in dev.log)
     assert dev.flash[0x100:0x102]==b'\x44\x55'
+
+
+def test_host_preserves_application_selected_isr_vectors():
+    d,h=make()
+    image={0:0x07,1:0xc0}
+    for n in range(1,20):
+        word=0xc000|((n*13+5)&0xfff)
+        image[2*n]=word&0xff
+        image[2*n+1]=word>>8
+    h.upload(image,full_erase=True,verify=True)
+    for n in range(1,20):
+        word=0xc000|((n*13+5)&0xfff)
+        assert d.flash[2*n:2*n+2]==word.to_bytes(2,'little')
+    assert d.flash[:2]==(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')

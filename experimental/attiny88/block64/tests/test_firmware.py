@@ -397,3 +397,36 @@ def test_all_101_page_erase_addresses_and_loader_boundary(firmware):
         c.run_from('block_erase_setup',stop_at=['L1df8','block_reject'],count=350,execute_ret=True)
         assert c.mem[MEM_STATE]!=ST_FLASH_WAIT_PREP,hex(addr)
         assert not c.spm_oplog
+
+
+def test_cold_start_initializes_all_block64_state(firmware):
+    """Real AVR SRAM is undefined after POR; the state machine cannot rely on zeros."""
+    import random
+    rng=random.Random(0x88)
+    c=make(firmware)
+    for addr in range(0x0100,0x0140):
+        c.mem[addr]=rng.randrange(1,256)
+    c.run_from('startup', stop_at=['main'], count=400)
+    assert c.mem[0x0100:0x013a] == bytes(0x3a)
+    assert c.mem[MEM_STATE] == ST_IDLE
+    assert c.mem[MEM_STATUS] == 0
+    assert c.mem[MEM_EXPECT_PID] == 0
+
+
+def test_page_zero_uses_app_supplied_interrupt_vectors(firmware):
+    """RESET patched, all other vector bytes and page-zero contents untouched."""
+    c=make(firmware)
+    erase_flash(c,0)
+    prepare(c,0,64,0)
+    # Different jump destinations for all 19 interrupt vectors, no fixed ABI.
+    page=bytearray((i*37+11)&0xff for i in range(64))
+    for n in range(1,20):
+        # Valid one-word RJMP encodings, all distinct.
+        v=0xc000 | ((n*13+5)&0xfff)
+        page[2*n:2*n+2]=v.to_bytes(2,'little')
+    for i in range(8):
+        out(c,bytes(page[i*8:(i+1)*8]),0x4b if i%2==0 else 0xc3)
+    usb_status_and_spm(c,'write')
+    reset=(0xc000|(((BOOT//2)-1)&0xfff)).to_bytes(2,'little')
+    assert c.flash[:2]==reset
+    assert c.flash[2:64]==page[2:]
