@@ -29,11 +29,15 @@ bootloader_start:
 
 startup:
     eor     r1, r1
+#if !T88_ASSUME_RESET_STACK_INIT
+    /* Needed only when entered through a software jump, not a hardware reset. */
     out     T88_IO_SREG, r1
+    /* Optional software stack reinitialization if entered without RESET. */
     ldi     r28, (T88_RAMEND & 0xff)
     ldi     r29, (T88_RAMEND >> 8)
     out     T88_IO_SPL, r28
     out     T88_IO_SPH, r29
+#endif
     /* Removed 0x1a7a: ldi     r18, 0x01 (size-optimized, see CHANGES.md) */
     ldi     r26, (T88_RAMSTART & 0xff)
     ldi     r27, (T88_RAMSTART >> 8)
@@ -51,11 +55,11 @@ L1a84:
     /* X == 0x013A; preload constant tail once, not on every status poll. */
     ldi     r30, ((BOOT_AT + 2) & 0xff)
     ldi     r31, ((BOOT_AT + 2) >> 8)
-    ldi     r20, 6
+    /* X begins at 0x013A: after six metadata bytes it reaches 0x0140. */
 block_init_status_tail:
     lpm     r18, Z+
     st      X+, r18
-    dec     r20
+    cpi     r26, 0x40
     brne    block_init_status_tail
     rjmp    main
 
@@ -208,20 +212,11 @@ app_jump:
  * No legacy SPI or old Micronucleus vendor opcodes are accepted.
  */
 block_vendor_dispatch:
-    ldd     r18, Y+23         /* complete bmRequestType (IN/OUT) */
+    ldd     r18, Y+23         /* vendor bmRequestType */
     cpi     r18, 0xc0
     breq    block_vendor_in
     cpi     r18, 0x40
-    breq    block_vendor_out
-    rjmp    block_reject
-
-block_vendor_in:
-    cpi     r25, OP_GET_STATUS
-    breq    block_status
-    cpi     r25, OP_READ
-    breq    block_read_setup
-    rjmp    block_reject
-
+    brne    block_vendor_reject
 block_vendor_out:
     cpi     r25, OP_WRITE
     breq    block_write_setup
@@ -229,9 +224,16 @@ block_vendor_out:
     breq    block_run
     cpi     r25, OP_ERASE_PAGE
     breq    block_vendor_is_erase
+block_vendor_reject:
     rjmp    block_reject
 block_vendor_is_erase:
     rjmp    block_erase_setup
+block_vendor_in:
+    cpi     r25, OP_GET_STATUS
+    breq    block_status
+    cpi     r25, OP_READ
+    breq    block_read_setup
+    rjmp    block_vendor_reject
 
 /* Live SRAM response overlay at 0x0138:
  * [last_result, state, app_hi, app_lo, page_bytes, eeprom_bytes,
@@ -264,12 +266,12 @@ block_run_ready:
 block_read_setup:
     rcall   block_validate_range
     brcc    block_reject
+    /* Common range validator also enforces the idle/EEPROM-ready interlock. */
 block_read_range_ok:
     /* r16=memory type; r22:r23=start address; r24=request size. */
     tst     r16
     breq    block_read_flash
-    sbic    T88_IO_EECR, 1
-    rjmp    block_reject
+    /* EEPROM-busy test is shared with block_check_idle_for_write. */
     /* Snapshot EEPROM to 64-byte SRAM buffer before starting DATA IN. */
     ldi     r26, 0x40
     ldi     r27, 0x01
@@ -304,15 +306,12 @@ block_write_setup:
     cpi     r24, 64
     brne    block_write_bad
 block_write_validated:
-    rcall   block_check_idle_for_write
-    brcc    block_write_bad
     ldi     r17, ST_RECEIVE
     std     Y+57, r17
     std     Y+48, r16
     std     Y+49, r22
     std     Y+50, r23
     std     Y+51, r24
-    std     Y+53, r24
     std     Y+54, r1
     ldi     r17, 0x4b            /* USB DATA1 first after SETUP */
     std     Y+55, r17
@@ -346,33 +345,18 @@ block_reject_no_state:
    Must not erase any bootloader byte; 0x1900 is the final writable page
    for BOOT_AT=0x1980 (other layouts derive it from BOOT_AT). */
 block_erase_setup:
-    ldd     r22, Y+25
-    ldd     r23, Y+26
+    /* ERASE has wLength=0. Reuse the common page bounds checker by
+       temporarily validating a full 64-byte page, then restore wLength. */
+    ldd     r18, Y+29
+    tst     r18                  /* length high byte checked by shared validator */
+    brne    block_reject
+    ldi     r24, 64              /* validate one complete Flash page */
+    rcall   block_validate_page_range
+    brcc    block_reject
     mov     r18, r22
     andi    r18, 0x3f
+    or      r18, r16             /* both page offset and memory type must be zero */
     brne    block_reject
-#if (BOOT_AT & 0xff) == 0
-    /* Since both page and boot start are 256B-aligned, comparing the
-       high byte alone is sufficient to reject the entire bootloader. */
-    cpi     r23, (BOOT_AT >> 8)
-    brsh    block_reject
-#else
-    cpi     r22, (BOOT_AT & 0xff)
-    ldi     r18, (BOOT_AT >> 8)
-    cpc     r23, r18
-    brsh    block_reject
-#endif
-    /* Memory type must be Flash, length=0, and index high/low zero. */
-    ldd     r18, Y+27
-    ldd     r19, Y+28
-    or      r18, r19
-    ldd     r19, Y+29
-    or      r18, r19
-    ldd     r19, Y+30
-    or      r18, r19
-    brne    block_reject
-    rcall   block_check_idle_for_write
-    brcc    block_reject
     ldi     r18, ST_FLASH_WAIT_PREP
     std     Y+57, r18
     /* MEM_TYPE is not used during standalone ERASE. */
@@ -400,18 +384,19 @@ block_idle_return:
 /* Validate wValue+wLength against selected memory bounds. Carry set
  * on success; r16 type, r22:r23 address, r24 length; r18:r19 scratch. */
 block_validate_range:
+    ldd     r24, Y+29
+    tst     r24
+    breq    block_invalid_range
+    cpi     r24, 65
+    brsh    block_invalid_range
+block_validate_page_range:
+    /* Caller supplied 1..64 (ERASE uses 64 even though USB wLength=0). */
     ldd     r16, Y+27
-    /* Combine the reserved high byte of wIndex and wLength. */
     ldd     r18, Y+28
     ldd     r19, Y+30
     or      r18, r19
     brne    block_invalid_range
     cpi     r16, 2
-    brsh    block_invalid_range
-    ldd     r24, Y+29
-    tst     r24
-    breq    block_invalid_range
-    cpi     r24, 65
     brsh    block_invalid_range
     ldd     r22, Y+25
     ldd     r23, Y+26
@@ -433,7 +418,9 @@ block_check_selected_bound:
     cpc     r21, r23
     brcs    block_invalid_range
 block_valid_range:
-    sec
+    /* This return includes the busy-state check for READ, WRITE and ERASE.
+       C=1 only when both address range and operation interlock are valid. */
+    rcall   block_check_idle_for_write
     ret
 block_invalid_range:
     clc
@@ -473,25 +460,24 @@ block_accept_out:
     cp      r24, r16
     cpc     r25, r17  /* combine 16-bit equality with propagated Z */
     brne    block_out_return
-    mov     r24, r23
+    /* Subtraction both checks packet count and updates bytes remaining. */
     ldd     r18, Y+51
-    cp      r18, r24
-    brlo    block_out_return
-    sub     r18, r24
+    sub     r18, r23
+    brcs    block_out_return
     std     Y+51, r18
-    ldd     r19, Y+52
+    /* Z tracks both destination and new received-byte count. */
     ldi     r26, 0x17            /* RX payload at 0x0117 */
-    ldi     r27, 0x01
-    ldi     r30, 0x40            /* SRAM block data 0x0140 + index */
-    add     r30, r19
+    /* XH remains 0x01 after usb_crc16_append (at most 8+2 byte steps). */
+    ldd     r30, Y+52
+    subi    r30, 0xc0            /* add MEM_BUFFER low-byte (0x40) */
     ldi     r31, 0x01
 block_out_copy_byte:
     ld      r20, X+
     st      Z+, r20
-    inc     r19
-    dec     r24
+    dec     r23
     brne    block_out_copy_byte
-    std     Y+52, r19
+    subi    r30, 0x40            /* convert pointer back into count */
+    std     Y+52, r30
     ldd     r17, Y+55
     ldi     r20, 0x88            /* DATA0/DATA1 PID XOR mask */
     eor     r17, r20
@@ -524,7 +510,7 @@ block_memory_service:
     cpi     r18, ST_RUN
     brne    block_service_return
     /* Inline the sole RUN dispatch, remove RCALL trampoline and a RET. */
-    lds     r18, 0x010f
+    ldd     r18, Y+15
     cpi     r18, EP0_NAK
     brne    block_service_return
     rjmp    L1eac
@@ -535,7 +521,7 @@ block_step_eeprom:
     sbic    T88_IO_EECR, 1           /* EEPE active? */
     ret
     ldd     r18, Y+54
-    ldd     r19, Y+53
+    ldd     r19, Y+52  /* Once EEPROM RX completes, MEM_INDEX equals total. */
     cp      r18, r19
     breq    block_complete
 block_eeprom_more_bytes:
@@ -556,7 +542,7 @@ block_eeprom_more_bytes:
 
 block_complete:
     /* Finish EEPROM control-OUT with a ZLP; Flash finishes separately. */
-    sts     0x0100, r1
+    std     Y+0, r1
     rjmp    block_complete_flash
 
 /* This hook runs only when the main USB polling window has expired.
@@ -607,7 +593,7 @@ block_flash_fill_start:
     spm
     ldi     r26, 0x40
     ldi     r27, 0x01
-    ldi     r20, 32          /* 32 words in one 64-byte page */
+    /* X advances from 0x0140 to 0x0180 after exactly 32 word loads. */
     ldi     r18, 0x01
 block_flash_fill_word:
     ld      r0, X+
@@ -615,7 +601,7 @@ block_flash_fill_word:
     out     T88_IO_SPMCSR, r18
     spm
     adiw    r30, 2
-    dec     r20
+    cpi     r26, 0x80
     brne    block_flash_fill_word
     clr     r1
     /* Page write must have Z low six address bits zero. */

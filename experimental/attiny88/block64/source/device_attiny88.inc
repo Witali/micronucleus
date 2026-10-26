@@ -12,6 +12,12 @@
 #define T88_RAMSTART 0x0100
 #define T88_RAMEND 0x02ff
 #define T88_F_CPU_HZ 16000000
+/* The ATtiny88 reset value of SPL/SPH is RAMEND (datasheet section 4.6).
+   1 removes redundant 8 bytes on hardware reset, but a direct software jump
+   into the bootloader without reset is then unsupported. Set 0 for that use. */
+#ifndef T88_ASSUME_RESET_STACK_INIT
+#define T88_ASSUME_RESET_STACK_INIT 1
+#endif
 /* Registers below are I/O addresses, except explicitly marked MEM. */
 #define T88_IO_PIND 0x09
 #define T88_IO_DDRD 0x0a
