@@ -52,7 +52,7 @@ complete regression run. It does not change the USB bit sampler.
 | `MOVW` for even register pairs | Already used for CRC pointers and word transfers; one instruction replaces two MOVs. | Use when both byte lifetimes permit it. |
 | `LDD/STD Y/Z+q` | The 0x0100 context keeps hot fields within 63-byte displacement. Two-byte indirect instructions replace four-byte LDS/STS when the base is already live. | Count pointer initialization/restoration as well as the access. |
 | Page-local pointer arithmetic | The 0x0116 RX buffer and at most 11 bytes cannot wrap YL. The isolated EOP path omits the YH borrow; Flash refill already advances ZL with SUBI rather than ADIW. | Requires a proved range, not just a typical address. |
-| Make EOP Y equal context base | A possible streaming-only follow-up replaces low-byte rewind with LDI YL,0, restores Z using MOVW, and changes token displacements to +23/+24. | Potential one-clock valid-response saving; not implemented or waveform-proved. Early drop paths still need full Z restoration. |
+| Make EOP Y equal context base | An opt-in streaming experiment replaces low-byte rewind with LDI YL,0, restores Z using MOVW, and changes token displacements to +22..24. | One-clock response saving verified; combined EOP publication saves three. See the [ACK report](prototypes/streaming_crc16/ACK_EXPERIMENTS.md). Early drop paths retain full Z restoration. |
 | Move the 64-byte memory buffer to a 256-byte boundary | Can remove low-base conversions, but moves static buffer end from 0x0180 to 0x0240: 192 additional address-space bytes below the stack. | Do not pay that SRAM/layout cost for a few instructions. |
 | Replace EEPROM pointer setup with MOVW from Y | Current LDI+ADD+LDI and MOVW+SUBI+ADD both cost three instructions/three clocks. | No isolated benefit. |
 | Remove page-address ANDI | Alignment is validated upstream, but the shared SPM helper also provides a local page-alignment defense. | Retain that defense. |
@@ -83,13 +83,17 @@ Its assembly expression has 23 single-cycle instructions, excluding any
 function boundary and register setup. The current streaming table pipeline
 spends 11 clocks per byte. A direct replacement therefore needs about
 12 additional byte clocks, beyond the padding available in the current
-85/86-clock schedule. This is an instruction-count comparison, not an
-assembled alternative receiver or a proof that every table-free design is
-impossible. R0/scratch liveness and the final EOP pipeline also need review.
+85/86-clock schedule. Standalone assembly now confirms 23 clocks, but
+integration into a receiver has not been attempted. This is not a proof
+that every table-free design is impossible. Scratch liveness and the final
+EOP pipeline also need review.
 
-A 16-entry, 16-bit nibble table would occupy 32 bytes, with two update steps
-per byte. It is another unimplemented size/timing tradeoff. Removing the
-512-byte tables alone does not remove V2's expanded cooldown code or prove
+A 16-entry, 16-bit nibble table occupies 32 bytes, with two update steps
+per byte. Its assembled update needs 35 clocks with the page preloaded;
+a separate 16-byte folded-parity alternative needs 19. Both exceed the
+unchanged sampler's 14 regular CRC slots. See the measured
+[table comparison](prototypes/streaming_crc16/CRC_TABLE_TRADEOFFS.md).
+Removing tables alone does not remove V2's expanded cooldown code or prove
 that a smaller complete receiver meets the USB sampling schedule.
 
 MicroMusic's flag-neutral CPSE/SBRC and GPIOR backup recipes are useful
@@ -112,7 +116,10 @@ The maintained TX uses R16..R22 and Y; simply moving the stores across it
 would corrupt the transaction. Moving count/token to two additional live
 registers costs two clocks before ACK to save four publication clocks, so
 the maximum immediate saving is two clocks before extra dispatch/ownership
-costs. This remains a design option, not an applied deferral.
+costs. The later opt-in [ACK experiment](prototypes/streaming_crc16/ACK_EXPERIMENTS.md)
+implements this with MOVW and balanced EOP publication. It saves three clocks
+including pointer restoration. Strict post-ACK publication adds seven return
+clocks and is retained only as a rejected experiment.
 
 The preferred immediate receiver repair uses direct EOP continuations for
 each CRC pipeline stage, so it need not spend response clocks dispatching
