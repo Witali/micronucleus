@@ -67,6 +67,12 @@ block_init_status_tail:
 #include "vusb_phy.inc"
 
 main:
+    /* Preserve reset causes for the application before clearing WDRF.
+       Microchip requires WDRF=0 before WDE can be disabled. Keeping these
+       operations until application handover would cause watchdog resets. */
+    in      r24, T88_IO_MCUSR
+    out     T88_IO_GPIOR0, r24
+    out     T88_IO_MCUSR, r1
     wdr
     /* WDT unlock: WDCE|WDE=0x18 is sufficient regardless of the
        previous prescaler and interrupt settings. Next store, immediately,
@@ -200,9 +206,7 @@ L1eac:
     out     T88_IO_DDRD, r1
     sts     T88_MEM_PCICR, r1
     sts     T88_MEM_PCMSK2, r1
-    in      r24, 0x34
-    out     T88_IO_GPIOR0, r24
-    out     T88_IO_MCUSR, r1
+    /* GPIOR0 already holds the original reset causes saved at startup. */
 app_jump:
     .word (0xc000 | (((bootloader_start - 4 - app_jump - 2)/2) & 0x0fff)) /* relative RJMP into application postscript */
 
