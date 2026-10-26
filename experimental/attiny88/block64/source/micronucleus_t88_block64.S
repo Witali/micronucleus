@@ -265,17 +265,11 @@ block_erase_setup:
     andi    r18, 0x3f
     or      r18, r16             /* both page offset and memory type must be zero */
     brne    block_vendor_reject
-    ldi     r18, ST_FLASH_WAIT_PREP
-    std     Y+57, r18
-    /* MEM_TYPE is not used during standalone ERASE. */
-    std     Y+49, r22
-    std     Y+50, r23
+    ldi     r17, ST_FLASH_WAIT_PREP
     ldi     r18, RESULT_BUSY
-    std     Y+54, r18  /* SPM operation flag: 1=erase, 0=page-write */
-    std     Y+56, r18
-    /* Prepare ZLP for the control OUT status stage. */
-    std     Y+0, r1
-    rjmp    L1df8
+    std     Y+54, r18  /* 1=erase, 0=page-write */
+    mov     r24, r1     /* Zero-length status response */
+    rjmp    block_begin_mutation
 
 
 block_status:
@@ -347,22 +341,22 @@ block_write_setup:
     cpi     r24, 64
     brne    block_write_bad
 block_write_validated:
-    ldi     r17, ST_RECEIVE
-    std     Y+57, r17
     std     Y+48, r16
-    std     Y+49, r22
-    std     Y+50, r23
     std     Y+51, r24
     std     Y+54, r1
     ldi     r17, 0x4b            /* USB DATA1 first after SETUP */
     std     Y+55, r17
-    ldi     r17, RESULT_BUSY
-    std     Y+56, r17
-    /* Incoming DATA1..DATA0 fills the SRAM 64-byte buffer at index 0.
-       No Flash LPM/RMW and no SPM inside SETUP or bit-level USB code. */
     std     Y+52, r1
-    ldi     r17, EMPTY_MESSAGE
-    std     Y+0, r17
+    ldi     r24, EMPTY_MESSAGE
+    ldi     r17, ST_RECEIVE
+block_begin_mutation:
+    /* Common init: state, address and BUSY status for ERASE and WRITE. */
+    std     Y+57, r17
+    std     Y+49, r22
+    std     Y+50, r23
+    ldi     r18, RESULT_BUSY
+    std     Y+56, r18
+    std     Y+0, r24
     rjmp    L1df8
 block_write_bad:
 block_reject:
@@ -380,18 +374,6 @@ block_reject_no_state:
        dispatcher has already set CTX_MSG_LENGTH to EMPTY_MESSAGE.
        No reply was queued on a rejected path. */
     rjmp    L1df8
-
-
-/* Returns C=1 if no other memory operation is active and EEPE is clear. */
-block_check_idle_for_write:
-    ldd     r17, Y+57
-    cpi     r17, ST_RUN
-    brsh    block_idle_return    /* C=0 for state>=3: already busy */
-    /* If EEPROM is idle, SBIC skips CLC: CPI left C=1 for state<3. */
-    sbic    T88_IO_EECR, 1
-    clc
-block_idle_return:
-    ret
 
 
 /* Validate wValue+wLength against selected memory bounds. Carry set
@@ -431,9 +413,15 @@ block_check_selected_bound:
     cpc     r21, r23
     brcs    block_invalid_range
 block_valid_range:
-    /* This return includes the busy-state check for READ, WRITE and ERASE.
-       C=1 only when both address range and operation interlock are valid. */
-    rcall   block_check_idle_for_write
+block_check_idle_for_write:
+    /* C=1 for allowed address and idle EEPROM/Flash.  Fall through
+       instead of dispatching through RCALL/RET or an RJMP. */
+    ldd     r17, Y+57
+    cpi     r17, ST_RUN
+    brsh    block_idle_return
+    sbic    T88_IO_EECR, 1
+    clc
+block_idle_return:
     ret
 block_invalid_range:
     clc
@@ -508,7 +496,7 @@ block_out_copy_byte:
     /* The last FLASH DATA OUT byte queues the status-stage ZLP. */
     std     Y+0, r1
 block_out_return:
-    ret
+    rjmp    L1df8 /* Tail-dispatch into the existing EP0 release path. */
 
 /* Called from main loop, never within the cycle-critical USB packet engine.
  * EEPROM programming progresses one byte whenever EEPE clears. Flash
@@ -589,8 +577,7 @@ block_commit_flash:
     /* Patch ONLY 0x0000..0x0001 on page 0. Leave 0x0002..0x003f
        exactly as supplied by the application, including all ISR vectors.
        This does NOT keep RESET valid between ERASE_PAGE and WRITE. */
-    mov     r18, r30
-    or      r18, r31
+    sbiw    r30, 0         /* Test page-zero address without a scratch register. */
     brne    block_flash_fill_start
     ldi     r26, 0x40
     ldi     r27, 0x01

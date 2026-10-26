@@ -34,7 +34,7 @@ def out(cpu, payload, pid, corrupt=False):
     if corrupt:checksum[0]^=0x40
     cpu.mem[0x0117+len(payload):0x0117+len(payload)+2]=checksum
     cpu.r[24]=len(payload)
-    cpu.run_from('block_accept_out', count=2000, execute_ret=True)
+    cpu.run_from('block_accept_out', stop_at=['L1df8'], count=2000, execute_ret=True)
 
 def service(cpu):
     # The active-state helper is called only after main preloads Y and r18.

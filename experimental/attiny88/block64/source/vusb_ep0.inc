@@ -29,8 +29,9 @@ block_standard_setup:
     rjmp    old_vendor_dispatch
 
 block_out_packet:
-    rcall   block_accept_out
-    rjmp    L1df8
+    /* Tail dispatch instead of RCALL + RJMP: the DATA OUT parser
+       returns directly to the common EP0 path. */
+    rjmp    block_accept_out
 
 L1de2:
     ldd     r25, Y+30

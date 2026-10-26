@@ -1,6 +1,6 @@
-# ATtiny88 Block64: Pass14
+# ATtiny88 Block64: Pass15
 
-Imported source snapshot from `04_HISTORY_EXTRACTED/10_Pass14_1596B` in the October 26 handoff.
+Imported source snapshot from `02_CURRENT_PASS15_EXPERIMENTAL` in the October 26 handoff.
 See [the provenance index](/docs/attiny88-block64-history/README.md) and
 the immutable original archive for stage documents, binaries, logs and checksums.
 This historical snapshot is experimental and has not been independently

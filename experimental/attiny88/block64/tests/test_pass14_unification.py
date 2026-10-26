@@ -22,7 +22,7 @@ def test_relief_and_usb_phy_identical():
     b=read_symbols(ROOT/'build/block64.o')
     o=old.read_bytes();n=new.read_bytes()
     assert b['bootloader_start']==0x19C0
-    assert len(n)-0x19c0==1596
+    assert len(n)-0x19c0==1580  # Pass15 compact build (Pass14 baseline was 1596)
     assert len(o)-0x1980==1610
     assert n[a['usb_crc16_append']-0x1980+0x19c0:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
     assert n[b['USB_handler']:b['main']]==o[a['USB_handler']:a['main']]
@@ -30,7 +30,7 @@ def test_relief_and_usb_phy_identical():
 
 
 def test_vendor_reject_in_real_setup_already_has_empty_response():
-    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS14.bin').read_bytes()
+    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
     for initial_length in (0,1,8,64,255):
         c=CPU(image=raw)
         c.set_setup(0x20,addr=0,length=8,memtype=0,request_type=0xc0)
@@ -45,7 +45,7 @@ def test_vendor_reject_in_real_setup_already_has_empty_response():
 
 def test_shared_erase_and_write_spm_instruction_window():
     # Hardware rule: the SPM must be the immediate next opcode after OUT SPMCSR.
-    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS14.bin').read_bytes()
+    raw=(ROOT/'firmware/ISP_FULL_8192_19C0_PASS15.bin').read_bytes()
     c=CPU(image=raw)
     start=c.labels['block_execute_spm']
     from avr_sim import D
