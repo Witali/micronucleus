@@ -50,16 +50,16 @@ At nominal 16 MHz, measured end-EOP-to-SOP ranges are:
 
 | Path | CPU cycles |
 | --- | ---: |
-| IN to DATA | 61.33–62.33 |
-| CRC-valid empty DATA1 OUT to ACK | 59.33–60.33 |
-| Eight-byte DATA1 to ACK | 46.67–47.67 |
+| IN to DATA | 61.33â€“62.33 |
+| CRC-valid empty DATA1 OUT to ACK | 59.33â€“60.33 |
+| Eight-byte DATA1 to ACK | 46.67â€“47.67 |
 
 All fit the stricter detachable-cable limit of 69.33 cycles; worst nominal
 margin is seven cycles. ACK SOP at cycle 179 remains eligible; cycle 180
-onward is disarmed, within the 16–18-bit SOP timeout window. Completing ACK
+onward is disarmed, within the 16â€“18-bit SOP timeout window. Completing ACK
 reception after that SOP deadline does not invalidate a timely start.
 
-A continuous ACK-to-next-IN probe catches 22–47-cycle gaps. Foreground/caller
+A continuous ACK-to-next-IN probe catches 22â€“47-cycle gaps. Foreground/caller
 re-entry beyond that probe, electrical operation and real-host reliability
 remain unproved. Packet-level turnaround is not a complete USB certification.
 
