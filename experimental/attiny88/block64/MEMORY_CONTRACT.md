@@ -6,7 +6,9 @@ ATtiny88; an ATmega with a separate boot section is not an equivalent device.
 
 ## Clock and device grade
 
-This implementation assumes a 16 MHz external clock. That assumption does not
+The operator confirms that the board uses a 16 MHz external oscillator.
+This implementation and the cycle-to-time model use 16 MHz; the frequency
+was not independently measured during this work. The clock source does not
 establish operation within the selected device's rated limits: the standard
 datasheet's speed grade is 12 MHz, while the separate [automotive ATtiny88
 datasheet, section 21.4.3](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-9157-Automotive-Microcontrollers-ATtiny88_Datasheet.pdf)
