@@ -1,5 +1,9 @@
 # Isolated 16 MHz streaming CRC receiver
 
+The later [opt-in ACK experiments](ACK_EXPERIMENTS.md) evaluate MOVW and
+publication during/after ACK. Their recommended EOP candidate saves three
+clocks without changing the default image or its NVM protection.
+
 This directory builds an ordinary, read-only diagnostic application at
 `0x0800`. It does not replace the maintained Block64 receiver or program
 hardware. Both prototypes check DATA CRC16 before selecting ACK. V1 retains

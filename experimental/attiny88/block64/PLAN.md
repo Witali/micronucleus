@@ -48,6 +48,13 @@ to execute or permission to program hardware.
   invalid CRC5 tokens and empty DATA CRC tests.
 - [ ] Prove continuous reception across foreground preparation, not only
   isolated-packet turnaround and a bounded ACK-to-next-IN probe.
+- [x] Measure opt-in MOVW and ACK-publication schedules. Publication in
+  the fixed EOP wait saves three clocks with matching TX waveforms and no
+  new bounded continuation regressions; strict post-ACK publication adds
+  return latency and remains rejected. See [the ACK experiments](prototypes/streaming_crc16/ACK_EXPERIMENTS.md).
+- [ ] Resolve the newly reproduced baseline continuation defects:
+  foreground CRC/copy can miss minimum-gap tokens, and busy RX metadata
+  can still refer to a scratch payload overwritten before NAK.
 - [x] Validate all token CRC5 bits with a cached per-address value; compute
   only during SET_ADDRESS recovery. Reject truncated or corrupt empty DATA.
 - [x] Assemble isolated streaming-CRC receiver prototypes described in
