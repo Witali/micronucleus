@@ -1168,7 +1168,7 @@ legacy_led_on_anchor:
  * EEPROM is not modified on unsupported or invalid requests.
  */
 
-/* Microchip ATtiny48/88 datasheet 5.4.4: EEPE is one while writing and
+/* Microchip ATtiny48/88 datasheet 5.4.3: EEPE is one while writing and
    hardware clears it on completion. Return only that state as USB 0/1;
    do not block USB processing while waiting for EEPROM. */
 ee_ready:
