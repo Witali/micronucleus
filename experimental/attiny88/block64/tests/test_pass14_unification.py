@@ -22,7 +22,7 @@ def test_relief_and_usb_phy_identical():
     b=read_symbols(ROOT/'build/block64.o')
     o=old.read_bytes();n=new.read_bytes()
     assert b['bootloader_start']==0x19C0
-    assert len(n)-0x19c0==1580  # Pass15 compact build (Pass14 baseline was 1596)
+    assert len(n)-0x19c0==1578  # CRC pointer reuse after Pass15 (Pass14 was 1596).
     assert len(o)-0x1980==1610
     assert n[a['usb_crc16_append']-0x1980+0x19c0:b['USB_handler']] == o[a['usb_crc16_append']:a['USB_handler']]
     assert n[b['USB_handler']:b['main']]==o[a['USB_handler']:a['main']]

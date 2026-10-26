@@ -449,13 +449,14 @@ block_accept_out:
        Discard corrupted payload and force a host timeout rather than
        silently writing Flash/EEPROM. */
     mov     r23, r24
-    ldi     r26, 0x17
-    ldi     r27, 0x01
+    /* Share the packet-start pointer with the following CRC call. The
+       trailer is at most eight bytes later, so XL cannot wrap here. */
+    ldi     r24, 0x17
+    ldi     r25, 0x01
+    movw    r26, r24
     add     r26, r23
     ld      r16, X+            /* received CRC low */
     ld      r17, X             /* received CRC high */
-    ldi     r24, 0x17
-    ldi     r25, 0x01
     mov     r22, r23
     rcall   usb_crc16_append
     cp      r24, r16
