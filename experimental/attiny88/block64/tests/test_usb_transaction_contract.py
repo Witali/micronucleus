@@ -166,8 +166,6 @@ def test_corrupt_setup_does_not_start_eeprom_receive(cpu):
     assert cpu.mem[MEM_STATE] == ST_IDLE
 
 
-@pytest.mark.xfail(strict=True, raises=USBContractViolation,
-                   reason="IN packet buffer/PID advance without host ACK")
 def test_lost_in_ack_replays_same_pid_length_and_payload(cpu):
     cpu.flash[0x0100:0x0110] = bytes(range(16))
     cpu.mem[0x0100] = 16
@@ -182,8 +180,6 @@ def test_lost_in_ack_replays_same_pid_length_and_payload(cpu):
                      "Lost IN ACK advanced the DATA PID or payload")
 
 
-@pytest.mark.xfail(strict=True, raises=USBContractViolation,
-                   reason="SPM readiness checks TX disposal, not status ACK")
 def test_lost_status_ack_cannot_start_flash_erase(cpu):
     begin_erase(cpu)
     prepare_reply(cpu)

@@ -19,6 +19,12 @@ L1d9c:
     ldi     r23, 8
     rcall   block_verify_rx_crc
     brne    L1df8
+    std     Y+CTX_TX_ACK_WINDOW, r1
+    /* Pending address defaults to the active address for every transfer.
+       SET_ADDRESS may replace it, including with valid address zero. */
+    ldd     r18, Y+12
+    lsr     r18
+    std     Y+19, r18
     mov     r7, r1               /* extend inactivity timeout */
     ldi     r24, 0xc3            /* initialize DATA0, TX toggle -> DATA1 */
     std     Y+1, r24

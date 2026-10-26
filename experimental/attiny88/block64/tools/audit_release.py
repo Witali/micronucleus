@@ -7,6 +7,7 @@ contain no unresolved ELF relocations before binary extraction.
 from pathlib import Path
 import json,hashlib,subprocess,re,random
 from layout import BOOT, FLASH, PAGE, APP, RESERVED
+from usb_transaction_audit import audit_timed_instructions
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
 body=(FW/'bootloader.bin').read_bytes()
@@ -43,7 +44,7 @@ assert hashlib.sha256(engine_ref).hexdigest()=='f9a6c9bb587fc6123a384c68f8ae897c
 crc_new=c[b['usb_crc16_append']:b['USB_handler']]
 engine_new=c[b['USB_handler']:b['main']]
 assert crc_ref==crc_new and len(crc_new)==44
-assert engine_ref==engine_new and len(engine_new)==508
+timed_audit = audit_timed_instructions(c, b)
 
 # Intel HEX checksums and complete sparse-image reconstruction.
 records=(FW/'isp-fresh.hex').read_text().strip().splitlines()
@@ -76,7 +77,8 @@ result={
     'application_bytes':APP,
     'spare_bytes_in_reserved_boot_region':FLASH-BOOT-len(body),
     'reset_vector_opcode':hex(reset),
-    'usb_bit_engine_unchanged_vs_pass8_bytes':len(engine_new),
+    'usb_phy_and_classifier_bytes':len(engine_new),
+    'timed_instruction_audit':timed_audit,
     'usb_crc16_unchanged_vs_pass8_bytes':len(crc_new),
     'unresolved_relocations':0,
     'hex_checksums':'PASS',

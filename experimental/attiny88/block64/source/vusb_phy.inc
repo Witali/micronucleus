@@ -212,11 +212,24 @@ L1baa:
     brbs    1, L1bf6
     cpi     r16, 0x4b
     brbs    1, L1bf6
+    cpi     r16, USB_PID_ACK
+    brne    usb_rx_token
+    rjmp    usb_host_ack
+usb_rx_token:
+    /* Only the immediately following handshake can acknowledge our DATA. */
+    std     Z+CTX_TX_ACK_WINDOW, r1
+    cpi     r19, 3
+    brne    L1ba6
     ldd     r18, Z+12
     ldd     r17, Y+1
+    sbrc    r17, 7            /* EP0 only: endpoint bit zero is in token byte 1. */
+    rjmp    L1ba6
     add     r17, r17
     cpse    r17, r18
     rjmp    L1ba6
+    ldd     r17, Y+2
+    andi    r17, 0x07         /* The other three endpoint bits must also be zero. */
+    brne    L1ba6
     cpi     r16, 0x69
     brbs    1, L1c14
     cpi     r16, 0x2d
@@ -240,17 +253,33 @@ L1be4:
     std     Z+20, r16
 
 L1be8:
+    /* Catch ACK SOP within a bounded interval after a DATA transmission.
+       Once SOP is observed the full packet may finish after this deadline. */
+    ldd     r28, Z+CTX_TX_ACK_WINDOW
+    tst     r28
+    breq    usb_handler_pop_packet_register
+    ldi     r28, USB_ACK_WAIT_POLLS
+usb_wait_ack_sop:
+    sbic    T88_IO_PCIFR, T88_USB_PIN_CHANGE_FLAG
+    rjmp    usb_handler_pop_packet_register
+    dec     r28
+    brne    usb_wait_ack_sop
+    std     Z+CTX_TX_ACK_WINDOW, r1
+usb_handler_pop_packet_register:
     pop     r19
     in      r28, 0x1b
     sbrc    r28, 2
     rjmp    L1abe
 
 L1bf0:
+    /* A malformed/incomplete packet cannot leave a stale ACK opportunity. */
+    sts     USB_TX_ACK_WINDOW, r1
     pop     r29
     pop     r28
     ret
 
 L1bf6:
+    std     Z+CTX_TX_ACK_WINDOW, r1
     ldd     r18, Z+20
     and     r18, r18
     brbs    1, L1be8
@@ -267,11 +296,12 @@ L1c14:
     ldd     r16, Z+18
     cpi     r16, 0x01
     brbc    4, L1c48
-    ldi     r16, 0x5a
+    ldi     r16, 1
     ldd     r19, Z+15
     sbrc    r19, 4
     rjmp    L1c4e
-    std     Z+15, r16
+    /* Keep length/PID/payload intact until an exact, timely host ACK. */
+    std     Z+CTX_TX_ACK_WINDOW, r16
     ldi     r28, 0x01
     ldi     r29, 0x01
     rjmp    L1c56
@@ -365,7 +395,9 @@ L1c8a:
     sbci    r29, 0x00
     out     T88_IO_PORTD, r16
     brbs    1, L1cb2
-    std     Z+12, r17
+    /* Address becomes effective on the status ACK, not merely at TX EOP.
+       This two-cycle jump preserves the original TX waveform timestamps. */
+    rjmp    L1cb2
 
 L1cb2:
     sbi     T88_IO_PCIFR, 2  /* 2 cycles like original LDI+OUT; PCMSK0/1/3 remain 0 */

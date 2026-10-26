@@ -30,6 +30,11 @@
 #define EP0_NAK 0x5a
 #define EMPTY_MESSAGE 0xff
 #define EP0_MAX_PACKET 8
+#define USB_PID_ACK 0xd2
+#define USB_PID_DATA1 0x4b
+#define USB_PID_OUT 0xe1
+/* Bounded SOP wait; exact end-EOP deadline is checked by bus timing tests. */
+#define USB_ACK_WAIT_POLLS 35
 #define BLOCK_MAX 64
 #define RESET_RJMP (0xc000 | (((BOOT_AT/2)-1) & 0x0fff))
 #endif /* BLOCK64_PROTOCOL_INC */
