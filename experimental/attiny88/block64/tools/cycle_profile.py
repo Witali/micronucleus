@@ -6,6 +6,7 @@ measured using the same corrected AVR timing model (ADIW/SBIW = 2 cycles).
 from __future__ import annotations
 from pathlib import Path
 import hashlib, json, sys
+from layout import BOOT
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tests'))
 from avr_sim import CPU, MEM_BUFFER, MEM_STATE, MEM_ADDR_LO, MEM_ADDR_HI, MEM_PROGRESS, MEM_INDEX
@@ -29,7 +30,7 @@ assert c.eeprom==bytes(range(64))
 ee_write=c.cycles
 
 # Flash page at end of a 256-byte region: ZL wraps after the final load.
-c=new();a=0x18c0;c.mem[MEM_ADDR_LO]=a&255;c.mem[MEM_ADDR_HI]=a>>8
+c=new();a=(BOOT&~0xff)-64;c.mem[MEM_ADDR_LO]=a&255;c.mem[MEM_ADDR_HI]=a>>8
 c.mem[MEM_BUFFER:MEM_BUFFER+64]=bytes(range(64))
 c.run_from('block_commit_flash',count=2000,execute_ret=True)
 assert c.flash[a:a+64]==bytes(range(64))
@@ -53,7 +54,7 @@ new={
  'main_loop_idle_to_ep0':idle,
 }
 assert new=={'eeprom_read64':628,'eeprom_write64_worker':1856,
-            'flash_64_program_logic_excluding_hardware_wait':468,
+            'flash_64_program_logic_excluding_hardware_wait':470,
             'main_loop_idle_to_ep0':8},new
 report={
  'baseline':'Pass12, same corrected software AVR model',

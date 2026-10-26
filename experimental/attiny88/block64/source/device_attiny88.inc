@@ -5,7 +5,7 @@
 
 #ifndef BOOT_AT
 /* Explicit development room for ACK/replay and control-transfer ownership. */
-#define BOOT_AT 0x1880
+#define BOOT_AT 0x18c0
 #endif
 #define T88_FLASH_BYTES 8192
 #define T88_FLASH_PAGE_BYTES 64

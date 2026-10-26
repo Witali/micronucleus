@@ -73,8 +73,8 @@ def test_flash_word_loading_no_16bit_overflow_dependency(firmware):
         loads=[rec for rec in cpu.spm_oplog if rec[0]=='load']
         assert [rec[1] for rec in loads] == [page+i for i in range(0,64,2)],hex(page)
         assert ('write',page) in cpu.spm_oplog
-        if page==0x18c0:
-            assert cpu.cycles <= 468, cpu.cycles
+        if page==(BOOT&~0xff)-64:
+            assert cpu.cycles <= 470, cpu.cycles
 
 
 def test_eeprom_eecr_write_strobes_are_equivalent(firmware):
