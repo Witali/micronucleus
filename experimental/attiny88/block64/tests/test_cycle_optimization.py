@@ -12,7 +12,7 @@ from avr_sim import CPU, MEM_ADDR_LO, MEM_ADDR_HI, MEM_BUFFER, MEM_STATE, MEM_PR
 
 @pytest.fixture(scope='module')
 def firmware():
-    return (ROOT/'firmware/ISP_FULL_8192_1980_PASS13.bin').read_bytes()
+    return (ROOT/'firmware/ISP_FULL_8192_19C0_PASS14.bin').read_bytes()
 
 
 def test_idle_dispatch_cycles_and_state(firmware):
@@ -57,7 +57,7 @@ def test_eeprom_write_64_cycle_budget(firmware):
 def test_flash_word_loading_no_16bit_overflow_dependency(firmware):
     # Exercises every address low-byte (0x00,0x40,0x80,0xC0), including
     # ZL=0xFE -> 0x00 at the final fill operation, before Z is reloaded.
-    for page in range(0,0x1980,64):
+    for page in range(0,0x19c0,64):
         data = bytes(((page//64)*7 +i*11)&255 for i in range(64))
         cpu = CPU(image=firmware)
         cpu.r[28],cpu.r[29] = 0,1
@@ -66,7 +66,7 @@ def test_flash_word_loading_no_16bit_overflow_dependency(firmware):
         cpu.run_from('block_commit_flash', count=1500, execute_ret=True)
         expected = bytearray(data)
         if page == 0:
-            reset = 0xC000|(((0x1980//2)-1)&0xFFF)
+            reset = 0xC000|(((0x19c0//2)-1)&0xFFF)
             expected[:2]=reset.to_bytes(2,'little')
         assert cpu.flash[page:page+64]==expected, hex(page)
         loads=[rec for rec in cpu.spm_oplog if rec[0]=='load']

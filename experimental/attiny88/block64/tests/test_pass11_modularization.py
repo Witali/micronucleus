@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 
 ROOT = Path(__file__).resolve().parents[1]
-BOOT_AT = 0x1980
+BOOT_AT = 0x19c0
 
 
 def test_source_modules_present_and_included():
@@ -26,18 +26,20 @@ def test_source_modules_present_and_included():
 
 def test_pass12_dispatch_optimized_and_protocol_header_unchanged():
     old = (ROOT / 'reference/Pass10_1662B_body.bin').read_bytes()
-    new = (ROOT / 'firmware/BOOTLOADER_BODY_1980_PASS13.bin').read_bytes()
+    new = (ROOT / 'firmware/BOOTLOADER_BODY_19C0_PASS14.bin').read_bytes()
     assert len(old) == 1662
-    assert len(new) <= 1664
+    assert len(new) <= 1600
     assert len(new) < len(old)
-    assert new[2:8] == old[2:6] + bytes([0x33, 0x03])
+    assert new[2:4] == bytes([(BOOT_AT - 4) >> 8, (BOOT_AT - 4) & 255])
+    assert new[4:6] == old[4:6]
+    assert new[6:8] == bytes([0x33, 0x03])
 
 
 def test_manifest_tracks_all_modules_and_fixed_reply():
     meta = json.loads((ROOT/'firmware/manifest.json').read_text())
     assert meta['bootloader_start'] == hex(BOOT_AT)
     assert meta['status_reply_bytes'] == 8
-    assert meta['bootloader_body_bytes'] <= 1664
+    assert meta['bootloader_body_bytes'] <= 1600
     assert meta['get_status_lengths'].startswith('8 bytes only')
     assert set(meta['source_modules']) == {'device_attiny88.inc', 'block64_protocol.inc',
                                           'vusb_phy.inc', 'vusb_ep0.inc', 'vusb_standard.inc'}

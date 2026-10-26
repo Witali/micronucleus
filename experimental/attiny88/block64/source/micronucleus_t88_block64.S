@@ -230,11 +230,9 @@ block_vendor_out:
     cpi     r25, OP_RUN
     breq    block_run
     cpi     r25, OP_ERASE_PAGE
-    breq    block_vendor_is_erase
+    breq    block_erase_setup
 block_vendor_reject:
     rjmp    block_reject
-block_vendor_is_erase:
-    rjmp    block_erase_setup
 block_vendor_in:
     cpi     r25, OP_GET_STATUS
     breq    block_status
@@ -250,6 +248,36 @@ block_vendor_in:
  * GET_STATUS has one supported form: host wLength=8 on every request.
  * Generic EP0 still clamps any malformed shorter wLength to preserve USB
  * data-stage correctness. No extra per-command length path is needed. */
+/* ERASE_PAGE uses a zero-length Vendor OUT control request.
+   Host is responsible for waiting for completion before WRITE_PAGE.
+   Must not erase any bootloader byte; 0x1980 is the final writable page
+   for BOOT_AT=0x19C0 (other layouts derive it from BOOT_AT). */
+block_erase_setup:
+    /* ERASE has wLength=0. Reuse the common page bounds checker by
+       temporarily validating a full 64-byte page, then restore wLength. */
+    ldd     r18, Y+29
+    tst     r18                  /* length high byte checked by shared validator */
+    brne    block_vendor_reject
+    ldi     r24, 64              /* validate one complete Flash page */
+    rcall   block_validate_page_range
+    brcc    block_vendor_reject
+    mov     r18, r22
+    andi    r18, 0x3f
+    or      r18, r16             /* both page offset and memory type must be zero */
+    brne    block_vendor_reject
+    ldi     r18, ST_FLASH_WAIT_PREP
+    std     Y+57, r18
+    /* MEM_TYPE is not used during standalone ERASE. */
+    std     Y+49, r22
+    std     Y+50, r23
+    ldi     r18, RESULT_BUSY
+    std     Y+54, r18  /* SPM operation flag: 1=erase, 0=page-write */
+    std     Y+56, r18
+    /* Prepare ZLP for the control OUT status stage. */
+    std     Y+0, r1
+    rjmp    L1df8
+
+
 block_status:
     /* Fixed 8-byte reply. Generic EP0 limiting remains for USB correctness. */
     ldi     r18, 0x38
@@ -284,18 +312,18 @@ block_read_range_ok:
     ldi     r26, 0x40
     ldi     r27, 0x01
     mov     r20, r24
-    mov     r17, r22
+    /* r22 is disposable here and already contains the EEPROM address. */
     /* EEPROM is idle and EECR uses erase/write mode with no ready IRQ.
        Preload the EERE strobe once; OUT is one cycle vs SBI's two.
        This changes EERE only, and all other EECR bits are deliberately 0. */
     /* The range validator guarantees memory-type r16 == 1 here, so it
        doubles as the EEPROM read strobe without loading another register. */
 block_snapshot_eeprom_loop:
-    out     T88_IO_EEARL, r17
+    out     T88_IO_EEARL, r22
     out     T88_IO_EECR, r16
     in      r18, 0x20
     st      X+, r18
-    inc     r17
+    inc     r22
     dec     r20
     brne    block_snapshot_eeprom_loop
     ldi     r18, 0x40
@@ -348,39 +376,11 @@ block_reject:
     std     Y+56, r18
     std     Y+57, r18
 block_reject_no_state:
-    ldi     r24, EMPTY_MESSAGE
-    std     Y+0, r24
+    /* Every vendor command reaches here only after the standard SETUP
+       dispatcher has already set CTX_MSG_LENGTH to EMPTY_MESSAGE.
+       No reply was queued on a rejected path. */
     rjmp    L1df8
 
-
-/* ERASE_PAGE uses a zero-length Vendor OUT control request.
-   Host is responsible for waiting for completion before WRITE_PAGE.
-   Must not erase any bootloader byte; 0x1900 is the final writable page
-   for BOOT_AT=0x1980 (other layouts derive it from BOOT_AT). */
-block_erase_setup:
-    /* ERASE has wLength=0. Reuse the common page bounds checker by
-       temporarily validating a full 64-byte page, then restore wLength. */
-    ldd     r18, Y+29
-    tst     r18                  /* length high byte checked by shared validator */
-    brne    block_reject
-    ldi     r24, 64              /* validate one complete Flash page */
-    rcall   block_validate_page_range
-    brcc    block_reject
-    mov     r18, r22
-    andi    r18, 0x3f
-    or      r18, r16             /* both page offset and memory type must be zero */
-    brne    block_reject
-    ldi     r18, ST_FLASH_WAIT_PREP
-    std     Y+57, r18
-    /* MEM_TYPE is not used during standalone ERASE. */
-    std     Y+49, r22
-    std     Y+50, r23
-    ldi     r18, RESULT_BUSY
-    std     Y+54, r18  /* SPM operation flag: 1=erase, 0=page-write */
-    std     Y+56, r18
-    /* Prepare ZLP for the control OUT status stage. */
-    std     Y+0, r1
-    rjmp    L1df8
 
 /* Returns C=1 if no other memory operation is active and EEPE is clear. */
 block_check_idle_for_write:
@@ -578,13 +578,10 @@ block_spm_after_quiet:
     breq    block_commit_flash
 
 block_flash_erase_only:
-    /* EEPE was checked when command was accepted. Busy states block
-       intervening EEPROM commands, so no intervening EEPROM write exists. */
-    rcall   block_load_page_z
+    /* Share page-address setup, SPMCSR write and SPM with WRITE_PAGE.
+       No extra delay between OUT SPMCSR and SPM. */
     ldi     r18, 0x03
-    out     T88_IO_SPMCSR, r18
-    spm
-    rjmp    block_complete_flash
+    rjmp    block_execute_spm
 
 block_commit_flash:
     /* Same interlock as standalone ERASE_PAGE, no duplicate EEPE check. */
@@ -623,9 +620,10 @@ block_flash_fill_word:
     cpi     r26, 0x80
     brne    block_flash_fill_word
     clr     r1
-    /* Page write must have Z low six address bits zero. */
-    rcall   block_load_page_z
     ldi     r18, 0x05
+block_execute_spm:
+    /* Hardware requires page-aligned Z for both erase and write. */
+    rcall   block_load_page_z
     out     T88_IO_SPMCSR, r18
     spm
     /* Fall through into shared completion; no second USB status. */

@@ -8,11 +8,11 @@ from pathlib import Path
 import json,hashlib,subprocess,re,random
 ROOT=Path(__file__).resolve().parent.parent
 FW=ROOT/'firmware'; BLD=ROOT/'build'
-BOOT=0x1980; FLASH=8192; PAGE=64; APP=BOOT-4
-body=(FW/'BOOTLOADER_BODY_1980_PASS13.bin').read_bytes()
-whole=(FW/'ISP_FULL_8192_1980_PASS13.bin').read_bytes()
+BOOT=0x19c0; FLASH=8192; PAGE=64; APP=BOOT-4
+body=(FW/'BOOTLOADER_BODY_19C0_PASS14.bin').read_bytes()
+whole=(FW/'ISP_FULL_8192_19C0_PASS14.bin').read_bytes()
 manifest=json.loads((FW/'manifest.json').read_text())
-assert len(body)<=1664 and len(body)%2==0 and len(whole)==FLASH
+assert len(body)<=1600 and len(body)%2==0 and len(whole)==FLASH
 assert len(body)==manifest['bootloader_body_bytes']
 assert len(body)<=FLASH-BOOT
 assert whole[BOOT:BOOT+len(body)]==body
@@ -46,7 +46,7 @@ assert crc_ref==crc_new and len(crc_new)==44
 assert engine_ref==engine_new and len(engine_new)==508
 
 # Intel HEX checksums and complete sparse-image reconstruction.
-records=(FW/'ISP_FULL_1980_PASS13_EXPERIMENTAL.hex').read_text().strip().splitlines()
+records=(FW/'ISP_FULL_19C0_PASS14_EXPERIMENTAL.hex').read_text().strip().splitlines()
 img=bytearray(b'\xff'*FLASH)
 for record in records:
     assert record.startswith(':'),record

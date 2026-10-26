@@ -4,7 +4,7 @@
 #define T88_DEVICE_CONFIG_INC
 
 #ifndef BOOT_AT
-#define BOOT_AT 0x1980
+#define BOOT_AT 0x19c0
 #endif
 #define T88_FLASH_BYTES 8192
 #define T88_FLASH_PAGE_BYTES 64
