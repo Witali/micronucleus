@@ -17,8 +17,8 @@ to execute or permission to program hardware.
 
 ## Completed development and validation
 
-- [x] Keep PHY and CRC instruction streams unchanged and reject the WIP
-  five-cycle wait loop through all arrival-phase tests.
+- [x] Preserve the CRC routine and timed RX/TX instruction schedule while
+  auditing transaction changes; reject the WIP five-cycle wait loop.
 - [x] Reuse the RX CRC pointer independently, saving two bytes and one cycle
   before the later shared-helper change.
 - [x] Clear WDRF before disabling the watchdog; preserve reset causes for the
@@ -35,17 +35,24 @@ to execute or permission to program hardware.
 - [ ] Validate received DATA before ACK, including SETUP. An RX-integrated
   CRC or another explicitly designed approach needs complete cycle traces;
   moving a slow foreground CRC before ACK is not a proven solution.
-- [ ] Retain the exact IN payload, length and DATA PID until host ACK. Test
+- [x] Retain the exact IN payload, length and DATA PID until host ACK. Test
   lost ACK, repeated IN, timeout and sequence toggle using actual paths.
-- [ ] Bind a memory mutation to its own completed status transaction and
+- [x] Bind a memory mutation to its own completed status transaction and
   require the matching ACK before SPM. An EP0 NAK marker or any queued ZLP
-  is insufficient.
-- [ ] Define how a new SETUP aborts a pending control transfer; prove that
+  is insufficient; the implementation now checks owner plus timely ACK.
+- [x] Define how a new SETUP aborts a pending control transfer; prove that
   GET_STATUS and other requests cannot complete an older mutation.
-- [ ] Preserve and broaden the passing duplicate-OUT tests: no double copy,
+- [x] Preserve and broaden the passing duplicate-OUT tests: no double copy,
   count, checksum or write when ACK is lost.
-- [ ] Extend testing from post-decode functional paths to complete RX/TX
-  waveforms, handshake loss/retries and foreground service-latency bounds.
+- [x] Add complete nominal RX/TX waveforms, bounded ACK-SOP deadlines,
+  invalid CRC5 tokens and empty DATA CRC tests.
+- [ ] Prove continuous reception across foreground preparation, not only
+  isolated-packet turnaround and a bounded ACK-to-next-IN probe.
+- [x] Validate all token CRC5 bits with a cached per-address value; compute
+  only during SET_ADDRESS recovery. Reject truncated or corrupt empty DATA.
+- [ ] Assemble the private standalone receiver prototype described in
+  [the streaming CRC design](STREAMING_CRC_DESIGN.md). Prove every normal,
+  stuffed and EOP path before enabling nonempty DATA CRC before ACK.
 
 The normative reference is the [USB-IF USB 2.0 specification](https://www.usb.org/document-library/usb-20-specification),
 particularly packet errors, control transfers and data synchronization in
@@ -54,8 +61,10 @@ are not exemptions from the USB protocol requirements.
 
 ## Priority 1: size after correctness
 
-Current code is 1588 bytes with a 1600-byte reservation. The next useful target
-is at most 1536 bytes, freeing one 64-byte page. Keep READ/WRITE for both
+Current code is 1852 bytes with a 1856-byte reservation at `0x18C0`. The next
+page-saving target is at most 1792 bytes. The handoff's 1536-byte target is a
+longer-term goal whose feasibility depends on the verified streaming CRC design.
+Keep READ/WRITE for both
 memories, ERASE_PAGE, RUN, GET_STATUS(8), range protection and packet CRC.
 Correctness fixes may increase code first; do not trade them for a size claim.
 

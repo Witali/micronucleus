@@ -24,7 +24,7 @@ a particular part's operating limits are separate claims.
 | --- | --- |
 | SPM requires programmed SELFPRGEN; there is no separate hardware boot section (§20.1, p.188) | The firmware assumes that fuse is programmed. Software bounds protect the loader; the RESET word is not hardware locked. |
 | SPMCSR must be followed promptly by SPM (§19, pp.183–187) | `block_spm_command` uses adjacent OUT/SPM. The strict model checks the four-cycle command window. |
-| Erase/write pauses the CPU; read-while-write is unavailable (§19.0.1/.3 and §19.2.1) | Workers run outside the USB bit engine. Software USB cannot run during the pause. The existing status-stage/host-ACK interlock remains defective. |
+| Erase/write pauses the CPU; read-while-write is unavailable (§19.0.1/.3 and §19.2.1) | Workers run outside the USB bit engine. Software USB cannot run during the pause. Own-status ACK and the quiet interval now gate SPM; tests cover lost/foreign ACK and SETUP cancellation. |
 | Erase precedes programming; buffer words load once between clears (§19.0.1–.3) | Host issues separate ERASE_PAGE then WRITE. The worker clears the buffer and loads 32 unique words. Strict tests reject an unsupported write to a non-erased page. |
 | EEPE blocks SPMCSR changes; EEPROM programming destroys staged Flash data (§19.1.1 and §19.0.2) | Active operations are serialized. EEPROM workers check readiness, and strict tests exercise the hardware exclusion and buffer lifetime. |
 | EEPROM uses EEPE polling and an EEMPE-to-EEPE timed sequence (§5.3 and §5.4.3, pp.21–27) | The worker uses adjacent OUT(EEMPE)/SBI(EEPE). Interrupts remain disabled. Flash CPU stalls and serialized workers prevent simultaneous SPM. |
@@ -52,3 +52,12 @@ is not presented as a guaranteed result for that operation.
 The functional test mode remains useful for command logic and historical
 instruction-cycle comparisons. Passing those tests alone does not establish
 the Flash/EEPROM hardware constraints or USB transaction correctness.
+
+## Control-transfer ownership
+
+Flash starts only after its own status ZLP receives a timely host ACK and the
+quiet polling interval expires. A new validated SETUP cancels unacknowledged
+Flash/receive/RUN work; an already ACKed Flash operation remains committed.
+EEPROM programming already in progress finishes its accepted bytes, while
+its old USB status is detached so it cannot overwrite a newer response.
+These are tested software policies, not power-loss atomicity guarantees.

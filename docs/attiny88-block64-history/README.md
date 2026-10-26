@@ -51,7 +51,7 @@ Block64 [development plan](../../experimental/attiny88/block64/PLAN.md).
 
 The original Pass13 stage's body and manifest both report 1610 bytes. A later
 `Pass13_baseline` reference is a different 1600-byte artifact. They are not
-silently treated as one build. The current development image is 1588 bytes;
+silently treated as one build. The current development image is 1852 bytes;
 its [validation record](../../experimental/attiny88/block64/VALIDATION.md)
 separates new checks from handoff reports.
 

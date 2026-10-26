@@ -17,18 +17,23 @@ build interface or a claim of hardware validation.
 | Property | Value |
 | --- | --- |
 | Protocol | Block64 v3.3; fixed eight-byte GET_STATUS |
-| Code | 1588 bytes, compared with archived Pass15's 1580 |
-| Loader boundary | `0x19C0`; 25 pages / 1600 reserved bytes |
-| Application capacity | 6588 bytes; four further bytes reserved for postscript |
-| USB PHY / CRC routine | Original 508 / 44 bytes, byte-identical |
-| Validation | Software only; four confirmed USB transaction defects remain |
+| Code | 1852 bytes, compared with archived Pass15's 1580 |
+| Loader boundary | `0x18C0`; 29 pages / 1856 reserved bytes |
+| Application capacity | 6332 bytes; four further bytes reserved for postscript |
+| Timed code / CRC | 242-byte sampler and 152-byte TX schedule audited; original 44-byte CRC retained |
+| Validation | Software only; nonempty DATA CRC before ACK remains unresolved |
 
 Development changes reproduce the original Pass15 image with current LLVM,
-fix watchdog-reset startup, accept only the safe two-byte CRC-pointer saving,
-and add a shared SETUP/OUT CRC gate. SETUP protection adds ten bytes after
-the pointer saving. Corrupt SETUP fields cannot dispatch memory commands.
-Foreground CRC processing adds latency; unchanged PHY opcodes alone do not
-prove that following host tokens are always serviced in time.
+fix watchdog-reset startup and SETUP CRC, retain IN packets until a timely
+host ACK, and bind Flash/RUN to their own acknowledged status ZLP. A valid
+new SETUP cancels unacknowledged work; already running EEPROM writes finish
+without injecting an old status into the new transfer.
+
+Empty DATA1 status packets are CRC-checked before ACK. Token CRC5 is cached
+per USB address: a 32-byte/80-cycle helper runs only on an acknowledged
+address change, while the common token check costs two additional cycles.
+The receiver sampler and TX bit schedule retain their instruction semantics;
+transaction bookkeeping intentionally changes outside those timed sections.
 
 The full archived Pass16 PHY change is rejected: its clear-flag polling loop
 falls from six to five cycles, and its ten-poll timeout from 59 to 49 cycles.
@@ -67,17 +72,16 @@ It also distinguishes the standard part's 12 MHz rating from the separately
 specified automotive grade; a 16 MHz cycle model does not verify the board's
 device grade or supply voltage.
 
-Four transport defects remain executable expected failures:
+The remaining strict expected failure is nonempty DATA acknowledged before
+its foreground CRC validation. SETUP command protection does not fix that
+handshake. Full continuous foreground service latency and electrical USB
+operation also remain unproved. The board retains the earlier physically
+tested 1274-byte Micronucleus+ loader and its application.
 
-1. The PHY can select ACK before foreground DATA CRC validation.
-2. An IN payload/PID can advance before the host acknowledges it.
-3. A Flash worker can start without the mutation status packet's host ACK.
-4. An unrelated GET_STATUS response can satisfy the pending status marker.
-
-SETUP CRC protection prevents command dispatch from damaged fields; it does
-not fix the premature handshake. These conditions make the branch a development
-target. The board retains the earlier physically tested 1274-byte Micronucleus+
-loader and its application; no Block64 image was installed during this work.
+The [streaming CRC design](STREAMING_CRC_DESIGN.md) records a concrete candidate
+that distributes table lookup and CRC updates across received bits at 16 MHz.
+It is not assembled or enabled. Its stuffed-bit, EOP, register and sample-phase
+proofs must precede integration.
 
 The [continuation plan](PLAN.md) prioritizes these transaction fixes before
 further size work or physical installation. The inherited first-page power-loss
