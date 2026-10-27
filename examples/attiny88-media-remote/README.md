@@ -146,6 +146,8 @@ The stock Micronucleus CLI does not support the installed compact 3.0 protocol.
 
 The old [hardware record](HARDWARE_TEST.md) applies to the three-button version.
 Expanded-version results are in [VALIDATION.md](VALIDATION.md).
+The new firmware was also uploaded and its keyboard/layer behavior checked on
+the board; details are in [HARDWARE_LAYERS.md](HARDWARE_LAYERS.md).
 V-USB is reused unchanged from the sibling example's
 [pinned driver](../attiny88-hid-keyboard/usbdrv/UPSTREAM.md), including its
 existing DATA CRC and USB suspend-power limitations.

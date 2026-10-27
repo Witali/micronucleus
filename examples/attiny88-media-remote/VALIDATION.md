@@ -27,5 +27,9 @@ correctly disabled saving/testing until an upgrade.
 GPIO-only build: 5506 Flash bytes, 308 static SRAM bytes. Automatic-test build:
 5630 Flash bytes, 309 static SRAM bytes.
 
-Physical checks of the expanded firmware, button wiring and layer LEDs remain
-pending. The earlier three-button hardware evidence is a separate scope.
+The expanded firmware was subsequently uploaded and checked on the connected
+board. Windows observed F13/F14/F15 press/release from three temporary layers,
+the MCU switch cycled 1 -> 2 -> 3 -> 1, and new-format EEPROM save/readback
+passed. Original bindings were restored. See [HARDWARE_LAYERS.md](HARDWARE_LAYERS.md).
+Physical external buttons and layer LEDs, plus cold-power persistence, remain
+unverified. The earlier three-button hardware evidence is a separate scope.
