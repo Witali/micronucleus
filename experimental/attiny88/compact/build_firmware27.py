@@ -19,7 +19,9 @@ def main():
     OUT.mkdir(exist_ok=True)
     manifest = dict(
         candidate='Pass27 verified software checkpoint, 2026-10-27',
-        code_checkpoint='ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3',
+        validation_baseline='ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3',
+        source_sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                       for path in sorted((ROOT / 'source').iterdir()) if path.is_file()},
         target='ATtiny88, external 16 MHz clock', protocol='v5.6',
         hardware_validated=False, fits_1024_bytes=False,
         toolchain='Clang/LLVM 18.1.3; GNU AVR binutils 2.26.20160125',

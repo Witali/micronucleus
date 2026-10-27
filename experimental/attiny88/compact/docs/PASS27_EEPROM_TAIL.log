@@ -1,0 +1,22 @@
+PHY audit NONE (57, 105)
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 355 busy/unknown vendor requests, empty DATA1 replies and standard USB while EEPROM is busy
+PASS NONE pending RUN returns to polling, exits after timeout, and waits for EEPROM
+PASS NONE 41981 no-packet PCIF intervals; max gap 32 + handler 5 + synchronizer 3 = 40 cycles from physical SOP
+PASS NONE 62 synchronized minimum-IPD cases; entry max 38.66666666666663 cycles; response max 47.33333333333337 cycles; stack max 6 bytes
+PASS tail reuse NONE 1148 61b0171148f578da77725b653220cab844ec02af4b5bfc895a24154ecdaa4cab
+PHY audit ACTIVE_HIGH (57, 105)
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 355 busy/unknown vendor requests, empty DATA1 replies and standard USB while EEPROM is busy
+PASS ACTIVE_HIGH pending RUN returns to polling, exits after timeout, and waits for EEPROM
+PASS ACTIVE_HIGH 41981 no-packet PCIF intervals; max gap 32 + handler 5 + synchronizer 3 = 40 cycles from physical SOP
+PASS ACTIVE_HIGH 62 synchronized minimum-IPD cases; entry max 38.66666666666663 cycles; response max 47.33333333333337 cycles; stack max 6 bytes
+PASS tail reuse ACTIVE_HIGH 1166 27601ec65effbb65934a3450e02016bbcc66109251a9e62a434a12efd2ec79b6
+PHY audit ACTIVE_LOW (57, 105)
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 355 busy/unknown vendor requests, empty DATA1 replies and standard USB while EEPROM is busy
+PASS ACTIVE_LOW pending RUN returns to polling, exits after timeout, and waits for EEPROM
+PASS ACTIVE_LOW 41981 no-packet PCIF intervals; max gap 32 + handler 5 + synchronizer 3 = 40 cycles from physical SOP
+PASS ACTIVE_LOW 62 synchronized minimum-IPD cases; entry max 38.66666666666663 cycles; response max 47.33333333333337 cycles; stack max 6 bytes
+PASS tail reuse ACTIVE_LOW 1164 2aff99a6e19b5f4a7b94f51fbe7970c4366c81cbcb6b8599d380c40c6b8fff99
+PASS target1144 bytes;120 over1024 ffa63b8666ad0f8811eabf01810070b756bda21921f6e84548e50d0c56da8eb5

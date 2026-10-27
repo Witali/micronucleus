@@ -7,9 +7,9 @@ comparison references. This candidate is not a released or hardware-tested build
 The [accepted receive-CRC16 exception](USB_PROTOCOL.md) records the user's
 size/ACK-latency tradeoff, its corruption risk and the checks it does not waive.
 
-The current timing-repair checkpoint is **1146 bytes at `0x1C00`**, still
-**122 bytes above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1150 bytes
-in 18 pages. Correcting the timing and foreground packet loss costs 50 bytes
+The current timing-repair checkpoint is **1144 bytes at `0x1C00`**, still
+**120 bytes above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1148 bytes
+in 18 pages. Correcting the timing and foreground packet loss costs 48 bytes
 relative to the preceding 1096-byte size checkpoint.
 Earlier checkpoints below retain the scope of their isolated measurements.
 
@@ -188,4 +188,14 @@ independently checks each intentional TX/return change. These digital checks
 do not establish analog or complete USB protocol compliance; known protocol
 gaps and the accepted receive-CRC exception remain in [USB_PROTOCOL.md](USB_PROTOCOL.md).
 
-Fitting off/high/low sizes are 1150/1168/1166 bytes at 0x1B80/0x1B40/0x1B40.
+Fitting off/high/low sizes are 1148/1166/1164 bytes at 0x1B80/0x1B40/0x1B40.
+
+### EEPROM worker tail reuse
+
+The ready EEPROM worker falls directly into the adjacent cooperative service
+helper, saving one two-byte RJMP and two cycles. No extra return frame is added.
+All three profiles retain the one-frame SETUP-abort contract and 40-cycle modeled
+poll bound. Targeted EEPROM, busy-request, pending-RUN and synchronized-traffic
+checks are recorded in PASS27_EEPROM_TAIL.log; the unchanged baseline suite is
+recorded separately in PASS27_COOPERATIVE.log. Previously delivered ZIP files
+remain frozen at their recorded commits.

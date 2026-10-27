@@ -5,9 +5,9 @@ No hardware was programmed or tested. This checkpoint does not yet fit 1 KiB.
 
 | File prefix | LED | BOOT_AT | Body bytes | Application bytes |
 | --- | --- | --- | ---: | ---: |
-| `Pass27_off` | None | `0x1B80` | 1150 | 7036 |
-| `Pass27_high` | Active high | `0x1B40` | 1168 | 6972 |
-| `Pass27_low` | Active low | `0x1B40` | 1166 | 6972 |
+| `Pass27_off` | None | `0x1B80` | 1148 | 7036 |
+| `Pass27_high` | Active high | `0x1B40` | 1166 | 6972 |
+| `Pass27_low` | Active low | `0x1B40` | 1164 | 6972 |
 
 `*_body.bin` contains only the bootloader at its listed placement.
 `*_ISP_FRESH_8192.bin` is a complete fresh-chip Flash image with RESET redirect;
@@ -32,3 +32,7 @@ Clang/LLVM 18.1.3 and AVR binutils 2.26.20160125. The builder checks physical fi
 profile/descriptor identity, undefined operands, emitted PHY contracts, RESET
 destination, and an independently parsed HEX round trip. `SHA256SUMS.txt`
 covers every other file in this directory.
+
+These images additionally include the two-byte EEPROM-tail reuse. Its affected
+EEPROM/USB paths pass in every LED profile; see docs/PASS27_EEPROM_TAIL.log.
+Exact current source hashes are recorded in manifest.json.

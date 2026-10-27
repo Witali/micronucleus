@@ -147,6 +147,8 @@ def check_flash_write4(artifact):
 
 
 def check_eeprom_write4(artifact):
+    assert artifact['symbols']['ee_write_step_done'] == artifact['symbols']['usb_service_pending'], \
+        'EEPROM tail must fall directly into the one-frame USB service helper'
     count = 0
     for address in range(256):
         machine = new_machine(artifact)

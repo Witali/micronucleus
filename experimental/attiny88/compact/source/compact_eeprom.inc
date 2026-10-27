@@ -16,8 +16,8 @@ rjmp usb_reply_empty
 /* Reuses the AVR register file as a four-byte queue (address 0x0A..0x0D).
  * Never spin on EEPE: advance one byte between USB poll windows. */
 ee_write_step:
-/* Empty queue skips the EEPE test and returns. Otherwise an idle EEPE test
- * skips RET and starts one byte; a busy EEPROM returns without side effects. */
+/* An empty queue skips the EEPE test and services USB. A ready EEPROM skips
+ * that jump and starts one byte; a busy EEPROM services USB without writing. */
 cpse r8, r1
 sbic _SFR_IO_ADDR(EECR), EEPE
 rjmp usb_service_pending
@@ -33,4 +33,5 @@ sbi _SFR_IO_ADDR(EECR), EEPE
 inc r4
 dec r8
 ee_write_step_done:
-rjmp usb_service_pending
+/* The main module places usb_service_pending immediately after this include.
+ * Fall through without adding a return frame; its SETUP abort pops one frame. */

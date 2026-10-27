@@ -52,13 +52,13 @@ most one byte per call and returns without waiting on EEPE.
 
 | bcdDevice | LED | BOOT_AT | Code bytes | App bytes excluding postscript |
 | --- | --- | --- | ---: | ---: |
-| `0x0560` | Off | `0x1B80` | 1150 | 7036 |
-| `0x0561` | Active high | `0x1B40` | 1168 | 6972 |
-| `0x0562` | Active low | `0x1B40` | 1166 | 6972 |
+| `0x0560` | Off | `0x1B80` | 1148 | 7036 |
+| `0x0561` | Active high | `0x1B40` | 1166 | 6972 |
+| `0x0562` | Active low | `0x1B40` | 1164 | 6972 |
 
 These values describe this checkpoint and must be updated with every admitted
-candidate build. At the target address `0x1C00`, no LED uses 1146 bytes,
-**122 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
+candidate build. At the target address `0x1C00`, no LED uses 1144 bytes,
+**120 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
 The build command measures the source; it does not program a device.
 
 The new client retains offline HEX preparation and the separate explicit

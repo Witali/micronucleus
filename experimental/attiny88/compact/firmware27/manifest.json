@@ -1,6 +1,17 @@
 {
   "candidate": "Pass27 verified software checkpoint, 2026-10-27",
-  "code_checkpoint": "ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3",
+  "validation_baseline": "ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3",
+  "source_sha256": {
+    "compact_eeprom.inc": "b65ddc4c13b2b6358b783712e274d8a85c87f95e6b3039b5aaf24408df8620de",
+    "compact_memory.inc": "f36daa44e1e460792cae1daf188fe051dbb67c75b46316faef44cdae296a5c79",
+    "compact_protocol.inc": "a0eafdcacdbb565536ad01a665782db7ca348ada3e146099adae37e665c2ed58",
+    "device_attiny88.inc": "db2b35ebea1623bc7720fc84e1fd2d9651cd8ecea5c905786fa4ec01f6a2320a",
+    "micronucleus_t88_compact.S": "9979bfc17a4eb17dc0ecd7e259f6651d560fc2273dcd82e1b762b5c9cf21912f",
+    "vusb_ep0.inc": "c8e15ab28a826e00cc6c49c4307ef9c0989ff28b6f65f3fa6d631c7d7930227b",
+    "vusb_phy.inc": "70c2ee5f3d252071a4b184924a98e0b2c1c7cea2132c1c4ec9dea576cf6fbb3f",
+    "vusb_setup.inc": "74e28453035f317b027eecd5a1c93ad2df84a5ba1d1a5073901e976112aed954",
+    "vusb_standard.inc": "86630343dfdf16638cb374e99eae76ae90234f7c577b90ce1093377a6fde53d9"
+  },
   "target": "ATtiny88, external 16 MHz clock",
   "protocol": "v5.6",
   "hardware_validated": false,
@@ -17,39 +28,22 @@
       "led": "NONE",
       "bcdDevice": "0x560",
       "boot_at": "0x1b80",
-      "code_bytes": 1150,
+      "code_bytes": 1148,
       "reserved_bytes": 1152,
       "app_bytes": 7036,
-      "spare_bytes": 2,
+      "spare_bytes": 4,
       "led_ddr_io": "0xa",
       "led_port_io": "0xb",
       "led_pin": 0,
       "body_file": "Pass27_off_body.bin",
       "isp_bin": "Pass27_off_ISP_FRESH_8192.bin",
       "isp_hex": "Pass27_off_ISP_FRESH_EXPERIMENTAL.hex",
-      "code_sha256": "37b634849dafe5512f135255e184ff392ef4e33de5fc449ddd451ac3ff366975",
-      "isp_sha256": "61ab97f14222489c6fb6f46b73fea775b65d054b5da49d8692a70f07cf58bb7b"
+      "code_sha256": "61b0171148f578da77725b653220cab844ec02af4b5bfc895a24154ecdaa4cab",
+      "isp_sha256": "26a7655b094d5793674afc5729eed177c70da29233a10dbd2f1d935e7fead2bc"
     },
     {
       "led": "ACTIVE_HIGH",
       "bcdDevice": "0x561",
-      "boot_at": "0x1b40",
-      "code_bytes": 1168,
-      "reserved_bytes": 1216,
-      "app_bytes": 6972,
-      "spare_bytes": 48,
-      "led_ddr_io": "0xa",
-      "led_port_io": "0xb",
-      "led_pin": 0,
-      "body_file": "Pass27_high_body.bin",
-      "isp_bin": "Pass27_high_ISP_FRESH_8192.bin",
-      "isp_hex": "Pass27_high_ISP_FRESH_EXPERIMENTAL.hex",
-      "code_sha256": "39af3b8668ddc73490e305ec407cf8240a6141cf0dc04784405f72e3a0dd8f4a",
-      "isp_sha256": "9bea6b95566aa5d11d775a93f0099fe2eb82c4e9ce7d2a9955dd7961b4739f8c"
-    },
-    {
-      "led": "ACTIVE_LOW",
-      "bcdDevice": "0x562",
       "boot_at": "0x1b40",
       "code_bytes": 1166,
       "reserved_bytes": 1216,
@@ -58,11 +52,28 @@
       "led_ddr_io": "0xa",
       "led_port_io": "0xb",
       "led_pin": 0,
+      "body_file": "Pass27_high_body.bin",
+      "isp_bin": "Pass27_high_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass27_high_ISP_FRESH_EXPERIMENTAL.hex",
+      "code_sha256": "27601ec65effbb65934a3450e02016bbcc66109251a9e62a434a12efd2ec79b6",
+      "isp_sha256": "4eb8206cb8f15a9d7706ac0ad69f95f3954278aabc35d8186dcef2e3e8b6603e"
+    },
+    {
+      "led": "ACTIVE_LOW",
+      "bcdDevice": "0x562",
+      "boot_at": "0x1b40",
+      "code_bytes": 1164,
+      "reserved_bytes": 1216,
+      "app_bytes": 6972,
+      "spare_bytes": 52,
+      "led_ddr_io": "0xa",
+      "led_port_io": "0xb",
+      "led_pin": 0,
       "body_file": "Pass27_low_body.bin",
       "isp_bin": "Pass27_low_ISP_FRESH_8192.bin",
       "isp_hex": "Pass27_low_ISP_FRESH_EXPERIMENTAL.hex",
-      "code_sha256": "3868ed1025af5c751d663d50520cfe5948b5826bd4e1395d061dd7a0f2ee69af",
-      "isp_sha256": "bb2955fe5300321c57089f68133600bac1ae17f1b599ecd77cedfb6ef27b3872"
+      "code_sha256": "2aff99a6e19b5f4a7b94f51fbe7970c4366c81cbcb6b8599d380c40c6b8fff99",
+      "isp_sha256": "8f91590b41ebb2ad5a1a89228166914e2e10c5380898d336ffe7c8e45154ef98"
     }
   ]
 }
