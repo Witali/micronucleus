@@ -98,6 +98,6 @@ For a hardware smoke test, record these observations separately:
 5. Reconnecting while the compact programmer waits still permits loading another application.
 
 V-USB is vendored independently of the reduced bootloader driver. Its pinned
-source and license are documented in [usbdrv/UPSTREAM.md](usbdrv/UPSTREAM.md).
+source and license are documented in [shared V-USB sources](../common/usbdrv/UPSTREAM.md).
 The upstream [HIDKeys example](https://www.obdev.at/products/vusb/hidkeys.html)
 documents this use of V-USB as a keyboard.

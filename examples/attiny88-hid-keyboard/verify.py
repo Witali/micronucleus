@@ -1,25 +1,16 @@
 #!/usr/bin/env python3
 """Offline checks of real firmware bytes, loader placement and C report logic."""
 import argparse
-import hashlib
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 import build
+from common import avr, verification
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[1]
-
-
-def rjmp_target(data, address):
-    word = int.from_bytes(data[address:address + 2], 'little')
-    assert word & 0xF000 == 0xC000, 'Expected a normal ATtiny88 RJMP vector'
-    offset = word & 0xFFF
-    if offset & 0x800:
-        offset -= 0x1000
-    return (address + 2 + 2 * offset) % 8192
 
 
 def main():
@@ -30,10 +21,7 @@ def main():
     toolchain = build.find_toolchain(args.toolchain)
     elf = build.build(toolchain)
     binary = (ROOT / 'build/keyboard.bin').read_bytes()
-    symbols = {}
-    for line in build.run_tool(toolchain, 'avr-nm', '-n', '--defined-only', elf).splitlines():
-        address, _, name = line.split()
-        symbols[name] = int(address, 16)
+    symbols = verification.symbols(toolchain, elf)
 
     def data(name, size):
         start = symbols[name]
@@ -52,12 +40,8 @@ def main():
     report = data('usbDescriptorHidReport', 63)
     assert report[:6] == bytes.fromhex('05010906a101') and report[-1] == 0xC0
     bits = {0x80: 0, 0x90: 0}  # Input and Output Main items.
-    size = count = position = 0
-    while position < len(report):
-        prefix = report[position]
-        length = (0, 1, 2, 4)[prefix & 3]
-        tag = prefix & 0xFC
-        value = int.from_bytes(report[position + 1:position + 1 + length], 'little')
+    size = count = 0
+    for tag, value in verification.hid_items(report):
         if tag == 0x74:
             size = value
         elif tag == 0x94:
@@ -65,30 +49,17 @@ def main():
         elif tag in bits:
             bits[tag] += size * count
         assert tag != 0x84, 'Boot keyboard must not use report IDs'
-        position += 1 + length
     assert bits == {0x80: 64, 0x90: 8}
 
-    assert rjmp_target(binary, 0) > 2
-    assert rjmp_target(binary, 2) == symbols['__vector_1']
-    assert symbols['__vector_1'] != symbols['__bad_interrupt']
     disassembly = build.run_tool(toolchain, 'avr-objdump', '-d', elf)
     assert not any('spm' in line.split(';')[0].split() for line in disassembly.splitlines())
     sys.path.insert(0, str(REPO / 'experimental/attiny88/compact'))
     from host import compact_programmer27 as programmer
     cells = build.read_hex(ROOT / 'build/keyboard.hex')
-    for _, boot_at, _ in programmer.USB_PROFILES.values():
-        prepared = programmer.pack_application(cells, boot_at=boot_at)
-        for address, value in cells.items():
-            if address >= 2:
-                assert prepared.image[address] == value
-        assert rjmp_target(prepared.image, 0) == boot_at
-        assert rjmp_target(prepared.image, boot_at - 4) == rjmp_target(binary, 0)
-        assert prepared.image[boot_at - 2:boot_at] == b'\xff\xff'
+    verification.check_placement(binary, cells, symbols, programmer)
     print('PASS: descriptors, RESET/INT0 vectors, compact 3.0 placement, no SPM')
 
-    for line in (ROOT / 'usbdrv/SHA256SUMS').read_text(encoding='ascii').splitlines():
-        expected, name = line.split()
-        assert hashlib.sha256((ROOT / 'usbdrv' / name).read_bytes()).hexdigest() == expected
+    verification.verify_vendor()
     print('PASS: pinned V-USB sources are unchanged')
     test = ROOT / 'build' / ('keyboard-test.exe' if os.name == 'nt' else 'keyboard-test')
     subprocess.run([args.cc, '-std=c11', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT),
