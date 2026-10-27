@@ -1,0 +1,33 @@
+{
+  "transformed_state_exhaustive_cases": 131072,
+  "transformed_init": "0x1557",
+  "transformed_good_residue": "0xffff",
+  "standard_good_residue": "0xb001",
+  "streaming_kernel": {
+    "manifest": {
+      "name": "crc_stream_kernel",
+      "bytes": 12,
+      "body_sha256": "6a8379fe41bba6d7fcd80fbcc2ae4a3223c81d76c77405ed38adaf7817188e7f",
+      "source_sha256": "412710b21681ad11da6ed46c0748198749ef21617f713bfd947cc95576bce399"
+    },
+    "emitted_cases": 2062,
+    "cycles_without_ret": [
+      4,
+      5
+    ],
+    "extra_decoded_carry_restore_cycles": 1
+  },
+  "fast_byte_kernel": {
+    "manifest": {
+      "name": "crc_fast_byte_kernel",
+      "bytes": 42,
+      "body_sha256": "320bb4c0f841ce234b0a2b648749c2ef1d8931143a8928ba0a18ffa15b2f42a4",
+      "source_sha256": "fd7604d73979394c2bb7c04cab48b92820341fc434d6d2825b1f7ce846774b99"
+    },
+    "emitted_cases": 65536,
+    "cycles_without_ret": [
+      20
+    ],
+    "extra_payload_copy_cycles": 1
+  }
+}

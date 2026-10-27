@@ -1,0 +1,134 @@
+{
+  "valid_vectors": 4864,
+  "removed_stuffed_bits": 1760,
+  "bad_payload_or_crc_single_bit_mutations": 3456,
+  "good_alternate_residue": "0xffff",
+  "scope": "Arithmetic/field-scope proof only; neither rejected integration is a working CRC receiver.",
+  "baseline": {
+    "name": "baseline",
+    "bytes": 1144,
+    "body_sha256": "07d88bc21d932b2d19c9969f988dfa01f0d68eb4902545aaf07773d5f2fa5fe2",
+    "source_sha256": "8d77ea1e82f572f9c550171563573941391562db99c8d1441149503f78608c65"
+  },
+  "delay_slots": [
+    {
+      "packet": "zero8",
+      "after_first_payload_complete": 262,
+      "replaceable_delay_cycles": 5,
+      "slots": [
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        }
+      ],
+      "required_fast_byte_arithmetic_cycles": 160,
+      "required_payload_copy_cycles": 8
+    },
+    {
+      "packet": "ff8",
+      "after_first_payload_complete": 273,
+      "replaceable_delay_cycles": 16,
+      "slots": [
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cac",
+          "cycles": 2,
+          "reason": "RJMP to next word"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        }
+      ],
+      "required_fast_byte_arithmetic_cycles": 160,
+      "required_payload_copy_cycles": 8
+    },
+    {
+      "packet": "ramp8",
+      "after_first_payload_complete": 262,
+      "replaceable_delay_cycles": 3,
+      "slots": [
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        },
+        {
+          "pc": "0x1cba",
+          "cycles": 1,
+          "reason": "NOP"
+        }
+      ],
+      "required_fast_byte_arithmetic_cycles": 160,
+      "required_payload_copy_cycles": 8
+    }
+  ],
+  "official_prior_art": [
+    {
+      "file": "vusb-usbdrvasm18-crc.inc",
+      "url": "https://github.com/obdev/v-usb/blob/master/usbdrv/usbdrvasm18-crc.inc",
+      "sha256": "fe25c95cdc4e503475f04bc8888dcedcb27596db18cb04aec4d073b659a677ff"
+    },
+    {
+      "file": "vusb-usbdrvasm.S",
+      "url": "https://github.com/obdev/v-usb/blob/master/usbdrv/usbdrvasm.S",
+      "sha256": "ad37642c953091124fed7c5b060a52974c227cab1ad0c9e04e4e5f3a5acc5a79"
+    }
+  ]
+}

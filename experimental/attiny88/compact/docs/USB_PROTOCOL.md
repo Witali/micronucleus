@@ -29,6 +29,14 @@ as proof of retry or malformed-packet correctness.
 
 ## Open protocol findings
 
+A separate agent tested table-free CRC updates during bit reception and a
+byte update distributed across sample slots. The tested integrations add
+54/86 bytes and break clean packet capture; the table-free byte kernel needs
+20 arithmetic cycles per byte. These designs remain rejected, without claiming
+that every redesigned receiver is impossible. The pinned sources, cycle-path
+analysis, independent arithmetic checks and commands are retained in
+[the isolated feasibility experiment](../prototypes/rx_crc/README.md).
+
 The timing-repair checkpoint still lacks token CRC5, exact token-length and
 endpoint-zero checks. Emitted-waveform counterexamples show a response to a
 corrupted or absent-endpoint token; an invalid SETUP token followed by DATA can
@@ -36,6 +44,11 @@ reach WRITE4. These are open defects, not covered by the receive-CRC16 waiver.
 ACK-driven retransmission, duplicate handling and control-pipe error/reset
 behavior also require independent admission. Happy-path PID/CRC comparisons
 and waveform equivalence do not close those items.
+
+An emitted-waveform counterexample on commit `ce74532` confirms that repeated
+IN requests without host ACK advance an 18-byte descriptor to the next payload
+and DATA PID. USB 2.0 sections 8.6.2/8.6.4 require retransmitting the same packet
+until acknowledgment; this remains an open defect outside the CRC16 waiver.
 
 Flash page erase/write halts this MCU. The private host protocol therefore
 requires a quiet interval after erase and automatic page commit; its programming

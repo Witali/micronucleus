@@ -1,0 +1,891 @@
+{
+  "manifest": {
+    "name": "baseline",
+    "bytes": 1144,
+    "body_sha256": "07d88bc21d932b2d19c9969f988dfa01f0d68eb4902545aaf07773d5f2fa5fe2",
+    "source_sha256": "8d77ea1e82f572f9c550171563573941391562db99c8d1441149503f78608c65"
+  },
+  "packets": 768,
+  "path_variants": 15,
+  "sample_paths": [
+    {
+      "source": "usb_rx_advance_bit_pair+6",
+      "target": "usb_rx_sample_bit7+2",
+      "cycles": [
+        11.0,
+        12.0
+      ]
+    },
+    {
+      "source": "usb_rx_delay_complete+8",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": [
+        10.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_sample_bit7+2",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_unstuff_bit7+2",
+      "cycles": [
+        10.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_even_bit",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": [
+        10.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_even_bit",
+      "target": "usb_rx_unstuff_even_bit+2",
+      "cycles": [
+        10.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_advance_bit_pair+6",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_unstuff_odd_bit+2",
+      "cycles": [
+        10.0
+      ]
+    },
+    {
+      "source": "usb_rx_unstuff_bit7+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_unstuff_even_bit+2",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": [
+        11.0
+      ]
+    },
+    {
+      "source": "usb_rx_unstuff_odd_bit+2",
+      "target": "usb_rx_advance_bit_pair+6",
+      "cycles": [
+        12.0
+      ]
+    },
+    {
+      "source": "usb_rx_unstuff_odd_bit+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": [
+        12.0
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "source": "usb_rx_advance_bit_pair+6",
+      "target": "usb_rx_sample_bit7+2",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r17, r16"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0x01"
+        },
+        {
+          "op": "brbc",
+          "operands": "2,"
+        },
+        {
+          "op": "subi",
+          "operands": "r17, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        }
+      ],
+      "count": 5451,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 22,
+        "next_cell": 23
+      }
+    },
+    {
+      "source": "usb_rx_advance_bit_pair+6",
+      "target": "usb_rx_sample_bit7+2",
+      "cycles": 12.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r17, r16"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0x01"
+        },
+        {
+          "op": "brbc",
+          "operands": "2,"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0xfd"
+        },
+        {
+          "op": "nop",
+          "operands": ""
+        },
+        {
+          "op": "subi",
+          "operands": "r17, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        }
+      ],
+      "count": 2997,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 14,
+        "next_cell": 15
+      }
+    },
+    {
+      "source": "usb_rx_delay_complete+8",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": 10.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "bst",
+          "operands": "r16, 1"
+        },
+        {
+          "op": "bld",
+          "operands": "r18, 7"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "ldi",
+          "operands": "r21, 0x00"
+        },
+        {
+          "op": "ldi",
+          "operands": "r23, 0x0b"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        }
+      ],
+      "count": 768,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 8,
+        "next_cell": 9
+      }
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_sample_bit7+2",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "ori",
+          "operands": "r20, 0x40"
+        },
+        {
+          "op": "andi",
+          "operands": "r18, 0x7f"
+        },
+        {
+          "op": "mov",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0xff"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        }
+      ],
+      "count": 68,
+      "example": {
+        "pid": "0xc3",
+        "payload": "6969696969696969",
+        "physical_cell": 95,
+        "next_cell": 96
+      }
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r16, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "eor",
+          "operands": "r20, r18"
+        },
+        {
+          "op": "st",
+          "operands": "Y+, r20"
+        }
+      ],
+      "count": 8391,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 15,
+        "next_cell": 16
+      }
+    },
+    {
+      "source": "usb_rx_sample_bit7+2",
+      "target": "usb_rx_unstuff_bit7+2",
+      "cycles": 10.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r16, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "ori",
+          "operands": "r20, 0x80"
+        }
+      ],
+      "count": 57,
+      "example": {
+        "pid": "0xc3",
+        "payload": "2626262626262626",
+        "physical_cell": 95,
+        "next_cell": 96
+      }
+    },
+    {
+      "source": "usb_rx_sample_even_bit",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": 10.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r17, r16"
+        },
+        {
+          "op": "andi",
+          "operands": "r20, 0x3f"
+        },
+        {
+          "op": "subi",
+          "operands": "r17, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "lsr",
+          "operands": "r20"
+        },
+        {
+          "op": "lsr",
+          "operands": "r20"
+        }
+      ],
+      "count": 25192,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 10,
+        "next_cell": 11
+      }
+    },
+    {
+      "source": "usb_rx_sample_even_bit",
+      "target": "usb_rx_unstuff_even_bit+2",
+      "cycles": 10.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "eor",
+          "operands": "r17, r16"
+        },
+        {
+          "op": "andi",
+          "operands": "r20, 0x3f"
+        },
+        {
+          "op": "subi",
+          "operands": "r17, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "ori",
+          "operands": "r20, 0x40"
+        }
+      ],
+      "count": 152,
+      "example": {
+        "pid": "0xc3",
+        "payload": "1515151515151515",
+        "physical_cell": 90,
+        "next_cell": 91
+      }
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_advance_bit_pair+6",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "eor",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r16, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "subi",
+          "operands": "r22, 0xab"
+        },
+        {
+          "op": "brbs",
+          "operands": "0,"
+        },
+        {
+          "op": "subi",
+          "operands": "r23, 0x01"
+        }
+      ],
+      "count": 8384,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 13,
+        "next_cell": 14
+      }
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "eor",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r16, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "subi",
+          "operands": "r22, 0xab"
+        },
+        {
+          "op": "brbs",
+          "operands": "0,"
+        }
+      ],
+      "count": 16764,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 9,
+        "next_cell": 10
+      }
+    },
+    {
+      "source": "usb_rx_sample_odd_bit",
+      "target": "usb_rx_unstuff_odd_bit+2",
+      "cycles": 10.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "eor",
+          "operands": "r16, r17"
+        },
+        {
+          "op": "subi",
+          "operands": "r16, 0x01"
+        },
+        {
+          "op": "ror",
+          "operands": "r18"
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "ori",
+          "operands": "r20, 0x20"
+        }
+      ],
+      "count": 196,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 85,
+        "next_cell": 86
+      }
+    },
+    {
+      "source": "usb_rx_unstuff_bit7+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "andi",
+          "operands": "r18, 0x7f"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0x02"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "cpi",
+          "operands": "r18, 0xfc"
+        },
+        {
+          "op": "brbc",
+          "operands": "0,"
+        },
+        {
+          "op": "eor",
+          "operands": "r20, r18"
+        },
+        {
+          "op": "st",
+          "operands": "Y+, r20"
+        }
+      ],
+      "count": 57,
+      "example": {
+        "pid": "0xc3",
+        "payload": "2626262626262626",
+        "physical_cell": 96,
+        "next_cell": "SE0"
+      }
+    },
+    {
+      "source": "usb_rx_unstuff_even_bit+2",
+      "target": "usb_rx_sample_odd_bit",
+      "cycles": 11.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r16, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r18, 0x7f"
+        },
+        {
+          "op": "andi",
+          "operands": "r16, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0xff"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "lsr",
+          "operands": "r20"
+        },
+        {
+          "op": "lsr",
+          "operands": "r20"
+        }
+      ],
+      "count": 152,
+      "example": {
+        "pid": "0xc3",
+        "payload": "1515151515151515",
+        "physical_cell": 91,
+        "next_cell": 92
+      }
+    },
+    {
+      "source": "usb_rx_unstuff_odd_bit+2",
+      "target": "usb_rx_advance_bit_pair+6",
+      "cycles": 12.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r18, 0x7f"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0xff"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "subi",
+          "operands": "r22, 0xab"
+        },
+        {
+          "op": "brbs",
+          "operands": "0,"
+        },
+        {
+          "op": "subi",
+          "operands": "r23, 0x01"
+        }
+      ],
+      "count": 64,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0000000000000000",
+        "physical_cell": 86,
+        "next_cell": 87
+      }
+    },
+    {
+      "source": "usb_rx_unstuff_odd_bit+2",
+      "target": "usb_rx_sample_even_bit",
+      "cycles": 12.0,
+      "instructions": [
+        {
+          "op": "in",
+          "operands": "r17, 0x9"
+        },
+        {
+          "op": "andi",
+          "operands": "r18, 0x7f"
+        },
+        {
+          "op": "andi",
+          "operands": "r17, 0x06"
+        },
+        {
+          "op": "brbs",
+          "operands": "1,"
+        },
+        {
+          "op": "subi",
+          "operands": "r21, 0xff"
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "rjmp",
+          "operands": ""
+        },
+        {
+          "op": "subi",
+          "operands": "r22, 0xab"
+        },
+        {
+          "op": "brbs",
+          "operands": "0,"
+        }
+      ],
+      "count": 132,
+      "example": {
+        "pid": "0xc3",
+        "payload": "0f0f0f0f0f0f0f0f",
+        "physical_cell": 20,
+        "next_cell": 21
+      }
+    }
+  ]
+}

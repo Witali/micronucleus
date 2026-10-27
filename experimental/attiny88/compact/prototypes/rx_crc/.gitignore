@@ -1,0 +1,15 @@
+# Assembly/object output is disposable; baseline.S is the pinned experiment input.
+/*.o
+/*.elf
+/*.bin
+/*.S
+!/baseline.S
+/__pycache__/
+/*.pyc
+
+# Keep only the selected reproducible results despite parent JSON ignore rules.
+/*.json
+!/insertion-results.json
+!/crc-arithmetic-results.json
+!/rx-cycle-budget.json
+!/vectors-and-slots.json

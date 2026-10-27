@@ -189,8 +189,9 @@ in r28, _SFR_IO_ADDR(PCIFR)
 sbrc r28, PCIF2
 rjmp usb_rx_wait_for_j
 rjmp usb_return_context
-/* Publish nonempty DATA to the EP0 parser and choose ACK/NAK. Inherited
- * limitation: ACK can precede full CRC16 validation; this is not USB admission.
+/* Publish nonempty DATA to the EP0 parser and choose ACK/NAK. Incoming CRC16
+ * validation is intentionally omitted under docs/USB_PROTOCOL.md's accepted
+ * size/timing exception; outgoing CRC16 remains independently checked.
  */
 usb_rx_handle_data:
 ldd r18, Z+CTX_CURRENT_TOKEN

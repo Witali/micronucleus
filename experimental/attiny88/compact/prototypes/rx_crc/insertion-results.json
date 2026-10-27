@@ -1,0 +1,708 @@
+[
+  {
+    "before": {
+      "name": "baseline",
+      "bytes": 1144,
+      "body_sha256": "07d88bc21d932b2d19c9969f988dfa01f0d68eb4902545aaf07773d5f2fa5fe2",
+      "source_sha256": "8d77ea1e82f572f9c550171563573941391562db99c8d1441149503f78608c65"
+    },
+    "after": {
+      "name": "inline_crc",
+      "bytes": 1230,
+      "body_sha256": "8c94b6523a0fcf9f091172cdfa72d93789697a30963d95ec931eda564d748674",
+      "source_sha256": "5417bd55d228558ecfc3d03f7314e1392b443793bae6c7204270fe265d870e19"
+    },
+    "delta_bytes": 86,
+    "cases": [
+      {
+        "packet": "zero8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7db6db7dd3e",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1048,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7db6db7dd3e",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1048,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7db6db7dd3e",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1048,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7db6db7dd3e",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1048,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7eeeeeeeeee5f",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1174,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7eeeeeeeeee5f",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1174,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7eeeeeeeeee5f",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1174,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "e7eeeeeeeeee5f",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1174,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1871,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1871,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1871,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1871,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1930,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1930,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1930,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 1930,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      }
+    ]
+  },
+  {
+    "before": {
+      "name": "baseline",
+      "bytes": 1144,
+      "body_sha256": "07d88bc21d932b2d19c9969f988dfa01f0d68eb4902545aaf07773d5f2fa5fe2",
+      "source_sha256": "8d77ea1e82f572f9c550171563573941391562db99c8d1441149503f78608c65"
+    },
+    "after": {
+      "name": "shared_crc",
+      "bytes": 1198,
+      "body_sha256": "aad0b63732899ca6a34e56a765df639ae37501a7a7fe55c3ae0b260e810d508a",
+      "source_sha256": "6c85d8b706a6acc682f2e39a1792885ae2876bb2fcd6b812fbccb7f4fb86877e"
+    },
+    "delta_bytes": 54,
+    "cases": [
+      {
+        "packet": "zero8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bf7df7ee4c",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1050,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bf7df7ee4c",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1050,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bf7df7ee4c",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1050,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "zero8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30000000000000000bff4",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1055,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bf7df7ee4c",
+          "expected": "c30000000000000000bff4",
+          "cycles": 1050,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2369,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2369,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2369,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ff8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c3fffffffffffffffffe70",
+          "expected": "c3fffffffffffffffffe70",
+          "cycles": 1172,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2369,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bfec665f2c",
+          "expected": "c30001020304050607b985",
+          "cycles": 1046,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bfec665f2c",
+          "expected": "c30001020304050607b985",
+          "cycles": 1046,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bfec665f2c",
+          "expected": "c30001020304050607b985",
+          "cycles": 1046,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "ramp8",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "c30001020304050607b985",
+          "expected": "c30001020304050607b985",
+          "cycles": 1044,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "wrong bytes",
+          "actual": "bfec665f2c",
+          "expected": "c30001020304050607b985",
+          "cycles": 1046,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 5,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2432,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 20,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2432,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 30,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2432,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      },
+      {
+        "packet": "empty",
+        "entry": 40,
+        "baseline": {
+          "ok": true,
+          "reason": "match",
+          "actual": "4b0000",
+          "expected": "4b0000",
+          "cycles": 361,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        },
+        "candidate": {
+          "ok": false,
+          "reason": "overflow",
+          "cycles": 2432,
+          "preserved": true,
+          "peak_standalone_stack_bytes": 4
+        }
+      }
+    ]
+  }
+]

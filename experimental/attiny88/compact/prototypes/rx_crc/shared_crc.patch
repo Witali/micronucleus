@@ -1,0 +1,108 @@
+--- baseline.S
++++ shared_crc.S
+@@ -55,7 +55,7 @@
+ pop r0
+ rjmp usb_rx_wait_for_k
+ usb_rx_sync_confirmed:
+-ldi r30, ((0x100) & 0xff)
++ldi r30, 0xa0
+ ldi r31, (((0x100) >> 8) & 0xff)
+ rjmp usb_rx_delay_complete
+ usb_rx_delay_complete:
+@@ -90,7 +90,9 @@
+ in r16, ((0x09))
+ andi r18, 0x7f
+ andi r16, ((1 << 1) | (1 << 2))
+-brbs 1, usb_rx_end_packet
++brbc 1, .Lshared_eop_continue
++rjmp usb_rx_end_packet
++.Lshared_eop_continue:
+ subi r21, ((-1) & 0xff)
+ rjmp usb_rx_unstuff_even_resume_jump
+ usb_rx_unstuff_even_resume_jump:
+@@ -114,6 +116,8 @@
+ nop
+ usb_rx_shift_bit6:
+ subi r17, 0x01
++rcall rx_crc_step
++lsl r17
+ ror r18
+ usb_rx_sample_bit7:
+ cpi r18, 0xfc
+@@ -122,18 +126,29 @@
+ andi r17, ((1 << 1) | (1 << 2))
+ eor r16, r17
+ subi r16, 0x01
++rcall rx_crc_step
++lsl r16
+ ror r18
+ usb_rx_finish_byte:
+ cpi r18, 0xfc
+ brbc 0, usb_rx_unstuff_bit7
+ eor r20, r18
+ st Y+, r20
++cpi r28, 23
++brne .Lcrc_payload
++ldi r19, 0x15
++ldi r30, 0x57
++mov r2, r30
++ldi r30, 0xa0
++.Lcrc_payload:
+ usb_rx_sample_even_bit:
+ in r16, ((0x09))
+ andi r16, ((1 << 1) | (1 << 2))
+ eor r17, r16
+ andi r20, 0x3f
+ subi r17, 0x01
++rcall rx_crc_step
++lsl r17
+ ror r18
+ cpi r18, 0xfc
+ brbc 0, usb_rx_unstuff_even_bit
+@@ -146,6 +161,8 @@
+ brbs 1, usb_rx_end_packet
+ eor r16, r17
+ subi r16, 0x01
++rcall rx_crc_step
++lsl r16
+ ror r18
+ cpi r18, 0xfc
+ brbc 0, usb_rx_unstuff_odd_bit
+@@ -156,11 +173,13 @@
+ in r16, ((0x09))
+ brbc 0, usb_rx_decode_bit6
+ usb_rx_overflow:
++eor r30, r30
+ sbi ((0x1b)), 2
+ usb_rx_ignore_packet:
+ eor r16, r16
+ rjmp usb_rx_store_token
+ usb_rx_end_packet:
++eor r30, r30
+ subi r23, (8 + 3)
+ neg r23
+ sub r28, r23
+@@ -198,6 +217,10 @@
+ rjmp usb_rx_wait_for_j
+ rjmp usb_return_context
+ usb_rx_handle_data:
++com r2
++com r19
++or r19, r2
++brne usb_rx_ignore_packet
+ ldd r18, Z+20
+ and r18, r18
+ brbs 1, usb_handler_packet_done
+@@ -709,3 +732,12 @@
+ rjmp usb_setup_capture_fields
+ .Lservice_done:
+ ret
++
++rx_crc_step:
++ror r19
++ror r2
++brcc .Lcrc_step_done
++eor r2, r31
++eor r19, r30
++.Lcrc_step_done:
++ret
