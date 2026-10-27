@@ -10,3 +10,4 @@
 
 # Retain the release manifest despite the repository-wide JSON ignore.
 !firmware/manifest.json
+!firmware27/manifest.json

@@ -1,0 +1,68 @@
+{
+  "candidate": "Pass27 verified software checkpoint, 2026-10-27",
+  "code_checkpoint": "ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3",
+  "target": "ATtiny88, external 16 MHz clock",
+  "protocol": "v5.6",
+  "hardware_validated": false,
+  "fits_1024_bytes": false,
+  "toolchain": "Clang/LLVM 18.1.3; GNU AVR binutils 2.26.20160125",
+  "limitations": [
+    "Incoming DATA CRC16 validation omitted by accepted design decision",
+    "Token CRC5/endpoint/length admission and ACK-driven retry remain open",
+    "Host requires 15 ms quiet after Flash erase/page commit",
+    "Fresh ISP image erases application; RESET-page power loss needs ISP recovery"
+  ],
+  "builds": [
+    {
+      "led": "NONE",
+      "bcdDevice": "0x560",
+      "boot_at": "0x1b80",
+      "code_bytes": 1150,
+      "reserved_bytes": 1152,
+      "app_bytes": 7036,
+      "spare_bytes": 2,
+      "led_ddr_io": "0xa",
+      "led_port_io": "0xb",
+      "led_pin": 0,
+      "body_file": "Pass27_off_body.bin",
+      "isp_bin": "Pass27_off_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass27_off_ISP_FRESH_EXPERIMENTAL.hex",
+      "code_sha256": "37b634849dafe5512f135255e184ff392ef4e33de5fc449ddd451ac3ff366975",
+      "isp_sha256": "61ab97f14222489c6fb6f46b73fea775b65d054b5da49d8692a70f07cf58bb7b"
+    },
+    {
+      "led": "ACTIVE_HIGH",
+      "bcdDevice": "0x561",
+      "boot_at": "0x1b40",
+      "code_bytes": 1168,
+      "reserved_bytes": 1216,
+      "app_bytes": 6972,
+      "spare_bytes": 48,
+      "led_ddr_io": "0xa",
+      "led_port_io": "0xb",
+      "led_pin": 0,
+      "body_file": "Pass27_high_body.bin",
+      "isp_bin": "Pass27_high_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass27_high_ISP_FRESH_EXPERIMENTAL.hex",
+      "code_sha256": "39af3b8668ddc73490e305ec407cf8240a6141cf0dc04784405f72e3a0dd8f4a",
+      "isp_sha256": "9bea6b95566aa5d11d775a93f0099fe2eb82c4e9ce7d2a9955dd7961b4739f8c"
+    },
+    {
+      "led": "ACTIVE_LOW",
+      "bcdDevice": "0x562",
+      "boot_at": "0x1b40",
+      "code_bytes": 1166,
+      "reserved_bytes": 1216,
+      "app_bytes": 6972,
+      "spare_bytes": 50,
+      "led_ddr_io": "0xa",
+      "led_port_io": "0xb",
+      "led_pin": 0,
+      "body_file": "Pass27_low_body.bin",
+      "isp_bin": "Pass27_low_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass27_low_ISP_FRESH_EXPERIMENTAL.hex",
+      "code_sha256": "3868ed1025af5c751d663d50520cfe5948b5826bd4e1395d061dd7a0f2ee69af",
+      "isp_sha256": "bb2955fe5300321c57089f68133600bac1ae17f1b599ecd77cedfb6ef27b3872"
+    }
+  ]
+}
