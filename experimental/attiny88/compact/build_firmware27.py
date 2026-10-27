@@ -7,7 +7,7 @@ import json
 from build_candidate import checked_build
 from check_build import build
 from audit_phy27 import audit_candidate
-from host.compact_programmer27 import USB_PROFILES, record, parse_intel_hex
+from host.compact_programmer27 import USB_PROFILES, record, parse_intel_hex, DEFAULT_FLASH_DELAY_MS
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / 'firmware27'
@@ -24,10 +24,11 @@ def main():
                        for path in sorted((ROOT / 'source').iterdir()) if path.is_file()},
         target='ATtiny88, external 16 MHz clock', protocol='v3.0',
         hardware_validated=False, fits_1024_bytes=False,
+        hardware_tested_profiles=['NONE'], hardware_evidence='hardware30.json',
         toolchain='Clang/LLVM 18.1.3; GNU AVR binutils 2.26.20160125',
         limitations=['Incoming DATA CRC16 validation omitted by accepted design decision',
                      'Token CRC5/endpoint/length admission and ACK-driven retry remain open',
-                     'Host requires 15 ms quiet after Flash erase/page commit',
+                     f'Host defaults to {DEFAULT_FLASH_DELAY_MS:g} ms quiet after Flash erase/page commit; configurable, same-board tested',
                      'Fresh ISP image erases application; RESET-page power loss needs ISP recovery'],
         builds=[])
     for mode, name, version in PROFILES:

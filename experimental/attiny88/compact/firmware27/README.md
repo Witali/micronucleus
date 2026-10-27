@@ -1,8 +1,9 @@
 # Pass27 software-verified firmware candidate
 
 Target: ATtiny88 with the existing external 16 MHz clock and board wiring.
-The ISP images have not been installed. A read-only application trial passed on
-the real board; see docs/HARDWARE_REHEARSAL30.md. This checkpoint does not fit 1 KiB.
+The no-LED body is permanently installed through the application self-updater;
+see [hardware evidence](../docs/HARDWARE_INSTALL30.md). LED profiles have not been
+installed. The fresh ISP images were not used. This checkpoint does not fit 1 KiB.
 
 | File prefix | LED | BOOT_AT | Body bytes | Application bytes |
 | --- | --- | --- | ---: | ---: |
@@ -19,7 +20,7 @@ Preserve the board's existing verified fuse settings and ISP recovery access.
 
 Use `host/compact_programmer27.py` for the matching v3.0 application protocol;
 the Pass26 client/profile is different. Its execution and ISP-recovery gates
-remain required. No programming command has been run by this build.
+remain required. The builder itself never accesses programming hardware.
 
 The full software suite passed at code checkpoint `ce74532`: standard/NVM/host
 regressions, 186 synchronized scenarios, 125943 polling intervals and 12654 TX
@@ -42,3 +43,8 @@ Exact current source hashes are recorded in manifest.json.
 (USB device revision 0x0390, protocol 3.0). It preserves the installed 2.8 loader
 at 0x1B00 and requires its 6908-byte application layout; it is not a permanent
 bootloader installer. The entry wrapper initializes SP and disables interrupts.
+
+`hardware30.json` records the no-LED permanent installation and basic checks.
+It does not certify the protocol or the untested LED profiles. The top-level
+manifest's `hardware_validated: false` retains that broader admission limit;
+`hardware_tested_profiles` records the specific tested image.

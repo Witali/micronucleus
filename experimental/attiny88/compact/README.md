@@ -5,8 +5,9 @@ from [Block64](../block64/README.md) and the earlier optimized firmware.
 Pass26 uses protocol **v5.5** on an ATtiny88 at 16 MHz. It has **no physical USB
 validation**. Its original source and release bytes are retained as the baseline.
 
-The current [protocol 3.0](PROTOCOL_v3_0.md) has a successful
-[application-only hardware rehearsal](docs/HARDWARE_REHEARSAL30.md).
+The no-LED [protocol 3.0](PROTOCOL_v3_0.md) loader is now
+[permanently installed and hardware smoke-tested](docs/HARDWARE_INSTALL30.md).
+The earlier [application-only rehearsal](docs/HARDWARE_REHEARSAL30.md) is retained.
 
 Development continues in the [annotated modular Pass27 candidate](docs/PASS27.md),
 organized like the adjacent Block64 source. Use `sh verify27.sh` for that work;

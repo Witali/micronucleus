@@ -2,8 +2,8 @@
  * Based on the preserved Pass26 assembly checkpoint; GPL-2.0-or-later.
  * Source modules follow the adjacent Block64 layout but use a separate protocol.
  * Original Micronucleus contributors' licensing/provenance remains in the
- * preserved handoff and LICENSE_GPL-2.0.txt. Hardware rehearsal is documented
- * separately; production bootloader installation remains untested.
+ * preserved handoff and LICENSE_GPL-2.0.txt. Permanent no-LED installation and
+ * the hardware smoke-test scope are recorded in docs/HARDWARE_INSTALL30.md.
  */
 #include "device_attiny88.inc"
 #include "compact_protocol.inc"

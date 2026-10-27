@@ -4,8 +4,10 @@ Current public protocol: [3.0](../PROTOCOL_v3_0.md), device revisions 0x0300..0x
 
 The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
-comparison references. The production bootloader has not been installed;
-the [read-only application rehearsal](HARDWARE_REHEARSAL30.md) passed on a board.
+comparison references. The no-LED production loader is now
+[permanently installed and hardware smoke-tested](HARDWARE_INSTALL30.md).
+LED profiles remain untested on the board; the earlier
+[read-only application rehearsal](HARDWARE_REHEARSAL30.md) is retained.
 
 The [accepted receive-CRC16 exception](USB_PROTOCOL.md) records the user's
 size/ACK-latency tradeoff, its corruption risk and the checks it does not waive.

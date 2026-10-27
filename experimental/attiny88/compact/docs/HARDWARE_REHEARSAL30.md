@@ -1,5 +1,9 @@
 # Protocol 3.0 application-only hardware test, 2026-10-27
 
+Historical trial: the board was later updated permanently as recorded in
+[HARDWARE_INSTALL30.md](HARDWARE_INSTALL30.md). The original trial scope below
+is preserved.
+
 Result: PASS on the connected ATtiny88 board at 16 MHz, using its existing
 libusb-win32 driver. The installed Micronucleus+ 2.8 loader remains at 0x1B00,
 with 6908 application bytes. No ISP programmer was connected.

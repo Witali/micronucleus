@@ -13,5 +13,6 @@
 !firmware27/manifest.json
 !firmware27/rehearsal30.json
 !firmware27/benchmark30.json
+!firmware27/hardware30.json
 !results/benchmark30-2026-10-27.json
 !results/flash-delay30-2026-10-27.json

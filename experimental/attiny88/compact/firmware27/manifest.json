@@ -6,7 +6,7 @@
     "compact_memory.inc": "df67cba651af9b0b8be101c7671261630eda356bf63d4a889015f2e1fd1cc0bc",
     "compact_protocol.inc": "5c03324288d20129d3b2dc025f7076d73f924a21f699b0747fd168a4107d152f",
     "device_attiny88.inc": "db2b35ebea1623bc7720fc84e1fd2d9651cd8ecea5c905786fa4ec01f6a2320a",
-    "micronucleus_t88_compact.S": "0394bf6de15e5b7061738006ac1380988009dc0e5801460c1f00968476ff82b2",
+    "micronucleus_t88_compact.S": "649e3382166cedbe15a342d629c1a299d57ad675d1a3569789538b5c8228e712",
     "vusb_ep0.inc": "34e9faf15d306c3c12a79be3cce40c11730ccf05a07891b2dc9961622dd3961f",
     "vusb_phy.inc": "ddbcc887b2c434dc4b27821437f97171b49a51bdb0ea8be1fa3a3137b5745cdd",
     "vusb_setup.inc": "eeca5313f8a130d1f6b3e4fa6793ef967534d8aaa62d7207b1928de8c62340f4",
@@ -16,11 +16,15 @@
   "protocol": "v3.0",
   "hardware_validated": false,
   "fits_1024_bytes": false,
+  "hardware_tested_profiles": [
+    "NONE"
+  ],
+  "hardware_evidence": "hardware30.json",
   "toolchain": "Clang/LLVM 18.1.3; GNU AVR binutils 2.26.20160125",
   "limitations": [
     "Incoming DATA CRC16 validation omitted by accepted design decision",
     "Token CRC5/endpoint/length admission and ACK-driven retry remain open",
-    "Host requires 15 ms quiet after Flash erase/page commit",
+    "Host defaults to 7 ms quiet after Flash erase/page commit; configurable, same-board tested",
     "Fresh ISP image erases application; RESET-page power loss needs ISP recovery"
   ],
   "builds": [

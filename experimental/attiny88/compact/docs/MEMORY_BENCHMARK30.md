@@ -1,5 +1,9 @@
 # Installed 2.8 versus compact 3.0 memory benchmark
 
+This records the pre-installation benchmark. The board was subsequently
+[updated permanently](HARDWARE_INSTALL30.md); earlier measured results below
+retain their original guarded-application scope.
+
 The benchmark measures the same ATtiny88 board, 16 MHz clock, Windows USB
 driver and PyUSB/libusb0 backend. It compares native protocol operations using
 host wall-clock time. It does not measure physical USB bit timing or establish
