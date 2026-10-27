@@ -1,4 +1,4 @@
-/* Asynchronous EEPROM worker. WRITE4 queues R10..R13 and R8=4.
+/* Asynchronous EEPROM worker. WRITE4 queues R10..R13 and R2=4.
  * Each service call starts at most one byte and never waits on EEPE. The
  * shared cursor advances only after starting that byte; READ8/SELECT are
  * rejected until queue and hardware busy state have both cleared.
@@ -9,8 +9,9 @@ ee_write:
     mov r18, r4
     cpi r18, EEPROM_BYTES - EEPROM_WRITE_BLOCK_BYTES + 1
     brsh ee_bad_addr
-    ldi r18, EEPROM_WRITE_BLOCK_BYTES
-    mov r8, r18
+/* Ready WRITE4 has R2=0 and request R25=3. The accepted CPI bound leaves
+ * C=1, so ADC forms four without a separate immediate-load register. */
+    adc r2, r25
     rjmp usb_reply_empty
 
 /* Reuses the AVR register file as a four-byte queue (address 0x0A..0x0D).
@@ -18,7 +19,7 @@ ee_write:
 ee_write_step:
 /* An empty queue skips the EEPE test and services USB. A ready EEPROM skips
  * that jump and starts one byte; a busy EEPROM services USB without writing. */
-    cpse r8, r1
+    cpse r2, r1
     sbic _SFR_IO_ADDR(EECR), EEPE
     rjmp usb_service_pending
     out _SFR_IO_ADDR(EEARL), r4
@@ -31,7 +32,7 @@ ee_write_step:
     sbi _SFR_IO_ADDR(EECR), EEMPE
     sbi _SFR_IO_ADDR(EECR), EEPE
     inc r4
-    dec r8
+    dec r2
 ee_write_step_done:
 /* The main module places usb_service_pending immediately after this include.
  * Fall through without adding a return frame; its SETUP abort pops one frame. */

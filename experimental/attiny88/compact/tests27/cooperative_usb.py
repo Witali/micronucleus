@@ -196,7 +196,7 @@ def run(abort=False,first_sop=24,setup=None,memory='flash',_retain_cpu=False):
  for when in entries:
   prior=[w for w in stream.waves if w.start<=when]
   if prior:entry_delays.append(when-max(prior,key=lambda w:w.start).start)
- result={'abort':abort,'setup':setup,'memory':memory,'first_sop':first_sop,'frames':frames,'peak_stack_bytes':cpu.peak_stack,'stack_bytes_at_DATA_release':len(cpu.raw_stack),'handler_entries':entries,'handler_entry_callers':entry_callers,'handler_entry_delays':entry_delays,'response_delays':response_delays,'host_packets':[dict(start=w.start,packet=w.packet.hex()) for w in stream.waves],'collected_hex':bytes(collected).hex(),'active_address':cpu.m[0x10c],'pending_address':cpu.m[0x113],'configuration':cpu.m[0x115],'cursor':cpu.word(4),'queued_command':cpu.r[3],'nvm_events':cpu.nvm_events,'eeprom_remaining':cpu.r[8],'eeprom_address':cpu.io.get(0x21),'eeprom_data':cpu.io.get(0x20),'cycles':cpu.t}
+ result={'abort':abort,'setup':setup,'memory':memory,'first_sop':first_sop,'frames':frames,'peak_stack_bytes':cpu.peak_stack,'stack_bytes_at_DATA_release':len(cpu.raw_stack),'handler_entries':entries,'handler_entry_callers':entry_callers,'handler_entry_delays':entry_delays,'response_delays':response_delays,'host_packets':[dict(start=w.start,packet=w.packet.hex()) for w in stream.waves],'collected_hex':bytes(collected).hex(),'active_address':cpu.m[0x10c],'pending_address':cpu.m[0x113],'configuration':cpu.m[0x115],'cursor':cpu.word(4),'queued_command':cpu.r[3],'nvm_events':cpu.nvm_events,'eeprom_remaining':cpu.r[2],'eeprom_address':cpu.io.get(0x21),'eeprom_data':cpu.io.get(0x20),'cycles':cpu.t}
 
  return (result,cpu) if _retain_cpu else result
 
@@ -210,8 +210,8 @@ def check_eeprom_completion(cpu):
     payload = bytes((0x11, 0x22, 0x33, 0x44))
     started = len(cpu.eeprom_events)
     assert 0 <= started <= 4
-    assert cpu.r[8] == 4 - started and cpu.word(4) == 0x8020 + started
-    assert bytes(cpu.r[10:10 + cpu.r[8]]) == payload[started:]
+    assert cpu.r[2] == 4 - started and cpu.word(4) == 0x8020 + started
+    assert bytes(cpu.r[10:10 + cpu.r[2]]) == payload[started:]
     completed = 0
 
     def complete_hardware_write():
@@ -233,12 +233,12 @@ def check_eeprom_completion(cpu):
         else:
             raise AssertionError('EEPROM worker failed to return to polling')
         assert not cpu.raw_stack and cpu.r[1] == 0
-        if cpu.r[8] == 0:
+        if cpu.r[2] == 0:
             break
     complete_hardware_write()
     assert cpu.eeprom_events == list(zip(range(0x20, 0x24), payload))
     assert cpu.eeprom[0x20:0x24] == payload and cpu.word(4) == 0x8024
-    assert cpu.r[8] == 0
+    assert cpu.r[2] == 0
 
 
 def check_case(**options):
@@ -316,7 +316,7 @@ def check_pending_run(artifact):
         cpu = CPU(meta, {'memory': bytearray(0x300), 'registers': [0] * 32})
         cpu.flash = FlashView(cpu.flash, cpu.base)
         cpu.pc = cpu.labels['bootloader_process_pending_command']
-        cpu.r[21], cpu.r[28], cpu.r[29], cpu.r[3], cpu.r[8] = 0xA0, 0, 1, 4, pending
+        cpu.r[21], cpu.r[28], cpu.r[29], cpu.r[3], cpu.r[2] = 0xA0, 0, 1, 4, pending
         cpu.r[26], cpu.r[27] = counter & 255, counter >> 8
         cpu.m[0x100], cpu.m[0x10F] = 0xFF, 0x5A
         cpu.flash.memory[art['boot'] - 3] = 0
@@ -366,7 +366,7 @@ def simulate(request,value,descriptor,length,kind='flash',data=0x55,idle=0,pendi
  if request==0xb0:c.r[4]=0;c.r[5]=0x80 if kind=='eeprom' else 5
  index=0x8020 if kind=='eeprom' else 0x100
  c.m[0x117:0x11f]=bytes([0xc0 if request==0xb0 else 0x80 if request in [0,6,8,10] else 0x40 if request in [1,2,3,4] else 0,request,value,descriptor,index&255,index>>8,length&255,length>>8])
- c.r[8]=pending;c.io=Reads(c,Stream());c.io.cleared_at=0;c.io[0x1f]=eecr
+ c.r[2]=pending;c.io=Reads(c,Stream());c.io.cleared_at=0;c.io[0x1f]=eecr
  if not rx_staged:c.m[0x112]=0
  if app_present:c.flash.memory[art['boot']-3]=0
  for _ in range(10000):

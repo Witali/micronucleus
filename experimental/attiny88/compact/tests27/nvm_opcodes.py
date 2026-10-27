@@ -22,7 +22,7 @@ def new_machine(artifact):
         machine = avr_exec.AVRExec(artifact)
     machine.r[29] = 1
     machine.r[21] = 0xA0
-    machine.r[2] = 0xA5
+    machine.r[8] = 0xA5
     machine.r[9] = 0x4B
     machine.r[14:16] = [0xEF, 0xBE]
     return machine
@@ -39,7 +39,7 @@ def set_pointer(machine, address):
 def preserve_usb_registers(machine):
     assert machine.r[9] == 0x4B and machine.r[14:16] == [0xEF, 0xBE]
     assert machine.r[1] == 0
-    assert machine.r[2] == 0xA5
+    assert machine.r[8] == 0xA5
 
 
 def check_main_gate_and_layout(artifact):
@@ -59,7 +59,7 @@ def check_main_gate_and_layout(artifact):
         for command in (3, 4, 5):
             machine = new_machine(artifact)
             set_pointer(machine, 0x100)
-            machine.r[3], machine.r[8], machine.io[0x1F] = command, pending, eecr
+            machine.r[3], machine.r[2], machine.io[0x1F] = command, pending, eecr
             # Enter the deferred-command gate after the independent SETUP parser.
             machine.run('bootloader_check_pending_command', stop=('usb_tx_prepare_pending_reply',))
             assert machine.r[3] == command and pointer(machine) == 0x100
@@ -135,7 +135,7 @@ def check_flash_write4(artifact):
                                 (1, address + 2, int.from_bytes(data[2:], 'little'))]
         assert pointer(machine) == address + 4
         assert machine.r[3] == (5 if (address + 4) % 64 == 0 else 0)
-        assert machine.r[8] == 0
+        assert machine.r[2] == 0
         preserve_usb_registers(machine)
         if machine.r[3] == 5:
             machine.spms.clear()
@@ -162,9 +162,9 @@ def check_eeprom_write4(artifact):
         if address > 60:
             # Rejected requests may overwrite an inactive data queue, but must
             # not activate it or perform any EEPROM/Flash operation.
-            assert machine.r[8] == 0
+            assert machine.r[2] == 0
             continue
-        assert machine.r[8] == 4 and machine.r[10:14] == list(data)
+        assert machine.r[2] == 4 and machine.r[10:14] == list(data)
         for offset, byte in enumerate(data):
             machine.io[0x1F] = 2
             registers, events = machine.r[:], len(machine.io_events)
@@ -175,9 +175,9 @@ def check_eeprom_write4(artifact):
             assert machine.io_events[-4:] == [('out', 0x21, address + offset),
                                               ('out', 0x20, byte),
                                               ('sbi', 0x1F, 2), ('sbi', 0x1F, 1)]
-            assert machine.r[8] == 3 - offset and machine.r[4] == address + offset + 1
+            assert machine.r[2] == 3 - offset and machine.r[4] == address + offset + 1
             preserve_usb_registers(machine)
-        assert machine.r[8] == 0
+        assert machine.r[2] == 0
         machine.io[0x1F] = 0
         before = len(machine.io_events)
         machine.run('ee_write_step')
@@ -192,11 +192,11 @@ def check_busy_and_invalid_requests(artifact):
         for eecr in (0, 2):
             machine = new_machine(artifact)
             set_pointer(machine, 0x800C)
-            machine.r[8], machine.io[0x1F] = pending, eecr
+            machine.r[2], machine.io[0x1F] = pending, eecr
             machine.run('ee_write_step')
             starts_byte = pending != 0 and eecr == 0
             assert bool(machine.io_events) == starts_byte
-            assert machine.r[8] == pending - int(starts_byte)
+            assert machine.r[2] == pending - int(starts_byte)
             assert pointer(machine) == 0x800C + int(starts_byte)
             preserve_usb_registers(machine)
             count += 1
@@ -209,21 +209,21 @@ def check_busy_and_invalid_requests(artifact):
                 cursor = 0x800C if eeprom else 0x10C
                 selector = 0x100 if eeprom else 0x800C  # Attempt a memory switch while busy.
                 set_pointer(machine, cursor)
-                machine.r[8], machine.io[0x1F] = pending, eecr
+                machine.r[2], machine.io[0x1F] = pending, eecr
                 machine.r[10:14] = [0xDE, 0xAD, 0x12, 0x34]
                 machine.ram.update({18: 11, 13: 0x2D, 23: 0xC0 if request == 0xB0 else 0x40,
                                     24: request, 25: 0x11, 26: 0x22,
                                     27: selector & 255, 28: selector >> 8,
                                     29: 8 if request == 0xB0 else 0, 30: 0})
                 machine.run('usb_control_process_received_packet', stop=('usb_rx_release_buffer',), limit=300)
-                assert pointer(machine) == cursor and machine.r[8] == pending
+                assert pointer(machine) == cursor and machine.r[2] == pending
                 assert machine.r[10:14] == [0xDE, 0xAD, 0x12, 0x34]
                 assert not machine.spms and not machine.io_events and machine.r[3] == 0
                 assert machine.ram[0] == 0
                 machine.run('usb_rx_release_buffer', stop=('bootloader_check_idle_timeout',), limit=300)
                 assert machine.ram[15] == 4 and machine.ram[1] == 0x4B
                 assert bytes(machine.data_memory[0x102 + i] for i in range(2)) == b'\0\0'
-                assert pointer(machine) == cursor and machine.r[8] == pending
+                assert pointer(machine) == cursor and machine.r[2] == pending
                 assert machine.r[10:14] == [0xDE, 0xAD, 0x12, 0x34]
                 count += 1
     # Standard requests deliberately bypass the private-command gate, including
@@ -231,11 +231,11 @@ def check_busy_and_invalid_requests(artifact):
     for request, descriptor in ((0, 0), (6, 1), (6, 2), (8, 0), (9, 0), (10, 0)):
         for pending, eecr in ((1, 0), (4, 2), (0, 2)):
             machine = initialize(artifact)
-            machine.r[8], machine.io[0x1F] = pending, eecr
+            machine.r[2], machine.io[0x1F] = pending, eecr
             machine.r[10:14] = [0xDE, 0xAD, 0x12, 0x34]
             machine.ram[21] = 1
             transfer(machine, artifact['mode'], request, descriptor=descriptor, value=19, length=18)
-            assert machine.r[8] == pending and machine.r[10:14] == [0xDE, 0xAD, 0x12, 0x34]
+            assert machine.r[2] == pending and machine.r[10:14] == [0xDE, 0xAD, 0x12, 0x34]
             assert not machine.spms
             count += 1
     for request in range(256):
@@ -273,7 +273,7 @@ def check_vendor_setup(artifact):
                 assert [event[0] for event in machine.spms] == [0x11]
             elif request == 3:
                 if eeprom:
-                    assert machine.r[8] == 4 and machine.r[10:14] == list(data)
+                    assert machine.r[2] == 4 and machine.r[10:14] == list(data)
                     assert not machine.spms
                 else:
                     assert [event[:2] for event in machine.spms] == [(1, address), (1, address + 2)]
@@ -283,7 +283,7 @@ def check_vendor_setup(artifact):
             elif request == 0xB0:
                 assert pointer(machine) == selector + 8
                 assert machine.r[14] | (machine.r[15] << 8) == selector
-                assert machine.r[2] == 0xA5 and machine.ram[0] == 8
+                assert machine.r[8] == 0xA5 and machine.ram[0] == 8
             else:
                 assert pointer(machine) == selector and machine.r[3] == 0 and not machine.spms
             assert machine.r[1] == 0
@@ -319,11 +319,36 @@ def check_cursor(artifact, *, exhaustive=True):
             assert machine.pc == artifact['symbols']['usb_reply_set_pointer']
             assert machine.r[18] | (machine.r[19] << 8) == selector
             assert pointer(machine) == selector + 8
-            assert machine.r[24] == 8 and machine.r[2] == 0xA5
+            assert machine.r[24] == 8 and machine.r[8] == 0xA5
     print('PASS', count, 'cursor increments and all valid ready Flash/EEPROM READ8 starts')
 
 
+def check_public_command_set(artifact):
+    """Every public opcode preserves the finite dispatcher-state invariant."""
+    states = (0, 2, 3, 4, 5)
+    observed = set()
+    count = 0
+    for before in states:
+        for request in range(256):
+            # Address bounds/wraps are exhausted by check_nvm. Here use one
+            # last-block cursor per memory to prove all opcode/state edges.
+            for cursor in (60, 0x803C):
+                machine = new_machine(artifact)
+                set_pointer(machine, cursor)
+                machine.r[3], machine.r[25] = before, request
+                machine.ram.update({25: 0x11, 26: 0x22, 27: 0x40, 28: 0})
+                machine.run('bootloader_handle_vendor_request',
+                            stop=('usb_rx_release_buffer',), limit=500)
+                observed.add(machine.r[3])
+                assert machine.r[3] in states, (before, request, cursor, machine.r[3])
+                if request not in (1, 2, 3, 4, 0xB0):
+                    assert machine.r[3] == before and not machine.spms
+                count += 1
+    assert observed == set(states)
+    print('PASS', count, 'public vendor opcode/cursor/prior-command cases; reachable commands', sorted(observed), flush=True)
+
 def check_nvm(artifact):
+    check_public_command_set(artifact)
     check_main_gate_and_layout(artifact)
     check_selectors(artifact)
     check_page_operations(artifact)

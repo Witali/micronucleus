@@ -102,7 +102,7 @@ def check_tx_bytes(artifact):
                 machine.r[24] = length
                 machine.r[0] = machine.r[25] = 0
                 machine.r[21] = 0xA0
-                machine.r[2] = 0xA5  # The former source register is now free.
+                machine.r[8] = 0xA5  # The former source register is now free.
                 pointer = offset | (0x8000 if source == 'eeprom' else 0)
                 machine.r[14:16] = [pointer & 255, pointer >> 8]
                 for index, value in enumerate(payload):
@@ -115,7 +115,7 @@ def check_tx_bytes(artifact):
                 actual = bytes(machine.data_memory[0x102 + i] for i in range(length + 2))
                 assert actual == payload + usb_crc(payload), (source, offset, payload, actual)
                 assert machine.r[14] | (machine.r[15] << 8) == pointer + length
-                assert machine.r[2] == 0xA5
+                assert machine.r[8] == 0xA5
                 count += 1
     print('PASS', count, 'actual-opcode payload/independent CRC/register-cursor cases')
 

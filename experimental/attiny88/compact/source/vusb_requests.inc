@@ -8,7 +8,7 @@ bootloader_handle_vendor_request:
  * advance the shared cursor or touch an active queue. Standard USB requests
  * bypass this gate and remain available while EEPROM programming is pending. */
     in r24, _SFR_IO_ADDR(EECR)
-    or r24, r8
+    or r24, r2
     brne usb_reply_empty
 /* READ8 falls through; OUT commands branch back to the adjacent NVM module. */
     cpi r25, REQ_UNIFIED_READ
@@ -16,7 +16,7 @@ bootloader_handle_vendor_request:
 /* Persistent register allocation:
  * r4:r5 = shared READ8/WRITE4 byte cursor, bit15 selects EEPROM
  * r6:r7 = idle poll count (preserved across USB handler calls)
- * r8 = pending EEPROM write count, r9 = DATA PID, r10..r13 = EEPROM queue
+ * r2 = pending EEPROM write count, r9 = DATA PID, r10..r13 = EEPROM queue
  * r14:r15 = reply byte cursor, preserved across PHY and NVM service
  * r3 = pending Flash SPM command; r15.7 tags an EEPROM reply.
  * X is the poll counter / reply staging pointer, Y the USB-context scratch

@@ -85,7 +85,7 @@ def initialize(artifact):
         machine.ram[offset] = 0
     machine.r[29] = 1
     machine.r[21] = 0xA0
-    machine.r[2] = 0xA5  # R2 is free; replies must not treat it as a memory source.
+    machine.r[8] = 0xA5  # R8 is free; replies must not treat it as a memory source.
     machine.r[4:6] = [0x34, 0x12]
     end = min(8192, artifact['boot'] + len(artifact['body']))
     machine.flash[artifact['boot']:end] = artifact['body'][:end - artifact['boot']]
@@ -113,7 +113,7 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
     """Run SETUP, then each prepared DATA packet, checking externally used state."""
     configuration, pending_address = machine.ram[21], machine.ram[12]
     cursor = machine.r[4:6]
-    unused_r2 = machine.r[2]
+    unused_r8 = machine.r[8]
     next_configuration = (value if request == 9 and descriptor == 0 and value < 2
                           else configuration)
     expected = expected_reply(mode, request, descriptor, configuration)[:length]
@@ -152,7 +152,7 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
             mode, request, descriptor, length, packet_index, machine.ram[0], remaining)
         assert machine.ram[16] == machine.ram[17] == 0
         assert machine.r[1] == 0 and machine.r[4:6] == cursor
-        assert machine.r[2] == unused_r2
+        assert machine.r[8] == unused_r8
         packets.append((machine.ram[1], payload))
         if count < 8 or len(observed) >= length:
             break
@@ -196,7 +196,7 @@ def check_configuration_words(artifact):
                         stop=('usb_rx_release_buffer',), limit=220)
             assert machine.ram[21] == (value if value < 2 else previous), (value, previous)
             assert machine.ram[0] == 0 and machine.r[1] == 0
-            assert machine.r[2] == 0xA5
+            assert machine.r[8] == 0xA5
             count += 1
     print('PASS', artifact['mode'], count,
           'complete SET_CONFIGURATION words and both valid prior states; malformed values preserve state')

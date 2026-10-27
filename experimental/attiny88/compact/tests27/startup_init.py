@@ -103,7 +103,7 @@ def check_startup(artifact):
     expected[0x100:0x12C] = bytes(44)
     expected[0x10F], expected[0x100] = 0x5A, 0xFF
     assert memory == expected, 'Clear/store escaped the exact USB context'
-    assert registers[1] == registers[3] == registers[8] == 0
+    assert registers[1] == registers[3] == registers[2] == 0
     assert registers[4:8] == [0] * 4 and registers[28:30] == [0, 1]
     assert io[0x1E] == 0x0B and io[0x34] == io[0x40] == 0
     watchdog = [(t, value) for t, address, value in writes if address == 0x40]

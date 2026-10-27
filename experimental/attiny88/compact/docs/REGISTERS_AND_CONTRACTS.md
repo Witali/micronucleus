@@ -1,4 +1,24 @@
-# Pass26 registers and invariants
+# Registers and invariants
+
+## Current Pass28 candidate
+
+The active source uses R2 as the remaining asynchronous EEPROM byte count;
+R8 is free and is poisoned by regression fixtures. Startup clears the count
+and deferred command together with MOVW R2,R24 after the countdown reaches zero.
+R3 holds only 0 (idle), 2 (SELECT), 3 (erase), 4 (RUN), or 5 (page commit).
+The dispatcher consumes R3 directly; all public opcode/prior-state transitions
+are checked before relying on its bit pattern.
+
+R9 holds the DATA PID. R14:R15 is the reply byte cursor, with R15 bit 7 selecting
+EEPROM. The PHY and NVM worker preserve these registers. R4:R5 remains the shared
+memory cursor; SELECT uses a byte address. Current layout/profile rules are in
+[APPLICATION_LAYOUT.md](APPLICATION_LAYOUT.md), and size/timing evidence is in
+[PASS28.md](PASS28.md).
+
+## Archived Pass26 contract
+
+The table, selector encoding and profile addresses below describe the imported
+Pass26 checkpoint, not the active Pass28 source or installed compact 3.0 loader.
 
 | Register | Live state / reuse |
 | --- | --- |

@@ -33,7 +33,6 @@ flash_buffer_load_word:
  */
 startup:
     eor r1, r1
-    mov r8, r1             /* no pending EEPROM write */
 /* Datasheet-defined RESET defaults: SPL/SPH=RAMEND, SREG=0.
  * This firmware entry is legal only through hardware RESET or WDT RESET;
  * a direct software jump into the bootloader without RESET is unsupported. */
@@ -72,6 +71,8 @@ startup_check_sram_end:
     cpi r28, LOW8(USB_CONTEXT_BASE)
     brne usb_disconnect_delay_outer
     cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
+/* The countdown ends at zero; clear queue count R2 and command R3 together. */
+    movw r2, r24
     movw r4, r24
     movw r6, r24
     ldi r24, USB_PID_NAK
@@ -84,7 +85,6 @@ startup_check_sram_end:
 led_init:
     LED_INIT
 led_init_done:
-    mov r3, r1
 /* Poll for up to 5 ms, recognizing sustained SE0 as a USB bus reset.
  * Every predecessor preserves Y=USB_CONTEXT_BASE; X is the poll countdown.
  */
@@ -115,7 +115,7 @@ bootloader_check_pending_command:
  * holds an older deferred RUN until a later EEPROM queue has fully drained.
  * With only two readiness sites, these inline IN/OR pairs save a helper/RET. */
     in r24, _SFR_IO_ADDR(EECR)
-    or r24, r8
+    or r24, r2
     brne usb_tx_prepare_pending_reply
 .Lcommand_eeprom_idle:
 /* Deferred operations run after the USB polling window. R3 uses the real
@@ -123,13 +123,13 @@ bootloader_check_pending_command:
  * SPM is forbidden while the asynchronous EEPROM worker is active.
  */
 bootloader_dispatch_command:
-    mov r24, r3
 /* Only pending erase (3) and page-write (5) have bit zero set.
  * SELECT leaves 2, RUN leaves 4, and idle leaves 0. */
-    sbrc r24, 0
+    sbrc r3, 0
     rjmp flash_erase_selected_page
-    cpi r24, CMD_EXIT
-    brne bootloader_clear_command
+/* Only 0/2/3/4/5 are reachable: after odd SPM commands, bit2 identifies RUN. */
+    sbrs r3, 2
+    rjmp bootloader_clear_command
     or r26, r27
     brne usb_tx_prepare_pending_reply
     rjmp bootloader_start_application
@@ -137,7 +137,7 @@ flash_erase_selected_page:
 flash_commit_buffered_page:
     movw r30, r4
 /* WRITE ends at the next page; ERASE starts at the selected page. */
-    sbrc r24, 2
+    sbrc r3, 2
     sbiw r30, AVR_WORD_BYTES
 /* Align to a physical page and protect every address at/above BOOT_AT.
  * The shared executor is the final guard for both erase and write requests.
@@ -153,7 +153,7 @@ flash_do_spm:
     cpc r31, r18
 #endif
     brsh bootloader_clear_command
-    out _SFR_IO_ADDR(SPMCSR), r24
+    out _SFR_IO_ADDR(SPMCSR), r3
     spm
 bootloader_clear_command:
     mov r3, r1
