@@ -17,9 +17,10 @@ USB device descriptor instead of probing private memory layouts.
 
 ## Build and verify
 
-Requirements: Python 3, a Clang AVR backend, `llvm-objdump`, `llvm-objcopy` and a
-POSIX shell. The imported builder was tested with LLVM 17; LLVM 18 requires an
-explicit AVR link step, as recorded in the import validation.
+Requirements: Python 3, a Clang AVR backend, `llvm-objdump`, `llvm-objcopy`, GNU
+`avr-ld` and a POSIX shell. On Ubuntu/WSL, `clang`, `llvm` and `binutils-avr`
+provide these tools. The builder explicitly links AVR relocations before binary
+extraction and opcode tests, including with LLVM 18.
 
 From this directory:
 
@@ -61,6 +62,8 @@ and the unmodified `PASS25_TO_PASS26.diff` for details.
 The offline suite covers standard requests, emitted reply bytes/CRC, NVM
 instructions, cursor movement, boundary protection and host recovery state.
 It does not establish electrical USB compatibility or transaction retry safety.
+The [import validation](docs/VALIDATION.md) records the successful LLVM 18 run
+and exact agreement with all supplied firmware files.
 Pass26 inherits Pass25's four-cycle earlier SYNC search and possible early ACK
 before nonempty DATA CRC16 validation. Lost ACKs leave write/cursor state
 uncertain; the host must verify and reselect rather than blindly replay writes.

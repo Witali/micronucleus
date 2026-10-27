@@ -11,7 +11,14 @@ def run(cmd):
 def build(source, mode='NONE',boot=0x1b00):
  name=Path(source).stem+'_'+mode.lower()+'_'+str(boot)
  obj=p/(name+'.o');binary=p/(name+'.bin')
- run(['clang','-target','avr','-mmcu=attiny88',f'-DBOOT_AT={hex(boot)}',f'-DLED_MODE={mode}', '-I',str(p/'vendor'), '-c','-x','assembler-with-cpp',str(source),'-o',str(obj)])
+ relocatable=p/(name+'.reloc.o')
+ run(['clang','-target','avr','-mmcu=attiny88',f'-DBOOT_AT={hex(boot)}',f'-DLED_MODE={mode}', '-I',str(p/'vendor'), '-c','-x','assembler-with-cpp',str(source),'-o',str(relocatable)])
+ # LLVM 18 retains AVR branches as relocations. Keep the historical .o API,
+ # but give opcode tests a fully linked ELF, as in the other ATtiny88 builds.
+ # Historical opcode comparisons deliberately place larger baselines beyond
+ # 8 KiB. Release fit is checked separately in build_release26.py.
+ run(['avr-ld','-m','avr25','--defsym=__TEXT_REGION_LENGTH__=0x10000',
+      '-Ttext=0','-e','bootloader_start','-o',str(obj),str(relocatable)])
  reloc=run(['llvm-objdump','-r',str(obj)])
  assert 'R_AVR_' not in reloc,reloc
  run(['llvm-objcopy','-O','binary','-j','.text',str(obj),str(binary)])
