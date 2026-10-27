@@ -5,6 +5,7 @@
  * Busy behavior belongs to that public dispatch path, before READ8 or writes.
  */
 bootloader_check_set_flash_address:
+rcall usb_service_pending
 /* Reject opcode zero; only SELECT and SELECT+ERASE enter the decoder. */
 tst r25
 breq usb_reply_empty
@@ -31,7 +32,7 @@ out _SFR_IO_ADDR(SPMCSR), r24
 spm
 usb_reply_empty:
 ldi r24, 0x00
-rjmp usb_reply_limit_length
+rjmp usb_reply_store_length
 bootloader_check_write4:
 /* The selector dispatched only opcodes >= WRITE4. Accept RUN explicitly;
  * unknown requests must never become a raw pending SPM operation. */
@@ -46,23 +47,27 @@ ldd r10, Y+CTX_SETUP_VALUE_LOW
 ldd r11, Y+CTX_SETUP_VALUE_HIGH
 ldd r12, Y+CTX_SETUP_INDEX_LOW
 ldd r13, Y+CTX_SETUP_INDEX_HIGH
+rcall usb_service_pending
 sbrc r5, 7
 rjmp ee_write
 /* Every host-selected Flash cursor is four-byte aligned. After ADIW Z,2,
  * bit1 is set after word1 and clear after word2, so it doubles as the loop
- * phase. R1 may contain data between words; no zero consumer, ABI call or USB
- * poll intervenes. Restore R1 before returning to the shared control path. */
-movw r30, r4
+ * phase. Each word restores R1 and the persistent cursor before polling. */
 .Lflash_load_two_words:
+movw r30, r4
 movw r0, r10
 movw r10, r12
 out _SFR_IO_ADDR(SPMCSR), r29
 spm
-adiw r30, AVR_WORD_BYTES
-sbrc r30, 1
-rjmp .Lflash_load_two_words
+/* The word has consumed R1:R0. Publish the cursor and restore the zero
+ * register before allowing another packet; the next word reloads its data. */
 eor r1, r1
+adiw r30, AVR_WORD_BYTES
 movw r4, r30
+rcall usb_service_pending
+sbrc r4, 1
+rjmp .Lflash_load_two_words
+mov r30, r4
 andi r30, FLASH_PAGE_OFFSET_MASK
 brbc SREG_Z, usb_reply_empty
 ldi r25, SPM_PAGE_WRITE

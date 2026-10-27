@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from build_candidate import checked_build
 from test_read_previous import decode
-from tests import avr_exec23
+from tests27 import avr_exec27 as avr_exec23
 
 CONTEXT = 0x100
 DATA0, DATA1, NAK = 0xC3, 0x4B, 0x5A
@@ -84,11 +84,12 @@ def initialize(artifact):
     for offset in range(44):
         machine.ram[offset] = 0
     machine.r[29] = 1
+    machine.r[21] = 0xA0
     machine.r[2] = 0xA5  # R2 is free; replies must not treat it as a memory source.
     machine.r[4:6] = [0x34, 0x12]
     end = min(8192, artifact['boot'] + len(artifact['body']))
     machine.flash[artifact['boot']:end] = artifact['body'][:end - artifact['boot']]
-    machine.ram[19] = 43  # Unchanged unless SET_ADDRESS is handled.
+    machine.ram[12] = machine.ram[19] = 42  # PHY stores doubled addresses.
     return machine
 
 
@@ -110,7 +111,7 @@ def expected_reply(mode, request, descriptor, configuration):
 
 def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
     """Run SETUP, then each prepared DATA packet, checking externally used state."""
-    configuration, pending_address = machine.ram[21], machine.ram[19]
+    configuration, pending_address = machine.ram[21], machine.ram[12]
     cursor = machine.r[4:6]
     unused_r2 = machine.r[2]
     next_configuration = (value if request == 9 and descriptor == 0 and value < 2
@@ -123,10 +124,10 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
                         29: length & 255, 30: length >> 8})
     machine.steps.clear()
     assert machine.run('usb_control_process_received_packet',
-                       stop=('usb_rx_release_buffer',), limit=160) == 'stop'
+                       stop=('usb_rx_release_buffer',), limit=220) == 'stop'
     assert machine.ram[0] == len(expected), (mode, request, descriptor, length, machine.ram[0])
     assert machine.ram[21] == next_configuration
-    assert machine.ram[19] == (value if request == 5 else pending_address)
+    assert machine.ram[19] == ((value * 2) & 255 if request == 5 else pending_address)
 
     observed = bytearray()
     packets = []
@@ -159,7 +160,9 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
         raise AssertionError('Standard reply exceeded four endpoint-zero packets')
     assert bytes(observed) == expected
     assert machine.ram[21] == next_configuration
-    assert machine.ram[19] == (value if request == 5 else pending_address)
+    assert machine.ram[19] == ((value * 2) & 255 if request == 5 else pending_address)
+    # Model the completed packet TX applying the pending doubled address.
+    machine.ram[12] = machine.ram[19]
     return packets
 
 
@@ -190,7 +193,7 @@ def check_configuration_words(artifact):
                                 21: previous})
             machine.steps.clear()
             machine.run('usb_control_process_received_packet',
-                        stop=('usb_rx_release_buffer',), limit=120)
+                        stop=('usb_rx_release_buffer',), limit=220)
             assert machine.ram[21] == (value if value < 2 else previous), (value, previous)
             assert machine.ram[0] == 0 and machine.r[1] == 0
             assert machine.r[2] == 0xA5
@@ -222,7 +225,7 @@ def check_transfers(artifact):
     for address in (0, 1, 19, 100, 127, 0):
         transfer(machine, mode, 5, value=address, length=0)
         transfer(machine, mode, 6, descriptor=2, length=256)
-        assert machine.ram[19] == address
+        assert machine.ram[19] == address * 2
         count += 2
     print('PASS', mode, count,
           'stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation')

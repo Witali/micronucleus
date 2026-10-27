@@ -20,7 +20,7 @@ ee_write_step:
  * skips RET and starts one byte; a busy EEPROM returns without side effects. */
 cpse r8, r1
 sbic _SFR_IO_ADDR(EECR), EEPE
-ret
+rjmp usb_service_pending
 out _SFR_IO_ADDR(EEARL), r4
 out _SFR_IO_ADDR(EEDR), r10
 mov r10, r11
@@ -33,4 +33,4 @@ sbi _SFR_IO_ADDR(EECR), EEPE
 inc r4
 dec r8
 ee_write_step_done:
-ret
+rjmp usb_service_pending

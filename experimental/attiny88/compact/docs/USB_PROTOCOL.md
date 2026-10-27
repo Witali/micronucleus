@@ -27,6 +27,20 @@ standard control-request behavior. Those checks remain separate audit items.
 In particular, a passing size or happy-path transfer test must not be presented
 as proof of retry or malformed-packet correctness.
 
+## Open protocol findings
+
+The timing-repair checkpoint still lacks token CRC5, exact token-length and
+endpoint-zero checks. Emitted-waveform counterexamples show a response to a
+corrupted or absent-endpoint token; an invalid SETUP token followed by DATA can
+reach WRITE4. These are open defects, not covered by the receive-CRC16 waiver.
+ACK-driven retransmission, duplicate handling and control-pipe error/reset
+behavior also require independent admission. Happy-path PID/CRC comparisons
+and waveform equivalence do not close those items.
+
+Flash page erase/write halts this MCU. The private host protocol therefore
+requires a quiet interval after erase and automatic page commit; its programming
+client uses 15 ms. Foreground service bounds exclude that hardware halt.
+
 The normative reference is the USB-IF
 [USB 2.0 specification](https://www.usb.org/document-library/usb-20-specification),
 sections 8.3.5 (CRC), 8.6.2 (sequence advancement) and 8.6.4 (lost ACK/retry).

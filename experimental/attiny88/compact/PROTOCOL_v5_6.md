@@ -52,13 +52,13 @@ most one byte per call and returns without waiting on EEPE.
 
 | bcdDevice | LED | BOOT_AT | Code bytes | App bytes excluding postscript |
 | --- | --- | --- | ---: | ---: |
-| `0x0560` | Off | `0x1B80` | 1114 | 7036 |
-| `0x0561` | Active high | `0x1B40` | 1132 | 6972 |
-| `0x0562` | Active low | `0x1B40` | 1130 | 6972 |
+| `0x0560` | Off | `0x1B80` | 1150 | 7036 |
+| `0x0561` | Active high | `0x1B40` | 1168 | 6972 |
+| `0x0562` | Active low | `0x1B40` | 1166 | 6972 |
 
 These values describe this checkpoint and must be updated with every admitted
-candidate build. At the target address `0x1C00`, no LED still uses 1110 bytes,
-**86 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
+candidate build. At the target address `0x1C00`, no LED uses 1146 bytes,
+**122 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
 The build command measures the source; it does not program a device.
 
 The new client retains offline HEX preparation and the separate explicit
@@ -68,3 +68,16 @@ RESET/postscript handling and profile rejection. The NVM tests execute compiled
 opcodes across all Flash page positions/boundaries and all 65536 cursor values
 in every LED profile. PHY timing and complete USB transaction admission are
 separate gates; see the candidate development record.
+
+## Flash programming quiet intervals
+
+Page erase and page write halt the ATtiny88 CPU. After SELECT+ERASE and after
+the final WRITE4 that automatically commits a page, the host must allow the
+operation to finish before sending the next request. `program_application`
+uses a 15-ms delay after each of those operations, then verifies the page by
+reading it back. Low-level transport callers must provide the same scheduling.
+The digital foreground service bound excludes the physical SPM halt; it does
+not promise a USB response during Flash programming.
+
+The accepted omission of incoming DATA CRC16 validation before ACK is recorded
+in [docs/USB_PROTOCOL.md](docs/USB_PROTOCOL.md). Outgoing CRC16 is retained.

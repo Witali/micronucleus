@@ -1,6 +1,8 @@
 /* Software USB Low-Speed PHY: synchronization, NRZI, stuffing and handshakes.
  * In: RESET-owned stack, interrupts disabled, initialized USB SRAM context.
- * Preserves persistent R2..R15 and X; clobbers R16..R23, Y, Z and SREG.
+ * Requires YH=1 at external entry. Preserves R0..R15, R24:R25 and X;
+ * clobbers R16..R23, Y, Z and SREG. Every external return restores
+ * Y=USB_CONTEXT_BASE and R21=HIGH8(CRC16_POLYNOMIAL).
  * RX/TX sample and output instants are cycle contracts, not ordinary delays.
  * Keep all timing changes tied to emitted-opcode audits and hardware caveats.
  */
@@ -23,16 +25,17 @@ sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
 rjmp usb_rx_found_k
 sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
 rjmp usb_rx_found_k
-rjmp usb_handler_return
+sbi _SFR_IO_ADDR(PCIFR), PCIF2
+rjmp usb_return_context
 usb_rx_found_k:
-/* This single-buffer implementation never changes INPUT_BUFFER_OFFSET
- * after startup clears it. Set Y=0x0116 directly. The old sequence took
- * 9 cycles and 12 bytes; two LDIs plus RCALL/RET take 9 cycles and 6 bytes.
- * RCALL temporarily needs two stack bytes (one more than the old PUSH).
- * Its return target is the existing bare RET, not packet cleanup. */
+/* Every external caller and chained RX path preserves YH=1. Handshake
+ * TX uses YH=0 but returns through the context restore, never into chained RX.
+ * RX stays within 0x0115..0x0122 even on partial packets/overflow. Reuse the
+ * polynomial load as delay work: LDI + RCALL + LDI + RET = 9 cycles, 4 bytes
+ * at this site. This early R21 value is dead before RX initializes its counter.
+ * RCALL needs two temporary stack bytes, as in the prior fixed-base version. */
 ldi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
-ldi r29, HIGH8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
-rcall usb_handler_return
+rcall usb_return_polynomial
 ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
 sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
 rjmp usb_rx_sync_confirmed
@@ -185,8 +188,7 @@ usb_handler_packet_done:
 in r28, _SFR_IO_ADDR(PCIFR)
 sbrc r28, PCIF2
 rjmp usb_rx_wait_for_j
-usb_handler_return:
-ret
+rjmp usb_return_context
 /* Publish nonempty DATA to the EP0 parser and choose ACK/NAK. Inherited
  * limitation: ACK can precede full CRC16 validation; this is not USB admission.
  */
@@ -288,24 +290,36 @@ dec r19
 brbc SREG_Z, usb_tx_begin_byte
 andi r16, USB_LINES_CLEAR_MASK
 ldd r17, Z+CTX_NEW_DEVICE_ADDRESS
-add r17, r17
 /* Two cycles in one word; Z flag still means (Y-22)==0. */
 sbiw r28, USB_HANDSHAKE_END_POINTER
 out _SFR_IO_ADDR(PORTD), r16
 brbs SREG_Z, usb_tx_finish_eop
 std Z+CTX_DEVICE_ADDRESS, r17
 usb_tx_finish_eop:
-sbi _SFR_IO_ADDR(PCIFR), PCIF2
 ori r16, (1 << USB_MINUS_BIT)
-in r17, _SFR_IO_ADDR(DDRD)
-andi r17, USB_LINES_CLEAR_MASK
-mov r20, r16
-andi r20, USB_LINES_CLEAR_MASK
 ldi r21, USB_EOP_DELAY_LOOPS
 usb_tx_eop_delay:
 dec r21
 brbc SREG_Z, usb_tx_eop_delay
 out _SFR_IO_ADDR(PORTD), r16
+sbi _SFR_IO_ADDR(PCIFR), PCIF2
+in r17, _SFR_IO_ADDR(DDRD)
+andi r17, USB_LINES_CLEAR_MASK
+mov r20, r16
+andi r20, USB_LINES_CLEAR_MASK
+rjmp .+0
+rjmp .+0
 out _SFR_IO_ADDR(DDRD), r17
 out _SFR_IO_ADDR(PORTD), r20
-rjmp usb_handler_packet_done
+/* EOP J has completed. Legal next SOP is at least two bit times
+ * after J begins, so return before that window instead of rechecking
+ * the pin-change flag here; cooperative foreground polling follows. */
+/* Every external PHY return restores foreground context and polynomial.
+ * The internal nine-cycle RX initializer enters at the polynomial load below. */
+usb_return_context:
+ldi r28, LOW8(USB_CONTEXT_BASE)
+ldi r29, HIGH8(USB_CONTEXT_BASE)
+usb_return_polynomial:
+ldi r21, HIGH8(CRC16_POLYNOMIAL)
+usb_handler_return:
+ret

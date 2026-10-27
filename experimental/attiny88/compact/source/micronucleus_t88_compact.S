@@ -101,15 +101,19 @@ usb_poll_check_packet_pending:
 sbis _SFR_IO_ADDR(PCIFR), PCIF2
 rjmp usb_poll_advance_timeout
 rcall USB_handler
-sbi _SFR_IO_ADDR(PCIFR), PCIF2
 bootloader_process_pending_command:
 wdr
+#include "vusb_setup.inc"
+bootloader_check_pending_command:
 /* EEPROM writes must complete before SPM erase/write/exit. This gate also
  * holds an older deferred RUN until a later EEPROM queue has fully drained.
  * With only two readiness sites, these inline IN/OR pairs save a helper/RET. */
 in r24, _SFR_IO_ADDR(EECR)
 or r24, r8
-brne usb_control_process_received_packet
+breq .Lcommand_eeprom_idle
+.Lcommand_wait_for_poll:
+rjmp usb_tx_prepare_pending_reply
+.Lcommand_eeprom_idle:
 /* Deferred operations run after the USB polling window. R3 uses the real
  * SPM command (erase=3, commit=5), RUN=4, SELECT marker=2, or idle=0.
  * SPM is forbidden while the asynchronous EEPROM worker is active.
@@ -123,7 +127,7 @@ rjmp flash_erase_selected_page
 cpi r24, CMD_EXIT
 brne bootloader_clear_command
 or r26, r27
-brne usb_control_process_received_packet
+brne .Lcommand_wait_for_poll
 rjmp bootloader_start_application
 flash_erase_selected_page:
 flash_commit_buffered_page:
@@ -151,7 +155,7 @@ bootloader_clear_command:
 mov r3, r1
 /* NVM handlers sit near the vendor dispatcher for short conditional branches.
  * The ordinary main-loop path must jump over their callable-only fragment. */
-rjmp usb_control_process_received_packet
+rjmp usb_tx_prepare_pending_reply
 #include "compact_memory.inc"
 #include "vusb_ep0.inc"
 
@@ -159,6 +163,8 @@ rjmp usb_control_process_received_packet
  * and enter the application only when its postscript is not erased.
  */
 bootloader_check_idle_timeout:
+/* Bound the no-message path before a ready EEPROM worker starts a byte. */
+rcall usb_service_pending
 rcall ee_write_step
 movw r24, r6
 adiw r24, 1
@@ -177,15 +183,7 @@ LED_TICK
 led_tick_done:
 legacy_led_off_anchor:
 usb_poll_check_missed_packet:
-sbis _SFR_IO_ADDR(PCIFR), PCIF2
-rjmp bootloader_poll_begin
-ldi r24, USB_RESYNC_IDLE_SAMPLES
-usb_poll_wait_for_idle:
-sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
-ldi r24, USB_RESYNC_IDLE_SAMPLES
-subi r24, 0x01
-brbc SREG_Z, usb_poll_wait_for_idle
-sbi _SFR_IO_ADDR(PCIFR), PCIF2
+rcall usb_service_pending
 rjmp bootloader_poll_begin
 usb_poll_advance_timeout:
 sbiw r26, 1
@@ -214,3 +212,28 @@ app_jump:
 
 #include "vusb_standard.inc"
 #include "compact_eeprom.inc"
+
+/* Cooperative foreground service. PHY preserves X, R24 and R25.
+ * R18 and flags are scratch at callers; CRC reconstructs C with SEC.
+ * Every caller is reached by a jump, so abort discards just this RCALL.
+ */
+usb_service_pending:
+sbis _SFR_IO_ADDR(PCIFR), PCIF2
+ret
+/* R0/R24/R25 are preserved by PHY, so the CRC state needs no spill. */
+rcall USB_handler
+ldd r18, Y+CTX_RX_LENGTH
+cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
+brne .Lservice_done
+ldd r18, Y+CTX_RX_TOKEN
+cpi r18, USB_PID_SETUP
+brne .Lservice_done
+/* The previous builder has no stack frame beyond this helper call. */
+pop r18
+pop r18
+/* Length, token and Y are already validated. Reuse that proof and capture
+ * the new fields before any further polling can overwrite RX bytes. */
+std Y+CTX_RX_LENGTH, r1
+rjmp usb_setup_capture_fields
+.Lservice_done:
+ret

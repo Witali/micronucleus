@@ -18,7 +18,8 @@ from check_build import build
 from build_candidate import SOURCE, checked_build
 from audit_phy27 import audit_candidate
 from test_read_previous import decode
-from tests import avr_exec, avr_exec23
+from tests27 import avr_exec27 as avr_exec
+from tests27 import avr_exec27 as avr_exec23
 
 
 @lru_cache(maxsize=32)
@@ -69,8 +70,8 @@ def check_standard(artifact, mode):
     old = build(ROOT / 'variants/strict_usb_optimized/micronucleus_t88_pass26.S',
                 mode, artifact['boot'])
     branches, states = audit_candidate(old, artifact, '')
-    print('PASS PHY: 9-cycle RX setup,', branches, 'branch targets,', states,
-          'flag-liveness states; three branch operands corrected')
+    print('PASS PHY: unchanged RX schedule,', branches, 'branch targets,', states,
+          'flag-liveness states; independent TX/return contracts')
     # Compare observable USB data/state, not intentionally removed scratch stores.
     from tests27.ep0_state import (check_standard as standard, check_transfers,
                                   check_configuration_words)
@@ -98,7 +99,9 @@ def check_tx_bytes(artifact):
                                 for _ in range(length))
                 machine = avr_exec23.AVRExec(artifact)
                 machine.r[29] = 1
-                machine.r[23] = length
+                machine.r[24] = length
+                machine.r[0] = machine.r[25] = 0
+                machine.r[21] = 0xA0
                 machine.r[2] = 0xA5  # The former source register is now free.
                 pointer = offset | (0x8000 if source == 'eeprom' else 0)
                 machine.r[14:16] = [pointer & 255, pointer >> 8]
@@ -129,6 +132,7 @@ def check_control_reply(artifact):
         machine = avr_exec23.AVRExec(artifact)
         machine.ram = ContextView(machine.data_memory)
         machine.r[29] = 1
+        machine.r[21] = 0xA0
         machine.flash[:min(8192, artifact['boot'] + len(artifact['body']))] = (
             bytes(artifact['boot']) + artifact['body'])[:8192]
         machine.ram.update({18: 11, 13: 0x2D, 23: 0x80, 24: request,

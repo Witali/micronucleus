@@ -1,8 +1,9 @@
-"""Actual-opcode audit of the modular Pass27 PHY against the archived Pass26.
+"""Audit emitted PHY words, timing repairs and shared-return ABI.
 
-The sole allowed body changes are fixed RX base initialization (-6 bytes) and
-three previously undefined branch-flag operands. This checks schedule/control
-flow, not electrical USB compatibility or inherited early ACK behavior.
+Unchanged RX/TX core instructions and branch destinations are compared with
+Pass26. Each intentional difference has a separate raw-word contract below.
+This structural audit is complemented by synchronized pin-waveform tests; it
+does not establish electrical compliance or received-packet CRC admission.
 """
 from pathlib import Path
 import subprocess
@@ -28,11 +29,23 @@ def audit_relocation(before,after):
     bstart=before['symbols']['usb_rx_found_k']; astart=after['symbols']['usb_rx_found_k']
     old=words(before,before['symbols']['USB_handler'],before['symbols']['flash_buffer_append_word'])
     new=words(after,after['symbols']['USB_handler'],after['symbols']['flash_buffer_append_word'])
-    old=[x for x in old if not bstart<=x[0]<bstart+12]
-    new=[x for x in new if not astart<=x[0]<astart+6]
+    # Exclude only explicitly checked replacements. Everything else, including
+    # each sampling/stuffing opcode, must retain its normalized control flow.
+    bend=before['symbols']['usb_tx_finish_eop']; aend=after['symbols']['usb_tx_finish_eop']
+    bseed=before['symbols']['usb_tx_begin_byte']; aseed=after['symbols']['usb_tx_begin_byte']
+    bret=before['symbols']['usb_handler_return']
+    aret=after['symbols']['usb_handler_packet_done']+6
+    removed_add=bend-10  # NEW_DEVICE_ADDRESS is now stored already shifted.
+    assert int.from_bytes(before['bytes'][removed_add:removed_add+2],'little')==0x0f11
+    old_ranges=[(bstart-2,bstart+12),(bret,bret+2),(bseed,bseed+2),(removed_add,removed_add+2),(bend,before['symbols']['flash_buffer_append_word'])]
+    new_ranges=[(astart-4,astart+4),(aret,aret+2),(aseed,aseed+2),(aend,after['symbols']['flash_buffer_append_word'])]
+    old=[x for x in old if not any(lo<=x[0]<hi for lo,hi in old_ranges)]
+    new=[x for x in new if not any(lo<=x[0]<hi for lo,hi in new_ranges)]
     assert len(old)==len(new)
     remap={x[0]:y[0] for x,y in zip(old,new)}
     remap[bstart]=astart
+    remap[bseed]=aseed
+    remap[bend]=aend
     flag_sites={before['symbols']['usb_rx_decode_bit6']+6:2, before['symbols']['usb_rx_handle_data']+14:2, before['symbols']['usb_rx_handle_in']+4:4}
     seen_flag_sites=set()
     count=0
@@ -64,8 +77,8 @@ def flags_and_flow(art,entry):
     """
     wordmap={pc:(w,len(raw)) for pc,w,raw in words(art,art['symbols']['bootloader_start']+38,len(art['bytes']))}
     calls=[pc for pc,(w,_) in wordmap.items() if w&0xf000==0xd000 and target(pc,w,12)==art['symbols']['USB_handler']]
-    assert len(calls)==1,calls
-    todo=[(entry,0x1f,(calls[0]+2,))]
+    assert calls,'No external PHY caller found'
+    todo=[(entry,0x1f,(call+2,)) for call in calls]
     seen=set()
     while todo:
         pc,dirty,stack=todo.pop()
@@ -118,17 +131,37 @@ def audit_candidate(reference,candidate,undefined_symbols):
     before=dict(reference, bytes=bytes(reference['boot'])+reference['body'])
     after=dict(candidate, bytes=bytes(candidate['boot'])+candidate['body'])
     start=after['symbols']['usb_rx_found_k']
-    fragment=words(after,start,start+6)
-    assert fragment[0][1]==0xe1c6 and fragment[1][1]==0xe0d1
-    assert fragment[2][1]&0xf000==0xd000
-    ret=target(fragment[2][0],fragment[2][1],12)
-    assert ret==after['symbols']['usb_handler_return']
-    assert after['bytes'][ret:ret+2]==b'\x08\x95'
-    assert 2+2+1+2+2==1+1+3+4==9
+    fragment=words(after,start,start+4)
+    assert fragment[0][1]==0xe1c6  # LDI YL,22; YH=1 is the private ABI.
+    assert fragment[1][1]&0xf000==0xd000
+    delay=target(fragment[1][0],fragment[1][1],12)
+    assert delay==after['symbols']['usb_return_polynomial']
+    assert after['bytes'][delay:delay+4]==bytes.fromhex('50 ea 08 95')
+    context=after['symbols']['usb_return_context']
+    assert after['bytes'][context:context+8]==bytes.fromhex('c0 e0 d1 e0 50 ea 08 95')
+    assert after['symbols']['usb_handler_return']==delay+2
+    assert 2+2+1+2+2==1+3+1+4==9
+    # Initial SYNC timeout clears the old flag without touching uninitialized Z.
+    timeout=words(after,start-4,start)
+    assert timeout[0][1]==0x9ada and timeout[1][1]&0xf000==0xc000
+    assert target(timeout[1][0],timeout[1][1],12)==context
+    returned=after['symbols']['usb_handler_packet_done']+6
+    return_word=int.from_bytes(after['bytes'][returned:returned+2],'little')
+    assert return_word&0xf000==0xc000 and target(returned,return_word,12)==context
+    # Seed 0x3B gives the corrected 85-cycle byte schedule. Pass26 used 0x35.
+    assert int.from_bytes(before['bytes'][before['symbols']['usb_tx_begin_byte']:][:2],'little')==0xe365
+    assert int.from_bytes(after['bytes'][after['symbols']['usb_tx_begin_byte']:][:2],'little')==0xe36b
+    # SE0 uses six loop iterations. After J, useful flag/port work and two
+    # two-cycle delay words keep DDR driven for eleven cycles before release.
+    eop=after['symbols']['usb_tx_finish_eop']
+    expected=[0x6002,0xe056,0x955a,0xf7f1,0xb90b,0x9ada,0xb11a,0x7f19,
+              0x2f40,0x7f49,0xc000,0xc000,0xb91a,0xb94b,0xe0c0,0xe0d1,0xea50,0x9508]
+    assert [word for _,word,_ in words(after,eop,after['symbols']['flash_buffer_append_word'])]==expected
+    assert 2+1+1+1+1+2+2+1==11  # J OUT end -> DDR release OUT end.
     assert before['symbols']['flash_buffer_append_word']-before['symbols']['USB_handler']==492
-    assert after['symbols']['flash_buffer_append_word']-after['symbols']['USB_handler']==486
+    assert after['symbols']['flash_buffer_append_word']-after['symbols']['USB_handler']==494
     branches=audit_relocation(before,after)
-    states=flags_and_flow(after,start+6)
+    states=flags_and_flow(after,start+4)
     # No explicit context store may mutate the removed input-buffer offset.
     # RX writes only 0x116..0x120, TX payload/CRC only 0x102..0x10b; startup's
     # descending zero-clear is the sole writer of context byte 14.
@@ -150,4 +183,4 @@ if __name__=='__main__':
         new=build(root/'source/micronucleus_t88_compact.S',mode,boot)
         undefined=subprocess.check_output(['llvm-nm','--undefined-only',str(new['obj'])],text=True).strip()
         branches,states=audit_candidate(old,new,undefined)
-        print('PASS',mode,hex(boot),'PHY492->486, three flag operands corrected, 9-cycle RX setup,',branches,'branch targets,',states,'flag-liveness states; +1 peak stack byte')
+        print('PASS',mode,hex(boot),'PHY492->494, three corrected flag operands, 9-cycle shared RX setup, 85-cycle TX byte and 11-cycle J,',branches,'branch targets,',states,'flag-liveness states; private YH=1 ABI')

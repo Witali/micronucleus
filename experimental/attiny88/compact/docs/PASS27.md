@@ -7,8 +7,10 @@ comparison references. This candidate is not a released or hardware-tested build
 The [accepted receive-CRC16 exception](USB_PROTOCOL.md) records the user's
 size/ACK-latency tradeoff, its corruption risk and the checks it does not waive.
 
-The current checkpoint is **1096 bytes at `0x1C00`**, still **72 bytes above
-1 KiB**. Its fitting no-LED placement is `0x1B80`, 1100 bytes in 18 pages.
+The current timing-repair checkpoint is **1146 bytes at `0x1C00`**, still
+**122 bytes above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1150 bytes
+in 18 pages. Correcting the timing and foreground packet loss costs 50 bytes
+relative to the preceding 1096-byte size checkpoint.
 Earlier checkpoints below retain the scope of their isolated measurements.
 
 | Source | Responsibility |
@@ -17,6 +19,7 @@ Earlier checkpoints below retain the scope of their isolated measurements.
 | `source/device_attiny88.inc` | Hardware, LED configuration, SREG bits, Flash geometry and clock |
 | `source/compact_protocol.inc` | USB context, private requests, descriptors and timing constants |
 | `source/vusb_phy.inc` | Low-Speed NRZI, stuffing, synchronization and bus handshakes |
+| `source/vusb_setup.inc` | SETUP validation/capture before deferred work and replacement of an interrupted request |
 | `source/vusb_ep0.inc` | SETUP dispatch, reply preparation, length limiting and payload CRC |
 | `source/vusb_standard.inc` | Standard USB requests |
 | `source/compact_memory.inc` | SELECT, combined erase, WRITE4 and RUN |
@@ -160,3 +163,29 @@ Partially rolling the six RX SYNC probes was also tested and rejected. Two-,
 three- and four-probe loop variants save 2..6 bytes but corrupt or overflow a
 valid packet at legal receiver jitter. The acquisition probes remain unrolled;
 the startup saving does not change USB sampling or transmission instructions.
+
+### USB timing-repair checkpoint
+
+Use TX seed 0x3B, drive EOP J for eleven cycles, and fill that J interval with
+useful flag/port work. Store the pending address already doubled, removing a
+late TX-tail ADD. External PHY returns share Y/context and CRC-polynomial
+restoration; the found-K delay reuses the polynomial-load/RET suffix for the
+same nine-cycle acquisition schedule in four bytes.
+
+Cooperative service replaces the foreground wait-and-discard tail. Poll during
+CRC, before long reply paths and between Flash words after restoring R1=0 and
+publishing the cursor. Capture request fields before polling can overwrite RX
+token bytes; a fresh SETUP unwinds the private helper and replaces the builder.
+SETUP also cancels any uncompleted pending address change. Pending RUN reaches
+polling until the real poll countdown expires, and waits for EEPROM readiness.
+
+`tests27/cooperative_usb.py` executes linked instructions with a shared byte
+stack, clocked GPIO/PCINT model and EEPROM CPU stalls. It checks minimum-IPD
+host traffic, descriptors, vendor side effects and replacement SETUP. The
+modeled foreground bound includes up to three cycles from pin edge to PCIF.
+`audit_phy27.py` preserves the unchanged sampler/core instruction contracts and
+independently checks each intentional TX/return change. These digital checks
+do not establish analog or complete USB protocol compliance; known protocol
+gaps and the accepted receive-CRC exception remain in [USB_PROTOCOL.md](USB_PROTOCOL.md).
+
+Fitting off/high/low sizes are 1150/1168/1166 bytes at 0x1B80/0x1B40/0x1B40.

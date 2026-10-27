@@ -1,25 +1,4 @@
-/* EP0 SETUP dispatch, reply length limiting and staged TX payload/CRC.
- * Restore Y after the PHY before any context access. SETUP resets DATA PID
- * and reply state; private memory requests share the same response machinery.
- */
-usb_control_process_received_packet:
-ldi r28, LOW8(USB_CONTEXT_BASE)
-ldi r29, HIGH8(USB_CONTEXT_BASE)
-ldd r24, Y+CTX_RX_LENGTH
-cpi r24, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
-brne usb_rx_release_buffer
-ldd r25, Y+CTX_RX_TOKEN
-cpi r25, USB_PID_SETUP
-brbc SREG_Z, usb_rx_release_buffer
-ldi r24, USB_PID_DATA0
-mov r9, r24
-ldi r24, USB_PID_NAK
-std Y+CTX_TX_LENGTH, r24
-ldd r24, Y+CTX_SETUP_REQUEST_TYPE
-andi r24, USB_REQUEST_TYPE_MASK
-ldd r25, Y+CTX_SETUP_REQUEST
-brbc SREG_Z, bootloader_handle_vendor_request
-rjmp usb_standard_dispatch
+/* EP0 reply generation; accepted SETUP dispatch is in vusb_setup.inc. */
 bootloader_handle_vendor_request:
 mov r7, r1
 /* One gate owns private-command readiness. Busy replies are empty and do not
@@ -66,6 +45,7 @@ movw r14, r18
  * high request-length byte cannot truncate these at-most-18-byte responses.
  */
 usb_reply_limit_length:
+rcall usb_service_pending
 ldd r25, Y+CTX_SETUP_LENGTH_HIGH
 cpse r25, r1
 rjmp usb_reply_store_length
@@ -76,38 +56,44 @@ mov r24, r25
 usb_reply_store_length:
 std Y+CTX_MSG_LENGTH, r24
 usb_rx_release_buffer:
-std Y+CTX_RX_LENGTH, r1
 usb_tx_prepare_pending_reply:
+/* CRC state is dead until this preparation starts and survives PHY service. */
+eor r0, r0
+ldi r25, 0x00
+rcall usb_service_pending
 ldd r24, Y+CTX_TX_LENGTH
 sbrs r24, USB_HANDSHAKE_FLAG_BIT
 rjmp bootloader_check_idle_timeout
 ldd r24, Y+CTX_MSG_LENGTH
 cpi r24, USB_NO_MESSAGE
 brbs SREG_Z, bootloader_check_idle_timeout
+/* Count and complemented CRC stay in PHY-preserved R24/R0/R25.
+ * Publish the next message remainder while TX_LENGTH still advertises NAK. */
 mov r23, r24
 cpi r24, (USB_EP0_PAYLOAD_BYTES + 1)
 brbs SREG_C, usb_tx_prepare_data_packet
-ldi r23, USB_EP0_PAYLOAD_BYTES
+ldi r24, USB_EP0_PAYLOAD_BYTES
 usb_tx_prepare_data_packet:
-sub r24, r23
+sub r23, r24
+cpi r24, USB_EP0_PAYLOAD_BYTES
+sbci r23, 0
+std Y+CTX_MSG_LENGTH, r23
 /* SETUP initialized R9 to DATA0; first prepared response is DATA1. */
 ldi r18, USB_DATA_PID_TOGGLE
 eor r9, r18
 std Y+CTX_TX_PID, r9
 /* Copy Flash/EEPROM into the TX buffer while computing USB CRC16.
- * R23 packs remaining bytes in its low five bits and the bit phase above them;
+ * R24 packs remaining bytes in its low five bits and the bit phase above them;
  * adding 32 wraps after eight shifts, then DEC consumes one payload byte.
- * R19:R25 hold the complemented CRC representation used by the original PHY.
+ * R0:R25 hold the complemented CRC representation used by the original PHY.
  */
 usb_tx_initialize_payload_crc:
-ldi r19, 0x00
-ldi r25, 0x00
-ldi r21, HIGH8(CRC16_POLYNOMIAL)
 ldi r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
 ldi r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-movw r30, r14
 usb_tx_copy_flash_payload:
-cp r1, r23
+rcall usb_service_pending
+movw r30, r14
+cp r1, r24
 breq usb_crc16_payload_complete
 sbrc r15, 7
 rjmp usb_tx_eeprom_byte
@@ -120,29 +106,29 @@ in r18, _SFR_IO_ADDR(EEDR)
 inc r30
 usb_tx_store_byte:
 st X+, r18
+movw r14, r30
 usb_crc16_mix_byte:
-eor r19, r18
+eor r0, r18
 usb_crc16_shift_bit:
+rcall usb_service_pending
+sec
 ror r25
-ror r19
+ror r0
 brbs SREG_C, usb_crc16_advance_bit_count
-eor r19, r29
+eor r0, r29
 eor r25, r21
 usb_crc16_advance_bit_count:
-subi r23, LOW8(-CRC_BIT_COUNTER_INCREMENT)
+subi r24, LOW8(-CRC_BIT_COUNTER_INCREMENT)
 brbs SREG_C, usb_crc16_shift_bit
 usb_crc16_byte_complete:
-dec r23
+dec r24
 rjmp usb_tx_copy_flash_payload
 usb_crc16_payload_complete:
-movw r14, r30
 usb_tx_append_payload_crc:
 usb_crc16_append:
-st X+, r19
+st X+, r0
 st X+, r25
 usb_crc16_core_end:
-cpi r26, USB_FULL_TX_PACKET_BYTES
-sbci r24, 0
-std Y+CTX_MSG_LENGTH, r24
 usb_tx_publish_packet_length:
+rcall usb_service_pending
 std Y+CTX_TX_LENGTH, r26

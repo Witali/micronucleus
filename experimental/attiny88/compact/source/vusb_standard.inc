@@ -3,7 +3,8 @@
  * Helpers in vusb_ep0.inc read Flash and clamp to the host's wLength.
  */
 usb_standard_dispatch:
-ldd r18, Y+CTX_SETUP_VALUE_LOW
+/* R24 caches wValue and survives every cooperative PHY service. */
+ldd r24, Y+CTX_SETUP_VALUE_LOW
 cpse r25, r1
 rjmp usb_standard_check_set_address
 ldi r24, USB_STATUS_REPLY_BYTES
@@ -11,9 +12,11 @@ rjmp usb_reply_use_scratch_buffer
 usb_standard_check_set_address:
 cpi r25, USB_REQ_SET_ADDRESS
 brbc SREG_Z, usb_standard_check_get_descriptor
-std Y+CTX_NEW_DEVICE_ADDRESS, r18
-rjmp usb_reply_use_scratch_buffer
+lsl r24
+std Y+CTX_NEW_DEVICE_ADDRESS, r24
+rjmp usb_reply_empty
 usb_standard_check_get_descriptor:
+rcall usb_service_pending
 cpi r25, USB_REQ_GET_DESCRIPTOR
 brbc SREG_Z, usb_standard_check_configuration
 ldd r24, Y+CTX_SETUP_VALUE_HIGH
@@ -34,12 +37,12 @@ cpi r25, USB_REQ_SET_CONFIGURATION
 brbc SREG_Z, usb_standard_check_get_interface
 /* Configuration is always 0 or 1. Compare the complete wValue word;
  * LDD preserves the borrow from CPI before the high-byte CPC. */
-cpi r18, 2
-ldd r24, Y+CTX_SETUP_VALUE_HIGH
-cpc r24, r1
+cpi r24, 2
+ldd r18, Y+CTX_SETUP_VALUE_HIGH
+cpc r18, r1
 brsh ee_std_empty
-std Y+CTX_CONFIGURATION, r18
-rjmp usb_reply_use_scratch_buffer
+std Y+CTX_CONFIGURATION, r24
+rjmp usb_reply_empty
 usb_standard_get_configuration:
 /* Device descriptor byte16 is zero; adjacent byte17 is one. Add their
  * low address to the strictly validated configuration without a second LDI. */

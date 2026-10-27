@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from build_candidate import checked_build
 from host import compact_programmer27 as host
-from tests import avr_exec
+from tests27 import avr_exec27 as avr_exec
 from tests27.ep0_state import cached_decode, initialize, transfer
 
 
@@ -21,6 +21,7 @@ def new_machine(artifact):
     with patch.object(avr_exec, 'decode', cached_decode):
         machine = avr_exec.AVRExec(artifact)
     machine.r[29] = 1
+    machine.r[21] = 0xA0
     machine.r[2] = 0xA5
     machine.r[9] = 0x4B
     machine.r[14:16] = [0xEF, 0xBE]
@@ -47,7 +48,7 @@ def check_main_gate_and_layout(artifact):
         machine = new_machine(artifact)
         set_pointer(machine, 0x100)
         machine.r[3], machine.r[25] = 2, stale_request
-        machine.run('bootloader_clear_command', stop=('usb_control_process_received_packet',))
+        machine.run('bootloader_clear_command', stop=('usb_tx_prepare_pending_reply',))
         assert machine.r[3] == 0 and pointer(machine) == 0x100
         assert not machine.spms and not machine.io_events
         preserve_usb_registers(machine)
@@ -59,8 +60,8 @@ def check_main_gate_and_layout(artifact):
             machine = new_machine(artifact)
             set_pointer(machine, 0x100)
             machine.r[3], machine.r[8], machine.io[0x1F] = command, pending, eecr
-            # Start immediately after WDR to exercise the real inline gate.
-            machine.run(entry + 2, stop=('usb_control_process_received_packet',))
+            # Enter the deferred-command gate after the independent SETUP parser.
+            machine.run('bootloader_check_pending_command', stop=('usb_tx_prepare_pending_reply',))
             assert machine.r[3] == command and pointer(machine) == 0x100
             assert not machine.spms and not machine.io_events
     print('PASS 256 stale-request main-loop jumps and 18 deferred SPM/RUN busy gates')
