@@ -12,6 +12,10 @@ Development continues in the [annotated modular Pass27 candidate](docs/PASS27.md
 organized like the adjacent Block64 source. Use `sh verify27.sh` for that work;
 `sh verify.sh` continues to reproduce the archived Pass26 release.
 
+The [same-board 2.8/3.0 benchmark](docs/MEMORY_BENCHMARK30.md) covers all 5440
+free test bytes and the complete EEPROM. The v3.0 client defaults to a 7 ms
+Flash completion wait; override it with `--flash-delay-ms 12`, for example.
+
 | LED profile | Code bytes | USB PHY bytes | BOOT_AT | Application bytes | bcdDevice |
 | --- | ---: | ---: | --- | ---: | --- |
 | Off | 1206 | 492 | `0x1B40` | 6972 | `0x0550` |

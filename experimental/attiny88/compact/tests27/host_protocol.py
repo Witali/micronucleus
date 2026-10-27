@@ -280,12 +280,31 @@ def test_identification_and_cli():
         with patch.dict(sys.modules, {'usb': usb, 'usb.core': core}), redirect_stdout(io.StringIO()):
             h.main(['--identify'])
             assert not device.calls
-            with patch.object(h.time, 'sleep', side_effect=device.finish_eeprom):
-                h.main([str(application), '--execute', '--i-have-isp-recovery', '--boot-at', '0x1C00'])
+            with patch.object(h.time, 'sleep', side_effect=device.finish_eeprom) as pauses:
+                h.main([str(application), '--execute', '--i-have-isp-recovery', '--boot-at', '0x1C00',
+                        '--flash-delay-ms', '11.5'])
+                assert pauses.call_args_list and all(call.args == (0.0115,) for call in pauses.call_args_list)
         # A manual offline placement cannot override a known hardware descriptor.
         assert device.calls[0][3] == device.boot_at - 64
         assert device.flash[device.boot_at:] == b'\xa5' * (8192 - device.boot_at)
     print('PASS descriptor-only identification, unknown profiles, offline CLI and both mocked execution gates')
+
+
+def test_flash_delay_policy():
+    device = ByteUSBMock()
+    transport = h.USBTransport(device)
+    prepared = h.pack_application({0: 0x80, 1: 0xC0})
+    with patch.object(h.time, 'sleep', side_effect=device.finish_eeprom) as pauses:
+        h.program_application(transport, prepared)
+    assert h.DEFAULT_FLASH_DELAY_MS == 7
+    assert pauses.call_args_list and all(call.args == (0.007,) for call in pauses.call_args_list)
+    for invalid in (0, -1, float('nan'), float('inf')):
+        before = len(device.calls)
+        rejected(lambda: h.program_application(transport, prepared, delay=invalid))
+        assert len(device.calls) == before
+        with redirect_stderr(io.StringIO()):
+            rejected(lambda: h.main(['--identify', '--flash-delay-ms', str(invalid)]), SystemExit)
+    print('PASS default7ms, custom11.5ms CLI and invalid waits rejected before USB')
 
 
 def test():
@@ -295,6 +314,7 @@ def test():
     test_transport()
     test_vectors_and_programming()
     test_identification_and_cli()
+    test_flash_delay_policy()
     assert previous.USB_PROFILES == original_profiles
     assert previous.encode_addr(60, eeprom=True) == original_encoding == 0x800F
     assert h.encode_addr(60, eeprom=True) == 0x803C

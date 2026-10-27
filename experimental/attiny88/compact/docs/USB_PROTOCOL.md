@@ -52,7 +52,10 @@ until acknowledgment; this remains an open defect outside the CRC16 waiver.
 
 Flash page erase/write halts this MCU. The private host protocol therefore
 requires a quiet interval after erase and automatic page commit; its programming
-client uses 15 ms. Foreground service bounds exclude that hardware halt.
+v3.0 client defaults to 7 ms, configurable with `--flash-delay-ms`. This is a
+same-board tested host policy, not a universal worst-case bound; see
+[the benchmark and delay sweep](MEMORY_BENCHMARK30.md). Foreground service
+bounds exclude that hardware halt.
 
 The normative reference is the USB-IF
 [USB 2.0 specification](https://www.usb.org/document-library/usb-20-specification),

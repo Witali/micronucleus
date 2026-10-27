@@ -1,0 +1,30 @@
+{
+  "protocol": "3.0",
+  "bcdDevice": "0x0391",
+  "application_only": true,
+  "origin": 4096,
+  "body_bytes": 1182,
+  "flash_mutation_ranges": [
+    [
+      64,
+      128
+    ],
+    [
+      192,
+      4032
+    ],
+    [
+      5312,
+      6848
+    ]
+  ],
+  "flash_test_bytes": 5440,
+  "eeprom_bytes": 64,
+  "run_enabled": false,
+  "inactivity_exit_enabled": false,
+  "installed_loader": "2.8 at 0x1B00, unchanged",
+  "phy_identical": true,
+  "page_guard_opcode_cases": 2048,
+  "body_sha256": "2a2b1107bd34baf3579b90be07c3141646a58a9b4eeb7ba77a8d76dbb2adc8e6",
+  "hex_sha256": "11b88947cc7a22f2cd7bbfa535ce33cf598ab87abf2ac5617466bcdf623c62bd"
+}

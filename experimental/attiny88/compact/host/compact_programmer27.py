@@ -8,6 +8,7 @@ both --execute and --i-have-isp-recovery; these candidates lack hardware admissi
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 import time
 
@@ -30,6 +31,7 @@ BOOT_AT = USB_PROFILES[USB_BCD][1]
 POSTSCRIPT_AT = APP_BYTES = BOOT_AT - 4
 REQ_SET_ADDRESS, REQ_SELECT_ERASE = base.REQ_SET_ADDRESS, base.REQ_SELECT_ERASE
 REQ_WRITE4, REQ_RUN, REQ_READ8 = base.REQ_WRITE4, base.REQ_RUN, base.REQ_READ8
+DEFAULT_FLASH_DELAY_MS = 7.0
 
 # These helpers depend only on image bytes or the supplied transport's geometry.
 # Reuse their validation and readback without changing the Pass26 module's globals.
@@ -41,10 +43,23 @@ record = base.record
 image_to_hex = base.image_to_hex
 plan_flash_pages = base.plan_flash_pages
 verify_application_page = base.verify_application_page
-program_application = base.program_application
 read_eeprom = base.read_eeprom
 program_eeprom_block = base.program_eeprom_block
 program_eeprom_stream = base.program_eeprom_stream
+
+
+def parse_flash_delay_ms(value):
+    """Validate a host pacing parameter before any USB command is issued."""
+    value = float(value)
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError('Flash delay must be a finite positive number of milliseconds')
+    return value
+
+
+def program_application(transport, patched, *, delay=DEFAULT_FLASH_DELAY_MS / 1000):
+    """Use the selected v3.0 erase/commit wait; preserve the archived v5.5 default."""
+    delay = parse_flash_delay_ms(delay * 1000) / 1000
+    return base.program_application(transport, patched, delay=delay)
 
 
 def encode_addr(byte_address: int, *, eeprom: bool = False) -> int:
@@ -150,6 +165,8 @@ def main(argv=None):
     parser.add_argument('--boot-at', type=lambda value: int(value, 0), default=BOOT_AT,
                         help='Offline placement only; hardware geometry comes from its descriptor')
     parser.add_argument('--identify', action='store_true', help='Read only standard device descriptor fields')
+    parser.add_argument('--flash-delay-ms', type=parse_flash_delay_ms, default=DEFAULT_FLASH_DELAY_MS,
+                        help='Quiet wait after each Flash erase/commit (default: 7 ms)')
     parser.add_argument('--execute', action='store_true', help='Write the identified experimental device')
     parser.add_argument('--i-have-isp-recovery', action='store_true', help='Confirm ISP recovery and complete backups')
     args = parser.parse_args(argv)
@@ -188,7 +205,8 @@ def main(argv=None):
         print('Wrote prepared image:', args.out)
     if args.execute:
         assert transport is not None
-        program_application(transport, prepared)
+        print(f'Flash completion delay: {args.flash_delay_ms:g} ms')
+        program_application(transport, prepared, delay=args.flash_delay_ms / 1000)
         print('Experimental write/readback complete, including postscript. Hardware unverified.')
     elif not args.identify:
         print('Dry run only. No USB device was modified.')

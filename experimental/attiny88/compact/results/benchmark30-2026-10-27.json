@@ -1,0 +1,111 @@
+{
+  "legacy": {
+    "eeprom.read": {
+      "samples": 3,
+      "bytes": 64,
+      "median_seconds": 0.19193150009959936,
+      "median_bytes_per_second": 333.4522992150239,
+      "median_host_wait_seconds": 0,
+      "median_control_transactions": 64
+    },
+    "eeprom.write": {
+      "samples": 3,
+      "bytes": 64,
+      "median_seconds": 0.642938100034371,
+      "median_bytes_per_second": 99.5430197659442,
+      "median_host_wait_seconds": 0.08017619978636503,
+      "median_control_transactions": 193
+    },
+    "flash.read.common": {
+      "samples": 3,
+      "bytes": 6908,
+      "median_seconds": 2.591842600144446,
+      "median_bytes_per_second": 2665.285306914475,
+      "median_host_wait_seconds": 0,
+      "median_control_transactions": 864
+    },
+    "flash.read.controlled": {
+      "samples": 1,
+      "bytes": 5440,
+      "median_seconds": 2.0387784999329597,
+      "median_bytes_per_second": 2668.264355435807,
+      "median_host_wait_seconds": 0.0,
+      "median_control_transactions": 680
+    },
+    "flash.write.scratch": {
+      "samples": 1,
+      "bytes": 5440,
+      "median_seconds": 3.400904499925673,
+      "median_bytes_per_second": 1599.5744661806561,
+      "median_host_wait_seconds": 0.6114415000192821,
+      "median_control_transactions": 1445
+    }
+  },
+  "compact": {
+    "eeprom.read": {
+      "samples": 3,
+      "bytes": 64,
+      "median_seconds": 0.02593540004454553,
+      "median_bytes_per_second": 2467.669667330226,
+      "median_host_wait_seconds": 0,
+      "median_control_transactions": 9
+    },
+    "eeprom.write": {
+      "samples": 3,
+      "bytes": 64,
+      "median_seconds": 0.5119482001755387,
+      "median_bytes_per_second": 125.01264772110821,
+      "median_host_wait_seconds": 0.05491870013065636,
+      "median_control_transactions": 192
+    },
+    "flash.erase.scratch": {
+      "samples": 3,
+      "bytes": 5440,
+      "median_seconds": 1.3619761001318693,
+      "median_bytes_per_second": 3994.1963735437707,
+      "median_host_wait_seconds": 1.2970152006018907,
+      "median_control_transactions": 85
+    },
+    "flash.read.common": {
+      "samples": 3,
+      "bytes": 6908,
+      "median_seconds": 2.593858600128442,
+      "median_bytes_per_second": 2663.213792632309,
+      "median_host_wait_seconds": 0,
+      "median_control_transactions": 865
+    },
+    "flash.read.controlled": {
+      "samples": 3,
+      "bytes": 5440,
+      "median_seconds": 2.044744399841875,
+      "median_bytes_per_second": 2660.4792268513797,
+      "median_host_wait_seconds": 0.0,
+      "median_control_transactions": 683
+    },
+    "flash.write.scratch": {
+      "samples": 3,
+      "bytes": 5440,
+      "median_seconds": 4.081799200037494,
+      "median_bytes_per_second": 1332.7456186355344,
+      "median_host_wait_seconds": 1.2954013999551535,
+      "median_control_transactions": 1445
+    }
+  },
+  "passed": true,
+  "production_bootloader_installed": false,
+  "application_upload_seconds": 7.72728590015322,
+  "scope": "Host wall-clock throughput includes USB/driver scheduling and completion waits; physical USB bit timing is not measured.",
+  "legacy_flash_trials": 1,
+  "compact_flash_trials": 3,
+  "legacy_flash_erase": "Not benchmarked: scratch initially erased; uploader erases the whole application during transition.",
+  "eeprom_restored": true,
+  "compact_scratch_erased": true,
+  "installed_loader_unchanged": true,
+  "compact_flash_wait_ms": 15,
+  "usb_poll_model": {
+    "intervals": 41991,
+    "maximum_gap_cycles": 32,
+    "physical_sop_entry_bound_cycles": 40,
+    "spm_cpu_halt_excluded": true
+  }
+}

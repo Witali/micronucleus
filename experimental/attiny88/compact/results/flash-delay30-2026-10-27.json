@@ -1,0 +1,328 @@
+{
+  "passed": true,
+  "diagnostic_levels_ms": [
+    12,
+    10,
+    8,
+    7,
+    6,
+    5
+  ],
+  "bytes_per_trial": 5440,
+  "pages_per_trial": 85,
+  "rows": [
+    {
+      "delay_ms": 12,
+      "trial": 0,
+      "passed": true,
+      "payload_sha256": "735333dff8ff7ce5bc20837c338b7d0246ebe79ddda1da5c759c5fa4c3f4243b",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 1.106655300129205,
+          "success": true,
+          "bytes_per_second": 4915.713139732729,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06564259831793606,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 1.0396083013620228,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0014044004492461681
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.829141000052914,
+          "success": true,
+          "bytes_per_second": 1420.6841690929705,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.778227394912392,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 1.0439064013771713,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.007007203763350844
+        }
+      ]
+    },
+    {
+      "delay_ms": 10,
+      "trial": 1,
+      "passed": true,
+      "payload_sha256": "03713a94cc5160e9a276d46eea144e1634850155203038ce51b3ac6db37c8c52",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.9364750999957323,
+          "success": true,
+          "bytes_per_second": 5809.017239246181,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06343370047397912,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.871705298544839,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0013361009769141674
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.6572012999095023,
+          "success": true,
+          "bytes_per_second": 1487.476229469407,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.778469300828874,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.8731066002510488,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.005625398829579353
+        }
+      ]
+    },
+    {
+      "delay_ms": 8,
+      "trial": 2,
+      "passed": true,
+      "payload_sha256": "7369a13c08793c4499e81fac7eb3298d2eb0ac997a46637cc2ade61cbe6a7b72",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.7683646001387388,
+          "success": true,
+          "bytes_per_second": 7079.97218900732,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06793999881483614,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.6993254001718014,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.001099201152101159
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.485854000085965,
+          "success": true,
+          "bytes_per_second": 1560.5931860215155,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.7832391960546374,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.6971058009658009,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0055090030655264854
+        }
+      ]
+    },
+    {
+      "delay_ms": 7,
+      "trial": 3,
+      "passed": true,
+      "payload_sha256": "d98f2e9b08d4cfb1908eca6373a3fb65e5e2379f08f06523509735748d1d939d",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.680376699892804,
+          "success": true,
+          "bytes_per_second": 7995.5706902618695,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06473909923806787,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.6145615009590983,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0010760996956378222
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.4008379001170397,
+          "success": true,
+          "bytes_per_second": 1599.6057912118606,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.783404093934223,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.6118511001113802,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.005582706071436405
+        }
+      ]
+    },
+    {
+      "delay_ms": 6,
+      "trial": 4,
+      "passed": true,
+      "payload_sha256": "c33c6797af2e02f7252c3f0a85fe14e1263512b0a013217ff53a8b8ac447d616",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.5952940001152456,
+          "success": true,
+          "bytes_per_second": 9138.341725175873,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06408420018851757,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.5300222986843437,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0011875012423843145
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.3160671000368893,
+          "success": true,
+          "bytes_per_second": 1640.4975640991954,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.783185194246471,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.5274355008732527,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.005446404917165637
+        }
+      ]
+    },
+    {
+      "delay_ms": 5,
+      "trial": 5,
+      "passed": true,
+      "payload_sha256": "501e18cf656b44bcbc69b145dfbabc7cb00dea75dff3247f39babc69c2528708",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.5112163999583572,
+          "success": true,
+          "bytes_per_second": 10641.286156788266,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06726979836821556,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.44289390044286847,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0010527011472731829
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.231001899810508,
+          "success": true,
+          "bytes_per_second": 1683.6882702913438,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.781707998132333,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.4437118999194354,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.005582001758739352
+        }
+      ]
+    },
+    {
+      "delay_ms": 10,
+      "trial": 100,
+      "passed": true,
+      "payload_sha256": "191140eae809c16d638210a464939b280be389ac02a5fe54b283f3b9df404f5e",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.9365189999807626,
+          "success": true,
+          "bytes_per_second": 5808.744937488449,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06519729970023036,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.87015559989959,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0011661003809422255
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.656070499913767,
+          "success": true,
+          "bytes_per_second": 1487.9362966683245,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.778974002227187,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.8715777990873903,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.00551869859918952
+        }
+      ]
+    },
+    {
+      "delay_ms": 10,
+      "trial": 101,
+      "passed": true,
+      "payload_sha256": "8ff4497ebdbc89b90cc4749a39cd93f8eac2e6bec048de1534a669b56ee74ad4",
+      "measurements": [
+        {
+          "operation": "flash.erase",
+          "bytes": 5440,
+          "wall_seconds": 0.9372523000929505,
+          "success": true,
+          "bytes_per_second": 5804.200213176854,
+          "control_transactions": 85,
+          "control_payload_bytes": 0,
+          "usb_seconds": 0.06247190083377063,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.8732518998440355,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.0015284994151443243
+        },
+        {
+          "operation": "flash.program",
+          "bytes": 5440,
+          "wall_seconds": 3.655817399965599,
+          "success": true,
+          "bytes_per_second": 1488.0393096359762,
+          "control_transactions": 1445,
+          "control_payload_bytes": 0,
+          "usb_seconds": 2.7787830003071576,
+          "completion_transactions": 0,
+          "completion_usb_seconds": 0,
+          "program_settle_seconds": 0.8712897999212146,
+          "poll_sleep_seconds": 0,
+          "host_other_seconds": 0.005744599737226963
+        }
+      ]
+    }
+  ],
+  "restoration": {
+    "scratch_erased": true,
+    "all_protected_flash_verified": true,
+    "eeprom_unchanged": true
+  },
+  "errors": [],
+  "scope": "Same-board diagnostic; less than10ms does not meet the conservative5ms deferred-start plus4.5ms SPM budget.",
+  "confirmed_wait_ms": 10,
+  "default_selected_by_user_ms": 7
+}

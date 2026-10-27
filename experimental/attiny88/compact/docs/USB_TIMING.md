@@ -68,7 +68,10 @@ a conservative 40-cycle physical-SOP bound for those modeled paths.
 
 That bound excludes the hardware CPU halt during page erase/write SPM.
 The host must leave a quiet interval after SELECT+ERASE and the WRITE4 that
-commits a complete Flash page. The programming client waits 15 ms after each;
+commits a complete Flash page. The v3.0 client defaults to 7 ms after each,
+configurable with `--flash-delay-ms`; the archived v5.5 client retains 15 ms.
+The shorter wait passed same-board testing; see [the measurements](MEMORY_BENCHMARK30.md).
+For the archived protocol,
 its protocol contract is documented in [PROTOCOL_v5_6.md](../PROTOCOL_v5_6.md).
 The digital instruction model checks protected operands and command gating,
 not USB servicing while the Flash hardware has halted the processor.
