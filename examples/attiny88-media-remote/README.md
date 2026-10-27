@@ -151,3 +151,27 @@ the board; details are in [HARDWARE_LAYERS.md](HARDWARE_LAYERS.md).
 V-USB is reused unchanged from the sibling example's
 [pinned driver](../common/usbdrv/UPSTREAM.md), including its
 existing DATA CRC and USB suspend-power limitations.
+
+## Desktop controller structure
+
+`controller.py` keeps the existing CLI and watch mode. `editor_ui.py` owns Tkinter
+widgets; `editor_state.py` owns editable layer bindings and saved-state checks.
+`device_session.py` owns the background command queue, polling, reconnects and
+mute feedback. Tk widgets are accessed only on the UI thread. The viewed layer
+is independent of the active device layer; testing a saved binding selects its
+layer explicitly. Reconnecting reloads the configuration from the device.
+
+Host checks run as part of `verify.py`, or independently from this directory:
+
+~~~sh
+python -m unittest discover -s tests -p 'test_*.py'
+~~~
+
+An optional hidden-window Tk test uses a simulated device and sends no HID
+commands. On Windows PowerShell, run:
+
+~~~powershell
+$env:TINY88_TEST_TK = '1'
+python -m unittest discover -s tests -p test_editor_ui.py
+Remove-Item Env:TINY88_TEST_TK
+~~~

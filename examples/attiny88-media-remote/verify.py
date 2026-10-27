@@ -69,9 +69,9 @@ def main():
     subprocess.run([str(storage_test)], check=True)
     subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(ROOT / 'tests'), '-p', 'test_*.py'],
                    cwd=ROOT, check=True)
-    for source in ('controller.py', 'windows_backend.py', 'protocol.py'):
-        compile((ROOT / source).read_text(encoding='utf-8'), str(ROOT / source), 'exec')
-    print('PASS: both modes, HID/placement, 6 input/layer scenarios, interrupted EEPROM saves, multi-packet HID and 7 host tests')
+    for source in ROOT.glob('*.py'):
+        compile(source.read_text(encoding='utf-8'), str(source), 'exec')
+    print('PASS: both modes, HID/placement, 6 input/layer scenarios, interrupted EEPROM saves, multi-packet HID and host tests')
 
 
 if __name__ == '__main__':
