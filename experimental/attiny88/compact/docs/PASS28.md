@@ -1,6 +1,7 @@
 # Pass28 size-reduction candidate
 
-The active source is a software candidate for the 1024-byte goal. The installed
+This records the e70a9f7 checkpoint. Active development continues in
+[Pass29](PASS29.md). The installed
 loader and frozen `firmware27/` images remain the e405ea7 hardware checkpoint;
 their exact body sizes/hashes and host profile geometry are unchanged. Do not
 mistake a candidate build for a new hardware-tested release.

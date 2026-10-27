@@ -1,6 +1,6 @@
 # Registers and invariants
 
-## Current Pass28 candidate
+## Current compact candidate
 
 The active source uses R2 as the remaining asynchronous EEPROM byte count;
 R8 is free and is poisoned by regression fixtures. Startup clears the count
@@ -13,7 +13,7 @@ R9 holds the DATA PID. R14:R15 is the reply byte cursor, with R15 bit 7 selectin
 EEPROM. The PHY and NVM worker preserve these registers. R4:R5 remains the shared
 memory cursor; SELECT uses a byte address. Current layout/profile rules are in
 [APPLICATION_LAYOUT.md](APPLICATION_LAYOUT.md), and size/timing evidence is in
-[PASS28.md](PASS28.md).
+[PASS29.md](PASS29.md); the preceding checkpoint is [PASS28.md](PASS28.md).
 
 Every external PHY call requires the full Y pointer to equal USB_CONTEXT_BASE.
 Entry copies Y into Z; no RX/TX instruction modifies that Z base. Every external

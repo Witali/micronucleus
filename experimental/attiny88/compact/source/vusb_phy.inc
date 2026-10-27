@@ -156,8 +156,9 @@ usb_rx_ignore_packet:
 usb_rx_end_packet:
     subi r23, USB_RX_BUFFER_BYTES
     neg r23
+/* YL begins at 22 and stays within 22..34; decoded count is 0..11.
+ * SUB cannot borrow into YH=1. Its flags are dead before the next PID CPI. */
     sub r28, r23
-    sbci r29, 0x00
     sbi _SFR_IO_ADDR(PCIFR), PCIF2
     ldd r16, Y+USB_PACKET_PID_OFFSET
     cpi r16, USB_PID_DATA0
@@ -178,8 +179,10 @@ usb_rx_end_packet:
 usb_rx_handle_setup_or_out:
     ldi r28, USB_NEXT_DATA_WAIT_COUNT
 usb_rx_wait_for_data:
-    in r17, _SFR_IO_ADDR(PCIFR)
-    sbrc r17, PCIF2
+/* PCIFR is bit-addressable. Twelve five-cycle idle iterations keep the old
+ * ten six-cycle iterations' 59-cycle timeout; a seen flag exits one cycle
+ * earlier. R17 is dead before the next receive sample overwrites it. */
+    sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp usb_rx_store_token
     dec r28
     brbc SREG_Z, usb_rx_wait_for_data
@@ -187,8 +190,9 @@ usb_rx_store_token:
     std Z+CTX_CURRENT_TOKEN, r16
 usb_handler_packet_done:
 /* The old POP r19 is gone; r23 does not need restoration after RX. */
-    in r28, _SFR_IO_ADDR(PCIFR)
-    sbrc r28, PCIF2
+/* A direct flag test advances the chain by one cycle. YL is a bounded
+ * receive pointer/count here; a legal EOP has J well before its wrap. */
+    sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp usb_rx_wait_for_j
     rjmp usb_return_context
 /* Publish nonempty DATA to the EP0 parser and choose ACK/NAK. Incoming CRC16
@@ -214,8 +218,9 @@ usb_rx_handle_in:
     sbrc r19, USB_HANDSHAKE_FLAG_BIT
     rjmp usb_tx_send_count_handshake
     std Z+CTX_TX_LENGTH, r16
+/* RX and every chained receive retain YH=HIGH8(USB_CONTEXT_BASE).
+ * The bounded RX pointer cannot cross a page, so only YL needs changing. */
     ldi r28, LOW8(USB_CONTEXT_BASE + CTX_TX_PID)
-    ldi r29, HIGH8(USB_CONTEXT_BASE + CTX_TX_PID)
     rjmp usb_tx_acquire_bus
 usb_tx_stuff_regular_bit:
     eor r16, r21
