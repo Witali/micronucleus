@@ -13,6 +13,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('simavr_source', type=Path)
     parser.add_argument('--build-dir', type=Path, default=ROOT/'build')
+    parser.add_argument('--initial-flash', type=Path,
+                        help='Optional complete Flash with the old loader and uploaded updater')
     args = parser.parse_args()
     sim = args.simavr_source.resolve() / 'simavr'
     build = args.build_dir.resolve()
@@ -23,7 +25,9 @@ def main():
                     '-lsimavr', '-lelf', '-o', str(executable)], check=True)
     metadata = json.loads((build / 'manifest.json').read_text())
     boot = metadata['image_address']
-    prefix = [str(executable), str(build / 'updater.flash.bin'),
+    initial = args.initial_flash.resolve() if args.initial_flash else build / 'updater.flash.bin'
+    assert len(initial.read_bytes()) == 8192, 'Initial Flash must contain8192 bytes'
+    prefix = [str(executable), str(initial),
               str(metadata['symbols']['updater_complete']), str(metadata['symbols']['updater_abort']),
               str(metadata['updater_end']), str(boot)]
     subprocess.run(prefix, cwd=build, check=True)
@@ -38,7 +42,7 @@ def main():
             assert 'erased:0 written:0' in result.stderr
         else:
             assert 'reset:c03f' in result.stderr
-    damaged = bytearray((build / 'updater.flash.bin').read_bytes())
+    damaged = bytearray(initial.read_bytes())
     damaged[metadata['symbols']['bootloader_image'] + 17] ^= 1
     corrupt = build / 'corrupt-image.bin'
     corrupt.write_bytes(damaged)

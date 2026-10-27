@@ -10,7 +10,11 @@ const music = process.env.MICROMUSIC_ROOT || 'C:/Work/MicroMusic';
 const {AVRCore} = await import(pathToFileURL(path.join(music, 'web-player/lib/avr-reference.js')).href);
 const build=path.resolve(process.argv[2]||path.join(root,'build'));
 const metadata = JSON.parse(fs.readFileSync(path.join(build, 'manifest.json')));
-const original = new Uint8Array(fs.readFileSync(path.join(build, 'updater.flash.bin')));
+const initialFlag = process.argv.indexOf('--initial-flash');
+assert.ok(initialFlag < 0 || process.argv[initialFlag + 1], 'Missing initial Flash path');
+const original = new Uint8Array(fs.readFileSync(initialFlag < 0 ? path.join(build, 'updater.flash.bin')
+    : process.argv[initialFlag + 1]));
+assert.equal(original.length, 8192, 'Initial Flash must contain8192 bytes');
 const expected = new Uint8Array(fs.readFileSync(path.join(build, metadata.image_file)));
 const boot=metadata.image_address,postscript=boot-64;
 const entry = metadata.symbols;
@@ -109,6 +113,7 @@ function verifySuccess(test) {
   assert.ok(test.cpu.rom.slice(postscript,boot).every(x=>x===255));
   assert.equal(test.cpu.rom[0]|test.cpu.rom[1]<<8,0xc000|((boot/2-1)&0xfff));
   assert.deepEqual(test.cpu.rom.slice(0x80,metadata.updater_end),original.slice(0x80,metadata.updater_end));
+  assert.deepEqual(test.cpu.rom.slice(64,postscript),original.slice(64,postscript));
 }
 verifySuccess(run(original));
 let test=run(original,{disabled:true});assert.equal(test.code,1);assert.equal(test.cpu.operations.length,0);

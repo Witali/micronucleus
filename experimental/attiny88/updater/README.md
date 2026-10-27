@@ -100,6 +100,46 @@ The latest optimized images have software/model validation only; no board
 programming was performed for the latest four reductions. Default verified
 builds and release files stay pinned.
 
+## Compact protocol 3.0
+
+The same `updater.c` also accepts the compact firmware manifest through a
+separate builder path; legacy INFO descriptor checks remain unchanged.
+
+```sh
+python3 build.py --compact-manifest ../compact/firmware27/manifest.json
+node test_micromusic.mjs build/compact30-none
+python3 test_simavr.py /path/to/simavr-source --build-dir build/compact30-none
+```
+
+`--led-profile` selects `NONE` (default), `ACTIVE_HIGH` or `ACTIVE_LOW` from
+the compact manifest. The builder checks target, body hash, memory geometry,
+USB descriptors and profile identity before embedding the selected payload.
+The no-LED image contains 1148 code bytes at `0x1B80`, padded to 1152 bytes;
+its postscript is at `0x1B7C`, RESET is `0xCDBF`, and application capacity is
+7036 bytes. It is not a 1-KiB loader. The updater ends at `0x0756` and keeps
+its code below the old and new loader areas.
+
+The ready application is [upgrade-t88-compact30-off.hex](releases/upgrade-t88-compact30-off.hex).
+[Its metadata](releases/compact30-off.json) pins the payload, CRC and updater
+HEX hash. It is an application for the existing working ATtiny88 uploader,
+not a fresh-device ISP image. The older checked release remains unchanged.
+
+Both CPU models passed with the exact installed 2.8 loader bytes in the initial
+Flash. Supply `--initial-flash /private/path/updater.seeded.bin` to either
+model test for this case; seed the uploaded updater with the old loader's
+RESET/postscript patches. Tests check every byte outside RESET, the new
+postscript page and destination pages, plus CRC/fuse/readback failure paths.
+MicroMusic also checks five restarts between completed Flash operations.
+These checks stop at `updater_complete`; real watchdog restart and new-loader
+startup require separate hardware evidence.
+
+Moving upward from the old `0x1B00` boundary can leave its first page and old
+postscript in the enlarged application area. They do not provide a fallback
+loader; the next complete compact application upload erases those leftovers.
+Replacing the old loader removes its USB recovery path. Without ISP, a power
+failure during a RESET-page rewrite can require obtaining a programmer.
+An explicit installation approval and verified private backups are required.
+
 ## Hardware memory test and user actions
 
 `test_hardware_memory.py --help` describes an explicit opt-in physical test. It reuses the existing host library: write/read all 64 EEPROM bytes, erase to `0xFF`, restore the backup, write/read/erase the entire application reservation, then restore and start the selected original application. `--firmware-manifest` selects its actual capacity and RESET (6908 bytes for the 20-page image); omission retains the earlier 6844-byte layout. `--restore-hex` selects the original application; `--led-hex` remains an alias. EEPROM has no separate USB erase opcode. The test requires `--exercise-hardware`, backups and an external report destination, and never runs in ordinary discovery.

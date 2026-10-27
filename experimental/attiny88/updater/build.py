@@ -19,12 +19,45 @@ def record(address, payload=b'', kind=0):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--firmware-manifest', type=Path,
-                        help='firmware.json from build_verified.py, including LED variants')
+    manifests = parser.add_mutually_exclusive_group()
+    manifests.add_argument('--firmware-manifest', type=Path,
+                           help='firmware.json from build_verified.py, including LED variants')
+    manifests.add_argument('--compact-manifest', type=Path,
+                           help='Protocol3.0 compact firmware27/manifest.json')
+    parser.add_argument('--led-profile', choices=('NONE', 'ACTIVE_HIGH', 'ACTIVE_LOW'), default='NONE',
+                        help='Profile from --compact-manifest (default: NONE)')
     parser.add_argument('--output-dir', type=Path, help='Separate updater output directory')
     args = parser.parse_args()
     image_address = IMAGE_ADDRESS
-    if args.firmware_manifest:
+    if args.compact_manifest:
+        manifest_path = args.compact_manifest.resolve()
+        firmware = json.loads(manifest_path.read_text())
+        assert firmware['target'] == 'ATtiny88, external 16 MHz clock', 'Wrong compact target'
+        assert firmware['protocol'] == 'v3.0', 'Unsupported compact protocol'
+        selected = [item for item in firmware['builds'] if item['led'] == args.led_profile]
+        assert len(selected) == 1, 'Missing or duplicate compact profile'
+        profile = selected[0]
+        image_address = int(profile['boot_at'], 0)
+        assert 0x1800 <= image_address <= 0x1bc0 and image_address % 64 == 0, 'Invalid boot boundary'
+        body_path = (manifest_path.parent / profile['body_file']).resolve()
+        assert body_path.parent == manifest_path.parent, 'Image must be beside its manifest'
+        image = body_path.read_bytes()
+        assert len(image) == profile['code_bytes'] <= 8192 - image_address, 'Invalid code length'
+        assert hashlib.sha256(image).hexdigest() == profile['code_sha256'], 'Compact body hash mismatch'
+        assert profile['app_bytes'] == image_address - 4
+        assert profile['reserved_bytes'] == 8192 - image_address
+        # Compact3.0 has standard descriptors at the front, without legacy INFO.
+        # Validate USB identity instead of interpreting descriptor bytes as INFO.
+        descriptor = image[20:38]
+        assert descriptor[:8] == bytes([18, 1, 0x10, 1, 0xff, 0, 0, 8]), 'Wrong USB descriptor'
+        assert descriptor[8:12] == bytes([0xd0, 0x16, 0x53, 7]), 'Wrong USB VID/PID'
+        assert int.from_bytes(descriptor[12:14], 'little') == int(profile['bcdDevice'], 0)
+        assert int(profile['bcdDevice'], 0) == {'NONE': 0x0300, 'ACTIVE_HIGH': 0x0301,
+                                              'ACTIVE_LOW': 0x0302}[args.led_profile]
+        assert image[2:20] == bytes([9, 2, 18, 0, 1, 1, 0, 0x80, 50,
+                                     9, 4, 0, 0, 0, 0, 0, 0, 0])
+        default_build = ROOT / 'build' / ('compact30-' + args.led_profile.lower())
+    elif args.firmware_manifest:
         manifest_path = args.firmware_manifest.resolve()
         firmware = json.loads(manifest_path.read_text())
         assert firmware['target'] == 'attiny88', 'Wrong target'
@@ -39,8 +72,9 @@ def main():
         image = (ROOT.parent / 'variants/strict_usb_verified/BOOTLOADER_BODY_1AC0_VERIFIED.bin').read_bytes()
         assert len(image) == 1344 and hashlib.sha256(image).hexdigest() == EXPECTED
         default_build = ROOT/'build'
-    assert int.from_bytes(image[2:4], 'big') == image_address-4, 'Descriptor capacity mismatch'
-    assert image[4] == 64 and image[6:8] == bytes([0x93, 0x11]), 'Wrong page size or device signature'
+    if not args.compact_manifest:
+        assert int.from_bytes(image[2:4], 'big') == image_address-4, 'Descriptor capacity mismatch'
+        assert image[4] == 64 and image[6:8] == bytes([0x93, 0x11]), 'Wrong page size or device signature'
     body_sha256 = hashlib.sha256(image).hexdigest()
     build = (args.output_dir or default_build).resolve()
     build.mkdir(parents=True, exist_ok=True)
@@ -84,6 +118,11 @@ def main():
                 'padded_image_sha256': hashlib.sha256(image).hexdigest(),
                 'image_file': 'bootloader-image.bin',
                 'updater_end': 0x80 + len(body), 'symbols': symbols}
+    if args.compact_manifest:
+        manifest.update(protocol='v3.0', target='attiny88', led=args.led_profile,
+                        bcdDevice=profile['bcdDevice'], code_bytes=code_bytes,
+                        application_bytes=image_address - 4,
+                        updater_hex_sha256=hashlib.sha256((build/'updater.hex').read_bytes()).hexdigest())
     (build / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print('PASS: updater application end', hex(manifest['updater_end']),
           f'; target 0x{image_address:04X}, code {code_bytes} bytes, padded to', len(image), '; CRC', hex(crc))
