@@ -160,11 +160,13 @@ def test():
     # and exercise v5.6 with its own actual-opcode and host suites.
     from host import compact_programmer27 as host
     from tests27 import nvm_opcodes, host_protocol
+    from tests27.startup_init import check_startup
     for mode, version in (('NONE', 0x0560), ('ACTIVE_HIGH', 0x0561), ('ACTIVE_LOW', 0x0562)):
         _name, boot, expected_size = host.USB_PROFILES[version]
         artifact = checked_build(mode, boot)
         assert artifact['size'] <= 8192 - boot
         assert artifact['size'] == expected_size, (mode, artifact['size'], expected_size)
+        check_startup(artifact)
         check_standard(artifact, mode)
         nvm_opcodes.check_nvm(artifact)
         check_invalid_vendor(artifact)

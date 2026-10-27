@@ -38,11 +38,6 @@ mov r8, r1             /* no pending EEPROM write */
  * a direct software jump into the bootloader without RESET is unsupported. */
 ldi r28, LOW8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES)
 ldi r29, HIGH8(USB_CONTEXT_BASE)
-startup_clear_sram_byte:
-st -Y, r1
-startup_check_sram_end:
-cpi r28, LOW8(USB_CONTEXT_BASE)
-brbc SREG_Z, startup_clear_sram_byte
 /* Preserve reset cause, disable the inherited watchdog, disconnect for
  * roughly 301 ms, then enable pin-change flag polling (interrupts stay off).
  */
@@ -55,14 +50,20 @@ ldi r24, WATCHDOG_UNLOCK_MASK
 sts _SFR_MEM_ADDR(WDTCSR), r24
 sts _SFR_MEM_ADDR(WDTCSR), r1
 sbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
-ldi r18, USB_DISCONNECT_OUTER_LOOPS
+/* Reuse the SRAM cursor as the disconnect-delay outer counter. Clear one
+ * byte after each delay, so all 44 bytes are zero and Y=0x0100 before USB
+ * is enabled. This removes the separate outer counter and clear loop.
+ * R24:R25 finish at zero, also initializing the memory and idle cursors. */
 usb_disconnect_delay_outer:
 ldi r24, LOW8(USB_DISCONNECT_INNER_LOOPS)
 ldi r25, HIGH8(USB_DISCONNECT_INNER_LOOPS)
 usb_disconnect_delay_inner:
 sbiw r24, 1
 brne usb_disconnect_delay_inner
-dec r18
+startup_clear_sram_byte:
+st -Y, r1
+startup_check_sram_end:
+cpi r28, LOW8(USB_CONTEXT_BASE)
 brne usb_disconnect_delay_outer
 cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
 movw r4, r24

@@ -19,9 +19,9 @@ else:
 USB_VID, USB_PID, USB_BCD = base.USB_VID, base.USB_PID, 0x0560
 # Provisional research profiles: update sizes only after the matching build audit.
 USB_PROFILES = {
-    0x0560: ('Pass27 / no LED; 18 pages', 0x1B80, 1106),
-    0x0561: ('Pass27 / LED active-high; 19 pages', 0x1B40, 1124),
-    0x0562: ('Pass27 / LED active-low; 19 pages', 0x1B40, 1122),
+    0x0560: ('Pass27 / no LED; 18 pages', 0x1B80, 1100),
+    0x0561: ('Pass27 / LED active-high; 19 pages', 0x1B40, 1118),
+    0x0562: ('Pass27 / LED active-low; 19 pages', 0x1B40, 1116),
 }
 FLASH_SIZE, EEPROM_SIZE, PAGE_BYTES = base.FLASH_SIZE, base.EEPROM_SIZE, base.PAGE_BYTES
 BLOCK_BYTES, READ_BYTES = base.BLOCK_BYTES, base.READ_BYTES

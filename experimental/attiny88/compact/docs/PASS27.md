@@ -4,9 +4,8 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
-The current [reply-source checkpoint](PASS27_REPLY_SOURCES.md) is **1102 bytes
-at `0x1C00`**, still **78 bytes above 1 KiB**. Its fitting no-LED placement is
-`0x1B80`, 1106 bytes in 18 pages.
+The current checkpoint is **1096 bytes at `0x1C00`**, still **72 bytes above
+1 KiB**. Its fitting no-LED placement is `0x1B80`, 1100 bytes in 18 pages.
 Earlier checkpoints below retain the scope of their isolated measurements.
 
 | Source | Responsibility |
@@ -137,3 +136,24 @@ device programming is part of this checkpoint.
 Physical USB, retry/ACK/CRC admission and power-loss behavior remain unproven.
 Next work must reduce the remaining code, integrate the corresponding host
 geometry/protocol, and preserve the final AVR erase/write boundary guard.
+
+### Shared startup loop checkpoint
+
+After the [descriptor-backed reply change](PASS27_REPLY_SOURCES.md), reuse the
+SRAM-clear cursor as the USB disconnect-delay outer counter. Each of 44 delay
+iterations clears one context byte. This removes a separate clear loop and the
+outer R18 counter, saving six bytes without changing the final RESET state.
+The inner count is 27359; emitted opcodes hold D- low for 300.965562 ms at 16 MHz.
+MCUSR capture and watchdog disable precede the delay; PCINT is enabled after it.
+
+`tests27/startup_init.py` executes the emitted outer-loop and initialization
+instructions with poisoned registers/SRAM. It verifies the exact clear range,
+watchdog write order/window, preserved RESET flags, cursor/queue initialization,
+Y=0x0100, disconnect duration and final PCINT enable. The inner countdown alone
+is accelerated after checking its exact SBIW/BRNE opcodes and cycle count.
+All three LED profiles pass. Fitting sizes are now 1100/1118/1116 bytes.
+
+Partially rolling the six RX SYNC probes was also tested and rejected. Two-,
+three- and four-probe loop variants save 2..6 bytes but corrupt or overflow a
+valid packet at legal receiver jitter. The acquisition probes remain unrolled;
+the startup saving does not change USB sampling or transmission instructions.
