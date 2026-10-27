@@ -72,6 +72,8 @@ class CPU(Timed):
   if address<32:self.r[address]=value&255
   else:super().memwrite(address,value)
  def step(self):
+  if self.pc==self.labels['USB_handler']:
+   assert self.word(28)==0x100,('PHY requires Y=context',hex(self.pc),self.word(28))
   if self.pc in (self.labels['USB_handler'],self.labels['usb_rx_found_k']):
    assert self.r[29]==1,('PHY requires YH=1',hex(self.pc),self.r[29])
   dec.START=self.base;dec.raw=bytes(self.flash[self.base:]);ins=dec.decode(self.pc)

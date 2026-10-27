@@ -38,22 +38,33 @@ check covers 2560 transitions per profile. Accepted EEPROM WRITE4 uses the
 bounds comparison's carry with request value 3 to form queue count 4 with ADC.
 The tests retain asynchronous busy handling and poison the now-free R8.
 
+PHY changes save another sixteen bytes. External calls enter with the complete
+Y context pointer, so MOVW initializes an immutable Z and later restores Y.
+Two useful LDIs call the existing polynomial-load/RET tail to provide the same
+ten-cycle RX initialization. A two-cycle RX_LENGTH load replaces an alignment
+jump; DATA and IN dispatch reuse the snapshot instead of loading it again.
+After atomic DDR release, CBI clears the D-minus output latch. Rescheduled delay
+words retain the eleven-cycle driven J interval. The emitted-word audit pins
+each replacement, unchanged sampling instructions and branch destinations;
+cooperative execution now checks the complete external Y pointer.
+
 | Placement/profile | Installed reference bytes | Candidate bytes | Saved |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1144 | 1132 | 12 |
-| No LED, `0x1B80` fitting placement | 1148 | 1136 | 12 |
-| Active high, `0x1B40` | 1166 | 1154 | 12 |
-| Active low, `0x1B40` | 1164 | 1152 | 12 |
+| No LED, `0x1C00` measurement | 1144 | 1116 | 28 |
+| No LED, `0x1B80` fitting placement | 1148 | 1120 | 28 |
+| Active high, `0x1B40` | 1166 | 1138 | 28 |
+| Active low, `0x1B40` | 1164 | 1136 | 28 |
 
-At the intended `0x1C00` boundary the candidate is still 108 bytes too large.
+At the intended `0x1C00` boundary the candidate is still 92 bytes too large.
 Measurement links use a larger linker region to quantify overflow; this is
 not permission to program an image beyond the ATtiny88's 8192 bytes.
 
-The 494-byte PHY remains identical. All fitting profiles pass standard/stateful
+The PHY is 478 bytes, with unchanged RX sample instants. All fitting profiles
+pass standard/stateful
 EP0, NVM/unknown requests, independent outgoing CRC and cooperative USB checks.
 The measured no-packet gap is 31 cycles; adding 5 entry and 3 synchronizer cycles
 gives 39 physical-SOP cycles, below the 40-cycle limit. The 62 synchronized cases
-per profile retain entry 38 cycles, response 47 1/3 cycles and peak stack 6 bytes.
+per profile have entry 38 cycles, response 45 1/3 cycles and peak stack 6 bytes.
 The complete `verify27.sh` suite passes, including 4218 TX waveform/state cases
 per profile. These are instruction/waveform-model checks; the candidate has
 not been installed or electrically measured on the board.

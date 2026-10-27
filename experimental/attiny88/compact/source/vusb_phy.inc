@@ -1,13 +1,15 @@
 /* Software USB Low-Speed PHY: synchronization, NRZI, stuffing and handshakes.
  * In: RESET-owned stack, interrupts disabled, initialized USB SRAM context.
- * Requires YH=1 at external entry. Preserves R0..R15, R24:R25 and X;
+ * Requires Y=USB_CONTEXT_BASE at external entry. Preserves R0..R15, R24:R25 and X;
  * clobbers R16..R23, Y, Z and SREG. Every external return restores
  * Y=USB_CONTEXT_BASE and R21=HIGH8(CRC16_POLYNOMIAL).
  * RX/TX sample and output instants are cycle contracts, not ordinary delays.
  * Keep all timing changes tied to emitted-opcode audits and hardware caveats.
  */
 USB_handler:
-    eor r28, r28
+/* Both external callers preserve Y=USB_CONTEXT_BASE. MOVW also keeps YL=0
+ * for the J-wait counter; INC defines the flags formerly written by EOR. */
+    movw r30, r28
 usb_rx_wait_for_j:
     inc r28
     sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
@@ -43,22 +45,22 @@ usb_rx_found_k:
     pop r0
     rjmp usb_rx_wait_for_k
 usb_rx_sync_confirmed:
-    ldi r30, LOW8(USB_CONTEXT_BASE)
-    ldi r31, HIGH8(USB_CONTEXT_BASE)
-    rjmp usb_rx_delay_complete
 usb_rx_delay_complete:
-    push r16
+/* Z is already the context base. Two LDIs plus RCALL/LDI/RET take the
+ * same ten cycles as the former Z setup, jump and PUSH/POP delay. R21's
+ * temporary polynomial value is dead before the RX counter initialization.
+ * This call uses two stack bytes, matching the existing found-K delay peak. */
     ldi r18, 0x00
     ldi r20, USB_RX_INITIAL_STUFF_MASK
-    pop r16
+    rcall usb_return_polynomial
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
     bst r16, USB_MINUS_BIT
     bld r18, 7
-/* Replace the former PUSH r19 with a two-cycle RJMP-to-next.
- * PUSH would also take two cycles, so the bit sampler phase is unchanged.
- * R23 is only an RX scratch count and needs no saving to the stack. */
-    rjmp .+0
+/* Foreground is paused and RX writes cannot touch RX_LENGTH. Snapshot
+ * it in decoder-free R19: this two-cycle LDD replaces the alignment jump,
+ * and both DATA and IN reuse it instead of loading the same byte later. */
+    ldd r19, Z+CTX_RX_LENGTH
     ldi r21, 0x00
     ldi r23, USB_RX_BUFFER_BYTES
     rjmp usb_rx_sample_odd_bit
@@ -197,8 +199,7 @@ usb_rx_handle_data:
     ldd r18, Z+CTX_CURRENT_TOKEN
     and r18, r18
     brbs SREG_Z, usb_handler_packet_done
-    ldd r17, Z+CTX_RX_LENGTH
-    and r17, r17
+    and r19, r19
     brbc SREG_Z, usb_tx_send_nak
     cpi r23, (USB_RX_PACKET_OVERHEAD + 1)
     brbs SREG_N, usb_tx_send_ack
@@ -206,8 +207,7 @@ usb_rx_handle_data:
     std Z+CTX_RX_TOKEN, r18
     rjmp usb_tx_send_ack
 usb_rx_handle_in:
-    ldd r16, Z+CTX_RX_LENGTH
-    cpi r16, 0x01
+    cpi r19, 0x01
     brbc SREG_S, usb_tx_send_nak
     ldi r16, USB_PID_NAK
     ldd r19, Z+CTX_TX_LENGTH
@@ -306,20 +306,23 @@ usb_tx_eop_delay:
     sbi _SFR_IO_ADDR(PCIFR), PCIF2
     in r17, _SFR_IO_ADDR(DDRD)
     andi r17, USB_LINES_CLEAR_MASK
-    mov r20, r16
-    andi r20, USB_LINES_CLEAR_MASK
+/* J already has D+ low. After atomic DDR release, clear only the D-
+ * pull-up latch with CBI; other PORT bits are preserved. A third two-cycle
+ * delay replaces the removed MOV/ANDI work, keeping driven J at 11 cycles.
+ * CBI takes one cycle longer than OUT; the shorter MOVW return offsets it. */
+    rjmp .+0
     rjmp .+0
     rjmp .+0
     out _SFR_IO_ADDR(DDRD), r17
-    out _SFR_IO_ADDR(PORTD), r20
+    cbi _SFR_IO_ADDR(PORTD), USB_MINUS_BIT
 /* EOP J has completed. Legal next SOP is at least two bit times
  * after J begins, so return before that window instead of rechecking
  * the pin-change flag here; cooperative foreground polling follows. */
 /* Every external PHY return restores foreground context and polynomial.
  * The internal nine-cycle RX initializer enters at the polynomial load below. */
 usb_return_context:
-    ldi r28, LOW8(USB_CONTEXT_BASE)
-    ldi r29, HIGH8(USB_CONTEXT_BASE)
+/* Z remains the context base throughout RX/TX, including no-K timeout. */
+    movw r28, r30
 usb_return_polynomial:
     ldi r21, HIGH8(CRC16_POLYNOMIAL)
 usb_handler_return:

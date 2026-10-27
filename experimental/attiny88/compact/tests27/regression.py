@@ -70,6 +70,7 @@ def check_standard(artifact, mode):
     old = build(ROOT / 'variants/strict_usb_optimized/micronucleus_t88_pass26.S',
                 mode, artifact['boot'])
     branches, states = audit_candidate(old, artifact, '')
+    check_phy_audit_mutations(old, artifact)
     print('PASS PHY: unchanged RX schedule,', branches, 'branch targets,', states,
           'flag-liveness states; independent TX/return contracts')
     # Compare observable USB data/state, not intentionally removed scratch stores.
@@ -83,6 +84,37 @@ def check_standard(artifact, mode):
     expected = {'NONE': 0x0300, 'ACTIVE_HIGH': 0x0301, 'ACTIVE_LOW': 0x0302}[mode]
     assert int.from_bytes(descriptor[12:14], 'little') == expected
     print('PASS', mode, 'distinct candidate descriptor')
+
+
+def check_phy_audit_mutations(reference, artifact):
+    """Ensure the timing/ABI audit rejects broken replacements, not just passes."""
+    mutations = (
+        ('entry context copy', 'USB_handler', 0, lambda word: word ^ 1),
+        ('return context copy', 'usb_return_context', 0, lambda word: word ^ 1),
+        ('seed call target', 'usb_rx_delay_complete', 4, lambda word: word + 1),
+        ('RX length address', 'usb_rx_delay_complete', 14, lambda word: word ^ 1),
+        ('DATA flag', 'usb_rx_handle_data', 12, lambda word: word & ~7),
+        ('IN flag', 'usb_rx_handle_in', 2, lambda word: word & ~7),
+        ('TX rate', 'usb_tx_begin_byte', 0, lambda word: 0xE365),
+        ('J delay', 'usb_tx_finish_eop', 16, lambda word: 0),
+        ('released port bit', 'usb_tx_finish_eop', 24, lambda word: word ^ 3),
+    )
+    for name, symbol, offset, transform in mutations:
+        raw = bytearray(artifact['body'])
+        at = artifact['symbols'][symbol] + offset - artifact['boot']
+        raw[at:at + 2] = transform(int.from_bytes(raw[at:at + 2], 'little')).to_bytes(2, 'little')
+        try:
+            audit_candidate(reference, dict(artifact, body=bytes(raw)), '')
+        except (AssertionError, KeyError):
+            continue
+        raise AssertionError('PHY audit accepted mutation: ' + name)
+    try:
+        audit_candidate(reference, artifact, 'U missing_operand')
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError('PHY audit accepted unresolved symbol')
+    print('PASS', artifact['mode'], len(mutations) + 1, 'negative PHY audit cases')
 
 
 def check_tx_bytes(artifact):

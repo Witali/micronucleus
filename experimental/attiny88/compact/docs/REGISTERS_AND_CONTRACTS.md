@@ -15,6 +15,11 @@ memory cursor; SELECT uses a byte address. Current layout/profile rules are in
 [APPLICATION_LAYOUT.md](APPLICATION_LAYOUT.md), and size/timing evidence is in
 [PASS28.md](PASS28.md).
 
+Every external PHY call requires the full Y pointer to equal USB_CONTEXT_BASE.
+Entry copies Y into Z; no RX/TX instruction modifies that Z base. Every external
+return restores Y with MOVW. Foreground instructions after startup preserve Y,
+and both emitted-code and synchronized-execution checks enforce this contract.
+
 ## Archived Pass26 contract
 
 The table, selector encoding and profile addresses below describe the imported
