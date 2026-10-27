@@ -16,3 +16,5 @@ From the repository root, shared HEX-boundary tests run with:
 ~~~sh
 PYTHONPATH=examples python3 -m unittest discover -s examples/common/tests
 ~~~
+
+See [validation results](VALIDATION.md) for baseline artifact hashes and checks.
