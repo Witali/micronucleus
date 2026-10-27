@@ -7,6 +7,9 @@ from check_build import build, run
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'source/micronucleus_t88_compact.S'
 MODES = ('NONE', 'ACTIVE_HIGH', 'ACTIVE_LOW')
+# Measured savings against the deployed e405ea7 release, at the same placement.
+# Keep host USB_PROFILES tied to the deployed firmware27 geometry/reference size.
+CANDIDATE_SAVINGS = {'NONE': 2, 'ACTIVE_HIGH': 2, 'ACTIVE_LOW': 2}
 
 
 def checked_build(mode='NONE', boot=0x1C00):

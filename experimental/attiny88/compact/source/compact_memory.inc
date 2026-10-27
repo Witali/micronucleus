@@ -40,8 +40,10 @@ bootloader_check_set_flash_address:
     out _SFR_IO_ADDR(SPMCSR), r24
     spm
 usb_reply_empty:
-    ldi r24, 0x00
-    rjmp usb_reply_store_length
+/* Publish zero directly; the moved nonempty reply tail must not add latency
+ * to the standard/NVM reject paths before cooperative USB service resumes. */
+    std Y+CTX_MSG_LENGTH, r1
+    rjmp usb_rx_release_buffer
 bootloader_check_write4:
 /* The selector dispatched only opcodes >= WRITE4. Accept RUN explicitly;
  * unknown requests must never become a raw pending SPM operation. */

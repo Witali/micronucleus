@@ -13,8 +13,9 @@ The [application layout contract](docs/APPLICATION_LAYOUT.md) keeps ordinary
 applications at `0x0000`, patches only RESET, preserves interrupt vectors and
 stores the application handoff in the four-byte postscript before the loader.
 
-Development continues in the [annotated modular Pass27 candidate](docs/PASS27.md),
-organized like the adjacent Block64 source. Use `sh verify27.sh` for that work;
+Development continues in the [Pass28 size-reduction candidate](docs/PASS28.md),
+based on the [deployed modular Pass27 checkpoint](docs/PASS27.md) and organized
+like the adjacent Block64 source. Use `sh verify27.sh` for active-source work;
 `sh verify.sh` continues to reproduce the archived Pass26 release.
 
 The [same-board 2.8/3.0 benchmark](docs/MEMORY_BENCHMARK30.md) covers all 5440

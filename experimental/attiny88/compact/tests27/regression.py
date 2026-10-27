@@ -15,7 +15,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from check_build import build
-from build_candidate import SOURCE, checked_build
+from build_candidate import SOURCE, checked_build, CANDIDATE_SAVINGS
 from audit_phy27 import audit_candidate
 from test_read_previous import decode
 from tests27 import avr_exec27 as avr_exec
@@ -169,7 +169,8 @@ def test():
         _name, boot, expected_size = host.USB_PROFILES[version]
         artifact = checked_build(mode, boot)
         assert artifact['size'] <= 8192 - boot
-        assert artifact['size'] == expected_size, (mode, artifact['size'], expected_size)
+        candidate_size = expected_size - CANDIDATE_SAVINGS[mode]
+        assert artifact['size'] == candidate_size, (mode, artifact['size'], candidate_size)
         check_startup(artifact)
         check_standard(artifact, mode)
         nvm_opcodes.check_nvm(artifact)

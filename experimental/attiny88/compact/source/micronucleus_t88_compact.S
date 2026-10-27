@@ -1,4 +1,4 @@
-/* Micronucleus+ compact Pass27 research candidate, ATtiny88 at 16 MHz.
+/* Micronucleus+ compact Pass28 research candidate, ATtiny88 at 16 MHz.
  * Based on the preserved Pass26 assembly checkpoint; GPL-2.0-or-later.
  * Source modules follow the adjacent Block64 layout but use a separate protocol.
  * Original Micronucleus contributors' licensing/provenance remains in the
@@ -111,9 +111,7 @@ bootloader_check_pending_command:
  * With only two readiness sites, these inline IN/OR pairs save a helper/RET. */
     in r24, _SFR_IO_ADDR(EECR)
     or r24, r8
-    breq .Lcommand_eeprom_idle
-.Lcommand_wait_for_poll:
-    rjmp usb_tx_prepare_pending_reply
+    brne usb_tx_prepare_pending_reply
 .Lcommand_eeprom_idle:
 /* Deferred operations run after the USB polling window. R3 uses the real
  * SPM command (erase=3, commit=5), RUN=4, SELECT marker=2, or idle=0.
@@ -128,7 +126,7 @@ bootloader_dispatch_command:
     cpi r24, CMD_EXIT
     brne bootloader_clear_command
     or r26, r27
-    brne .Lcommand_wait_for_poll
+    brne usb_tx_prepare_pending_reply
     rjmp bootloader_start_application
 flash_erase_selected_page:
 flash_commit_buffered_page:
@@ -154,10 +152,8 @@ flash_do_spm:
     spm
 bootloader_clear_command:
     mov r3, r1
-/* NVM handlers sit near the vendor dispatcher for short conditional branches.
- * The ordinary main-loop path must jump over their callable-only fragment. */
-    rjmp usb_tx_prepare_pending_reply
-#include "compact_memory.inc"
+/* Both idle and completed SPM paths fall into packet preparation. Keeping
+ * that hot continuation nearby removes the distant-TX branch trampoline. */
 #include "vusb_ep0.inc"
 
 /* Service at most one EEPROM byte per iteration, advance idle timeout,
@@ -211,6 +207,10 @@ led_exit_done:
 app_jump:
     .word (AVR_RJMP_OPCODE | (((bootloader_start - POSTSCRIPT_BYTES - app_jump - AVR_WORD_BYTES) / AVR_WORD_BYTES) & AVR_RJMP_OFFSET_MASK))
 
+/* Callable request handlers remain adjacent for their short BRxx edges.
+ * app_jump above prevents ordinary execution from falling into this block. */
+#include "compact_memory.inc"
+#include "vusb_requests.inc"
 #include "vusb_standard.inc"
 #include "compact_eeprom.inc"
 
