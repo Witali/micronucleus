@@ -4,6 +4,9 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
+The [accepted receive-CRC16 exception](USB_PROTOCOL.md) records the user's
+size/ACK-latency tradeoff, its corruption risk and the checks it does not waive.
+
 The current checkpoint is **1096 bytes at `0x1C00`**, still **72 bytes above
 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1100 bytes in 18 pages.
 Earlier checkpoints below retain the scope of their isolated measurements.

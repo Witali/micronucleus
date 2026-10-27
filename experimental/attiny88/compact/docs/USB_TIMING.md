@@ -64,6 +64,10 @@ paths, including WRITE4 and zero-length replies, not just the CRC loop.
 
 ## Evidence and remaining scope
 
+The user-approved receive-CRC16 exception is recorded separately in
+[USB_PROTOCOL.md](USB_PROTOCOL.md). It permits early ACK for incoming DATA;
+it does not relax the timing limits above or the transmitted DATA CRC16.
+
 Raw-opcode RX experiments independently encode packets, including CRC5/CRC16,
 NRZI, stuffing and EOP, then compare captured bytes. Finite rate/entry/jitter
 sweeps currently support a conservative 40-cycle entry budget; they do not prove
