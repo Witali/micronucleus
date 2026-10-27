@@ -1,15 +1,13 @@
 /* Vendor SELECT / SELECT+ERASE / WRITE4 / RUN handlers.
  * Y is the USB context, R25 is the request, R4:R5 is the shared byte cursor.
  * Flash buffer loading is immediate; erase/commit/RUN are deferred in R3.
- * EEPROM queueing is rejected until the previous asynchronous operation ends.
+ * Entry requires the vendor dispatcher to have checked queue/hardware idle.
+ * Busy behavior belongs to that public dispatch path, before READ8 or writes.
  */
 bootloader_check_set_flash_address:
 /* Reject opcode zero; only SELECT and SELECT+ERASE enter the decoder. */
 tst r25
 breq usb_reply_empty
-/* EEPROM's asynchronous writer must be idle before NVM mode changes. */
-rcall ee_check_busy
-brne usb_reply_empty
 /* Opcodes 1 (select) and 2 (select + erase) share the address decoder;
  * the queued erase runs only after the main USB polling interval. */
 cpi r25, CMD_WRITE4

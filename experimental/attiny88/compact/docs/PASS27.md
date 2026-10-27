@@ -4,8 +4,8 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
-The current v5.6 NVM checkpoint is **1120 bytes at `0x1C00`**, still **96 bytes
-above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1124 bytes in 18 pages.
+The current reuse checkpoint is **1110 bytes at `0x1C00`**, still **86 bytes
+above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1114 bytes in 18 pages.
 Earlier checkpoints below retain the scope of their isolated measurements.
 
 | Source | Responsibility |
@@ -97,6 +97,21 @@ the original Pass26 fixtures and client remain unchanged. In addition to complet
 EP0/PHY checks, every LED profile executes all 65536 cursor increments, legal and
 malformed selectors, all application-page write positions, protected-page erases
 and commits, EEPROM bounds/busy transitions and complete mocked programming.
+
+### Shared busy gate and reply tails
+
+One vendor-entry busy check now precedes READ8, SELECT, WRITE4 and RUN. It returns
+an empty response without moving the cursor or queue while EEPROM is busy;
+standard USB requests remain available. The deferred SPM/RUN gate is still
+separate. With only two readiness checks left, inlining IN/OR at both sites is
+two bytes smaller than retaining their RCALL/RET helper.
+
+Place the NVM fragment immediately before EP0 so vendor READ8 can fall through
+and the other requests use a short backward branch. An explicit main-loop jump
+skips the relocated NVM fragment; tests try all 256 stale request-register values.
+The standard unsupported-request path and rejected EEPROM address path also
+share one empty-reply jump. Combined, these changes save ten bytes relative to
+the 1120-byte checkpoint. Fitting profiles are now 1114/1132/1130 bytes.
 
 ```sh
 sh verify27.sh

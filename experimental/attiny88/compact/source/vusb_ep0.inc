@@ -23,10 +23,15 @@ brbc SREG_Z, bootloader_handle_vendor_request
 rjmp usb_standard_dispatch
 bootloader_handle_vendor_request:
 mov r7, r1
-/* Vendor protocol has one IN operation and four small OUT opcodes. */
+/* One gate owns private-command readiness. Busy replies are empty and do not
+ * advance the shared cursor or touch an active queue. Standard USB requests
+ * bypass this gate and remain available while EEPROM programming is pending. */
+in r24, _SFR_IO_ADDR(EECR)
+or r24, r8
+brne usb_reply_empty
+/* READ8 falls through; OUT commands branch back to the adjacent NVM module. */
 cpi r25, REQ_UNIFIED_READ
-breq memory_read
-rjmp bootloader_check_set_flash_address
+brne bootloader_check_set_flash_address
 /* Persistent register allocation:
  * r4:r5 = shared READ8/WRITE4 byte cursor, bit15 selects EEPROM
  * r6:r7 = idle poll count (preserved across USB handler calls)
@@ -44,10 +49,7 @@ movw r18, r4
 sbrs r19, 7
 rjmp memory_read_advance
 memory_read_eeprom:
-rcall ee_check_busy
-breq .Lread_eeprom_ready
-rjmp ee_empty
-.Lread_eeprom_ready:
+/* The shared vendor gate already proved EEPROM fully idle. */
 mov r2, r19
 mov r19, r1
 memory_read_advance:

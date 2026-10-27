@@ -25,7 +25,9 @@ READ8/WRITE4 share one cursor, so do not read during unfinished writes. Reselect
 and verify after an ambiguous USB result. Lost ACKs do not provide transactional
 commit semantics.
 
-The AVR loads the selected cursor directly, without block multiplication or an
+All vendor operations return an empty reply without moving the cursor or queue
+while EEPROM is busy; standard USB remains available. The AVR loads a ready
+selected cursor directly, without block multiplication or an
 EEPROM SELECT range decoder. Malformed EEPROM selectors can alias physical
 EEPROM addresses. Its EEPROM WRITE4 low-byte range guard remains; a rejected
 WRITE4 may overwrite inactive payload registers but starts no queue or IO.
@@ -50,13 +52,13 @@ most one byte per call and returns without waiting on EEPE.
 
 | bcdDevice | LED | BOOT_AT | Code bytes | App bytes excluding postscript |
 | --- | --- | --- | ---: | ---: |
-| `0x0560` | Off | `0x1B80` | 1124 | 7036 |
-| `0x0561` | Active high | `0x1B40` | 1142 | 6972 |
-| `0x0562` | Active low | `0x1B40` | 1140 | 6972 |
+| `0x0560` | Off | `0x1B80` | 1114 | 7036 |
+| `0x0561` | Active high | `0x1B40` | 1132 | 6972 |
+| `0x0562` | Active low | `0x1B40` | 1130 | 6972 |
 
 These values describe this checkpoint and must be updated with every admitted
-candidate build. At the target address `0x1C00`, no LED still uses 1120 bytes,
-**96 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
+candidate build. At the target address `0x1C00`, no LED still uses 1110 bytes,
+**86 bytes over 1 KiB**. No fitting or hardware-validated release is claimed.
 The build command measures the source; it does not program a device.
 
 The new client retains offline HEX preparation and the separate explicit

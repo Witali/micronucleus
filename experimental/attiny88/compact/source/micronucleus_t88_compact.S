@@ -103,8 +103,11 @@ rcall USB_handler
 sbi _SFR_IO_ADDR(PCIFR), PCIF2
 bootloader_process_pending_command:
 wdr
-/* EEPROM writes must complete before SPM erase/write/exit. */
-rcall ee_check_busy
+/* EEPROM writes must complete before SPM erase/write/exit. This gate also
+ * holds an older deferred RUN until a later EEPROM queue has fully drained.
+ * With only two readiness sites, these inline IN/OR pairs save a helper/RET. */
+in r24, _SFR_IO_ADDR(EECR)
+or r24, r8
 brne usb_control_process_received_packet
 /* Deferred operations run after the USB polling window. R3 uses the real
  * SPM command (erase=3, commit=5), RUN=4, SELECT marker=2, or idle=0.
@@ -145,6 +148,10 @@ out _SFR_IO_ADDR(SPMCSR), r24
 spm
 bootloader_clear_command:
 mov r3, r1
+/* NVM handlers sit near the vendor dispatcher for short conditional branches.
+ * The ordinary main-loop path must jump over their callable-only fragment. */
+rjmp usb_control_process_received_packet
+#include "compact_memory.inc"
 #include "vusb_ep0.inc"
 
 /* Service at most one EEPROM byte per iteration, advance idle timeout,
@@ -204,6 +211,5 @@ sts _SFR_MEM_ADDR(PCMSK2), r1
 app_jump:
 .word (AVR_RJMP_OPCODE | (((bootloader_start - POSTSCRIPT_BYTES - app_jump - AVR_WORD_BYTES) / AVR_WORD_BYTES) & AVR_RJMP_OFFSET_MASK))
 
-#include "compact_memory.inc"
 #include "vusb_standard.inc"
 #include "compact_eeprom.inc"

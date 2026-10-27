@@ -34,11 +34,3 @@ inc r4
 dec r8
 ee_write_step_done:
 ret
-
-/* R24 is scratch at all three call sites; Z=1 means EEPROM fully idle.
- * Treat any nonzero EECR bit conservatively as busy. Normally only EEPE
- * persists here; delaying on a transient EERE/EEMPE is safe and needs no mask. */
-ee_check_busy:
-in r24, _SFR_IO_ADDR(EECR)
-or r24, r8
-ret

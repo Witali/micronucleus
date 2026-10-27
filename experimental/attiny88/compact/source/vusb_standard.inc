@@ -51,7 +51,6 @@ ldi r24, 1
 rjmp usb_reply_use_scratch_buffer
 ee_std_empty:
 ee_empty:
-rjmp usb_reply_empty
-
+/* Standard rejects and EEPROM bounds share the same empty-reply tail. */
 ee_bad_addr:
 rjmp usb_reply_empty
