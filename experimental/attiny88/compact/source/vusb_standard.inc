@@ -1,6 +1,6 @@
 /* Standard EP0 GET_STATUS, SET_ADDRESS, descriptors, configuration and
  * interface requests. Descriptor pointers share one 256-byte Flash window.
- * Helpers in vusb_ep0.inc choose SRAM/Flash and clamp to the host's wLength.
+ * Helpers in vusb_ep0.inc read Flash and clamp to the host's wLength.
  */
 usb_standard_dispatch:
 ldd r18, Y+CTX_SETUP_VALUE_LOW
@@ -32,14 +32,21 @@ cpi r25, USB_REQ_GET_CONFIGURATION
 brbs SREG_Z, usb_standard_get_configuration
 cpi r25, USB_REQ_SET_CONFIGURATION
 brbc SREG_Z, usb_standard_check_get_interface
+/* Configuration is always 0 or 1. Compare the complete wValue word;
+ * LDD preserves the borrow from CPI before the high-byte CPC. */
+cpi r18, 2
+ldd r24, Y+CTX_SETUP_VALUE_HIGH
+cpc r24, r1
+brsh ee_std_empty
 std Y+CTX_CONFIGURATION, r18
 rjmp usb_reply_use_scratch_buffer
-/* Reply directly from the configuration byte; never overwrite zero reply
- * bytes16/17, since GET_STATUS and GET_INTERFACE reuse them after any packet. */
 usb_standard_get_configuration:
-ldi r18, LOW8(USB_CONTEXT_BASE + CTX_CONFIGURATION)
+/* Device descriptor byte16 is zero; adjacent byte17 is one. Add their
+ * low address to the strictly validated configuration without a second LDI. */
+ldd r18, Y+CTX_CONFIGURATION
+subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
 ldi r24, 1
-rjmp usb_reply_use_sram_pointer
+rjmp usb_reply_use_flash_pointer
 usb_standard_check_get_interface:
 cpi r25, USB_REQ_GET_INTERFACE
 brne ee_std_empty

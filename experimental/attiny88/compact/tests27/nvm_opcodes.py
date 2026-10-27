@@ -21,6 +21,7 @@ def new_machine(artifact):
     with patch.object(avr_exec, 'decode', cached_decode):
         machine = avr_exec.AVRExec(artifact)
     machine.r[29] = 1
+    machine.r[2] = 0xA5
     machine.r[9] = 0x4B
     machine.r[14:16] = [0xEF, 0xBE]
     return machine
@@ -37,6 +38,7 @@ def set_pointer(machine, address):
 def preserve_usb_registers(machine):
     assert machine.r[9] == 0x4B and machine.r[14:16] == [0xEF, 0xBE]
     assert machine.r[1] == 0
+    assert machine.r[2] == 0xA5
 
 
 def check_main_gate_and_layout(artifact):
@@ -228,7 +230,7 @@ def check_busy_and_invalid_requests(artifact):
             machine = initialize(artifact)
             machine.r[8], machine.io[0x1F] = pending, eecr
             machine.r[10:14] = [0xDE, 0xAD, 0x12, 0x34]
-            machine.ram[21] = 7
+            machine.ram[21] = 1
             transfer(machine, artifact['mode'], request, descriptor=descriptor, value=19, length=18)
             assert machine.r[8] == pending and machine.r[10:14] == [0xDE, 0xAD, 0x12, 0x34]
             assert not machine.spms
@@ -277,8 +279,8 @@ def check_vendor_setup(artifact):
                 assert machine.r[3] == 4 and not machine.spms
             elif request == 0xB0:
                 assert pointer(machine) == selector + 8
-                assert machine.r[14] | (machine.r[15] << 8) == address
-                assert machine.r[2] == (0x80 if eeprom else 0) and machine.ram[0] == 8
+                assert machine.r[14] | (machine.r[15] << 8) == selector
+                assert machine.r[2] == 0xA5 and machine.ram[0] == 8
             else:
                 assert pointer(machine) == selector and machine.r[3] == 0 and not machine.spms
             assert machine.r[1] == 0
@@ -312,9 +314,9 @@ def check_cursor(artifact, *, exhaustive=True):
             set_pointer(machine, selector)
             machine.run('memory_read', stop=('usb_reply_set_pointer', 'ee_empty'))
             assert machine.pc == artifact['symbols']['usb_reply_set_pointer']
-            assert machine.r[18] | (machine.r[19] << 8) == address
+            assert machine.r[18] | (machine.r[19] << 8) == selector
             assert pointer(machine) == selector + 8
-            assert machine.r[24] == 8 and machine.r[2] == (0x80 if eeprom else 0)
+            assert machine.r[24] == 8 and machine.r[2] == 0xA5
     print('PASS', count, 'cursor increments and all valid ready Flash/EEPROM READ8 starts')
 
 

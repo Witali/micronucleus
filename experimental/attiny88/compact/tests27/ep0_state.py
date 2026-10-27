@@ -84,6 +84,7 @@ def initialize(artifact):
     for offset in range(44):
         machine.ram[offset] = 0
     machine.r[29] = 1
+    machine.r[2] = 0xA5  # R2 is free; replies must not treat it as a memory source.
     machine.r[4:6] = [0x34, 0x12]
     end = min(8192, artifact['boot'] + len(artifact['body']))
     machine.flash[artifact['boot']:end] = artifact['body'][:end - artifact['boot']]
@@ -111,6 +112,9 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
     """Run SETUP, then each prepared DATA packet, checking externally used state."""
     configuration, pending_address = machine.ram[21], machine.ram[19]
     cursor = machine.r[4:6]
+    unused_r2 = machine.r[2]
+    next_configuration = (value if request == 9 and descriptor == 0 and value < 2
+                          else configuration)
     expected = expected_reply(mode, request, descriptor, configuration)[:length]
     # The preceding eight-byte packet leaves CRC at offsets10/11. Zero replies
     # must use the permanent zero pair16/17, never those stale CRC bytes.
@@ -121,7 +125,7 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
     assert machine.run('usb_control_process_received_packet',
                        stop=('usb_rx_release_buffer',), limit=160) == 'stop'
     assert machine.ram[0] == len(expected), (mode, request, descriptor, length, machine.ram[0])
-    assert machine.ram[21] == (value if request == 9 else configuration)
+    assert machine.ram[21] == next_configuration
     assert machine.ram[19] == (value if request == 5 else pending_address)
 
     observed = bytearray()
@@ -147,13 +151,14 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
             mode, request, descriptor, length, packet_index, machine.ram[0], remaining)
         assert machine.ram[16] == machine.ram[17] == 0
         assert machine.r[1] == 0 and machine.r[4:6] == cursor
+        assert machine.r[2] == unused_r2
         packets.append((machine.ram[1], payload))
         if count < 8 or len(observed) >= length:
             break
     else:
         raise AssertionError('Standard reply exceeded four endpoint-zero packets')
     assert bytes(observed) == expected
-    assert machine.ram[21] == (value if request == 9 else configuration)
+    assert machine.ram[21] == next_configuration
     assert machine.ram[19] == (value if request == 5 else pending_address)
     return packets
 
@@ -164,7 +169,7 @@ def check_standard(artifact, mode):
     count = 0
     for request in range(256):
         for descriptor in DESCRIPTOR_KINDS:
-            for configuration, value in ((0, 0), (1, 19), (255, 100)):
+            for configuration, value in ((0, 1), (1, 0), (1, 255)):
                 machine.ram[21] = configuration
                 machine.ram[19] = 43
                 transfer(machine, mode, request, value=value, descriptor=descriptor)
@@ -172,6 +177,26 @@ def check_standard(artifact, mode):
     assert count == 4608
     print('PASS', mode, count,
           'standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context')
+
+
+def check_configuration_words(artifact):
+    """Reject every malformed complete wValue from both valid prior states."""
+    machine = initialize(artifact)
+    count = 0
+    for value in range(65536):
+        for previous in (0, 1):
+            machine.ram.update({18: 11, 13: 0x2D, 23: 0, 24: 9,
+                                25: value & 255, 26: value >> 8, 29: 0, 30: 0,
+                                21: previous})
+            machine.steps.clear()
+            machine.run('usb_control_process_received_packet',
+                        stop=('usb_rx_release_buffer',), limit=120)
+            assert machine.ram[21] == (value if value < 2 else previous), (value, previous)
+            assert machine.ram[0] == 0 and machine.r[1] == 0
+            assert machine.r[2] == 0xA5
+            count += 1
+    print('PASS', artifact['mode'], count,
+          'complete SET_CONFIGURATION words and both valid prior states; malformed values preserve state')
 
 
 def check_transfers(artifact):
@@ -208,6 +233,7 @@ def test():
         artifact = checked_build(mode, boot)
         check_standard(artifact, mode)
         check_transfers(artifact)
+        check_configuration_words(artifact)
     print('PASS 13824 standard request combinations and complete EP0 packet/state regressions')
 
 

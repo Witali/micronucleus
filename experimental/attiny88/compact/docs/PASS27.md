@@ -4,8 +4,9 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
-The current reuse checkpoint is **1110 bytes at `0x1C00`**, still **86 bytes
-above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1114 bytes in 18 pages.
+The current [reply-source checkpoint](PASS27_REPLY_SOURCES.md) is **1102 bytes
+at `0x1C00`**, still **78 bytes above 1 KiB**. Its fitting no-LED placement is
+`0x1B80`, 1106 bytes in 18 pages.
 Earlier checkpoints below retain the scope of their isolated measurements.
 
 | Source | Responsibility |

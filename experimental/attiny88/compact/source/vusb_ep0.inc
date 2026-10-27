@@ -15,7 +15,6 @@ ldi r24, USB_PID_DATA0
 mov r9, r24
 ldi r24, USB_PID_NAK
 std Y+CTX_TX_LENGTH, r24
-mov r2, r1
 ldd r24, Y+CTX_SETUP_REQUEST_TYPE
 andi r24, USB_REQUEST_TYPE_MASK
 ldd r25, Y+CTX_SETUP_REQUEST
@@ -37,7 +36,7 @@ brne bootloader_check_set_flash_address
  * r6:r7 = idle poll count (preserved across USB handler calls)
  * r8 = pending EEPROM write count, r9 = DATA PID, r10..r13 = EEPROM queue
  * r14:r15 = reply byte cursor, preserved across PHY and NVM service
- * r3 = pending Flash SPM command, r2 = current reply memory source.
+ * r3 = pending Flash SPM command; r15.7 tags an EEPROM reply.
  * X is the poll counter / reply staging pointer, Y the USB-context scratch
  * and receive buffer pointer, Z the SPM/CRC/read scratch pointer. X/Y/Z
  * are intentionally NOT permanently bound: the V-USB PHY clobbers Y/Z.
@@ -46,12 +45,8 @@ memory_read:
 /* SELECT loads the persistent r4:r5 byte-address cursor. WRITE4 already
  * advances it by four; READ8 advances it by eight without reselecting. */
 movw r18, r4
-sbrs r19, 7
-rjmp memory_read_advance
+/* Keep bit15 as a reply-pointer EEPROM tag. EEARL consumes only ZL. */
 memory_read_eeprom:
-/* The shared vendor gate already proved EEPROM fully idle. */
-mov r2, r19
-mov r19, r1
 memory_read_advance:
 /* Reuse the reply's eight-byte length as the low-register addend. R1=0;
  * ADD/ADC advances the full cursor without borrowing Z or changing R18:R19. */
@@ -59,11 +54,11 @@ ldi r24, USB_EP0_PAYLOAD_BYTES
 add r4, r24
 adc r5, r1
 rjmp usb_reply_set_pointer
+/* Device descriptor bytes14/15 are permanent zero string indexes. */
 usb_reply_use_scratch_buffer:
-ldi r18, LOW8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
-usb_reply_use_sram_pointer:
-ldi r19, HIGH8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
-mov r2, r19
+ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
+usb_reply_use_flash_pointer:
+ldi r19, HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
 usb_reply_set_pointer:
 /* R14:R15 survives PHY and NVM workers, so no SRAM pointer spills. */
 movw r14, r18
@@ -99,7 +94,7 @@ sub r24, r23
 ldi r18, USB_DATA_PID_TOGGLE
 eor r9, r18
 std Y+CTX_TX_PID, r9
-/* Copy Flash/SRAM/EEPROM into the TX buffer while computing USB CRC16.
+/* Copy Flash/EEPROM into the TX buffer while computing USB CRC16.
  * R23 packs remaining bytes in its low five bits and the bit phase above them;
  * adding 32 wraps after eight shifts, then DEC consumes one payload byte.
  * R19:R25 hold the complemented CRC representation used by the original PHY.
@@ -114,11 +109,8 @@ movw r30, r14
 usb_tx_copy_flash_payload:
 cp r1, r23
 breq usb_crc16_payload_complete
-sbrc r2, 7
+sbrc r15, 7
 rjmp usb_tx_eeprom_byte
-sbrc r2, 0
-ld r18, Z+
-sbrs r2, 0
 lpm r18, Z+
 rjmp usb_tx_store_byte
 usb_tx_eeprom_byte:

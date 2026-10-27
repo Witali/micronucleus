@@ -72,9 +72,11 @@ def check_standard(artifact, mode):
     print('PASS PHY: 9-cycle RX setup,', branches, 'branch targets,', states,
           'flag-liveness states; three branch operands corrected')
     # Compare observable USB data/state, not intentionally removed scratch stores.
-    from tests27.ep0_state import check_standard as standard, check_transfers
+    from tests27.ep0_state import (check_standard as standard, check_transfers,
+                                  check_configuration_words)
     standard(artifact, mode)
     check_transfers(artifact)
+    check_configuration_words(artifact)
     start = artifact['symbols']['USB_handler'] - artifact['boot'] - 18
     descriptor = artifact['body'][start:start + 18]
     expected = {'NONE': 0x0560, 'ACTIVE_HIGH': 0x0561, 'ACTIVE_LOW': 0x0562}[mode]
@@ -87,7 +89,7 @@ def check_tx_bytes(artifact):
     rng = random.Random(0x2757)
     count = 0
     for source, offset in (('flash', 0x142), ('flash', 0x1AFE),
-                           ('eeprom', 16), ('eeprom', 56), ('sram', 0x10A)):
+                           ('eeprom', 16), ('eeprom', 56)):
         for length in range(9):
             if source == 'eeprom' and offset + length > 64:
                 continue
@@ -97,20 +99,20 @@ def check_tx_bytes(artifact):
                 machine = avr_exec23.AVRExec(artifact)
                 machine.r[29] = 1
                 machine.r[23] = length
-                machine.r[2] = {'flash': 0, 'sram': 1, 'eeprom': 0x80}[source]
-                machine.r[14:16] = [offset & 255, offset >> 8]
+                machine.r[2] = 0xA5  # The former source register is now free.
+                pointer = offset | (0x8000 if source == 'eeprom' else 0)
+                machine.r[14:16] = [pointer & 255, pointer >> 8]
                 for index, value in enumerate(payload):
                     if source == 'flash':
                         machine.flash[offset + index] = value
                     elif source == 'eeprom':
                         machine.eeprom[offset + index] = value
-                    else:
-                        machine.data_memory[offset + index] = value
                 machine.run('usb_tx_initialize_payload_crc',
                             stop=('usb_tx_publish_packet_length',), limit=1500)
                 actual = bytes(machine.data_memory[0x102 + i] for i in range(length + 2))
                 assert actual == payload + usb_crc(payload), (source, offset, payload, actual)
-                assert machine.r[14] | (machine.r[15] << 8) == offset + length
+                assert machine.r[14] | (machine.r[15] << 8) == pointer + length
+                assert machine.r[2] == 0xA5
                 count += 1
     print('PASS', count, 'actual-opcode payload/independent CRC/register-cursor cases')
 
@@ -119,7 +121,7 @@ def check_control_reply(artifact):
     """Run SETUP through packet staging, rather than stopping at reply helpers."""
     for request, value, descriptor, length, config, expected in (
         (0, 0, 0, 2, 0, b'\0\0'),
-        (8, 0, 0, 1, 7, b'\7'),
+        (8, 0, 0, 1, 1, b'\1'),
         (10, 0, 0, 1, 0, b'\0'),
         (6, 0, 1, 8, 0, artifact['body'][20:28]),
         (6, 0, 2, 9, 0, artifact['body'][2:10]),

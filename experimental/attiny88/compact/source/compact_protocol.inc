@@ -145,6 +145,9 @@
 #if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)
 #error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
 #endif
+#if HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 17)
+#error Descriptor-backed status/configuration replies must share a Flash page
+#endif
 #if HIGH8(USB_CONTEXT_BASE) != LOW8(CRC16_POLYNOMIAL)
 #error CRC polynomial low byte must match the context pointer high byte in Y
 #endif
