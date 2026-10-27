@@ -13,3 +13,16 @@
 - Preserve vendor and pinned reference/history formatting; `.inc` files that are
   Makefiles are not assembly. Generators should emit the same assembly layout.
 - Verify emitted bytes and relevant symbols are unchanged after formatting.
+
+# ATtiny88 compact application layout
+
+- Follow [the application layout contract](experimental/attiny88/compact/docs/APPLICATION_LAYOUT.md).
+- Applications stay linked at `0x0000`. Patch only their RESET word; preserve
+  supplied interrupt-vector/application bytes from `0x0002` onward.
+- Keep the four-byte postscript at `BOOT_AT-4`; do not reserve a vector page,
+  relocate applications to `0x0040`, or assume unused space beside RESET.
+- Derive hardware geometry from a recognized USB profile. A changed boot
+  boundary/layout needs a new profile identity; reject unknown profiles before
+  vendor memory commands. Offline placement must not override detected geometry.
+- Treat original application images and foreign already-patched images as
+  different input contracts. Do not guess a foreign image's original entry.

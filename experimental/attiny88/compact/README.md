@@ -9,6 +9,10 @@ The no-LED [protocol 3.0](PROTOCOL_v3_0.md) loader is now
 [permanently installed and hardware smoke-tested](docs/HARDWARE_INSTALL30.md).
 The earlier [application-only rehearsal](docs/HARDWARE_REHEARSAL30.md) is retained.
 
+The [application layout contract](docs/APPLICATION_LAYOUT.md) keeps ordinary
+applications at `0x0000`, patches only RESET, preserves interrupt vectors and
+stores the application handoff in the four-byte postscript before the loader.
+
 Development continues in the [annotated modular Pass27 candidate](docs/PASS27.md),
 organized like the adjacent Block64 source. Use `sh verify27.sh` for that work;
 `sh verify.sh` continues to reproduce the archived Pass26 release.

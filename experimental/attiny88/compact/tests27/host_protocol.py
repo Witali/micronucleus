@@ -200,7 +200,16 @@ def test_vectors_and_programming():
     for version, (_name, boot, _code) in h.USB_PROFILES.items():
         device = ByteUSBMock(version)
         transport = h.USBTransport(device)
-        prepared = h.pack_application({0: 0x80, 1: 0xC0, 0x102: 0xAB, boot - 5: 0x91}, boot_at=boot)
+        original = {0: 0x80, 1: 0xC0, 0x102: 0xAB, boot - 5: 0x91}
+        # All nineteen hardware interrupt slots carry distinct legal RJMPs.
+        # Host RESET patching must preserve their exact bytes and placement.
+        for vector in range(1, 20):
+            address = 2 * vector
+            target = 0x200 + 4 * vector
+            jump = 0xC000 | (((target - address - 2) // 2) & 0xFFF)
+            original[address], original[address + 1] = jump & 255, jump >> 8
+        prepared = h.pack_application(original, boot_at=boot)
+        assert all(prepared.image[address] == value for address, value in original.items() if address >= 2)
         assert prepared.reset_target_word == 0x81
         marker_pc = (boot - 4) // 2
         displacement = prepared.postscript_reset_word & 0xFFF
