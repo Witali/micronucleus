@@ -5,10 +5,12 @@
 #include <avr/wdt.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
+#include <string.h>
 #include "usbdrv.h"
 #include "remote.h"
 #include "config.h"
 #include "storage.h"
+#include "control.h"
 
 PROGMEM const char usbHidReportDescriptor[] = {
     0x05, 0x0c, 0x09, 0x01, 0xa1, 0x01, /* Consumer Control */
@@ -16,11 +18,19 @@ PROGMEM const char usbHidReportDescriptor[] = {
     0x15, 0x00, 0x26, (char)0xff, 0x03,
     0x19, 0x00, 0x2a, (char)0xff, 0x03,
     0x75, 0x10, 0x95, 0x01, 0x81, 0x00, 0xc0,
+    0x05, 0x01, 0x09, 0x06, 0xa1, 0x01, /* Keyboard, report protocol */
+    0x85, REMOTE_KEYBOARD_ID, 0x05, 0x07,
+    0x19, (char)0xe0, 0x29, (char)0xe7, 0x15, 0x00, 0x25, 0x01,
+    0x75, 0x01, 0x95, 0x08, 0x81, 0x02,
+    0x19, 0x00, 0x29, 0x73, 0x15, 0x00, 0x25, 0x73,
+    0x75, 0x08, 0x95, 0x06, 0x81, 0x00, 0xc0, /* Six keys; no reserved byte */
     0x06, 0x00, (char)0xff, 0x09, 0x01, 0xa1, 0x01, /* Vendor control */
     0x85, REMOTE_LED_ID, 0x09, 0x02,
     0x15, 0x00, 0x26, (char)0xff, 0x00,
     0x75, 0x08, 0x95, 0x01, 0x91, 0x02, /* Mute feedback flags */
-    0x85, REMOTE_MAPPING_ID, 0x09, 0x03, 0x95, 0x07, 0xb1, 0x02, 0xc0
+    0x85, REMOTE_TEST_ID, 0x09, 0x05, 0x95, 0x01, 0x91, 0x02,
+    0x85, REMOTE_PRESET_ID, 0x09, 0x06, 0x95, 0x01, 0x91, 0x02,
+    0x85, REMOTE_MAPPING_ID, 0x09, 0x03, 0x95, REMOTE_FEATURE_BYTES - 1, 0xb1, 0x02, 0xc0
 };
 PROGMEM const char usbDescriptorConfiguration[] = {
     9, USBDESCR_CONFIG, 34, 0, 1, 1, 0, (char)0x80, 50,
@@ -30,8 +40,6 @@ PROGMEM const char usbDescriptorConfiguration[] = {
     7, USBDESCR_ENDPOINT, (char)0x81, 3, 8, 0, 10
 };
 _Static_assert(sizeof usbHidReportDescriptor == USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH, "HID length");
-static uint8_t control_report[8];
-static uint8_t write_id;
 
 void early_watchdog_off(void) __attribute__((naked, used, section(".init3")));
 void early_watchdog_off(void)
@@ -44,7 +52,7 @@ void remote_usb_reset(unsigned char starts)
 {
     if (starts) {
         usbConfiguration = 0;
-        write_id = 0;
+        remote_control_abort();
         remote_reset();
     }
 }
@@ -54,38 +62,39 @@ usbMsgLen_t usbFunctionSetup(uchar bytes[8])
     usbRequest_t *rq = (void *)bytes;
     uint8_t id = rq->wValue.bytes[0];
     uint8_t type = rq->wValue.bytes[1];
-    write_id = 0;
+    remote_control_abort();
     if (rq->wIndex.word)
         return 0;
     if (rq->bmRequestType == 0xa1) {
-        if (rq->bRequest == USBRQ_HID_GET_IDLE && (id == 0 || id == REMOTE_INPUT_ID)) {
-            usbMsgPtr = &remote_idle_rate;
+        if (rq->bRequest == USBRQ_HID_GET_IDLE &&
+            (id == 0 || id == REMOTE_INPUT_ID || id == REMOTE_KEYBOARD_ID)) {
+            usbMsgPtr = &remote_idle_rate[id == REMOTE_KEYBOARD_ID];
             return 1;
         }
         if (rq->bRequest == USBRQ_HID_GET_REPORT) {
             if (id == REMOTE_INPUT_ID && type == 1) {
-                usbMsgPtr = remote_report;
-                return sizeof remote_report;
+                usbMsgPtr = remote_consumer_report;
+                return sizeof remote_consumer_report;
+            }
+            if (id == REMOTE_KEYBOARD_ID && type == 1) {
+                usbMsgPtr = remote_keyboard_report;
+                return sizeof remote_keyboard_report;
             }
             if (id == REMOTE_MAPPING_ID && type == 3) {
-                control_report[0] = REMOTE_MAPPING_ID;
-                control_report[1] = 1 | (storage_busy ? 0x10 : 0) | (storage_error ? 0x20 : 0);
-                for (uint8_t i = 0; i < REMOTE_BUTTONS; ++i) {
-                    control_report[2 + i * 2] = remote_mapping[i];
-                    control_report[3 + i * 2] = remote_mapping[i] >> 8;
-                }
-                usbMsgPtr = control_report;
-                return sizeof control_report;
+                remote_control_read();
+                usbMsgPtr = remote_control_report;
+                return sizeof remote_control_report;
             }
+
         }
     } else if (rq->bmRequestType == 0x21) {
-        if (rq->bRequest == USBRQ_HID_SET_IDLE && (id == 0 || id == REMOTE_INPUT_ID) && !rq->wLength.word)
-            remote_set_idle(type);
+        if (rq->bRequest == USBRQ_HID_SET_IDLE && !rq->wLength.word)
+            remote_set_idle(id, type);
         if (rq->bRequest == USBRQ_HID_SET_REPORT &&
-            ((id == REMOTE_LED_ID && type == 2 && rq->wLength.word == 2) ||
-             (id == REMOTE_MAPPING_ID && type == 3 && rq->wLength.word == 8))) {
-            write_id = id;
-            return USB_NO_MSG;
+            (((id == REMOTE_LED_ID || id == REMOTE_TEST_ID || id == REMOTE_PRESET_ID) && type == 2 && rq->wLength.word == 2) ||
+             (id == REMOTE_MAPPING_ID && type == 3 && rq->wLength.word == REMOTE_FEATURE_BYTES))) {
+            if (remote_control_begin(id, rq->wLength.word))
+                return USB_NO_MSG;
         }
     }
     return 0;
@@ -93,24 +102,7 @@ usbMsgLen_t usbFunctionSetup(uchar bytes[8])
 
 uchar usbFunctionWrite(uchar *data, uchar length)
 {
-    uint8_t id = write_id;
-    write_id = 0;
-    if (id == REMOTE_LED_ID && length == 2 && data[0] == id && data[1] <= 3) {
-        remote_set_mute_state(data[1]);
-        return 1;
-    }
-    if (id == REMOTE_MAPPING_ID && length == 8 && data[0] == id &&
-        (data[1] == 1 || data[1] == 0x81) && !storage_busy) {
-        uint16_t mapping[REMOTE_BUTTONS];
-        for (uint8_t i = 0; i < REMOTE_BUTTONS; ++i)
-            mapping[i] = data[2 + i * 2] | ((uint16_t)data[3 + i * 2] << 8);
-        if (!remote_set_mapping(mapping))
-            return 0xff;
-        if (data[1] & 0x80)
-            return storage_save(mapping) ? 1 : 0xff;
-        return 1;
-    }
-    return 0xff;
+    return remote_control_write(data, length);
 }
 
 uint8_t storage_hw_ready(void)
@@ -136,14 +128,16 @@ int main(void)
     EIMSK = PCICR = TIMSK0 = TIMSK1 = 0;
     EICRA = _BV(ISC00) | _BV(ISC01);
     EIFR = _BV(INTF0);
-    PORTD &= (uint8_t)~(USBMASK | _BV(PD0));
-    DDRD = (DDRD & (uint8_t)~USBMASK) | _BV(PD0);
-    uint8_t buttons = _BV(REMOTE_BUTTON0_BIT) | _BV(REMOTE_BUTTON1_BIT) | _BV(REMOTE_BUTTON2_BIT);
-    DDRC &= (uint8_t)~buttons;
-    PORTC |= buttons;
+    PORTD &= (uint8_t)~(USBMASK | _BV(PD0) | _BV(PD3) | _BV(PD4) | _BV(PD5));
+    DDRD = (DDRD & (uint8_t)~USBMASK) | _BV(PD0) | _BV(PD3) | _BV(PD4) | _BV(PD5);
+    DDRC &= (uint8_t)~REMOTE_PORTC_MASK;
+    PORTC |= REMOTE_PORTC_MASK;
+    DDRB &= (uint8_t)~REMOTE_PORTB_MASK;
+    PORTB |= REMOTE_PORTB_MASK;
     MCUCR &= (uint8_t)~_BV(PUD);
-    PORTCR &= (uint8_t)~_BV(PUDC);
-    DIDR0 &= (uint8_t)~(_BV(ADC0D) | _BV(ADC1D) | _BV(ADC2D));
+    PORTCR &= (uint8_t)~(_BV(PUDC) | _BV(PUDB));
+    DIDR0 &= (uint8_t)~REMOTE_PORTC_MASK;
+    TWCR = 0;
     storage_init();
     usbInit();
     usbDeviceDisconnect();
@@ -159,6 +153,10 @@ int main(void)
     for (;;) {
         usbPoll();
         storage_poll();
+        /* Constant single-bit updates compile to atomic SBI/CBI, preserving USB. */
+        if (remote_active_preset == 0) PORTD |= _BV(PD3); else PORTD &= (uint8_t)~_BV(PD3);
+        if (remote_active_preset == 1) PORTD |= _BV(PD4); else PORTD &= (uint8_t)~_BV(PD4);
+        if (remote_active_preset == 2) PORTD |= _BV(PD5); else PORTD &= (uint8_t)~_BV(PD5);
         if (!usbConfiguration) {
             if (configured)
                 remote_reset();
@@ -170,14 +168,12 @@ int main(void)
         configured = 1;
         if ((uint16_t)(TCNT1 - last_tick) >= 250) {
             last_tick += 250;
-            uint8_t pins = (uint8_t)~PINC;
-            uint8_t pressed = (!!(pins & _BV(REMOTE_BUTTON0_BIT))) |
-                              (!!(pins & _BV(REMOTE_BUTTON1_BIT)) << 1) |
-                              (!!(pins & _BV(REMOTE_BUTTON2_BIT)) << 2);
-            remote_tick_ms(pressed | remote_simulated_buttons());
+            uint8_t pressed = ((uint8_t)~PINC & REMOTE_PORTC_MASK) |
+                              (((uint8_t)~PINB & REMOTE_PORTB_MASK) << 6);
+            remote_tick_ms(pressed | remote_simulated_buttons() | remote_injected_buttons());
         }
         if (usbInterruptIsReady() && remote_next_report())
-            usbSetInterrupt(remote_report, sizeof remote_report);
+            usbSetInterrupt(remote_report, remote_report_length);
         if (remote_mute_led())
             PORTD |= _BV(PD0);
         else

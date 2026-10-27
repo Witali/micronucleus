@@ -33,18 +33,18 @@
 #define USB_COUNT_SOF 0
 #define USB_USE_FAST_CRC 0
 #define USB_CFG_VENDOR_ID 0xc0, 0x16
-#define USB_CFG_DEVICE_ID 0xd9, 0x27
-#define USB_CFG_DEVICE_VERSION 0x00, 0x02
+#define USB_CFG_DEVICE_ID 0xdb, 0x27
+#define USB_CFG_DEVICE_VERSION 0x00, 0x03
 #define USB_CFG_VENDOR_NAME 'M','i','c','r','o','N','u','c','l','e','u','s'
 #define USB_CFG_VENDOR_NAME_LEN 12
-#define USB_CFG_DEVICE_NAME 'T','i','n','y','8','8',' ','M','e','d','i','a'
-#define USB_CFG_DEVICE_NAME_LEN 12
+#define USB_CFG_DEVICE_NAME 'T','i','n','y','8','8',' ','M','e','d','i','a',' ','8'
+#define USB_CFG_DEVICE_NAME_LEN 14
 #define USB_CFG_DEVICE_CLASS 0
 #define USB_CFG_DEVICE_SUBCLASS 0
 #define USB_CFG_INTERFACE_CLASS 3
 #define USB_CFG_INTERFACE_SUBCLASS 0
 #define USB_CFG_INTERFACE_PROTOCOL 0
-#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH 56
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH 111
 #define USB_CFG_DESCR_PROPS_CONFIGURATION 34
 #ifndef __ASSEMBLER__
 void remote_usb_reset(unsigned char reset_starts);

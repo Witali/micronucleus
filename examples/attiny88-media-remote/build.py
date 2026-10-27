@@ -22,7 +22,7 @@ def build(toolchain, simulate=False):
     base.run_tool(toolchain, 'avr-gcc', '-mmcu=attiny88', '-DF_CPU=16000000UL',
                   f'-DREMOTE_SIMULATE={int(simulate)}', '-Os', '-std=c11',
                   '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-fdata-sections',
-                  '-I', ROOT, '-I', driver, ROOT / 'main.c', ROOT / 'remote.c', ROOT / 'storage.c',
+                  '-I', ROOT, '-I', driver, ROOT / 'main.c', ROOT / 'remote.c', ROOT / 'storage.c', ROOT / 'control.c',
                   driver / 'usbdrv.c', driver / 'usbdrvasm.S', '-Wl,--gc-sections',
                   f'-Wl,-Map={output / (name + ".map")}', '-o', elf)
     sizes = {}

@@ -2,6 +2,7 @@
 """Build both firmware modes and check real descriptors, placements and C behavior."""
 import argparse
 import hashlib
+import re
 import os
 from pathlib import Path
 import subprocess
@@ -38,13 +39,13 @@ def main():
             return binary[symbols[symbol]:symbols[symbol] + size]
         device = data('usbDescriptorDevice', 18)
         assert device[:8] == bytes([18, 1, 0x10, 1, 0, 0, 0, 8])
-        assert device[8:12] == bytes.fromhex('c016d927')
+        assert device[8:12] == bytes.fromhex('c016db27')
         cfg = data('usbDescriptorConfiguration', 34)
         assert cfg[:9] == bytes([9, 2, 34, 0, 1, 1, 0, 0x80, 50])
         assert cfg[9:18] == bytes([9, 4, 0, 0, 1, 3, 0, 0, 0])
-        assert cfg[18:27] == bytes([9, 0x21, 0x11, 1, 0, 1, 0x22, 56, 0])
+        assert cfg[18:27] == bytes([9, 0x21, 0x11, 1, 0, 1, 0x22, 111, 0])
         assert cfg[27:] == bytes([7, 5, 0x81, 3, 8, 0, 10])
-        desc = data('usbDescriptorHidReport', 56)
+        desc = data('usbDescriptorHidReport', 111)
         bits, pos, size, count, report_id = {}, 0, 0, 0, 0
         while pos < len(desc):
             prefix = desc[pos]
@@ -57,7 +58,8 @@ def main():
             elif tag in (0x80, 0x90, 0xb0):
                 bits[report_id, tag] = bits.get((report_id, tag), 0) + size * count
             pos += 1 + length
-        assert bits == {(1, 0x80): 16, (2, 0x90): 8, (3, 0xb0): 56}
+        assert bits == {(1, 0x80): 16, (4, 0x80): 56, (2, 0x90): 8, (5, 0x90): 8, (6, 0x90): 8, (3, 0xb0): 416}
+        assert all((length + 8) // 8 <= 8 for (report, tag), length in bits.items() if tag == 0x80)
         assert target(binary, 2) == symbols['__vector_1'] != symbols['__bad_interrupt']
         cells = build.base.read_hex(elf.with_suffix('.hex'))
         for _, boot_at, _ in programmer.USB_PROFILES.values():
@@ -67,12 +69,15 @@ def main():
             assert target(packed, boot_at - 4) == target(binary, 0)
         disasm = build.base.run_tool(toolchain, 'avr-objdump', '-d', elf)
         assert not any('spm' in line.split(';')[0].split() for line in disasm.splitlines())
+        for bit in (3, 4, 5):
+            for opcode in ('sbi', 'cbi'):
+                assert re.search(r'\b%s\s+0x0b,\s*%d\b' % (opcode, bit), disasm), 'Layer LEDs must preserve USB PORTD bits atomically'
         exe = ROOT / 'build' / (name + '-test' + ('.exe' if os.name == 'nt' else ''))
         subprocess.run([args.cc, '-std=c11', '-Wall', '-Wextra', '-Werror',
                         f'-DREMOTE_SIMULATE={int(simulate)}', '-I', str(ROOT),
                         str(ROOT / 'remote.c'), str(ROOT / 'tests/remote_test.c'),
                         '-o', str(exe)], check=True)
-        scenarios = ('simulation',) if simulate else ('debounce', 'repeat', 'backpressure', 'mapping', 'led-idle')
+        scenarios = ('simulation',) if simulate else ('consumer', 'keyboard', 'layers', 'backpressure', 'validation')
         for scenario in scenarios:
             subprocess.run([str(exe), scenario], check=True)
     for line in (build.KEYBOARD / 'usbdrv/SHA256SUMS').read_text().splitlines():
@@ -80,14 +85,14 @@ def main():
         assert hashlib.sha256((build.KEYBOARD / 'usbdrv' / name).read_bytes()).hexdigest() == expected
     storage_test = ROOT / 'build' / ('storage-test.exe' if os.name == 'nt' else 'storage-test')
     subprocess.run([args.cc, '-std=c11', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT),
-                    str(ROOT / 'remote.c'), str(ROOT / 'storage.c'), str(ROOT / 'tests/storage_test.c'),
+                    str(ROOT / 'remote.c'), str(ROOT / 'storage.c'), str(ROOT / 'control.c'), str(ROOT / 'tests/storage_test.c'),
                     '-o', str(storage_test)], check=True)
     subprocess.run([str(storage_test)], check=True)
     subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(ROOT / 'tests'), '-p', 'test_*.py'],
                    cwd=ROOT, check=True)
     for source in ('controller.py', 'windows_backend.py', 'protocol.py'):
         compile((ROOT / source).read_text(encoding='utf-8'), str(ROOT / source), 'exec')
-    print('PASS: both modes, HID/placement, vendor hashes, 6 GPIO scenarios, EEPROM journal and 5 host tests')
+    print('PASS: both modes, HID/placement, 6 input/layer scenarios, interrupted EEPROM saves, multi-packet HID and 7 host tests')
 
 
 if __name__ == '__main__':

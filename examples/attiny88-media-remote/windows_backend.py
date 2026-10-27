@@ -4,7 +4,7 @@ from ctypes import wintypes as wt
 import os
 import time
 import uuid
-from protocol import mapping_report, parse_mapping, mute_report
+from protocol import FEATURE_BYTES, mapping_report, parse_mapping, parse_legacy, mute_report, test_report
 
 
 class GUID(ct.Structure):
@@ -32,8 +32,12 @@ def function(library, name, result, *arguments):
 
 
 class RemoteDevice:
-    def __init__(self, handle, hid, kernel):
+    def __init__(self, handle, hid, kernel, legacy=False):
         self.handle, self.hid, self.kernel = handle, hid, kernel
+        self.legacy = legacy
+        self.feature_bytes = 8 if legacy else FEATURE_BYTES
+        self.legacy_loaded = False
+        self.active_layer = 0
 
     @classmethod
     def find(cls):
@@ -85,7 +89,7 @@ class RemoteDevice:
                                                               required, None, None):
                     continue
                 path = ct.wstring_at(ct.addressof(detail) + 4)
-                if 'vid_16c0&pid_27d9' not in path.lower():
+                if not any(identity in path.lower() for identity in ('vid_16c0&pid_27db', 'vid_16c0&pid_27d9')):
                     continue
                 handle = kernel.CreateFileW(path, 0xc0000000, 3, None, 3, 0, None)
                 if handle == invalid:
@@ -93,19 +97,20 @@ class RemoteDevice:
                 keep = False
                 try:
                     product = ct.create_unicode_buffer(128)
-                    if not hid.HidD_GetProductString(handle, product, ct.sizeof(product)) or product.value != 'Tiny88 Media':
+                    if not hid.HidD_GetProductString(handle, product, ct.sizeof(product)) or product.value not in ('Tiny88 Media', 'Tiny88 Media 8'):
                         continue
+                    legacy = product.value == 'Tiny88 Media'
                     preparsed, caps = ct.c_void_p(), HidCaps()
                     if not hid.HidD_GetPreparsedData(handle, ct.byref(preparsed)):
                         continue
                     try:
                         status = hid.HidP_GetCaps(preparsed, ct.byref(caps))
-                        if status != 0x110000 or (caps.page, caps.usage, caps.feature_bytes, caps.output_bytes) != (0xff00, 1, 8, 2):
+                        if status != 0x110000 or (caps.page, caps.usage, caps.feature_bytes, caps.output_bytes) != (0xff00, 1, 8 if legacy else FEATURE_BYTES, 2):
                             continue
                     finally:
                         hid.HidD_FreePreparsedData(preparsed)
                     keep = True
-                    return cls(handle, hid, kernel)
+                    return cls(handle, hid, kernel, legacy)
                 finally:
                     if not keep:
                         kernel.CloseHandle(handle)
@@ -118,12 +123,16 @@ class RemoteDevice:
             self.handle = None
 
     def get_mapping(self):
-        buffer = ct.create_string_buffer(bytes((3, 0, 0, 0, 0, 0, 0, 0)), 8)
-        if not self.hid.HidD_GetFeature(self.handle, buffer, 8):
+        buffer = ct.create_string_buffer(bytes((3,)) + bytes(self.feature_bytes - 1), self.feature_bytes)
+        if not self.hid.HidD_GetFeature(self.handle, buffer, self.feature_bytes):
             raise ct.WinError(ct.get_last_error())
-        return parse_mapping(buffer.raw)
+        self.legacy_loaded = bool(buffer.raw[1] & 0x40)
+        self.active_layer = 0 if self.legacy else buffer.raw[2]
+        return (parse_legacy if self.legacy else parse_mapping)(buffer.raw)
 
     def set_mapping(self, mapping, persist=True):
+        if self.legacy:
+            raise ValueError('Upload eight-button firmware before saving the expanded mapping')
         payload = mapping_report(mapping, persist)
         buffer = ct.create_string_buffer(payload, len(payload))
         if not self.hid.HidD_SetFeature(self.handle, buffer, len(payload)):
@@ -132,7 +141,7 @@ class RemoteDevice:
         while time.monotonic() < deadline:
             actual, busy = self.get_mapping()
             if not busy:
-                if actual != tuple(mapping):
+                if actual != mapping:
                     raise OSError('Mapping readback did not match the selected actions')
                 return
             time.sleep(0.02)
@@ -140,6 +149,22 @@ class RemoteDevice:
 
     def set_mute(self, muted):
         payload = mute_report(muted)
+        buffer = ct.create_string_buffer(payload, len(payload))
+        if not self.hid.HidD_SetOutputReport(self.handle, buffer, len(payload)):
+            raise ct.WinError(ct.get_last_error())
+
+    def test_button(self, button):
+        if self.legacy:
+            raise ValueError('Button testing requires eight-button firmware')
+        payload = test_report(button)
+        buffer = ct.create_string_buffer(payload, len(payload))
+        if not self.hid.HidD_SetOutputReport(self.handle, buffer, len(payload)):
+            raise ct.WinError(ct.get_last_error())
+
+    def select_layer(self, layer):
+        if self.legacy or not 0 <= layer < 3:
+            raise ValueError('Layer selection requires eight-button firmware and layer 1..3')
+        payload = bytes((6, layer))
         buffer = ct.create_string_buffer(payload, len(payload))
         if not self.hid.HidD_SetOutputReport(self.handle, buffer, len(payload)):
             raise ct.WinError(ct.get_last_error())

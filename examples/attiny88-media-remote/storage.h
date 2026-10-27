@@ -4,8 +4,9 @@
 #include "remote.h"
 extern uint8_t storage_busy;
 extern uint8_t storage_error;
+extern uint8_t storage_legacy;
 void storage_init(void);
-uint8_t storage_save(const uint16_t mapping[REMOTE_BUTTONS]);
+uint8_t storage_save(void);
 void storage_poll(void);
 /* Board hooks: never wait for a pending EEPROM write in the polling path. */
 uint8_t storage_hw_ready(void);
