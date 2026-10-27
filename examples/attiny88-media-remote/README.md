@@ -150,6 +150,10 @@ those files. Its license and source are documented in
 [the vendor record](../attiny88-hid-keyboard/usbdrv/UPSTREAM.md).
 The 16 MHz backend's incoming DATA CRC and USB suspend-power limitations remain.
 
-The Windows audio access and discovery paths have been checked read-only.
-Physical media-key, EEPROM power-cycle, button wiring and GUI interaction tests
-must be recorded separately; offline success does not establish those results.
+The automatic test was uploaded and verified on the connected board: Windows
+observed all three audio changes, HID feedback succeeded, and a persistent
+mapping save completed with readback. See [the hardware test record](HARDWARE_TEST.md).
+The tested build uses 4034 Flash bytes and 127 static SRAM bytes; the GPIO-only
+build uses 3910 Flash bytes and 126 static SRAM bytes (AVR-GCC 7.3.0).
+Visible LED state, cold-power persistence, physical button wiring and GUI
+interaction remain to be checked; the controller was exercised in console mode.
