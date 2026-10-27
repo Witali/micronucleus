@@ -82,9 +82,10 @@ format; GET/SET_IDLE, GET/SET_PROTOCOL, GET_REPORT, and the one-byte keyboard LE
 SET_REPORT are implemented.
 
 Validated offline on 2026-10-27 using AVR-GCC 7.3.0: **2488 Flash bytes,
-85 static SRAM bytes**. All checks passed. The application has **not been
-flashed or tested on physical hardware**. Enumeration and observed typing
-remain to be checked on the actual board. The inherited V-USB 16 MHz backend
+85 static SRAM bytes**. All checks passed. The application was subsequently
+uploaded and verified on the connected board: Windows enumerated the HID
+keyboard and the user confirmed text input. See [the hardware test record](HARDWARE_TEST.md)
+for the exact scope and limitations. The inherited V-USB 16 MHz backend
 does not validate incoming DATA CRC16; this demonstration does not implement
 USB suspend power management or remote wakeup.
 
