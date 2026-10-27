@@ -22,21 +22,11 @@ rjmp startup
 .byte LOW8(BOOT_VERSION_BCD), HIGH8(BOOT_VERSION_BCD), 0, 0, 0, 1
 #include "vusb_phy.inc"
 
-/* RESET word is supplied prepatched by the host. Do NOT rewrite it here. */
-/* Append one host-supplied word to the temporary Flash page buffer.
- * In: R4:R5 cursor, R25:R24 data, YH=SELFPRGEN=1. Out: cursor +2, R1=0.
- * This does not write Flash; page commit is deferred to the guarded SPM worker.
- */
+/* End-of-PHY anchors retained for the opcode/timing audit. Flash WRITE4 now
+ * stages its two words directly in compact_memory.inc; no helper body remains.
+ * RESET/postscript patching stays on the host. */
 flash_buffer_append_word:
-movw r30, r4
 flash_buffer_load_word:
-movw r0, r24
-out _SFR_IO_ADDR(SPMCSR), r29
-spm
-eor r1, r1
-adiw r30, AVR_WORD_BYTES
-movw r4, r30
-ret
 /* Clear USB state and pending EEPROM count after RESET. Do not enter this
  * routine by a software jump: stack and global interrupt state are reset-owned.
  */

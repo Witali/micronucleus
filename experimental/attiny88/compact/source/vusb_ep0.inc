@@ -51,11 +51,11 @@ rjmp ee_empty
 mov r2, r19
 mov r19, r1
 memory_read_advance:
-/* Z is scratch and may be reused after preparing the reply. */
-movw r30, r4
-adiw r30, USB_EP0_PAYLOAD_BYTES
-movw r4, r30
+/* Reuse the reply's eight-byte length as the low-register addend. R1=0;
+ * ADD/ADC advances the full cursor without borrowing Z or changing R18:R19. */
 ldi r24, USB_EP0_PAYLOAD_BYTES
+add r4, r24
+adc r5, r1
 rjmp usb_reply_set_pointer
 usb_reply_use_scratch_buffer:
 ldi r18, LOW8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)

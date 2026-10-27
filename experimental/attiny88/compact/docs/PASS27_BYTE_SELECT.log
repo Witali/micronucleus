@@ -1,0 +1,53 @@
+PASS PHY: 9-cycle RX setup, 60 branch targets, 65 flag-liveness states; three branch operands corrected
+PASS NONE 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS NONE 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS NONE distinct candidate descriptor
+PASS 5152 byte SELECT/erase cases, physical EEPROM aliases and final Flash guard
+PASS 258 actual erase/page-commit operations across all Flash pages and cursor wrap
+PASS 2048 aligned WRITE4 pairs, exact host words, cursor+4, R1 restoration and automatic commit
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 289 busy/unknown requests cannot clear a page buffer, queue SPM or overwrite an active EEPROM queue
+PASS 16 complete vendor SETUP dispatch cases with exact byte selectors and payload fields
+PASS 65536 cursor increments, all valid Flash/EEPROM READ8 starts and busy preservation
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS PHY: 9-cycle RX setup, 60 branch targets, 65 flag-liveness states; three branch operands corrected
+PASS ACTIVE_HIGH 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_HIGH 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS ACTIVE_HIGH distinct candidate descriptor
+PASS 5152 byte SELECT/erase cases, physical EEPROM aliases and final Flash guard
+PASS 258 actual erase/page-commit operations across all Flash pages and cursor wrap
+PASS 2048 aligned WRITE4 pairs, exact host words, cursor+4, R1 restoration and automatic commit
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 289 busy/unknown requests cannot clear a page buffer, queue SPM or overwrite an active EEPROM queue
+PASS 16 complete vendor SETUP dispatch cases with exact byte selectors and payload fields
+PASS 65536 cursor increments, all valid Flash/EEPROM READ8 starts and busy preservation
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS PHY: 9-cycle RX setup, 60 branch targets, 65 flag-liveness states; three branch operands corrected
+PASS ACTIVE_LOW 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_LOW 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS ACTIVE_LOW distinct candidate descriptor
+PASS 5152 byte SELECT/erase cases, physical EEPROM aliases and final Flash guard
+PASS 258 actual erase/page-commit operations across all Flash pages and cursor wrap
+PASS 2048 aligned WRITE4 pairs, exact host words, cursor+4, R1 restoration and automatic commit
+PASS 61 EEPROM start positions, 195 rejected low-byte bounds and asynchronous busy/data sequencing
+PASS 289 busy/unknown requests cannot clear a page buffer, queue SPM or overwrite an active EEPROM queue
+PASS 16 complete vendor SETUP dispatch cases with exact byte selectors and payload fields
+PASS 65536 cursor increments, all valid Flash/EEPROM READ8 starts and busy preservation
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS all 2064 valid byte selectors; invalid ranges/alignment/EEPROM aliases rejected before USB
+PASS READ8/WRITE4 automatic cursor, busy/short/error invalidation, seek recovery and write boundaries
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x560 0x1b80
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x561 0x1b40
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x562 0x1b40
+PASS descriptor-only identification, unknown profiles, offline CLI and both mocked execution gates
+PASS v5.6 client and complete offline host scenarios; Pass26 globals remain unchanged
+PASS modular candidate: standard USB, Flash/EEPROM, cursor and TX opcode contracts
+NONE: 1120 bytes at 0x1c00; capacity 1024; over budget 96; SHA256 1c74d45ed61f7ba8caf68bf0039539aef411d94ba9e19afd418680eb275cf3fa
+ACTIVE_HIGH: 1138 bytes at 0x1c00; capacity 1024; over budget 114; SHA256 772808b36dc2b5a982aa224822d7f309ba077cb080d9a2c2ea9da25dad457385
+ACTIVE_LOW: 1136 bytes at 0x1c00; capacity 1024; over budget 112; SHA256 2ac786fac95590d4323bf7eceddeb3689bbf912ae81fccb6d14e8f3e84406a6f

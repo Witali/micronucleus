@@ -4,9 +4,9 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
-The subsequent EP0 register checkpoint is **1168 bytes at `0x1C00`**, still
-**144 bytes above 1 KiB**. The first modular checkpoint below remains the
-historical reference for its isolated savings.
+The current v5.6 NVM checkpoint is **1120 bytes at `0x1C00`**, still **96 bytes
+above 1 KiB**. Its fitting no-LED placement is `0x1B80`, 1124 bytes in 18 pages.
+Earlier checkpoints below retain the scope of their isolated measurements.
 
 | Source | Responsibility |
 | --- | --- |
@@ -79,6 +79,25 @@ Separate waveform work has identified inherited TX bit-rate and driven-J timing
 defects. These checkpoints establish neither specification timing nor electrical
 USB admission; those require their own corrections and verification.
 
+### Byte-cursor and shared NVM checkpoint
+
+[Protocol v5.6](../PROTOCOL_v5_6.md) moves selector range/alignment work to a
+separate host client and removes the four-byte block decoder. The MCU retains
+its final Flash erase/write guard and EEPROM WRITE4 low-byte bound. Both memories
+share an inactive SETUP payload load; Flash consumes two words using its guaranteed
+alignment as the loop phase, then restores r1 before returning. A nested CPSE/SBIC
+worker gate replaces a separate empty-queue branch. READ8 reuses its length as
+the ADD/ADC cursor increment and does not borrow Z.
+
+This checkpoint saves 48 more bytes relative to the EP0 register checkpoint.
+No LED is 1124 bytes at `0x1B80`; LED high/low are 1142/1140 at `0x1B40`.
+Host profile sizes and default source placement match those fitting builds.
+The new NVM/host tests replace candidate tests that assumed v5.5 block selectors;
+the original Pass26 fixtures and client remain unchanged. In addition to complete
+EP0/PHY checks, every LED profile executes all 65536 cursor increments, legal and
+malformed selectors, all application-page write positions, protected-page erases
+and commits, EEPROM bounds/busy transitions and complete mocked programming.
+
 ```sh
 sh verify27.sh
 python3 build_candidate.py --require-fit
@@ -95,9 +114,10 @@ commands. The PHY audit checks 60 normalized branch targets and 66 flag-liveness
 states per profile. LLVM unknown-instruction groups are split at actual AVR word
 boundaries before emulation; decoding is cached by ELF modification time/size.
 
-The first candidate retains v5.5 command/address semantics and reserves
-`bcdDevice=0x0560..0x0562` for development. The released host profile table still
-identifies Pass26; no Pass27 device programming is part of this checkpoint.
+The first candidate used v5.5 selectors; the current source uses v5.6 and
+`host/compact_programmer27.py`. `bcdDevice=0x0560..0x0562` remains reserved for
+development. The preserved Pass26 host profile table is unchanged; no Pass27
+device programming is part of this checkpoint.
 Physical USB, retry/ACK/CRC admission and power-loss behavior remain unproven.
 Next work must reduce the remaining code, integrate the corresponding host
 geometry/protocol, and preserve the final AVR erase/write boundary guard.

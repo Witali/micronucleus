@@ -1,5 +1,5 @@
 /* Compact EP0 protocol, context layout, descriptors and timing constants.
- * R4:R5 is a byte cursor internally; SELECT still receives a 4-byte-block index.
+ * Protocol v5.6 SELECT receives the exact R4:R5 byte cursor, bit15=EEPROM.
  * Keep the context offsets synchronized with PHY and host-side fixtures.
  */
 #ifndef COMPACT_PROTOCOL_INC
@@ -68,7 +68,7 @@
 #define BOOT_FEATURES (BOOT_FEATURE_RESET_FLAGS | BOOT_FEATURE_EEPROM | BOOT_FEATURE_FLASH_READ)
 #define FLASH_WRITE_DELAY_MS 5
 #define USB_PROTOCOL_BCD 0x0110
-/* Host-driven v5.5, SELECT once, then READ8/WRITE4 auto-increment. */
+/* Host-driven v5.6: exact byte SELECT, then READ8/WRITE4 auto-increment. */
 /* Device-descriptor bcdDevice identifies the complete known build on the host.
  * No INFO, checksum table or firmware fingerprinting on the MCU. */
 #if LED_MODE == NONE
@@ -98,7 +98,10 @@
 #define CMD_EXIT 4
 #define CMD_COMMIT_PAGE SPM_PAGE_WRITE
 #define CMD_DEFERRED_MASK 0x3f
-/* SELECT uses wIndex: 16-bit four-byte block index, bit15=EEPROM.
+/* SELECT uses wIndex: exact byte address, bit15=EEPROM. The host validates
+ * Flash/EEPROM bounds, four-byte alignment and page alignment for erase.
+ * Malformed EEPROM selectors can alias physical EEPROM; its WRITE4 low-byte
+ * bound and all actual Flash erase/write bootloader guards remain on the AVR.
  * READ8 ignores both address fields and reads from the shared R4:R5 cursor,
  * returning eight bytes and advancing R4:R5 by eight. WRITE4 advances four.
  * Host must SELECT after a failed/ambiguous USB transaction or any seek.
@@ -107,9 +110,6 @@
  */
 #define REQ_UNIFIED_READ 0xb0
 #define ADDRESS_EEPROM_FLAG 0x80
-#define EEPROM_BLOCKS (EEPROM_BYTES / 4)
-#define MAX_FLASH_READ_BLOCK ((8192 - USB_EP0_PAYLOAD_BYTES)/4)
-#define MAX_FLASH_START_BLOCK ((BOOT_AT - FLASH_PAGE_BYTES)/4)
 #define EEPROM_WRITE_BLOCK_BYTES 4
 #define STATUS_READY 0
 #define STATUS_ACCEPTED 0

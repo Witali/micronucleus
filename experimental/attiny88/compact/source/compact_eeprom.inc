@@ -3,19 +3,12 @@
  * shared cursor advances only after starting that byte; READ8/SELECT are
  * rejected until queue and hardware busy state have both cleared.
  */
-/* Write one aligned block of four EEPROM bytes, packed in SETUP fields.
- * R8 = pending byte count; R9 = next address; R10:R13 = queued data.
- * Rejected while EEPROM/Flash is busy; no legacy byte-write command.
- */
 ee_write:
-/* 4 data bytes arrive in SETUP fields; R4 is the EEPROM byte address. */
+/* Shared WRITE4 dispatch has staged four bytes in R10..R13. R4 is the
+ * physical EEPROM byte address; R9 remains the persistent USB DATA PID. */
 mov r18, r4
 cpi r18, EEPROM_BYTES - EEPROM_WRITE_BLOCK_BYTES + 1
 brsh ee_bad_addr
-ldd r10, Y+CTX_SETUP_VALUE_LOW
-ldd r11, Y+CTX_SETUP_VALUE_HIGH
-ldd r12, Y+CTX_SETUP_INDEX_LOW
-ldd r13, Y+CTX_SETUP_INDEX_HIGH
 ldi r18, EEPROM_WRITE_BLOCK_BYTES
 mov r8, r18
 rjmp usb_reply_empty
@@ -23,8 +16,9 @@ rjmp usb_reply_empty
 /* Reuses the AVR register file as a four-byte queue (address 0x0A..0x0D).
  * Never spin on EEPE: advance one byte between USB poll windows. */
 ee_write_step:
-tst r8
-breq ee_write_step_done
+/* Empty queue skips the EEPE test and returns. Otherwise an idle EEPE test
+ * skips RET and starts one byte; a busy EEPROM returns without side effects. */
+cpse r8, r1
 sbic _SFR_IO_ADDR(EECR), EEPE
 ret
 out _SFR_IO_ADDR(EEARL), r4
@@ -41,9 +35,10 @@ dec r8
 ee_write_step_done:
 ret
 
-/* R24 is scratch at all three call sites; Z=1 means EEPROM fully idle. */
+/* R24 is scratch at all three call sites; Z=1 means EEPROM fully idle.
+ * Treat any nonzero EECR bit conservatively as busy. Normally only EEPE
+ * persists here; delaying on a transient EERE/EEMPE is safe and needs no mask. */
 ee_check_busy:
 in r24, _SFR_IO_ADDR(EECR)
-andi r24, (1 << EEPE)
 or r24, r8
 ret

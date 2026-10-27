@@ -11,7 +11,11 @@
 #include "../variants/strict_usb_verified/led_config.h"
 #include "../variants/strict_usb_verified/led_macros.inc"
 #ifndef BOOT_AT
+#if LED_MODE == NONE
+#define BOOT_AT 0x1b80
+#else
 #define BOOT_AT 0x1b40
+#endif
 #endif
 #define LOW8(value) ((value) & 0xff)
 #define HIGH8(value) (((value) >> 8) & 0xff)

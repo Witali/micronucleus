@@ -74,6 +74,12 @@ class AVRExec:
         if (word&0xfc00)==0x2400:
             d=(word>>4)&0x1f;sr=(word&15)|((word>>5)&0x10)
             return ('eor',f'r{d}, r{sr}',2)
+        if (word&0xf000)==0x7000:
+            d=16+((word>>4)&15);imm=((word>>4)&0xf0)|(word&15)
+            return ('andi',f'r{d}, {imm}',2)
+        if (word&0xfc00) in (0x0c00,0x1c00):
+            d=(word>>4)&31;source=(word&15)|((word>>5)&16)
+            return ('adc' if word&0x1000 else 'add',f'r{d}, r{source}',2)
         if (word&0xff00) in (0x9600,0x9700):
             reg=24+2*((word>>4)&3);imm=((word>>2)&0x30)|(word&15)
             return ('adiw' if word&0x100==0 else 'sbiw',f'r{reg}, {imm}',2)
@@ -105,6 +111,8 @@ class AVRExec:
             q=self.pc+size
             self.steps.append((self.pc,op,arg))
             if op=='nop':pass
+            elif op=='clr':
+                self.r[regnum(args[0])]=0;self.Z=1  # EOR Rd,Rd alias; carry is unchanged.
             elif op=='ldi':self.r[regnum(args[0])]=int(args[1],0)&255
             elif op=='mov':self.r[regnum(args[0])]=self.reg(args[1])
             elif op=='movw':
@@ -141,8 +149,10 @@ class AVRExec:
                 d=regnum(args[0]);x=self.r[d];v=int(args[1],0);self.r[d]=(x-v)&255;self.C=int(x<v);self.Z=int(self.r[d]==0)
             elif op=='sub':
                 d=regnum(args[0]);x=self.r[d];v=self.reg(args[1]);self.r[d]=(x-v)&255;self.C=int(x<v);self.Z=int(self.r[d]==0)
-            elif op=='add':
-                d=regnum(args[0]);x=self.r[d];v=self.reg(args[1]);self.r[d]=(x+v)&255;self.C=int(x+v>255);self.Z=int(self.r[d]==0)
+            elif op in ('add','adc'):
+                d=regnum(args[0]);x=self.r[d];v=self.reg(args[1])
+                value=x+v+(self.C if op=='adc' else 0)
+                self.r[d]=value&255;self.C=int(value>255);self.Z=int(self.r[d]==0)
             elif op=='inc':
                 d=regnum(args[0]);self.r[d]=(self.r[d]+1)&255;self.Z=int(self.r[d]==0)
             elif op=='dec':

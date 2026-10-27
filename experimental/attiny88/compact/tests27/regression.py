@@ -19,9 +19,6 @@ from build_candidate import SOURCE, checked_build
 from audit_phy27 import audit_candidate
 from test_read_previous import decode
 from tests import avr_exec, avr_exec23
-from tests26 import test26_nvm as nvm
-from tests26 import test26_cursor_opcodes as cursor
-from tests26 import test26_combined_erase as erase
 
 
 @lru_cache(maxsize=32)
@@ -157,22 +154,21 @@ def check_invalid_vendor(artifact):
 
 
 def test():
-    for mode in ('NONE', 'ACTIVE_HIGH', 'ACTIVE_LOW'):
-        boot = 0x1B40 if mode == 'NONE' else 0x1B00
+    # Candidate selectors are exact bytes, so retain Pass26 fixtures unchanged
+    # and exercise v5.6 with its own actual-opcode and host suites.
+    from host import compact_programmer27 as host
+    from tests27 import nvm_opcodes, host_protocol
+    for mode, version in (('NONE', 0x0560), ('ACTIVE_HIGH', 0x0561), ('ACTIVE_LOW', 0x0562)):
+        _name, boot, expected_size = host.USB_PROFILES[version]
         artifact = checked_build(mode, boot)
         assert artifact['size'] <= 8192 - boot
+        assert artifact['size'] == expected_size, (mode, artifact['size'], expected_size)
         check_standard(artifact, mode)
-        nvm.test_setaddr(artifact)
-        nvm.test_erase_and_commit(artifact)
-        nvm.test_flash_write_data(artifact)
-        nvm.test_eeprom_queue(artifact)
+        nvm_opcodes.check_nvm(artifact)
         check_invalid_vendor(artifact)
         check_control_reply(artifact)
         check_tx_bytes(artifact)
-    cursor.SRC = SOURCE
-    cursor.test()
-    erase.SRC = SOURCE
-    erase.test()
+    host_protocol.test()
     print('PASS modular candidate: standard USB, Flash/EEPROM, cursor and TX opcode contracts')
 
 
