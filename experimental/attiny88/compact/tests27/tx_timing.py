@@ -102,5 +102,5 @@ def check(artifact):
 if __name__ == '__main__':
     from build_candidate import checked_build
     from host import compact_programmer27 as host
-    for mode, version in (('NONE', 0x0560), ('ACTIVE_HIGH', 0x0561), ('ACTIVE_LOW', 0x0562)):
+    for mode, version in (('NONE', 0x0300), ('ACTIVE_HIGH', 0x0301), ('ACTIVE_LOW', 0x0302)):
         check(checked_build(mode, host.USB_PROFILES[version][1]))

@@ -80,7 +80,7 @@ def check_standard(artifact, mode):
     check_configuration_words(artifact)
     start = artifact['symbols']['USB_handler'] - artifact['boot'] - 18
     descriptor = artifact['body'][start:start + 18]
-    expected = {'NONE': 0x0560, 'ACTIVE_HIGH': 0x0561, 'ACTIVE_LOW': 0x0562}[mode]
+    expected = {'NONE': 0x0300, 'ACTIVE_HIGH': 0x0301, 'ACTIVE_LOW': 0x0302}[mode]
     assert int.from_bytes(descriptor[12:14], 'little') == expected
     print('PASS', mode, 'distinct candidate descriptor')
 
@@ -161,11 +161,11 @@ def check_invalid_vendor(artifact):
 
 def test():
     # Candidate selectors are exact bytes, so retain Pass26 fixtures unchanged
-    # and exercise v5.6 with its own actual-opcode and host suites.
+    # and exercise v3.0 with its own actual-opcode and host suites.
     from host import compact_programmer27 as host
     from tests27 import nvm_opcodes, host_protocol
     from tests27.startup_init import check_startup
-    for mode, version in (('NONE', 0x0560), ('ACTIVE_HIGH', 0x0561), ('ACTIVE_LOW', 0x0562)):
+    for mode, version in (('NONE', 0x0300), ('ACTIVE_HIGH', 0x0301), ('ACTIVE_LOW', 0x0302)):
         _name, boot, expected_size = host.USB_PROFILES[version]
         artifact = checked_build(mode, boot)
         assert artifact['size'] <= 8192 - boot

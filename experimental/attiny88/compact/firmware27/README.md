@@ -1,7 +1,8 @@
 # Pass27 software-verified firmware candidate
 
 Target: ATtiny88 with the existing external 16 MHz clock and board wiring.
-No hardware was programmed or tested. This checkpoint does not yet fit 1 KiB.
+The ISP images have not been installed. A read-only application trial passed on
+the real board; see docs/HARDWARE_REHEARSAL30.md. This checkpoint does not fit 1 KiB.
 
 | File prefix | LED | BOOT_AT | Body bytes | Application bytes |
 | --- | --- | --- | ---: | ---: |
@@ -16,7 +17,7 @@ contains the RESET redirect and bootloader region. Neither changes fuses or
 EEPROM. These are ISP preparation artifacts, not application upload images.
 Preserve the board's existing verified fuse settings and ISP recovery access.
 
-Use `host/compact_programmer27.py` for the matching v5.6 application protocol;
+Use `host/compact_programmer27.py` for the matching v3.0 application protocol;
 the Pass26 client/profile is different. Its execution and ISP-recovery gates
 remain required. No programming command has been run by this build.
 
@@ -36,3 +37,8 @@ covers every other file in this directory.
 These images additionally include the two-byte EEPROM-tail reuse. Its affected
 EEPROM/USB paths pass in every LED profile; see docs/PASS27_EEPROM_TAIL.log.
 Exact current source hashes are recorded in manifest.json.
+
+`Pass30_rehearsal_app.hex` is the tested, write-disabled application at 0x1000
+(USB device revision 0x0390, protocol 3.0). It preserves the installed 2.8 loader
+at 0x1B00 and requires its 6908-byte application layout; it is not a permanent
+bootloader installer. The entry wrapper initializes SP and disables interrupts.

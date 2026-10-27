@@ -1,4 +1,8 @@
-# Compact research protocol v5.6
+# Archived compact research protocol v5.6
+
+Superseded by [protocol 3.0](PROTOCOL_v3_0.md). The profiles below describe the
+previous development checkpoint.
+
 
 Pass27 selects an exact byte cursor on the host. Use
 `host/compact_programmer27.py`; the preserved Pass26 client still uses v5.5

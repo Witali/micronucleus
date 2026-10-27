@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline v5.6 byte-selector client checks; the device is an independent mock.
+"""Offline v3.0 byte-selector client checks; the device is an independent mock.
 
 These tests exercise planner, transport state and readback, not electrical USB,
 physical EEPROM timing, transaction retries or boot-page power-loss behavior.
@@ -273,7 +273,7 @@ def test_identification_and_cli():
         assert len(h.parse_intel_hex(output.read_text())) == h.BOOT_AT
 
         # PyUSB is replaced completely: even the CLI execute path has no device access.
-        device = ByteUSBMock(0x0561)
+        device = ByteUSBMock(0x0301)
         usb, core = ModuleType('usb'), ModuleType('usb.core')
         core.find = lambda **_kwargs: device
         usb.core = core
@@ -298,7 +298,7 @@ def test():
     assert previous.USB_PROFILES == original_profiles
     assert previous.encode_addr(60, eeprom=True) == original_encoding == 0x800F
     assert h.encode_addr(60, eeprom=True) == 0x803C
-    print('PASS v5.6 client and complete offline host scenarios; Pass26 globals remain unchanged')
+    print('PASS v3.0 client and complete offline host scenarios; Pass26 globals remain unchanged')
 
 
 if __name__ == '__main__':

@@ -1,8 +1,11 @@
 # Modular compact candidate, Pass27
 
+Current public protocol: [3.0](../PROTOCOL_v3_0.md), device revisions 0x0300..0x0302.
+
 The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
-comparison references. This candidate is not a released or hardware-tested build.
+comparison references. The production bootloader has not been installed;
+the [read-only application rehearsal](HARDWARE_REHEARSAL30.md) passed on a board.
 
 The [accepted receive-CRC16 exception](USB_PROTOCOL.md) records the user's
 size/ACK-latency tradeoff, its corruption risk and the checks it does not waive.
@@ -135,8 +138,8 @@ commands. The PHY audit checks 60 normalized branch targets and 66 flag-liveness
 states per profile. LLVM unknown-instruction groups are split at actual AVR word
 boundaries before emulation; decoding is cached by ELF modification time/size.
 
-The first candidate used v5.5 selectors; the current source uses v5.6 and
-`host/compact_programmer27.py`. `bcdDevice=0x0560..0x0562` remains reserved for
+The first candidate used v5.5 selectors; the current source uses protocol 3.0 and
+`host/compact_programmer27.py`. `bcdDevice=0x0300..0x0302` remains reserved for
 development. The preserved Pass26 host profile table is unchanged; no Pass27
 device programming is part of this checkpoint.
 Physical USB, retry/ACK/CRC admission and power-loss behavior remain unproven.

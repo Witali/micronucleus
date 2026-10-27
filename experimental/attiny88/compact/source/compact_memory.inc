@@ -6,6 +6,14 @@
  */
 bootloader_check_set_flash_address:
 rcall usb_service_pending
+#ifdef COMPACT_REHEARSAL_READ_ONLY
+/* Application-only hardware trial: SELECT and READ8 are the sole private
+ * operations. Never queue erase/write/RUN or start an EEPROM write. */
+cpi r25, CMD_SET_MEMORY_ADDRESS
+breq .Lrehearsal_select
+rjmp usb_reply_empty
+.Lrehearsal_select:
+#else
 /* Reject opcode zero; only SELECT and SELECT+ERASE enter the decoder. */
 tst r25
 breq usb_reply_empty
@@ -13,7 +21,8 @@ breq usb_reply_empty
  * the queued erase runs only after the main USB polling interval. */
 cpi r25, CMD_WRITE4
 brsh bootloader_check_write4
-/* Protocol v5.6 puts the exact byte cursor in wIndex; bit15 selects EEPROM.
+#endif
+/* Protocol v3.0 puts the exact byte cursor in wIndex; bit15 selects EEPROM.
  * The host checks ranges and four-byte/page alignment before SELECT. Malformed
  * EEPROM selectors may alias the physical 64-byte EEPROM; WRITE4 retains its
  * separate low-byte bounds guard, and actual Flash SPM is guarded on the MCU.

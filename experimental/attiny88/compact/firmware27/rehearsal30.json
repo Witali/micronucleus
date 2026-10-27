@@ -1,0 +1,14 @@
+{
+  "protocol": "3.0",
+  "bcdDevice": "0x0390",
+  "read_only": true,
+  "address": 4096,
+  "body_bytes": 1142,
+  "last_hex_address": 5237,
+  "installed_application_bytes": 6908,
+  "installed_boot_address": 6912,
+  "phy_identical": true,
+  "private_opcodes_verified": 256,
+  "body_sha256": "bd199564512e3ea1ea5541bea9d4e04d51d5b37024c41aa5f739962fe7fd1cfe",
+  "hex_sha256": "a26902f1f73e93b718094a4a0dce04426600149d2b41634a6f7c795da4d38475"
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run v5.6 NVM/cursor contracts through decoded, compiled AVR instructions.
+"""Run v3.0 NVM/cursor contracts through decoded, compiled AVR instructions.
 
 The host owns selector geometry/alignment. The MCU must still reject every
 page-changing SPM at or above BOOT_AT, including malformed EEPROM selectors.
@@ -335,10 +335,10 @@ def check_nvm(artifact):
 
 
 def test():
-    for mode, version in (('NONE', 0x0560), ('ACTIVE_HIGH', 0x0561), ('ACTIVE_LOW', 0x0562)):
+    for mode, version in (('NONE', 0x0300), ('ACTIVE_HIGH', 0x0301), ('ACTIVE_LOW', 0x0302)):
         _name, boot, _size = host.USB_PROFILES[version]
         check_nvm(checked_build(mode, boot))
-    print('PASS v5.6 byte-cursor NVM/host-bound policy and MCU Flash protection')
+    print('PASS v3.0 byte-cursor NVM/host-bound policy and MCU Flash protection')
 
 
 if __name__ == '__main__':

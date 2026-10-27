@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Experimental compact Pass27 client, protocol v5.6 with byte-address SELECT.
+"""Experimental compact Pass27 client, protocol v3.0 with byte-address SELECT.
 
 The host validates memory geometry and alignment before sending a selector.
 Offline image planning needs no USB packages. Physical programming requires
@@ -16,12 +16,12 @@ if __package__:
 else:
     import compact_programmer as base
 
-USB_VID, USB_PID, USB_BCD = base.USB_VID, base.USB_PID, 0x0560
+USB_VID, USB_PID, USB_BCD = base.USB_VID, base.USB_PID, 0x0300
 # Provisional research profiles: update sizes only after the matching build audit.
 USB_PROFILES = {
-    0x0560: ('Pass27 / no LED; 18 pages', 0x1B80, 1148),
-    0x0561: ('Pass27 / LED active-high; 19 pages', 0x1B40, 1166),
-    0x0562: ('Pass27 / LED active-low; 19 pages', 0x1B40, 1164),
+    0x0300: ('Pass27 / no LED; 18 pages', 0x1B80, 1148),
+    0x0301: ('Pass27 / LED active-high; 19 pages', 0x1B40, 1166),
+    0x0302: ('Pass27 / LED active-low; 19 pages', 0x1B40, 1164),
 }
 FLASH_SIZE, EEPROM_SIZE, PAGE_BYTES = base.FLASH_SIZE, base.EEPROM_SIZE, base.PAGE_BYTES
 BLOCK_BYTES, READ_BYTES = base.BLOCK_BYTES, base.READ_BYTES

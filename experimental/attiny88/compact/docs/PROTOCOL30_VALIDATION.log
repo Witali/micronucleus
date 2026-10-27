@@ -1,0 +1,16 @@
+PASS NONE 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS NONE 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS protocol3.0 identity; all executable bytes unchanged NONE
+PASS ACTIVE_HIGH 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_HIGH 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS protocol3.0 identity; all executable bytes unchanged ACTIVE_HIGH
+PASS ACTIVE_LOW 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_LOW 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS protocol3.0 identity; all executable bytes unchanged ACTIVE_LOW
+PASS all 2064 valid byte selectors; invalid ranges/alignment/EEPROM aliases rejected before USB
+PASS READ8/WRITE4 automatic cursor, busy/short/error invalidation, seek recovery and write boundaries
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x300 0x1b80
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x301 0x1b40
+PASS full mock Flash/EEPROM programming/readback, RESET/postscript, stream and RUN 0x302 0x1b40
+PASS descriptor-only identification, unknown profiles, offline CLI and both mocked execution gates
+PASS v3.0 client and complete offline host scenarios; Pass26 globals remain unchanged

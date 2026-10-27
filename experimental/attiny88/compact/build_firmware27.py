@@ -11,8 +11,8 @@ from host.compact_programmer27 import USB_PROFILES, record, parse_intel_hex
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / 'firmware27'
-PROFILES = (('NONE', 'off', 0x0560), ('ACTIVE_HIGH', 'high', 0x0561),
-            ('ACTIVE_LOW', 'low', 0x0562))
+PROFILES = (('NONE', 'off', 0x0300), ('ACTIVE_HIGH', 'high', 0x0301),
+            ('ACTIVE_LOW', 'low', 0x0302))
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
         validation_baseline='ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3',
         source_sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                        for path in sorted((ROOT / 'source').iterdir()) if path.is_file()},
-        target='ATtiny88, external 16 MHz clock', protocol='v5.6',
+        target='ATtiny88, external 16 MHz clock', protocol='v3.0',
         hardware_validated=False, fits_1024_bytes=False,
         toolchain='Clang/LLVM 18.1.3; GNU AVR binutils 2.26.20160125',
         limitations=['Incoming DATA CRC16 validation omitted by accepted design decision',

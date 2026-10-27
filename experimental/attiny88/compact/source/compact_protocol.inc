@@ -1,5 +1,5 @@
 /* Compact EP0 protocol, context layout, descriptors and timing constants.
- * Protocol v5.6 SELECT receives the exact R4:R5 byte cursor, bit15=EEPROM.
+ * Protocol v3.0 SELECT receives the exact R4:R5 byte cursor, bit15=EEPROM.
  * Keep the context offsets synchronized with PHY and host-side fixtures.
  */
 #ifndef COMPACT_PROTOCOL_INC
@@ -68,15 +68,17 @@
 #define BOOT_FEATURES (BOOT_FEATURE_RESET_FLAGS | BOOT_FEATURE_EEPROM | BOOT_FEATURE_FLASH_READ)
 #define FLASH_WRITE_DELAY_MS 5
 #define USB_PROTOCOL_BCD 0x0110
-/* Host-driven v5.6: exact byte SELECT, then READ8/WRITE4 auto-increment. */
+/* Host-driven v3.0: exact byte SELECT, then READ8/WRITE4 auto-increment. */
 /* Device-descriptor bcdDevice identifies the complete known build on the host.
  * No INFO, checksum table or firmware fingerprinting on the MCU. */
+#ifndef BOOT_VERSION_BCD
 #if LED_MODE == NONE
-#define BOOT_VERSION_BCD 0x0560
+#define BOOT_VERSION_BCD 0x0300
 #elif LED_MODE == ACTIVE_HIGH
-#define BOOT_VERSION_BCD 0x0561
+#define BOOT_VERSION_BCD 0x0301
 #else
-#define BOOT_VERSION_BCD 0x0562
+#define BOOT_VERSION_BCD 0x0302
+#endif
 #endif
 #define USB_VENDOR_ID 0x16d0
 #define USB_PRODUCT_ID 0x0753

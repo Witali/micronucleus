@@ -19,7 +19,7 @@ from tests27 import avr_exec27 as avr_exec23
 
 CONTEXT = 0x100
 DATA0, DATA1, NAK = 0xC3, 0x4B, 0x5A
-VERSIONS = {'NONE': 0x0560, 'ACTIVE_HIGH': 0x0561, 'ACTIVE_LOW': 0x0562}
+VERSIONS = {'NONE': 0x0300, 'ACTIVE_HIGH': 0x0301, 'ACTIVE_LOW': 0x0302}
 DESCRIPTOR_KINDS = (0, 1, 2, 3, 7, 255)
 CONFIGURATION_DESCRIPTOR = bytes((9, 2, 18, 0, 1, 1, 0, 0x80, 50,
                                   9, 4, 0, 0, 0, 0, 0, 0, 0))
