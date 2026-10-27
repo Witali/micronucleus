@@ -48,14 +48,24 @@ words retain the eleven-cycle driven J interval. The emitted-word audit pins
 each replacement, unchanged sampling instructions and branch destinations;
 cooperative execution now checks the complete external Y pointer.
 
+EP0 then saves fourteen bytes. A full-word CP/CPC comparison clamps replies to
+wLength; SUBI both selects an eight-byte packet and computes its remainder.
+Descriptor kinds share the Flash-pointer high-byte tail, with a compile-time
+page guard. Main-loop and cooperative SETUP paths share one token validator.
+A valid SETUP discards exactly one real return frame before field capture;
+the invalid cooperative path retains its fast RET. The non-bitstream executor
+now uses the same byte stack for RCALL/RET and ordinary PUSH/POP. Independent
+timed execution rejects a missing POP at field capture, and stateful transfers
+assert an empty stack after SETUP and packet preparation.
+
 | Placement/profile | Installed reference bytes | Candidate bytes | Saved |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1144 | 1116 | 28 |
-| No LED, `0x1B80` fitting placement | 1148 | 1120 | 28 |
-| Active high, `0x1B40` | 1166 | 1138 | 28 |
-| Active low, `0x1B40` | 1164 | 1136 | 28 |
+| No LED, `0x1C00` measurement | 1144 | 1102 | 42 |
+| No LED, `0x1B80` fitting placement | 1148 | 1106 | 42 |
+| Active high, `0x1B40` | 1166 | 1124 | 42 |
+| Active low, `0x1B40` | 1164 | 1122 | 42 |
 
-At the intended `0x1C00` boundary the candidate is still 92 bytes too large.
+At the intended `0x1C00` boundary the candidate is still 78 bytes too large.
 Measurement links use a larger linker region to quantify overflow; this is
 not permission to program an image beyond the ATtiny88's 8192 bytes.
 
@@ -64,7 +74,7 @@ pass standard/stateful
 EP0, NVM/unknown requests, independent outgoing CRC and cooperative USB checks.
 The measured no-packet gap is 31 cycles; adding 5 entry and 3 synchronizer cycles
 gives 39 physical-SOP cycles, below the 40-cycle limit. The 62 synchronized cases
-per profile have entry 38 cycles, response 45 1/3 cycles and peak stack 6 bytes.
+per profile have entry 37 2/3 cycles, response 45 1/3 cycles and peak stack 6 bytes.
 The complete `verify27.sh` suite passes, including 4218 TX waveform/state cases
 per profile. These are instruction/waveform-model checks; the candidate has
 not been installed or electrically measured on the board.

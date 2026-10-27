@@ -2,6 +2,7 @@
 # Offline candidate regression. A fitting 1-KiB release is a separate gate.
 set -eu
 cd "$(dirname "$0")"
+python3 tests27/executor_stack.py
 python3 tests27/regression.py
 python3 tests27/cooperative_usb.py
 python3 tests27/tx_timing.py

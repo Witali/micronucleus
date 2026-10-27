@@ -16,14 +16,16 @@ usb_tx_prepare_pending_reply:
     brbs SREG_Z, bootloader_check_idle_timeout
 /* Count and complemented CRC stay in PHY-preserved R24/R0/R25.
  * Publish the next message remainder while TX_LENGTH still advertises NAK. */
+/* A short packet ends the message; a full packet retains its remainder,
+ * including zero when the next response must be a terminating ZLP. */
     mov r23, r24
-    cpi r24, (USB_EP0_PAYLOAD_BYTES + 1)
-    brbs SREG_C, usb_tx_prepare_data_packet
-    ldi r24, USB_EP0_PAYLOAD_BYTES
+    subi r23, USB_EP0_PAYLOAD_BYTES
+    brsh usb_tx_prepare_data_packet
+    ldi r23, USB_NO_MESSAGE
+    rjmp .Ltx_store_remainder
 usb_tx_prepare_data_packet:
-    sub r23, r24
-    cpi r24, USB_EP0_PAYLOAD_BYTES
-    sbci r23, 0
+    ldi r24, USB_EP0_PAYLOAD_BYTES
+.Ltx_store_remainder:
     std Y+CTX_MSG_LENGTH, r23
 /* SETUP initialized R9 to DATA0; first prepared response is DATA1. */
     ldi r18, USB_DATA_PID_TOGGLE

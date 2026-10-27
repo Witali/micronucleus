@@ -20,6 +20,12 @@ Entry copies Y into Z; no RX/TX instruction modifies that Z base. Every external
 return restores Y with MOVW. Foreground instructions after startup preserve Y,
 and both emitted-code and synchronized-execution checks enforce this contract.
 
+The shared SETUP validator has exactly one caller frame on either entry. Its
+accepted path POPs two return-address bytes before capturing fields; the main
+length fast path creates that frame with RCALL. Ordinary data PUSH/POP and
+RCALL/RET use one physical stack in both current executors. Field capture must
+see an empty stack, including when a fresh SETUP replaces a partial reply.
+
 ## Archived Pass26 contract
 
 The table, selector encoding and profile addresses below describe the imported

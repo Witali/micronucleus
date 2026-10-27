@@ -72,6 +72,8 @@ class CPU(Timed):
   if address<32:self.r[address]=value&255
   else:super().memwrite(address,value)
  def step(self):
+  if self.pc==self.labels['usb_setup_capture_fields']:
+   assert not self.raw_stack,('SETUP capture retained a return frame',self.raw_stack)
   if self.pc==self.labels['USB_handler']:
    assert self.word(28)==0x100,('PHY requires Y=context',hex(self.pc),self.word(28))
   if self.pc in (self.labels['USB_handler'],self.labels['usb_rx_found_k']):
@@ -382,6 +384,24 @@ def simulate(request,value,descriptor,length,kind='flash',data=0x55,idle=0,pendi
  return gaps
 
 
+def check_setup_stack_guard(artifact):
+    """A missing frame-discard POP must fail at actual SETUP field capture."""
+    raw = bytearray(artifact['body'])
+    at = artifact['symbols']['usb_validate_setup_token'] + 6 - artifact['boot']
+    assert raw[at:at + 2] == b'\x2f\x91'  # POP R18
+    raw[at:at + 2] = b'\0\0'              # NOP leaves half a return frame.
+    configure(dict(artifact, body=bytes(raw)))
+    try:
+        simulate(6, 0, 1, 18)
+    except AssertionError as error:
+        assert error.args[0][0] == 'SETUP capture retained a return frame', error
+    else:
+        raise AssertionError('Missing SETUP frame-discard POP was accepted')
+    finally:
+        configure(artifact)
+    print('PASS', artifact['mode'], 'SETUP frame-discard mutation rejected by byte-stack execution')
+
+
 def check_poll_gaps(artifact):
     """Bound every modeled no-packet poll interval, including EEPROM stalls."""
     configure(artifact)
@@ -417,6 +437,7 @@ def check_poll_gaps(artifact):
 
 
 def check(artifact):
+    check_setup_stack_guard(artifact)
     check_pending_run(artifact)
     check_poll_gaps(artifact)
     check_waveforms(artifact)

@@ -125,6 +125,7 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
     machine.steps.clear()
     assert machine.run('usb_control_process_received_packet',
                        stop=('usb_rx_release_buffer',), limit=220) == 'stop'
+    assert not machine.stack.raw, 'SETUP left a return frame'
     assert machine.ram[0] == len(expected), (mode, request, descriptor, length, machine.ram[0])
     assert machine.ram[21] == next_configuration
     assert machine.ram[19] == ((value * 2) & 255 if request == 5 else pending_address)
@@ -137,6 +138,7 @@ def transfer(machine, mode, request, *, value=0, descriptor=0, length=18):
         machine.steps.clear()
         assert machine.run('usb_rx_release_buffer',
                            stop=('bootloader_check_idle_timeout',), limit=1800) == 'stop'
+        assert not machine.stack.raw, 'Packet builder left a return frame'
         count = machine.ram[15] - 4
         assert count == min(before, 8), (mode, request, descriptor, length, count, before)
         payload = bytes(machine.data_memory[CONTEXT + 2 + i] for i in range(count))

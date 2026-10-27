@@ -27,9 +27,9 @@ usb_standard_check_get_descriptor:
     brne ee_std_empty
     ldi r18, LOW8(BOOT_AT + USB_CONFIGURATION_OFFSET)
 desc_ptr:
-    ldi r19, HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET)
+/* Both descriptor kinds share the existing Flash-high-byte reply tail. */
     ldi r24, USB_DEVICE_DESCRIPTOR_BYTES
-    rjmp usb_reply_set_pointer
+    rjmp usb_reply_use_flash_pointer
 usb_standard_check_configuration:
     cpi r25, USB_REQ_GET_CONFIGURATION
     brbs SREG_Z, usb_standard_get_configuration

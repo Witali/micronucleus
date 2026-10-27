@@ -49,12 +49,13 @@ usb_reply_set_pointer:
  */
 usb_reply_limit_length:
     rcall usb_service_pending
-    ldd r25, Y+CTX_SETUP_LENGTH_HIGH
-    cpse r25, r1
-    rjmp usb_reply_store_length
+/* Compare the complete request word; LDD preserves the low-byte borrow.
+ * R18 is dead after the persistent reply pointer has been published. */
     ldd r25, Y+CTX_SETUP_LENGTH_LOW
     cp r25, r24
-    brbc SREG_C, usb_reply_store_length
+    ldd r18, Y+CTX_SETUP_LENGTH_HIGH
+    cpc r18, r1
+    brsh usb_reply_store_length
     mov r24, r25
 usb_reply_store_length:
     std Y+CTX_MSG_LENGTH, r24

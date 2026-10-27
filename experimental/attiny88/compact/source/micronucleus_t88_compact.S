@@ -109,7 +109,15 @@ usb_poll_check_packet_pending:
     rcall USB_handler
 bootloader_process_pending_command:
     wdr
-#include "vusb_setup.inc"
+/* The main path proves length without paying a subroutine return on idle.
+ * A valid SETUP shares the token validator and discards this one call frame. */
+usb_control_process_received_packet:
+    ldd r18, Y+CTX_RX_LENGTH
+    cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
+    brne .Lsetup_not_received
+    rcall usb_validate_setup_token
+.Lsetup_not_received:
+    std Y+CTX_RX_LENGTH, r1
 bootloader_check_pending_command:
 /* EEPROM writes must complete before SPM erase/write/exit. This gate also
  * holds an older deferred RUN until a later EEPROM queue has fully drained.
@@ -225,21 +233,10 @@ app_jump:
  */
 usb_service_pending:
     sbis _SFR_IO_ADDR(PCIFR), PCIF2
-    ret
-/* R0/R24/R25 are preserved by PHY, so the CRC state needs no spill. */
-    rcall USB_handler
-    ldd r18, Y+CTX_RX_LENGTH
-    cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
-    brne .Lservice_done
-    ldd r18, Y+CTX_RX_TOKEN
-    cpi r18, USB_PID_SETUP
-    brne .Lservice_done
-/* The previous builder has no stack frame beyond this helper call. */
-    pop r18
-    pop r18
-/* Length, token and Y are already validated. Reuse that proof and capture
- * the new fields before any further polling can overwrite RX bytes. */
-    std Y+CTX_RX_LENGTH, r1
-    rjmp usb_setup_capture_fields
 .Lservice_done:
     ret
+/* The invalid SETUP validator shares this fast RET. On a new SETUP the
+ * accepted path below falls directly into field capture after discarding
+ * the original caller frame; it does not return to an obsolete builder. */
+    rcall USB_handler
+#include "vusb_setup.inc"

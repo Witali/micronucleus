@@ -167,4 +167,9 @@
 #error Packet length must not carry out of X low byte
 #endif
 
+
+#if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
+#error Shared standard reply pointer high byte requires one Flash page
+#endif
+
 #endif /* COMPACT_PROTOCOL_INC */
