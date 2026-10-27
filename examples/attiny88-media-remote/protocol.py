@@ -57,7 +57,12 @@ class Action:
 
     @classmethod
     def key(cls, name, modifiers=0):
-        return cls(1, modifiers, KEYS[name]).validate()
+        usage = KEYS.get(name)
+        if usage is None:
+            if not name.startswith('Key 0x'):
+                raise KeyError(name)
+            usage = int(name[4:], 16)
+        return cls(1, modifiers, usage).validate()
 
 
 DISABLED = Action()
@@ -84,6 +89,10 @@ class Configuration:
 DEFAULTS = Configuration(1, 7, (DEFAULT_MAPPING,) * PRESETS)
 
 
+def key_name(code):
+    return next((name for name, usage in KEYS.items() if usage == code), 'Key 0x%02X' % code)
+
+
 def action_label(action):
     if action.kind == 0:
         return 'Disabled'
@@ -91,7 +100,7 @@ def action_label(action):
         return next(name for name, usage in MEDIA_ACTIONS.items() if usage == (action.arg << 8 | action.code))
     parts = [name for name, flag in MODIFIERS.items() if action.arg & flag]
     if action.code:
-        parts.append(next((name for name, usage in KEYS.items() if usage == action.code), 'Key 0x%02X' % action.code))
+        parts.append(key_name(action.code))
     return '+'.join(parts)
 
 

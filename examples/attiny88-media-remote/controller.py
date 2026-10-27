@@ -5,7 +5,7 @@ import queue
 import threading
 import time
 from protocol import (Action, Configuration, DEFAULTS, DEFAULT_MAPPING, DISABLED,
-                      MEDIA_ACTIONS, KEYS, MODIFIERS, PINS, action_label, parse_action)
+                      MEDIA_ACTIONS, KEYS, MODIFIERS, PINS, action_label, key_name, parse_action)
 from windows_backend import RemoteDevice, audio_state
 
 
@@ -137,7 +137,7 @@ def gui():
                 if kind == 'Media':
                     row['value'].set(action_label(action))
                 elif kind == 'Keyboard':
-                    row['value'].set(next(name for name, code in KEYS.items() if code == action.code))
+                    row['value'].set(key_name(action.code))
                 for flag, variable in row['mods']:
                     variable.set(bool(action.arg & flag) if action.kind == 1 else False)
 

@@ -1,7 +1,7 @@
 import unittest
 from protocol import (Action, Configuration, DEFAULTS, DEFAULT_MAPPING, DISABLED, MEDIA_ACTIONS,
                       action_label, mapping_report, parse_mapping, parse_legacy, parse_action,
-                      mute_report, test_report)
+                      mute_report, test_report, key_name)
 
 class ProtocolTests(unittest.TestCase):
     def test_config_length_and_first_binding(self):
@@ -43,6 +43,17 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(parse_action('Disabled'),DISABLED)
         for action in (Action(1,0,0),Action(1,16,4),Action(2,15,255),Action(3,2,0)):
             with self.assertRaises(ValueError):action.validate()
+
+    def test_every_valid_key_label_can_be_saved_again(self):
+        # A valid usage can lack a friendly name, e.g. Power (0x66).
+        for code in range(4, 0x74):
+            with self.subTest(code=code):
+                action = Action(1, 0, code).validate()
+                self.assertEqual(Action.key(action_label(action)), action)
+                self.assertEqual(Action.key(key_name(code), 3), Action(1, 3, code))
+        self.assertEqual(Action.key(key_name(0), 1), Action(1, 1, 0))
+        with self.assertRaises(ValueError):
+            Action.key('Key 0xFF')
 
     def test_three_button_firmware_can_be_read(self):
         config,busy=parse_legacy(bytes.fromhex('0301e200e900ea00'))
