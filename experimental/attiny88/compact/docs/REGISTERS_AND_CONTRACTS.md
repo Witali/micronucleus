@@ -20,6 +20,12 @@ Entry copies Y into Z; no RX/TX instruction modifies that Z base. Every external
 return restores Y with MOVW. Foreground instructions after startup preserve Y,
 and both emitted-code and synchronized-execution checks enforce this contract.
 
+Context byte CTX_INPUT_BUFFER_OFFSET (14) is a permanent zero after startup.
+The current PHY loads it in useful two-cycle delay slots. No runtime context
+writer may repurpose that byte; the emitted-code audit enforces this invariant.
+NONE additionally preserves zero non-USB DDRD bits from RESET, allowing atomic
+EOP release to use the same zero. LED profiles retain dynamic DDR preservation.
+
 The shared SETUP validator has exactly one caller frame on either entry. Its
 accepted path POPs two return-address bytes before capturing fields; the main
 length fast path creates that frame with RCALL. Ordinary data PUSH/POP and

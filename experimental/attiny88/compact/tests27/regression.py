@@ -102,8 +102,20 @@ def check_phy_audit_mutations(reference, artifact):
         ('DATA wait count', 'usb_rx_handle_setup_or_out', 0, lambda word: word ^ 1),
         ('TX rate', 'usb_tx_begin_byte', 0, lambda word: 0xE365),
         ('J delay', 'usb_tx_finish_eop', 16, lambda word: 0),
-        ('released port bit', 'usb_tx_finish_eop', 24, lambda word: word ^ 3),
+        ('released port bit', 'usb_tx_finish_eop',
+         22 if artifact['mode'] == 'NONE' else 24, lambda word: word ^ 3),
+        ('stuff zero address', 'usb_tx_stuff_regular_bit', 2, lambda word: word ^ 1),
+        ('stuff output address', 'usb_tx_stuff_regular_delay', 0, lambda word: word ^ 1),
+        ('release DDR source', 'usb_tx_finish_eop', 12, lambda word: word ^ 1),
     )
+    if artifact['mode'] == 'NONE':
+        start = artifact['symbols']['startup'] - artifact['boot']
+        end = artifact['symbols']['led_init'] - artifact['boot']
+        sites = [at for at in range(start, end, 2)
+                 if artifact['body'][at:at + 2] == b'\x51\x9a']
+        assert len(sites) == 1  # SBI DDRD, USB-minus
+        mutations += (('non-USB DDRD enable', 'startup', sites[0] - start,
+                       lambda word: word ^ 1),)
     for name, symbol, offset, transform in mutations:
         raw = bytearray(artifact['body'])
         at = artifact['symbols'][symbol] + offset - artifact['boot']

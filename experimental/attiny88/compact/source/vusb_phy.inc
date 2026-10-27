@@ -224,10 +224,11 @@ usb_rx_handle_in:
     rjmp usb_tx_acquire_bus
 usb_tx_stuff_regular_bit:
     eor r16, r21
-    ldi r17, 0x00
+/* This context byte is cleared at RESET and never written afterwards.
+ * One two-cycle LDD performs the old one-cycle LDI plus alignment NOP. */
+    ldd r17, Z+CTX_INPUT_BUFFER_OFFSET
     rjmp usb_tx_stuff_regular_delay
 usb_tx_stuff_regular_delay:
-    nop
     out _SFR_IO_ADDR(PORTD), r16
     rjmp usb_tx_check_regular_stuffing
 usb_tx_stuff_bit6:
@@ -309,8 +310,16 @@ usb_tx_eop_delay:
     brbc SREG_Z, usb_tx_eop_delay
     out _SFR_IO_ADDR(PORTD), r16
     sbi _SFR_IO_ADDR(PCIFR), PCIF2
+#if LED_MODE == NONE
+/* RESET clears DDRD. In the no-LED bootloader, only the USB bits are ever
+ * enabled; atomic release therefore writes zero. The existing permanent
+ * zero byte replaces IN/ANDI in the same two cycles, without an extra slot.
+ * LED builds retain the read/mask because their non-USB DDR bit is live. */
+    ldd r17, Z+CTX_INPUT_BUFFER_OFFSET
+#else
     in r17, _SFR_IO_ADDR(DDRD)
     andi r17, USB_LINES_CLEAR_MASK
+#endif
 /* J already has D+ low. After atomic DDR release, clear only the D-
  * pull-up latch with CBI; other PORT bits are preserved. A third two-cycle
  * delay replaces the removed MOV/ANDI work, keeping driven J at 11 cycles.

@@ -31,15 +31,24 @@ The combined source passes startup/deferred-command/RUN checks and 2160 actual
 main-poll captures across all three profiles; maximum physical entry is twenty
 cycles. Sustained SE0 clears both USB addresses after exactly one hundred samples.
 
+Useful zero loads save four more bytes in NONE, two in LED builds. The constant
+context byte at offset 14 replaces a zero LDI plus NOP in the stuffing path.
+For NONE, the same two-cycle load replaces DDRD read/mask at EOP release:
+RESET and the exact emitted writer inventory prove that every non-USB DDRD bit
+remains zero. LED builds retain the dynamic read/mask. Sampling, GPIO times and
+flags are unchanged. Startup, exact-opcode audits and 16872 TX waveform/state
+cases pass across four placements; NONE rejects 19 audit mutants and LED
+profiles reject 18. The PHY is now 466 bytes in NONE, 468 with LED.
+
 | Placement/profile | Pass28 bytes | Candidate bytes | New saving |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1102 | 1090 | 12 |
-| No LED, `0x1BC0`, 17-page milestone | 1106 | 1094 | 12 |
-| No LED, `0x1B80`, installed geometry | 1106 | 1094 | 12 |
-| Active high, `0x1B40` | 1124 | 1112 | 12 |
-| Active low, `0x1B40` | 1122 | 1110 | 12 |
+| No LED, `0x1C00` measurement | 1102 | 1086 | 16 |
+| No LED, `0x1BC0`, 17-page milestone | 1106 | 1090 | 16 |
+| No LED, `0x1B80`, installed geometry | 1106 | 1090 | 16 |
+| Active high, `0x1B40` | 1124 | 1110 | 14 |
+| Active low, `0x1B40` | 1122 | 1108 | 14 |
 
-The 17-page fit gate is still six bytes over budget at this stage.
+The 17-page fit gate is still two bytes over budget at this stage.
 
 The PHY8 checkpoint passed verify27.sh for all three existing fitting profiles:
 15 negative PHY-audit cases per profile, complete standard/NVM/cursor tests,
@@ -59,7 +68,8 @@ python3 build_candidate.py --boot 0x1C00 --require-fit
 
 The fit gates remain strict. Exact-size regression expectations are the
 deployed reference sizes minus measured CANDIDATE_SAVINGS, which is currently
-54 bytes. No code, descriptor or reserved application bytes are excluded.
+58 bytes for NONE and 56 for LED profiles. No code, descriptor or reserved
+application bytes are excluded.
 
 The installed firmware remains e405ea7: 1148 bytes at `0x1B80`, USB profile
 0x0300. Frozen firmware27 images and host profile geometry remain unchanged.

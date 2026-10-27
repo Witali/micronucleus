@@ -9,7 +9,7 @@ SOURCE = ROOT / 'source/micronucleus_t88_compact.S'
 MODES = ('NONE', 'ACTIVE_HIGH', 'ACTIVE_LOW')
 # Measured savings against the deployed e405ea7 release, at the same placement.
 # Keep host USB_PROFILES tied to the deployed firmware27 geometry/reference size.
-CANDIDATE_SAVINGS = {'NONE': 54, 'ACTIVE_HIGH': 54, 'ACTIVE_LOW': 54}
+CANDIDATE_SAVINGS = {'NONE': 58, 'ACTIVE_HIGH': 56, 'ACTIVE_LOW': 56}
 
 
 def checked_build(mode='NONE', boot=0x1C00):

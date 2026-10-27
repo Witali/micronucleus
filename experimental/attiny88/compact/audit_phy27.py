@@ -41,6 +41,7 @@ def audit_relocation(before, after):
                   (b['usb_rx_handle_in'], b['usb_rx_handle_in'] + 2),
                   (b['usb_rx_wait_for_data'], b['usb_rx_wait_for_data'] + 4),
                   (b['usb_handler_packet_done'], b['usb_handler_packet_done'] + 4),
+                  (b['usb_tx_stuff_regular_delay'], b['usb_tx_stuff_regular_delay'] + 2),
                   (b['usb_rx_end_packet'] + 6, b['usb_rx_end_packet'] + 8),
                   (b['usb_rx_handle_in'] + 18, b['usb_rx_handle_in'] + 20),
                   (be, b['flash_buffer_append_word'])]
@@ -59,7 +60,8 @@ def audit_relocation(before, after):
         remap[b[name]] = a[name]
     flag_sites = {b['usb_rx_decode_bit6'] + 6: 2,
                   b['usb_rx_handle_data'] + 14: 2, b['usb_rx_handle_in'] + 4: 4}
-    changed_words = {b['usb_rx_handle_setup_or_out']: (0xe0ca, 0xe0cc),
+    changed_words = {b['usb_tx_stuff_regular_bit'] + 2: (0xe010, 0x8516),
+                     b['usb_rx_handle_setup_or_out']: (0xe0ca, 0xe0cc),
                      bfirst + 8: (0xc000, 0x8932),
                      b['usb_rx_handle_data'] + 8: (0x2311, 0x2333),
                      b['usb_rx_handle_in'] + 2: (0x3001, 0x3031)}
@@ -221,10 +223,13 @@ def audit_candidate(reference, candidate, undefined_symbols):
     eop = a['usb_tx_finish_eop']
     expected = [0x6002, 0xe056, 0x955a, 0xf7f1, 0xb90b, 0x9ada, 0xb11a, 0x7f19,
                 0xc000, 0xc000, 0xc000, 0xb91a, 0x9859, 0x01ef, 0xea50, 0x9508]
+    if candidate['mode'] == 'NONE':
+        assert expected[6:8] == [0xb11a, 0x7f19]
+        expected[6:8] = [0x8516]
     assert [word for _, word, _ in words(after, eop, a['flash_buffer_append_word'])] == expected
     assert 2 + 1 + 1 + 2 + 2 + 2 + 1 == 11
     assert b['flash_buffer_append_word'] - b['USB_handler'] == 492
-    assert a['flash_buffer_append_word'] - a['USB_handler'] == 470
+    assert a['flash_buffer_append_word'] - a['USB_handler'] == (466 if candidate['mode'] == 'NONE' else 468)
     # RX never borrows into YH: its low byte is 22..34 and count is 0..11.
     # The remaining instructions, including the next flag-defining PID CPI,
     # stay pinned by relocation normalization. IN also inherits YH=1.
@@ -234,6 +239,17 @@ def audit_candidate(reference, candidate, undefined_symbols):
     for name in ('usb_rx_wait_for_data', 'usb_handler_packet_done'):
         assert int.from_bytes(after['bytes'][a[name]:][:2], 'little') == 0x99da
     assert 10 * 6 - 1 == 12 * 5 - 1 == 59
+    # NONE enters only through RESET; no non-USB DDRD bit is ever enabled.
+    if candidate['mode'] == 'NONE':
+        writers = []
+        for pc, w, raw in words(after, a['USB_handler'], len(after['bytes'])):
+            io = (w & 15) | ((w >> 5) & 48)
+            if ((w & 0xf800 == 0xb800 and io == 10) or
+                    (w & 0xff00 in (0x9800, 0x9a00) and ((w >> 3) & 31) == 10)):
+                writers.append(w)
+            if w & 0xfe0f == 0x9200:
+                assert int.from_bytes(raw[2:4], 'little') != 0x2a
+        assert writers == [0xb91a, 0xb91a, 0x9a51, 0x9851, 0xb81a]
     audit_context_contract(after)
     branches = audit_relocation(before, after)
     states = flags_and_flow(after, start + 4)
@@ -255,4 +271,4 @@ if __name__=='__main__':
         new=build(root/'source/micronucleus_t88_compact.S',mode,boot)
         undefined=subprocess.check_output(['llvm-nm','--undefined-only',str(new['obj'])],text=True).strip()
         branches,states=audit_candidate(old,new,undefined)
-        print('PASS',mode,hex(boot),'PHY492->470, three corrected flag operands, 9/10-cycle shared RX setup, useful RX_LENGTH load, bounded YH, 85-cycle TX byte and 11-cycle J,',branches,'branch targets,',states,'flag-liveness states; private Y=context ABI; immutable PHY Z')
+        print('PASS',mode,hex(boot),'PHY492->466/468, three corrected flag operands, 9/10-cycle shared RX setup, useful RX_LENGTH load, bounded YH, 85-cycle TX byte and 11-cycle J,',branches,'branch targets,',states,'flag-liveness states; private Y=context ABI; immutable PHY Z')
