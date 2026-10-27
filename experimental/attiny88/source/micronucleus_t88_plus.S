@@ -182,10 +182,10 @@
 #if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)
 #error USB descriptor pointers cross a 256-byte page; adjust optimized dispatcher
 #endif
-.section .text
+    .section .text
 /* Edit BOOT_AT only after the build audits that the loader fits in flash. */
-.org BOOT_AT
-.global bootloader_start
+    .org BOOT_AT
+    .global bootloader_start
 bootloader_start:
     rjmp startup
 /* Device info: application size, page bytes, write delay, signature, features. */

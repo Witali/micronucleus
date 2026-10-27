@@ -3,27 +3,27 @@
 
 ; Ralph Doncaster public domain AVR asm macros github.com/nerdralph
 
-.macro GLABEL name
-     .global \name
-     \name:
-.endm
+    .macro GLABEL name
+    .global \name
+\name:
+    .endm
 
 ; in/out require an io register at address < 0x40
-.macro LOAD rd, ioreg
+    .macro LOAD rd, ioreg
     .if \ioreg > 0x3F
     lds \rd, \ioreg
     .else
     in \rd, \ioreg
     .endif
-.endm
+    .endm
 
-.macro STORE ioreg, rr
+    .macro STORE ioreg, rr
     .if \ioreg > 0x3F
     sts \ioreg, \rr
     .else
     out \ioreg, \rr
     .endif
-.endm
+    .endm
 
 #define __SFR_OFFSET 0                  /* start SFRs at 0x00 not 0x20 */
 #include "usbdrv/usbdrv.h"
@@ -43,7 +43,7 @@
 
 ; tuneOsccal should be called after USB reset
 ; needs to see 5 consecutive EOF/SOF transistions
-GLABEL tuneOsccal
+    GLABEL tuneOsccal
 reset:
     sbis USBIN, USBMINUS
     rjmp reset                          ; wait for bus reset to end
@@ -54,8 +54,8 @@ reset:
     rcall tuneOnce
     ; fall through to tuneOnce for third time
 
-.equ fKHz, (F_CPU/1000)
-.equ goal, (fKHz / 12) * fraction       ; each fraction is 12 cycles
+    .equ fKHz, (F_CPU/1000)
+    .equ goal, (fKHz / 12) * fraction       ; each fraction is 12 cycles
 tuneOnce:
     subi countH, hi8(goal)              ; countH-goal = change to OSCCAL 
     LOAD scratch, OSCCAL
@@ -69,7 +69,7 @@ tuneOnce:
 ; idle is D+ low & D- high. save D+ history in shift
 ; countL is used as a fractional accumulator with countH LSbit =~ 0.5%
 ; fraction = (256/.5)/fMHz rounded
-.equ fraction, ((2 * 512)/(fKHz / 1000) + 1) / 2
+    .equ fraction, ((2 * 512)/(fKHz / 1000) + 1) / 2
 countFrame:
     ldi shift, 0xFF
     ldi countL, fraction                ; countFrame overhead adjustment
@@ -85,5 +85,5 @@ waitSOF:                                ; 12-cycle loop
     sbrs r0, USBMINUS
     tst shift
     brne waitSOF                        ; not idle last 7 loops
-ret
+    ret
 

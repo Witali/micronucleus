@@ -34,10 +34,10 @@ def main():
     assert phy(artifact) == phy(normal), 'Trial must preserve the production PHY'
     assert int.from_bytes(artifact['body'][32:34], 'little') == 0x0390
     wrapper = out / 'micronucleus_t88_rehearsal_entry.S'
-    wrapper.write_text('.text\n.org 0x80\n.global bootloader_start\nbootloader_start:\n'
-                       'cli\nldi r16, 2\nout 0x3e, r16\n'
+    wrapper.write_text('    .text\n    .org 0x80\n    .global bootloader_start\nbootloader_start:\n'
+                       '    cli\n    ldi r16, 2\n    out 0x3e, r16\n'
                        # Explicit RJMP encoding avoids assembler literal/PC-relative ambiguity.
-                       'ldi r16, 0xff\nout 0x3d, r16\nclr r1\n.word 0xc7b9\n')
+                       '    ldi r16, 0xff\n    out 0x3d, r16\n    clr r1\n    .word 0xc7b9\n')
     entry = build(wrapper, 'NONE', 0x80)['body']
     assert len(entry) == 14 and entry[:2] == b'\xf8\x94'
     jump = int.from_bytes(entry[-2:], 'little') & 0xFFF

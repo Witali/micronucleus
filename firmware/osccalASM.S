@@ -95,45 +95,45 @@
 
 #if (OSCCAL_HAVE_XTAL == 0)
 
-.global calibrateOscillatorASM
+    .global calibrateOscillatorASM
 calibrateOscillatorASM:
 
-  ldi   opD, 255
+    ldi   opD, 255
 
-  ldi   try, 128    ; calibration start value
-  ldi   stp, 0      ; initial step width=0 for sync phase (first delay is discarded)
-  ldi   i, 10       ; 10 iterations (1x sync, 7x binary search, 2x neighbourhood)
+    ldi   try, 128    ; calibration start value
+    ldi   stp, 0      ; initial step width=0 for sync phase (first delay is discarded)
+    ldi   i, 10       ; 10 iterations (1x sync, 7x binary search, 2x neighbourhood)
 
 usbCOloop:
 
 #if OSCCAL <64
-  out   OSCCAL, try
+    out   OSCCAL, try
 #else
-  sts   OSCCAL, try
+    sts   OSCCAL, try
 #endif  
-  nop
+    nop
 
 usbCOLoopNoCal:
 
   ; Delay values = F_CPU * 999e-6 / 5 + 0.5
   
 #if (F_CPU == 16500000)
-  ldi   cnt16L, lo8(3297)
-  ldi   cnt16H, hi8(3297)
+    ldi   cnt16L, lo8(3297)
+    ldi   cnt16H, hi8(3297)
 #elif (F_CPU == 12800000)
-  ldi   cnt16L, lo8(2557)
-  ldi   cnt16H, hi8(2557)
+    ldi   cnt16L, lo8(2557)
+    ldi   cnt16H, hi8(2557)
 #elif (F_CPU == 12000000)
-  ldi   cnt16L, lo8(2398)
-  ldi   cnt16H, hi8(2398)
+    ldi   cnt16L, lo8(2398)
+    ldi   cnt16H, hi8(2398)
 #elif (F_CPU == 16000000)
-  ldi   cnt16L, lo8(3197)
-  ldi   cnt16H, hi8(3197)  
+    ldi   cnt16L, lo8(3197)
+    ldi   cnt16H, hi8(3197)
 #elif (F_CPU == 15000000)
-  ldi   cnt16L, lo8(2998)
-  ldi   cnt16H, hi8(2998)  
+    ldi   cnt16L, lo8(2998)
+    ldi   cnt16H, hi8(2998)
 #else
-	#error "calibrateOscillatorASM: no delayvalues defined for this F_CPU setting"
+#error "calibrateOscillatorASM: no delayvalues defined for this F_CPU setting"
 #endif
 
 usbCOWaitStrobe:            ; first wait for D- == 0 (idle strobe)
@@ -143,7 +143,7 @@ usbCOWaitIdle:              ; then wait until idle again
     sbis    USBIN, USBMINUS ;1 wait for D- == 1
     rjmp    usbCOWaitIdle   ;2
 usbCOWaitLoop:
-	sbiw	cnt16,1			;[0] [5]
+    sbiw	cnt16,1			;[0] [5]
     sbic    USBIN, USBMINUS ;[2] 
     rjmp    usbCOWaitLoop   ;[3]
 
@@ -175,15 +175,15 @@ usbCOWaitNoData2:
 */
     
 usbCOnotdata:
-	sbrs	cnt16H, 7		;delay overflow?
-	rjmp	usbCOclocktoolow
-	sub		try, stp
-	neg		cnt16L
-	rjmp	usbCOclocktoohigh
+    sbrs	cnt16H, 7		;delay overflow?
+    rjmp	usbCOclocktoolow
+    sub		try, stp
+    neg		cnt16L
+    rjmp	usbCOclocktoohigh
 usbCOclocktoolow:
-	add		try, stp
+    add		try, stp
 usbCOclocktoohigh:
-	lsr		stp                ; stp = 0 in first iteration (sync)
+    lsr		stp                ; stp = 0 in first iteration (sync)
                            ; stp = 2^x (x=0..6) during binary search, 
                            ; stp = 1 during neighbourhood search                          
                            
@@ -198,20 +198,20 @@ usbCOclocktoohigh:
 #else
     lds		opV, OSCCAL
 #endif      
-	mov		opD, cnt16L
+    mov		opD, cnt16L
 usbCOnoimprovement:
-	ldi		stp, 1             ; stp=1 to continue with neighbourhood search
+    ldi		stp, 1             ; stp=1 to continue with neighbourhood search
 usbCObinarysearch:  
-	subi	i, 1
-	brne	usbCOloop
+    subi	i, 1
+    brne	usbCOloop
 
 #if OSCCAL <64
-  out   OSCCAL, opV
+    out   OSCCAL, opV
 #else
-  sts   OSCCAL, opV
+    sts   OSCCAL, opV
 #endif  
-  nop
-  ret
+    nop
+    ret
 
 #endif //OSCCAL_HAVE_XTAL  
   

@@ -13,10 +13,10 @@
 #include "device_attiny88.inc"
 #include "block64_protocol.inc"
 
-.section .text
+    .section .text
 /* Edit BOOT_AT only after the build audits that the loader fits in flash. */
-.org BOOT_AT
-.global bootloader_start
+    .org BOOT_AT
+    .global bootloader_start
 bootloader_start:
     rjmp startup
 /* Six-byte static status metadata and relocated standard USB descriptors. */

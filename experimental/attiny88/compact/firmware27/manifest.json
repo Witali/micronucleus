@@ -2,15 +2,15 @@
   "candidate": "Pass27 verified software checkpoint, 2026-10-27",
   "validation_baseline": "ce74532ebbd1d73fdcf1b47e15cb603a19ba52f3",
   "source_sha256": {
-    "compact_eeprom.inc": "b65ddc4c13b2b6358b783712e274d8a85c87f95e6b3039b5aaf24408df8620de",
-    "compact_memory.inc": "3b213193445beefc3acab45b5600b13848ae7e94d3f6e5e42a2bc591170b1deb",
+    "compact_eeprom.inc": "87d501cc8fac08bccbb5b73ba69334ac3440d0e02e2a81740649c7f63146e418",
+    "compact_memory.inc": "df67cba651af9b0b8be101c7671261630eda356bf63d4a889015f2e1fd1cc0bc",
     "compact_protocol.inc": "5c03324288d20129d3b2dc025f7076d73f924a21f699b0747fd168a4107d152f",
     "device_attiny88.inc": "db2b35ebea1623bc7720fc84e1fd2d9651cd8ecea5c905786fa4ec01f6a2320a",
-    "micronucleus_t88_compact.S": "9b9d5b204c4107b00a95e26ce99ef2220c39b48d07f721a64c89eceb0b89d4ac",
-    "vusb_ep0.inc": "c8e15ab28a826e00cc6c49c4307ef9c0989ff28b6f65f3fa6d631c7d7930227b",
-    "vusb_phy.inc": "70c2ee5f3d252071a4b184924a98e0b2c1c7cea2132c1c4ec9dea576cf6fbb3f",
-    "vusb_setup.inc": "74e28453035f317b027eecd5a1c93ad2df84a5ba1d1a5073901e976112aed954",
-    "vusb_standard.inc": "86630343dfdf16638cb374e99eae76ae90234f7c577b90ce1093377a6fde53d9"
+    "micronucleus_t88_compact.S": "0394bf6de15e5b7061738006ac1380988009dc0e5801460c1f00968476ff82b2",
+    "vusb_ep0.inc": "34e9faf15d306c3c12a79be3cce40c11730ccf05a07891b2dc9961622dd3961f",
+    "vusb_phy.inc": "ddbcc887b2c434dc4b27821437f97171b49a51bdb0ea8be1fa3a3137b5745cdd",
+    "vusb_setup.inc": "eeca5313f8a130d1f6b3e4fa6793ef967534d8aaa62d7207b1928de8c62340f4",
+    "vusb_standard.inc": "b80d2e2d9d963f591269a958cd77b6b5dc762ce84fe490ac0768fd4fc9092412"
   },
   "target": "ATtiny88, external 16 MHz clock",
   "protocol": "v3.0",

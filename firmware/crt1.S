@@ -44,12 +44,12 @@
 //#include <avr/pgmspace.h>
 
 #ifdef __AVR_HAVE_JMP_CALL__
-  #define XJMP jmp
+#define XJMP jmp
 #else
-  #define XJMP rjmp
+#define XJMP rjmp
 #endif
 
-  #define XCALL rcall
+#define XCALL rcall
 
     .macro    vector name
     .weak    \name
