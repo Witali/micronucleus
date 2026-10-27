@@ -81,6 +81,9 @@ class AVRExec:
         if (word&0xf000)==0xe000:
             d=16+((word>>4)&15);imm=((word>>4)&0xf0)|(word&15)
             return ('ldi',f'r{d}, {hex(imm)}',2)
+        if (word&0xfe08) in (0xfc00,0xfe00):
+            register=(word>>4)&31; bit=word&7
+            return ('sbrs' if word&0x0200 else 'sbrc',f'r{register}, {bit}',2)
         if (word&0xf000)==0xc000:
             imm=word&0xfff
             if imm&0x800:imm-=4096

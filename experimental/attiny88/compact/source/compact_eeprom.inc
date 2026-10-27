@@ -1,0 +1,49 @@
+/* Asynchronous EEPROM worker. WRITE4 queues R10..R13 and R8=4.
+ * Each service call starts at most one byte and never waits on EEPE. The
+ * shared cursor advances only after starting that byte; READ8/SELECT are
+ * rejected until queue and hardware busy state have both cleared.
+ */
+/* Write one aligned block of four EEPROM bytes, packed in SETUP fields.
+ * R8 = pending byte count; R9 = next address; R10:R13 = queued data.
+ * Rejected while EEPROM/Flash is busy; no legacy byte-write command.
+ */
+ee_write:
+/* 4 data bytes arrive in SETUP fields; R4 is the EEPROM byte address. */
+mov r18, r4
+cpi r18, EEPROM_BYTES - EEPROM_WRITE_BLOCK_BYTES + 1
+brsh ee_bad_addr
+ldd r10, Y+CTX_SETUP_VALUE_LOW
+ldd r11, Y+CTX_SETUP_VALUE_HIGH
+ldd r12, Y+CTX_SETUP_INDEX_LOW
+ldd r13, Y+CTX_SETUP_INDEX_HIGH
+ldi r18, EEPROM_WRITE_BLOCK_BYTES
+mov r8, r18
+rjmp usb_reply_empty
+
+/* Reuses the AVR register file as a four-byte queue (address 0x0A..0x0D).
+ * Never spin on EEPE: advance one byte between USB poll windows. */
+ee_write_step:
+tst r8
+breq ee_write_step_done
+sbic _SFR_IO_ADDR(EECR), EEPE
+ret
+out _SFR_IO_ADDR(EEARL), r4
+out _SFR_IO_ADDR(EEDR), r10
+mov r10, r11
+mov r11, r12
+mov r12, r13
+/* Only the bootloader touches EECR and keeps EEPM=00, EERIE=0;
+ * the timed pair of SBIs performs erase/write without extra OUT EECR=0. */
+sbi _SFR_IO_ADDR(EECR), EEMPE
+sbi _SFR_IO_ADDR(EECR), EEPE
+inc r4
+dec r8
+ee_write_step_done:
+ret
+
+/* R24 is scratch at all three call sites; Z=1 means EEPROM fully idle. */
+ee_check_busy:
+in r24, _SFR_IO_ADDR(EECR)
+andi r24, (1 << EEPE)
+or r24, r8
+ret

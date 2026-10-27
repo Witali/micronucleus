@@ -16,6 +16,21 @@ def decode(obj):
     out=subprocess.check_output(['llvm-objdump','-d',str(obj)],text=True)
     instr={}
     for line in out.splitlines():
+        # LLVM sometimes groups two legal 16-bit AVR words as one unknown.
+        # Preserve each real word boundary for the executor's raw-word fallback;
+        # otherwise the last hex byte can be mistaken for a mnemonic (e.g. e0).
+        if '<unknown>' in line and ':' in line:
+            address, encoded = line.split(':', 1)
+            pc = int(address.strip(), 16)
+            raw = bytes.fromhex(encoded.split('<unknown>', 1)[0])
+            offset = 0
+            while offset < len(raw):
+                word = int.from_bytes(raw[offset:offset+2], 'little')
+                size = 4 if ((word & 0xfe0f) in (0x9000, 0x9200)
+                             or (word & 0xfe0e) in (0x940c, 0x940e)) else 2
+                instr[pc + offset] = ('unknown', '<unknown>', size)
+                offset += size
+            continue
         mat=re.match(r'^\s*([0-9a-f]+):\s+((?:[0-9a-f]{2} )+)\s*([a-z][a-z0-9]*)\s*(.*)$',line)
         if not mat: continue
         pc=int(mat[1],16);raw=bytes.fromhex(mat[2]);op=mat[3].lower();args=mat[4].strip()

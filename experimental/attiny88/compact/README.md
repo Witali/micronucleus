@@ -5,6 +5,10 @@ from [Block64](../block64/README.md) and the earlier optimized firmware.
 Pass26 uses protocol **v5.5** on an ATtiny88 at 16 MHz. It has **no physical USB
 validation**. Its original source and release bytes are retained as the baseline.
 
+Development continues in the [annotated modular Pass27 candidate](docs/PASS27.md),
+organized like the adjacent Block64 source. Use `sh verify27.sh` for that work;
+`sh verify.sh` continues to reproduce the archived Pass26 release.
+
 | LED profile | Code bytes | USB PHY bytes | BOOT_AT | Application bytes | bcdDevice |
 | --- | ---: | ---: | --- | ---: | --- |
 | Off | 1206 | 492 | `0x1B40` | 6972 | `0x0550` |

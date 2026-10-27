@@ -1,0 +1,311 @@
+/* Software USB Low-Speed PHY: synchronization, NRZI, stuffing and handshakes.
+ * In: RESET-owned stack, interrupts disabled, initialized USB SRAM context.
+ * Preserves persistent R2..R15 and X; clobbers R16..R23, Y, Z and SREG.
+ * RX/TX sample and output instants are cycle contracts, not ordinary delays.
+ * Keep all timing changes tied to emitted-opcode audits and hardware caveats.
+ */
+USB_handler:
+eor r28, r28
+usb_rx_wait_for_j:
+inc r28
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+brbc SREG_Z, usb_rx_wait_for_j
+usb_rx_wait_for_k:
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_found_k
+rjmp usb_handler_return
+usb_rx_found_k:
+/* This single-buffer implementation never changes INPUT_BUFFER_OFFSET
+ * after startup clears it. Set Y=0x0116 directly. The old sequence took
+ * 9 cycles and 12 bytes; two LDIs plus RCALL/RET take 9 cycles and 6 bytes.
+ * RCALL temporarily needs two stack bytes (one more than the old PUSH).
+ * Its return target is the existing bare RET, not packet cleanup. */
+ldi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
+ldi r29, HIGH8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
+rcall usb_handler_return
+ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
+sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+rjmp usb_rx_sync_confirmed
+push r0
+pop r0
+rjmp usb_rx_wait_for_k
+usb_rx_sync_confirmed:
+ldi r30, LOW8(USB_CONTEXT_BASE)
+ldi r31, HIGH8(USB_CONTEXT_BASE)
+rjmp usb_rx_delay_complete
+usb_rx_delay_complete:
+push r16
+ldi r18, 0x00
+ldi r20, USB_RX_INITIAL_STUFF_MASK
+pop r16
+in r16, _SFR_IO_ADDR(PIND)
+andi r16, USB_LINE_MASK
+bst r16, USB_MINUS_BIT
+bld r18, 7
+/* Replace the former PUSH r19 with a two-cycle RJMP-to-next.
+ * PUSH would also take two cycles, so the bit sampler phase is unchanged.
+ * R23 is only an RX scratch count and needs no saving to the stack. */
+rjmp .+0
+ldi r21, 0x00
+ldi r23, USB_RX_BUFFER_BYTES
+rjmp usb_rx_sample_odd_bit
+usb_rx_unstuff_bit6:
+andi r17, USB_LINE_MASK
+ori r20, USB_RX_CORRECTION_BIT6_MASK
+andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+mov r16, r17
+subi r21, LOW8(-1)
+rjmp usb_rx_sample_bit7
+usb_rx_unstuff_bit7:
+ori r20, USB_RX_CORRECTION_BIT7_MASK
+in r17, _SFR_IO_ADDR(PIND)
+andi r17, USB_LINE_MASK
+andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+subi r21, USB_RX_UNSTUFF7_LEAP_ADJUST
+rjmp usb_rx_finish_byte
+usb_rx_unstuff_even_bit:
+ori r20, USB_RX_CORRECTION_BIT6_MASK
+in r16, _SFR_IO_ADDR(PIND)
+andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+andi r16, USB_LINE_MASK
+brbs SREG_Z, usb_rx_end_packet
+subi r21, LOW8(-1)
+rjmp usb_rx_unstuff_even_resume_jump
+usb_rx_unstuff_even_resume_jump:
+rjmp usb_rx_shift_stuff_mask
+usb_rx_unstuff_odd_bit:
+ori r20, USB_RX_CORRECTION_BIT5_MASK
+in r17, _SFR_IO_ADDR(PIND)
+andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+andi r17, USB_LINE_MASK
+brbs SREG_Z, usb_rx_end_packet
+subi r21, LOW8(-1)
+rjmp usb_rx_unstuff_odd_resume_jump
+usb_rx_unstuff_odd_resume_jump:
+rjmp usb_rx_advance_bit_pair
+usb_rx_decode_bit6:
+andi r16, USB_LINE_MASK
+eor r17, r16
+subi r21, 0x01
+brbc SREG_N, usb_rx_shift_bit6
+subi r21, LOW8(-USB_RX_LEAP_PERIOD)
+nop
+usb_rx_shift_bit6:
+subi r17, 0x01
+ror r18
+usb_rx_sample_bit7:
+cpi r18, USB_STUFF_HISTORY_THRESHOLD
+in r17, _SFR_IO_ADDR(PIND)
+brbc SREG_C, usb_rx_unstuff_bit6
+andi r17, USB_LINE_MASK
+eor r16, r17
+subi r16, 0x01
+ror r18
+usb_rx_finish_byte:
+cpi r18, USB_STUFF_HISTORY_THRESHOLD
+brbc SREG_C, usb_rx_unstuff_bit7
+eor r20, r18
+st Y+, r20
+usb_rx_sample_even_bit:
+in r16, _SFR_IO_ADDR(PIND)
+andi r16, USB_LINE_MASK
+eor r17, r16
+andi r20, USB_RX_LOW_BITS_MASK
+subi r17, 0x01
+ror r18
+cpi r18, USB_STUFF_HISTORY_THRESHOLD
+brbc SREG_C, usb_rx_unstuff_even_bit
+usb_rx_shift_stuff_mask:
+lsr r20
+lsr r20
+usb_rx_sample_odd_bit:
+in r17, _SFR_IO_ADDR(PIND)
+andi r17, USB_LINE_MASK
+brbs SREG_Z, usb_rx_end_packet
+eor r16, r17
+subi r16, 0x01
+ror r18
+cpi r18, USB_STUFF_HISTORY_THRESHOLD
+brbc SREG_C, usb_rx_unstuff_odd_bit
+usb_rx_advance_bit_pair:
+subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
+brbs SREG_C, usb_rx_sample_even_bit
+subi r23, 0x01
+in r16, _SFR_IO_ADDR(PIND)
+brbc SREG_C, usb_rx_decode_bit6
+usb_rx_overflow:
+sbi _SFR_IO_ADDR(PCIFR), PCIF2
+usb_rx_ignore_packet:
+eor r16, r16
+rjmp usb_rx_store_token
+usb_rx_end_packet:
+subi r23, USB_RX_BUFFER_BYTES
+neg r23
+sub r28, r23
+sbci r29, 0x00
+sbi _SFR_IO_ADDR(PCIFR), PCIF2
+ldd r16, Y+USB_PACKET_PID_OFFSET
+cpi r16, USB_PID_DATA0
+brbs SREG_Z, usb_rx_handle_data
+cpi r16, USB_PID_DATA1
+brbs SREG_Z, usb_rx_handle_data
+ldd r18, Z+CTX_DEVICE_ADDRESS
+ldd r17, Y+USB_PACKET_ADDRESS_OFFSET
+add r17, r17
+cpse r17, r18
+rjmp usb_rx_ignore_packet
+cpi r16, USB_PID_IN
+brbs SREG_Z, usb_rx_handle_in
+cpi r16, USB_PID_SETUP
+brbs SREG_Z, usb_rx_handle_setup_or_out
+cpi r16, USB_PID_OUT
+brbc SREG_Z, usb_rx_ignore_packet
+usb_rx_handle_setup_or_out:
+ldi r28, USB_NEXT_DATA_WAIT_COUNT
+usb_rx_wait_for_data:
+in r17, _SFR_IO_ADDR(PCIFR)
+sbrc r17, PCIF2
+rjmp usb_rx_store_token
+dec r28
+brbc SREG_Z, usb_rx_wait_for_data
+usb_rx_store_token:
+std Z+CTX_CURRENT_TOKEN, r16
+usb_handler_packet_done:
+/* The old POP r19 is gone; r23 does not need restoration after RX. */
+in r28, _SFR_IO_ADDR(PCIFR)
+sbrc r28, PCIF2
+rjmp usb_rx_wait_for_j
+usb_handler_return:
+ret
+/* Publish nonempty DATA to the EP0 parser and choose ACK/NAK. Inherited
+ * limitation: ACK can precede full CRC16 validation; this is not USB admission.
+ */
+usb_rx_handle_data:
+ldd r18, Z+CTX_CURRENT_TOKEN
+and r18, r18
+brbs SREG_Z, usb_handler_packet_done
+ldd r17, Z+CTX_RX_LENGTH
+and r17, r17
+brbc SREG_Z, usb_tx_send_nak
+cpi r23, (USB_RX_PACKET_OVERHEAD + 1)
+brbs SREG_N, usb_tx_send_ack
+std Z+CTX_RX_LENGTH, r23
+std Z+CTX_RX_TOKEN, r18
+rjmp usb_tx_send_ack
+usb_rx_handle_in:
+ldd r16, Z+CTX_RX_LENGTH
+cpi r16, 0x01
+brbc SREG_S, usb_tx_send_nak
+ldi r16, USB_PID_NAK
+ldd r19, Z+CTX_TX_LENGTH
+sbrc r19, USB_HANDSHAKE_FLAG_BIT
+rjmp usb_tx_send_count_handshake
+std Z+CTX_TX_LENGTH, r16
+ldi r28, LOW8(USB_CONTEXT_BASE + CTX_TX_PID)
+ldi r29, HIGH8(USB_CONTEXT_BASE + CTX_TX_PID)
+rjmp usb_tx_acquire_bus
+usb_tx_stuff_regular_bit:
+eor r16, r21
+ldi r17, 0x00
+rjmp usb_tx_stuff_regular_delay
+usb_tx_stuff_regular_delay:
+nop
+out _SFR_IO_ADDR(PORTD), r16
+rjmp usb_tx_check_regular_stuffing
+usb_tx_stuff_bit6:
+eor r16, r21
+ldi r17, 0x00
+adc r18, r18
+rjmp usb_tx_send_bit6
+usb_tx_stuff_bit7:
+ldi r17, 0x00
+rjmp usb_tx_send_bit7
+usb_tx_send_nak:
+ldi r20, USB_PID_NAK
+rjmp usb_tx_prepare_handshake
+usb_tx_send_ack:
+ldi r19, USB_PID_ACK
+usb_tx_send_count_handshake:
+mov r20, r19
+usb_tx_prepare_handshake:
+ldi r28, LOW8(USB_HANDSHAKE_REGISTER)
+ldi r29, HIGH8(USB_HANDSHAKE_REGISTER)
+ldi r19, USB_HANDSHAKE_TX_BYTES
+/* Drive the bus and emit SYNC, PID/data and CRC with NRZI/bit stuffing.
+ * Y points to either the SRAM packet or the register-file handshake byte.
+ */
+usb_tx_acquire_bus:
+in r17, _SFR_IO_ADDR(DDRD)
+ori r17, USB_LINE_MASK
+sbi _SFR_IO_ADDR(PORTD), USB_MINUS_BIT
+in r16, _SFR_IO_ADDR(PORTD)
+out _SFR_IO_ADDR(DDRD), r17
+ldi r21, USB_LINE_MASK
+ldi r18, USB_SYNC_BYTE
+usb_tx_begin_byte:
+ldi r22, USB_TX_BIT_COUNTER_SEED
+usb_tx_send_regular_bit:
+sbrs r18, 0
+eor r16, r21
+out _SFR_IO_ADDR(PORTD), r16
+ror r18
+ror r17
+usb_tx_check_regular_stuffing:
+cpi r17, USB_STUFF_HISTORY_THRESHOLD
+brbc SREG_C, usb_tx_stuff_regular_bit
+lsr r22
+brbc SREG_C, usb_tx_send_regular_bit
+brbc SREG_Z, usb_tx_send_regular_bit
+sbrs r18, 0
+eor r16, r21
+usb_tx_send_bit6:
+out _SFR_IO_ADDR(PORTD), r16
+ror r18
+ror r17
+cpi r17, USB_STUFF_HISTORY_THRESHOLD
+brbc SREG_C, usb_tx_stuff_bit6
+ror r18
+usb_tx_send_bit7:
+ror r17
+sbrs r17, 7
+eor r16, r21
+nop
+cpi r17, USB_STUFF_HISTORY_THRESHOLD
+out _SFR_IO_ADDR(PORTD), r16
+brbc SREG_C, usb_tx_stuff_bit7
+ld r18, Y+
+dec r19
+brbc SREG_Z, usb_tx_begin_byte
+andi r16, USB_LINES_CLEAR_MASK
+ldd r17, Z+CTX_NEW_DEVICE_ADDRESS
+add r17, r17
+/* Two cycles in one word; Z flag still means (Y-22)==0. */
+sbiw r28, USB_HANDSHAKE_END_POINTER
+out _SFR_IO_ADDR(PORTD), r16
+brbs SREG_Z, usb_tx_finish_eop
+std Z+CTX_DEVICE_ADDRESS, r17
+usb_tx_finish_eop:
+sbi _SFR_IO_ADDR(PCIFR), PCIF2
+ori r16, (1 << USB_MINUS_BIT)
+in r17, _SFR_IO_ADDR(DDRD)
+andi r17, USB_LINES_CLEAR_MASK
+mov r20, r16
+andi r20, USB_LINES_CLEAR_MASK
+ldi r21, USB_EOP_DELAY_LOOPS
+usb_tx_eop_delay:
+dec r21
+brbc SREG_Z, usb_tx_eop_delay
+out _SFR_IO_ADDR(PORTD), r16
+out _SFR_IO_ADDR(DDRD), r17
+out _SFR_IO_ADDR(PORTD), r20
+rjmp usb_handler_packet_done

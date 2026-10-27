@@ -1,0 +1,75 @@
+# Modular compact candidate, Pass27
+
+The active development source now follows the neighboring Block64 organization.
+The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
+comparison references. This candidate is not a released or hardware-tested build.
+
+| Source | Responsibility |
+| --- | --- |
+| `source/micronucleus_t88_compact.S` | Descriptors, RESET/startup, polling, deferred SPM and app handover |
+| `source/device_attiny88.inc` | Hardware, LED configuration, SREG bits, Flash geometry and clock |
+| `source/compact_protocol.inc` | USB context, private requests, descriptors and timing constants |
+| `source/vusb_phy.inc` | Low-Speed NRZI, stuffing, synchronization and bus handshakes |
+| `source/vusb_ep0.inc` | SETUP dispatch, reply preparation, length limiting and payload CRC |
+| `source/vusb_standard.inc` | Standard USB requests |
+| `source/compact_memory.inc` | SELECT, combined erase, WRITE4 and RUN |
+| `source/compact_eeprom.inc` | Four-byte queue and asynchronous single-byte service |
+
+Comments describe procedure inputs/outputs, register lifetimes, deferred effects,
+stack cost, boundary checks and timing assumptions. The split itself preserved
+the exact binary SHA-256 and non-linker symbol maps for all nine combinations of
+three LED modes and BOOT_AT `0x1B00`, `0x1B40`, `0x1C00`.
+
+## First measured checkpoint
+
+At `0x1C00`, no LED uses **1182 bytes**, down from Pass26's 1202: still **158
+bytes over the 1024-byte goal**. At the fitting `0x1B40` placement it is 1186
+bytes. At `0x1B00`, active-high/low profiles are 1200/1198 bytes. All three at
+`0x1C00` remain research measurements, not installable 1-KiB releases.
+
+The net non-PHY saving is ten bytes: share EEPROM readiness checks, classify
+deferred SPM erase/write operations by their defined opcode bits, simplify vendor
+dispatch, shift the four-byte EEPROM register queue, and use STD for bus-reset
+context stores. Explicitly reject opcode zero and unknown OUT requests before
+they can become pending SPM commands.
+
+The PHY saves six bytes by replacing its permanently zero input-buffer offset
+calculation with a fixed Y=`0x0116` load and a call to the existing bare RET.
+Two LDIs plus RCALL/RET take the same nine cycles as PUSH/LDS/LDI/ADIW/POP.
+Peak stack use rises by **one byte**. A raw-opcode audit checks unchanged branch
+targets, sampling-path instructions and dead arithmetic flags before redefinition.
+
+The remaining four-byte saving replaces two absolute STS stores with STD in the
+bus-reset path: every predecessor establishes Y=`0x0100`. This changes only the
+instruction encoding; both stores still take two cycles on this AVR.
+
+The handoff header omitted SREG_N and SREG_S. Pass26 therefore contains undefined
+ELF symbols and encodes three intended N/N/S branches as C branches. Pass27
+defines the actual bit positions 2 and 4 and checks the emitted instruction bits.
+This fixes a correctness defect without reducing size. The candidate build now
+rejects all undefined ELF symbols, not only remaining AVR relocations.
+
+## Verification and open work
+
+```sh
+sh verify27.sh
+python3 build_candidate.py --require-fit
+```
+
+The second command is the explicit fit gate and currently **fails**. It must pass
+before claiming the goal. `verify27.sh` checks software regressions and reports
+the over-budget measurements without labeling them a fitting release.
+
+The candidate runner covers 13824 differential standard-request cases, complete
+SETUP-to-staged-TX standard replies with an independent USB CRC16 reference,
+all supplied NVM/cursor/erase/TX opcode scenarios and rejection of unknown vendor
+commands. The PHY audit checks 60 normalized branch targets and 66 flag-liveness
+states per profile. LLVM unknown-instruction groups are split at actual AVR word
+boundaries before emulation; decoding is cached by ELF modification time/size.
+
+The first candidate retains v5.5 command/address semantics and reserves
+`bcdDevice=0x0560..0x0562` for development. The released host profile table still
+identifies Pass26; no Pass27 device programming is part of this checkpoint.
+Physical USB, retry/ACK/CRC admission and power-loss behavior remain unproven.
+Next work must reduce the remaining code, integrate the corresponding host
+geometry/protocol, and preserve the final AVR erase/write boundary guard.

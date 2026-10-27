@@ -1,0 +1,31 @@
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS NONE 4608 standard request dispatch cases; distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS ACTIVE_HIGH 4608 standard request dispatch cases; distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS ACTIVE_LOW 4608 standard request dispatch cases; distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS NONE cursor opcode paths, 1186 bytes
+PASS ACTIVE_HIGH cursor opcode paths, 1200 bytes
+PASS ACTIVE_LOW cursor opcode paths, 1198 bytes
+PASS 219 sequential Flash/EEPROM READ8+busy opcode checks
+PASS NONE select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_HIGH select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_LOW select-and-erase/deferred/boot protection opcode paths
+PASS 780 combined address+erase machine-opcode cases
+PASS NONE USB reply-copy/CRC equivalence
+PASS ACTIVE_HIGH USB reply-copy/CRC equivalence
+PASS ACTIVE_LOW USB reply-copy/CRC equivalence
+PASS 675 actual-opcode TX byte + CRC comparisons
+PASS modular candidate: standard USB, Flash/EEPROM, cursor and TX opcode contracts
+NONE: 1182 bytes at 0x1c00; capacity 1024; over budget 158; SHA256 3703377ef0b6d0710f58a34ffe682b3288b7f679ca00cecc10f1514ecdeed952
+ACTIVE_HIGH: 1200 bytes at 0x1c00; capacity 1024; over budget 176; SHA256 6e79821ebee8dcb49b0370d8e00fd71fe2edcd790f884758f1b0d15359893f5c
+ACTIVE_LOW: 1198 bytes at 0x1c00; capacity 1024; over budget 174; SHA256 a224e2c0f6c1530dbc95848d820b89074fc1b4029eb5d0044aa528fb4494fdb4
