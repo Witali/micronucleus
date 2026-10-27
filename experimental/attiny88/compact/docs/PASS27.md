@@ -4,6 +4,10 @@ The active development source now follows the neighboring Block64 organization.
 The original Pass22/24/25/26 checkpoints and Pass26 release images remain the
 comparison references. This candidate is not a released or hardware-tested build.
 
+The subsequent EP0 register checkpoint is **1168 bytes at `0x1C00`**, still
+**144 bytes above 1 KiB**. The first modular checkpoint below remains the
+historical reference for its isolated savings.
+
 | Source | Responsibility |
 | --- | --- |
 | `source/micronucleus_t88_compact.S` | Descriptors, RESET/startup, polling, deferred SPM and app handover |
@@ -50,6 +54,30 @@ This fixes a correctness defect without reducing size. The candidate build now
 rejects all undefined ELF symbols, not only remaining AVR relocations.
 
 ## Verification and open work
+
+### Persistent EP0 state checkpoint
+
+Keep the reply byte pointer in `r14:r15`, which every PHY/NVM path preserves.
+Three paired SRAM loads/stores become MOVW, saving six bytes. Keep the DATA PID
+in `r9`, initialized by each SETUP, saving two bytes when toggling/publishing a
+packet. Share the one-byte standard reply tail for another two bytes.
+
+The former pointer bytes at context offsets 16/17 become permanent zeros.
+GET_STATUS and GET_INTERFACE reply from this pair, while GET_CONFIGURATION reads
+its live context byte directly. This removes four more bytes. The previous
+scratch pair 10/11 cannot be permanent zero: an eight-byte TX packet writes its
+CRC there. The new zero bytes lie outside both TX and RX write ranges.
+
+`PASS27_REGISTERS.log` records 13824 complete standard SETUP/TX payload/state
+cases, 2658 extra stateful transfers (including all descriptor wLength values
+0..256), 675 payload/independent-CRC/register-cursor cases, NVM/boundary checks
+and all cursor cases. Assertions cover DATA PID alternation, remaining lengths,
+repeated configuration changes and poisoned old CRC scratch bytes. These tests
+replace comparison of incidental scratch writes with observable USB replies.
+
+Separate waveform work has identified inherited TX bit-rate and driven-J timing
+defects. These checkpoints establish neither specification timing nor electrical
+USB admission; those require their own corrections and verification.
 
 ```sh
 sh verify27.sh

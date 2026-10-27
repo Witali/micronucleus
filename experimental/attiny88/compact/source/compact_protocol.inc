@@ -9,14 +9,13 @@
 #define CTX_MSG_LENGTH 0
 #define CTX_TX_PID 1
 #define CTX_TX_PAYLOAD 2
-#define CTX_REPLY_SCRATCH 10
-#define CTX_REPLY_SCRATCH_HIGH 11
+/* Permanent zero reply bytes, outside TX payload/CRC and RX buffers. */
+#define CTX_REPLY_SCRATCH 16
+#define CTX_REPLY_SCRATCH_HIGH 17
 #define CTX_DEVICE_ADDRESS 12
 #define CTX_RX_TOKEN 13
 #define CTX_INPUT_BUFFER_OFFSET 14
 #define CTX_TX_LENGTH 15
-#define CTX_MSG_POINTER_LOW 16
-#define CTX_MSG_POINTER_HIGH 17
 #define CTX_RX_LENGTH 18
 #define CTX_NEW_DEVICE_ADDRESS 19
 #define CTX_CURRENT_TOKEN 20

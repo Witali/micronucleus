@@ -12,7 +12,7 @@ ldd r25, Y+CTX_RX_TOKEN
 cpi r25, USB_PID_SETUP
 brbc SREG_Z, usb_rx_release_buffer
 ldi r24, USB_PID_DATA0
-std Y+CTX_TX_PID, r24
+mov r9, r24
 ldi r24, USB_PID_NAK
 std Y+CTX_TX_LENGTH, r24
 mov r2, r1
@@ -30,7 +30,8 @@ rjmp bootloader_check_set_flash_address
 /* Persistent register allocation:
  * r4:r5 = shared READ8/WRITE4 byte cursor, bit15 selects EEPROM
  * r6:r7 = idle poll count (preserved across USB handler calls)
- * r8 = pending EEPROM write count, r10..r13 = EEPROM four-byte queue
+ * r8 = pending EEPROM write count, r9 = DATA PID, r10..r13 = EEPROM queue
+ * r14:r15 = reply byte cursor, preserved across PHY and NVM service
  * r3 = pending Flash SPM command, r2 = current reply memory source.
  * X is the poll counter / reply staging pointer, Y the USB-context scratch
  * and receive buffer pointer, Z the SPM/CRC/read scratch pointer. X/Y/Z
@@ -58,11 +59,12 @@ ldi r24, USB_EP0_PAYLOAD_BYTES
 rjmp usb_reply_set_pointer
 usb_reply_use_scratch_buffer:
 ldi r18, LOW8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
+usb_reply_use_sram_pointer:
 ldi r19, HIGH8(USB_CONTEXT_BASE + CTX_REPLY_SCRATCH)
 mov r2, r19
 usb_reply_set_pointer:
-std Y+CTX_MSG_POINTER_HIGH, r19
-std Y+CTX_MSG_POINTER_LOW, r18
+/* R14:R15 survives PHY and NVM workers, so no SRAM pointer spills. */
+movw r14, r18
 /* Reply length is min(prepared length, 16-bit SETUP wLength). A nonzero
  * high request-length byte cannot truncate these at-most-18-byte responses.
  */
@@ -91,10 +93,10 @@ brbs SREG_C, usb_tx_prepare_data_packet
 ldi r23, USB_EP0_PAYLOAD_BYTES
 usb_tx_prepare_data_packet:
 sub r24, r23
-ldd r25, Y+CTX_TX_PID
+/* SETUP initialized R9 to DATA0; first prepared response is DATA1. */
 ldi r18, USB_DATA_PID_TOGGLE
-eor r25, r18
-std Y+CTX_TX_PID, r25
+eor r9, r18
+std Y+CTX_TX_PID, r9
 /* Copy Flash/SRAM/EEPROM into the TX buffer while computing USB CRC16.
  * R23 packs remaining bytes in its low five bits and the bit phase above them;
  * adding 32 wraps after eight shifts, then DEC consumes one payload byte.
@@ -106,8 +108,7 @@ ldi r25, 0x00
 ldi r21, HIGH8(CRC16_POLYNOMIAL)
 ldi r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
 ldi r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
-ldd r30, Y+CTX_MSG_POINTER_LOW
-ldd r31, Y+CTX_MSG_POINTER_HIGH
+movw r30, r14
 usb_tx_copy_flash_payload:
 cp r1, r23
 breq usb_crc16_payload_complete
@@ -140,8 +141,7 @@ usb_crc16_byte_complete:
 dec r23
 rjmp usb_tx_copy_flash_payload
 usb_crc16_payload_complete:
-std Y+CTX_MSG_POINTER_HIGH, r31
-std Y+CTX_MSG_POINTER_LOW, r30
+movw r14, r30
 usb_tx_append_payload_crc:
 usb_crc16_append:
 st X+, r19

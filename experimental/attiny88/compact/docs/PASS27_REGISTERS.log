@@ -1,0 +1,36 @@
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS NONE 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS NONE 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS NONE distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS ACTIVE_HIGH 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_HIGH 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS ACTIVE_HIGH distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS PHY: 9-cycle RX setup, 60 branch targets, 66 flag-liveness states; three branch operands corrected
+PASS ACTIVE_LOW 4608 standard SETUP/TX payload/state cases; independent descriptors/CRC, persistent zero context
+PASS ACTIVE_LOW 886 stateful EP0 transfers, descriptor wLength0..256, DATA1/DATA0, remaining lengths and stale CRC isolation
+PASS ACTIVE_LOW distinct candidate descriptor
+  EEPROM blocks validated: 32
+PASS unknown vendor opcodes cannot queue SPM or modify the page buffer
+PASS complete standard SETUP-to-TX path and independent USB CRC16
+PASS 225 actual-opcode payload/independent CRC/register-cursor cases
+PASS NONE cursor opcode paths, 1172 bytes
+PASS ACTIVE_HIGH cursor opcode paths, 1186 bytes
+PASS ACTIVE_LOW cursor opcode paths, 1184 bytes
+PASS 219 sequential Flash/EEPROM READ8+busy opcode checks
+PASS NONE select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_HIGH select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_LOW select-and-erase/deferred/boot protection opcode paths
+PASS 780 combined address+erase machine-opcode cases
+PASS modular candidate: standard USB, Flash/EEPROM, cursor and TX opcode contracts
+NONE: 1168 bytes at 0x1c00; capacity 1024; over budget 144; SHA256 79e5db468b6ed1493cc6a111b0c6e74cd29354cacda076aed8ee507402e2d05d
+ACTIVE_HIGH: 1186 bytes at 0x1c00; capacity 1024; over budget 162; SHA256 0dfb0aaa925140607dc7b2cc8c5edb7ea1e8fbb6602aaed7dc4ecd99f8033bfd
+ACTIVE_LOW: 1184 bytes at 0x1c00; capacity 1024; over budget 160; SHA256 bfd5a3a35e2be2336b2ce0b1e68e65c3c1114db5a985871b9839620ea81639b0

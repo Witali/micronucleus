@@ -9,6 +9,7 @@ keying the cache to the actual ELF's modification time and size.
 from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
+import random
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,11 +19,9 @@ from build_candidate import SOURCE, checked_build
 from audit_phy27 import audit_candidate
 from test_read_previous import decode
 from tests import avr_exec, avr_exec23
-from test_standard import disasm_q, execute
 from tests26 import test26_nvm as nvm
 from tests26 import test26_cursor_opcodes as cursor
 from tests26 import test26_combined_erase as erase
-from tests26 import test26_tx_bytes as tx
 
 
 @lru_cache(maxsize=32)
@@ -72,23 +71,51 @@ def usb_crc(payload):
 def check_standard(artifact, mode):
     old = build(ROOT / 'variants/strict_usb_optimized/micronucleus_t88_pass26.S',
                 mode, artifact['boot'])
-    old_ops, new_ops = disasm_q(old['obj']), disasm_q(artifact['obj'])
     branches, states = audit_candidate(old, artifact, '')
     print('PASS PHY: 9-cycle RX setup,', branches, 'branch targets,', states,
           'flag-liveness states; three branch operands corrected')
-    count = 0
-    for request in range(256):
-        for descriptor in (0, 1, 2, 3, 7, 255):
-            for config, value in ((0, 0), (1, 19), (255, 100)):
-                left = execute(old, old_ops, request, descriptor, config, value)
-                right = execute(artifact, new_ops, request, descriptor, config, value)
-                assert left == right, (mode, request, descriptor, config, value, left, right)
-                count += 1
+    # Compare observable USB data/state, not intentionally removed scratch stores.
+    from tests27.ep0_state import check_standard as standard, check_transfers
+    standard(artifact, mode)
+    check_transfers(artifact)
     start = artifact['symbols']['USB_handler'] - artifact['boot'] - 18
     descriptor = artifact['body'][start:start + 18]
     expected = {'NONE': 0x0560, 'ACTIVE_HIGH': 0x0561, 'ACTIVE_LOW': 0x0562}[mode]
     assert int.from_bytes(descriptor[12:14], 'little') == expected
-    print('PASS', mode, count, 'standard request dispatch cases; distinct candidate descriptor')
+    print('PASS', mode, 'distinct candidate descriptor')
+
+
+def check_tx_bytes(artifact):
+    """Independent payload/CRC and persistent reply-cursor checks at real opcodes."""
+    rng = random.Random(0x2757)
+    count = 0
+    for source, offset in (('flash', 0x142), ('flash', 0x1AFE),
+                           ('eeprom', 16), ('eeprom', 56), ('sram', 0x10A)):
+        for length in range(9):
+            if source == 'eeprom' and offset + length > 64:
+                continue
+            for fill in (0, 255, 0x55, 0xAA, None):
+                payload = bytes(fill if fill is not None else rng.randrange(256)
+                                for _ in range(length))
+                machine = avr_exec23.AVRExec(artifact)
+                machine.r[29] = 1
+                machine.r[23] = length
+                machine.r[2] = {'flash': 0, 'sram': 1, 'eeprom': 0x80}[source]
+                machine.r[14:16] = [offset & 255, offset >> 8]
+                for index, value in enumerate(payload):
+                    if source == 'flash':
+                        machine.flash[offset + index] = value
+                    elif source == 'eeprom':
+                        machine.eeprom[offset + index] = value
+                    else:
+                        machine.data_memory[offset + index] = value
+                machine.run('usb_tx_initialize_payload_crc',
+                            stop=('usb_tx_publish_packet_length',), limit=1500)
+                actual = bytes(machine.data_memory[0x102 + i] for i in range(length + 2))
+                assert actual == payload + usb_crc(payload), (source, offset, payload, actual)
+                assert machine.r[14] | (machine.r[15] << 8) == offset + length
+                count += 1
+    print('PASS', count, 'actual-opcode payload/independent CRC/register-cursor cases')
 
 
 def check_control_reply(artifact):
@@ -141,12 +168,11 @@ def test():
         nvm.test_eeprom_queue(artifact)
         check_invalid_vendor(artifact)
         check_control_reply(artifact)
+        check_tx_bytes(artifact)
     cursor.SRC = SOURCE
     cursor.test()
     erase.SRC = SOURCE
     erase.test()
-    tx.SRC = SOURCE
-    tx.test()
     print('PASS modular candidate: standard USB, Flash/EEPROM, cursor and TX opcode contracts')
 
 
