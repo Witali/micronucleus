@@ -1,0 +1,56 @@
+PASS NONE 0x1b40 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+PASS off body 1206 PHY 492 APP 6972 bcdDevice 0x550
+PASS PASS26: all firmware artifacts generated without hardware programming
+PASS ACTIVE_HIGH 0x1b00 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+PASS high body 1220 PHY 492 APP 6908 bcdDevice 0x551
+PASS PASS26: all firmware artifacts generated without hardware programming
+PASS ACTIVE_LOW 0x1b00 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+PASS low body 1218 PHY 492 APP 6908 bcdDevice 0x552
+PASS PASS26: all firmware artifacts generated without hardware programming
+PASS NONE 0x1b40 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+PASS ACTIVE_HIGH 0x1b00 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+PASS ACTIVE_LOW 0x1b00 PHY498->492; RX r19->r23 + cycle-neutral ADIW/SBIW; branch targets preserved
+SYNC model, nominal 16MHz / 1.5 Mbps:
+  both detect K: 12 of 12 sampled entry phases
+  worst detection timestamp difference: 0 CPU cycles
+  other outcomes: []
+  later-phase differences needing real USB measurement: [16, 17, 18, 19, 37, 38, 39, 40]
+PASS NONE 4608 standard request opcode cases
+PASS ACTIVE_HIGH 4608 standard request opcode cases
+PASS ACTIVE_LOW 4608 standard request opcode cases
+PASS 13824 standard request opcode cases
+PASS NONE 0x550 identified without proprietary requests
+PASS ACTIVE_HIGH 0x551 identified without proprietary requests
+PASS ACTIVE_LOW 0x552 identified without proprietary requests
+PASS descriptor-only version selection and unknown-version rejection
+PASS NONE USB reply-copy/CRC equivalence
+PASS ACTIVE_HIGH USB reply-copy/CRC equivalence
+PASS ACTIVE_LOW USB reply-copy/CRC equivalence
+PASS 675 actual-opcode TX byte + CRC comparisons
+  EEPROM blocks validated: 32
+PASS NONE NVM opcode simulation
+  EEPROM blocks validated: 32
+PASS ACTIVE_HIGH NVM opcode simulation
+  EEPROM blocks validated: 32
+PASS ACTIVE_LOW NVM opcode simulation
+PASS NONE select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_HIGH select-and-erase/deferred/boot protection opcode paths
+PASS ACTIVE_LOW select-and-erase/deferred/boot protection opcode paths
+PASS 780 combined address+erase machine-opcode cases
+PASS NONE cursor opcode paths, 1206 bytes
+PASS ACTIVE_HIGH cursor opcode paths, 1220 bytes
+PASS ACTIVE_LOW cursor opcode paths, 1218 bytes
+PASS 219 sequential Flash/EEPROM READ8+busy opcode checks
+PASS Pass26 / no LED; 19 pages READ8/WRITE4 automatic cursor and resync
+PASS Pass26 / LED active-high READ8/WRITE4 automatic cursor and resync
+PASS Pass26 / LED active-low READ8/WRITE4 automatic cursor and resync
+PASS v5.5 sequential transport and error recovery mock
+PASS host RESET relocation (relative, absolute, invalid)
+PASS block addressing, Intel HEX/CRC record, bounds
+PASS host dynamic 19/20-page layouts, postscript readback and protection
+PASS mock PC-side complete Flash and EEPROM programming
+PASS full host mock Pass26 / no LED; 19 pages v 0x550 app 6972
+PASS full host mock Pass26 / LED active-high v 0x551 app 6908
+PASS full host mock Pass26 / LED active-low v 0x552 app 6908
+
+PASS: Pass26 AVR opcode/host model tests. NOT tested on real USB hardware.

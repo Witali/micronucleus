@@ -1,0 +1,8 @@
+Portable local snapshot Git bundle, NOT a push to Witali/micronucleus.
+Branch: handoff/attiny88-pass26
+Snapshot commit: 378ebfecb33da72d2bbd460757f364911a46616c
+Artifact: Micronucleus_ATtiny88_Pass26_AGENT_BRANCH_2026-10-27.bundle
+Commands:
+  git clone Micronucleus_ATtiny88_Pass26_AGENT_BRANCH_2026-10-27.bundle micronucleus-pass26
+  cd micronucleus-pass26 && ./verify.sh
+Git history here is a single handoff snapshot, NOT historical commits from the original repository.

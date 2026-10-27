@@ -1,0 +1,8 @@
+Pass26 handoff tested on 2026-10-27 in an isolated local directory.
+Python 3.13.5
+clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)
+LLVM (http://llvm.org/):
+Tests: ./verify.sh
+Physical USB/ISP hardware: NOT available, not tested.
+Host programmer --help: PASS; no USB device connected.
+Firmware release SHA: sha256sum -c firmware/SHA256SUMS.txt (from firmware directory): PASS.

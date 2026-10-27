@@ -1,5 +1,13 @@
 # Experimental Micronucleus+ for ATtiny88
 
+The [compact Pass26 line](compact/README.md) imports the October 27 handoff
+on `feature/attiny88-compact-pass26`. Its v5.5 host and persistent memory cursor
+are separate from Block64 and the earlier optimized variants. The no-LED body
+is 1206 bytes at `0x1B40`; LED bodies are 1220/1218 bytes at `0x1B00`.
+Pass26 has offline validation only. Its original snapshot commit, earlier
+source checkpoints and complete archive are preserved in the
+[Pass26 provenance record](../../docs/attiny88-history/pass26/README.md).
+
 The separate [Block64 development line](block64/README.md) imports the complete
 October 26 handoff and develops its 64-byte control-transfer protocol on
 `feature/attiny88-block64`. It is also preserved in the default `master`

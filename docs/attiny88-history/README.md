@@ -1,5 +1,10 @@
 # ATtiny88 development history
 
+The separate [October 27 Pass26 handoff](pass26/README.md) preserves its complete
+original archive and the single original Git snapshot in the compact branch's
+ancestry. [Maintained compact documentation](../../experimental/attiny88/compact/README.md)
+describes protocol v5.5, software checks and remaining hardware risks.
+
 The original upstream history is retained. Historical snapshots from the October 25, 2026 handoff are replayed as individual import commits, with English stage summaries. Commit authors and times describe this import; they do not impersonate the earlier agent or reconstruct unavailable Git metadata.
 
 `original-handoff.zip` preserves the complete supplied handoff byte for byte, including all ten original ZIP files, original-language reports, historical generated artifacts, and validation records. These archived records are provenance, not current project instructions. Expanded project documentation is maintained in English.

@@ -1,0 +1,174 @@
+--- Pass25/micronucleus_t88_pass25.S
++++ Pass26/micronucleus_t88_pass26.S
+@@ -1,4 +1,5 @@
+-/* Strict USB size-optimization candidate: ATtiny88, 16 MHz, EEPROM/Flash read.
++/* Pass26 experimental: long-lived R4:R5 shared READ8/WRITE4 cursor; RX counter R23.
++ * Strict USB size-optimization candidate: ATtiny88, 16 MHz, EEPROM/Flash read.
+  * BASED ON Optimized Micronucleus t88_default 16 MHz ATtiny88 bootloader, pass 3.
+  * Assembler reconstruction of public Micronucleus firmware with conservative code-size
+  * SRAM pointer reuse in V-USB with cycle-neutral sync-stage initialization.
+@@ -99,15 +100,15 @@
+ #define BOOT_FEATURES (BOOT_FEATURE_RESET_FLAGS | BOOT_FEATURE_EEPROM | BOOT_FEATURE_FLASH_READ)
+ #define FLASH_WRITE_DELAY_MS 5
+ #define USB_PROTOCOL_BCD 0x0110
+-/* Host-driven v5.3, select-and-erase combined; standard USB control preserved. */
++/* Host-driven v5.5, SELECT once, then READ8/WRITE4 auto-increment. */
+ /* Device-descriptor bcdDevice identifies the complete known build on the host.
+  * No INFO, checksum table or firmware fingerprinting on the MCU. */
+ #if LED_MODE == NONE
+-#define BOOT_VERSION_BCD 0x0540
++#define BOOT_VERSION_BCD 0x0550
+ #elif LED_MODE == ACTIVE_HIGH
+-#define BOOT_VERSION_BCD 0x0541
++#define BOOT_VERSION_BCD 0x0551
+ #else
+-#define BOOT_VERSION_BCD 0x0542
++#define BOOT_VERSION_BCD 0x0552
+ #endif
+ #define USB_VENDOR_ID 0x16d0
+ #define USB_PRODUCT_ID 0x0753
+@@ -129,10 +130,12 @@
+ #define CMD_EXIT 4
+ #define CMD_COMMIT_PAGE SPM_PAGE_WRITE
+ #define CMD_DEFERRED_MASK 0x3f
+-/* For READ8 and SET_ADDRESS, the 16-bit field is a block address:
+- * bit15 selects EEPROM; bits0..14 select a 4-byte unit.
+- * READ8 always returns the selected block and the next block.
++/* SELECT uses wIndex: 16-bit four-byte block index, bit15=EEPROM.
++ * READ8 ignores both address fields and reads from the shared R4:R5 cursor,
++ * returning eight bytes and advancing R4:R5 by eight. WRITE4 advances four.
++ * Host must SELECT after a failed/ambiguous USB transaction or any seek.
+  * WRITE4 carries its four data bytes in wValue and wIndex.
++ * Neither command may be interleaved with unfinished EEPROM page writes.
+  */
+ #define REQ_UNIFIED_READ 0xb0
+ #define ADDRESS_EEPROM_FLAG 0x80
+@@ -226,9 +229,10 @@
+ usb_rx_found_k:
+ push r0
+ lds r28, (USB_CONTEXT_BASE + CTX_INPUT_BUFFER_OFFSET)
+-eor r29, r29
+-subi r28, LOW8(-(USB_CONTEXT_BASE + CTX_RX_BUFFER))
+-sbci r29, HIGH8(-(USB_CONTEXT_BASE + CTX_RX_BUFFER))
++/* Cycle-neutral 16-bit pointer computation. LDI(1)+ADIW(2) =
++ * EOR(1)+SUBI(1)+SBCI(1) cycles, one opcode word shorter. */
++ldi r29, HIGH8(USB_CONTEXT_BASE)
++adiw r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
+ pop r0
+ ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
+ sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
+@@ -249,9 +253,12 @@
+ andi r16, USB_LINE_MASK
+ bst r16, USB_MINUS_BIT
+ bld r18, 7
+-push r19
++/* Replace the former PUSH r19 with a two-cycle RJMP-to-next.
++ * PUSH would also take two cycles, so the bit sampler phase is unchanged.
++ * R23 is only an RX scratch count and needs no saving to the stack. */
++rjmp .+0
+ ldi r21, 0x00
+-ldi r19, USB_RX_BUFFER_BYTES
++ldi r23, USB_RX_BUFFER_BYTES
+ rjmp usb_rx_sample_odd_bit
+ usb_rx_unstuff_bit6:
+ andi r17, USB_LINE_MASK
+@@ -334,7 +341,7 @@
+ usb_rx_advance_bit_pair:
+ subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
+ brbs SREG_C, usb_rx_sample_even_bit
+-subi r19, 0x01
++subi r23, 0x01
+ in r16, _SFR_IO_ADDR(PIND)
+ brbc SREG_C, usb_rx_decode_bit6
+ usb_rx_overflow:
+@@ -343,9 +350,9 @@
+ eor r16, r16
+ rjmp usb_rx_store_token
+ usb_rx_end_packet:
+-subi r19, USB_RX_BUFFER_BYTES
+-neg r19
+-sub r28, r19
++subi r23, USB_RX_BUFFER_BYTES
++neg r23
++sub r28, r23
+ sbci r29, 0x00
+ sbi _SFR_IO_ADDR(PCIFR), PCIF2
+ ldd r16, Y+USB_PACKET_PID_OFFSET
+@@ -375,7 +382,7 @@
+ usb_rx_store_token:
+ std Z+CTX_CURRENT_TOKEN, r16
+ usb_handler_packet_done:
+-pop r19
++/* The old POP r19 is gone; r23 does not need restoration after RX. */
+ in r28, _SFR_IO_ADDR(PCIFR)
+ sbrc r28, PCIF2
+ rjmp usb_rx_wait_for_j
+@@ -388,9 +395,9 @@
+ ldd r17, Z+CTX_RX_LENGTH
+ and r17, r17
+ brbc SREG_Z, usb_tx_send_nak
+-cpi r19, (USB_RX_PACKET_OVERHEAD + 1)
++cpi r23, (USB_RX_PACKET_OVERHEAD + 1)
+ brbs SREG_N, usb_tx_send_ack
+-std Z+CTX_RX_LENGTH, r19
++std Z+CTX_RX_LENGTH, r23
+ std Z+CTX_RX_TOKEN, r18
+ rjmp usb_tx_send_ack
+ usb_rx_handle_in:
+@@ -477,8 +484,8 @@
+ andi r16, USB_LINES_CLEAR_MASK
+ ldd r17, Z+CTX_NEW_DEVICE_ADDRESS
+ add r17, r17
+-subi r28, USB_HANDSHAKE_END_POINTER
+-sbci r29, 0x00
++/* Two cycles in one word; Z flag still means (Y-22)==0. */
++sbiw r28, USB_HANDSHAKE_END_POINTER
+ out _SFR_IO_ADDR(PORTD), r16
+ brbs SREG_Z, usb_tx_finish_eop
+ std Z+CTX_DEVICE_ADDRESS, r17
+@@ -844,15 +851,21 @@
+ usb_dispatch_extended_or_standard_request:
+ cpi r25, REQ_UNIFIED_READ
+ brne usb_standard_dispatch
++/* Persistent register allocation:
++ * r4:r5 = shared READ8/WRITE4 byte cursor, bit15 selects EEPROM
++ * r6:r7 = idle poll count (preserved across USB handler calls)
++ * r8 = pending EEPROM write count, r10..r13 = EEPROM four-byte queue
++ * r3 = pending Flash SPM command, r2 = current reply memory source.
++ * X is the poll counter / reply staging pointer, Y the USB-context scratch
++ * and receive buffer pointer, Z the SPM/CRC/read scratch pointer. X/Y/Z
++ * are intentionally NOT permanently bound: the V-USB PHY clobbers Y/Z.
++ */
+ memory_read:
+-/* Fixed READ8: allow the whole 8-KiB Flash, including the loader.
+- * Read-only access supports PC-side firmware fingerprinting; the separate
+- * SPM erase/write guards remain intact. No checksum code on the MCU. */
+-ldd r18, Y+CTX_SETUP_VALUE_LOW
+-ldd r19, Y+CTX_SETUP_VALUE_HIGH
++/* SELECT loads the persistent r4:r5 byte-address cursor. WRITE4 already
++ * advances it by four; READ8 advances it by eight without reselecting. */
++movw r18, r4
+ sbrs r19, 7
+-rjmp memory_read_shift
+-/* Shared READ8: EEPROM path falls through, Flash skips the EEPROM peripheral. */
++rjmp memory_read_advance
+ memory_read_eeprom:
+ tst r8
+ brne ee_empty
+@@ -860,11 +873,11 @@
+ rjmp ee_empty
+ mov r2, r19
+ mov r19, r1
+-memory_read_shift:
+-lsl r18
+-rol r19
+-lsl r18
+-rol r19
++memory_read_advance:
++/* Z is scratch and may be reused after preparing the reply. */
++movw r30, r4
++adiw r30, USB_EP0_PAYLOAD_BYTES
++movw r4, r30
+ ldi r24, USB_EP0_PAYLOAD_BYTES
+ rjmp usb_reply_set_pointer
+ usb_standard_dispatch:
