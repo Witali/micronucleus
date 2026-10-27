@@ -22,14 +22,22 @@ reply publishes zero directly before returning to cooperative service.
 `vusb_ep0.inc` owns TX-buffer preparation and outgoing CRC. This module split
 emits exactly the bytes tested in the isolated nearby-TX probe.
 
+Startup then shares one Z pointer between the watchdog register and the two
+nearby PCINT registers. Indirect watchdog stores replace STS without changing
+their two-cycle separation. Z is untouched by the disconnect countdown; STD
+offsets configure PCMSK2/PCICR later. This saves four more bytes. Compile-time
+guards enforce the memory-map assumptions. The startup decoder executes the
+real indirect memory-mapped IO stores while retaining every original watchdog,
+SRAM, disconnect-time and USB-enable ordering assertion.
+
 | Placement/profile | Installed reference bytes | Candidate bytes | Saved |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1144 | 1142 | 2 |
-| No LED, `0x1B80` fitting placement | 1148 | 1146 | 2 |
-| Active high, `0x1B40` | 1166 | 1164 | 2 |
-| Active low, `0x1B40` | 1164 | 1162 | 2 |
+| No LED, `0x1C00` measurement | 1144 | 1138 | 6 |
+| No LED, `0x1B80` fitting placement | 1148 | 1142 | 6 |
+| Active high, `0x1B40` | 1166 | 1160 | 6 |
+| Active low, `0x1B40` | 1164 | 1158 | 6 |
 
-At the intended `0x1C00` boundary the candidate is still 118 bytes too large.
+At the intended `0x1C00` boundary the candidate is still 114 bytes too large.
 Measurement links use a larger linker region to quantify overflow; this is
 not permission to program an image beyond the ATtiny88's 8192 bytes.
 

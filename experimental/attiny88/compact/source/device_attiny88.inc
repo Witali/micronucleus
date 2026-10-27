@@ -41,4 +41,15 @@
 #define SPM_BUFFER_CLEAR ((1 << CTPB) | SPM_BUFFER_LOAD)
 #define CPU_CLOCK_HZ 16000000
 
+/* Startup shares a Z base across watchdog disable and PCINT configuration. */
+#if HIGH8(_SFR_MEM_ADDR(WDTCSR)) != 0
+#error Shared startup register base requires WDTCSR below 0x0100
+#endif
+#if (_SFR_MEM_ADDR(PCMSK2) < _SFR_MEM_ADDR(WDTCSR)) || ((_SFR_MEM_ADDR(PCMSK2) - _SFR_MEM_ADDR(WDTCSR)) > 63)
+#error PCMSK2 must fit a positive STD offset from WDTCSR
+#endif
+#if (_SFR_MEM_ADDR(PCICR) < _SFR_MEM_ADDR(WDTCSR)) || ((_SFR_MEM_ADDR(PCICR) - _SFR_MEM_ADDR(WDTCSR)) > 63)
+#error PCICR must fit a positive STD offset from WDTCSR
+#endif
+
 #endif /* COMPACT_DEVICE_ATTINY88_INC */

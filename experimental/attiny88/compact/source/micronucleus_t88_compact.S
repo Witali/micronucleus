@@ -47,9 +47,14 @@ main:
     in r24, _SFR_IO_ADDR(MCUSR)
     out _SFR_IO_ADDR(GPIOR0), r24
     out _SFR_IO_ADDR(MCUSR), r1
+/* Keep one base pointer for the timed watchdog pair and the later PCINT
+ * enables. The disconnect loop does not touch Z; nearby STD stores save
+ * words without changing the two-cycle watchdog write separation. */
+    ldi r30, LOW8(_SFR_MEM_ADDR(WDTCSR))
+    mov r31, r1
     ldi r24, WATCHDOG_UNLOCK_MASK
-    sts _SFR_MEM_ADDR(WDTCSR), r24
-    sts _SFR_MEM_ADDR(WDTCSR), r1
+    st Z, r24
+    st Z, r1
     sbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
 /* Reuse the SRAM cursor as the disconnect-delay outer counter. Clear one
  * byte after each delay, so all 44 bytes are zero and Y=0x0100 before USB
@@ -74,8 +79,8 @@ startup_check_sram_end:
     ldi r24, USB_NO_MESSAGE
     std Y+CTX_MSG_LENGTH, r24
     ldi r24, USB_INTERRUPT_ENABLE_MASK
-    sts _SFR_MEM_ADDR(PCMSK2), r24
-    sts _SFR_MEM_ADDR(PCICR), r24
+    std Z+(_SFR_MEM_ADDR(PCMSK2) - _SFR_MEM_ADDR(WDTCSR)), r24
+    std Z+(_SFR_MEM_ADDR(PCICR) - _SFR_MEM_ADDR(WDTCSR)), r24
 led_init:
     LED_INIT
 led_init_done:

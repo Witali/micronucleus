@@ -63,10 +63,16 @@ def check_startup(artifact):
             memory[address] = registers[destination]
             clears.append(address)
             duration = 2
-        elif opcode & 0xD208 == 0x8208:
+        elif opcode & 0xD208 in (0x8208, 0x8200):
+            # Execute real Y/Z indirect stores, including memory-mapped IO.
             offset = (opcode & 7) | ((opcode >> 7) & 24) | ((opcode >> 8) & 32)
-            address = (registers[28] | registers[29] << 8) + offset
-            memory[address] = registers[destination]
+            pair = 28 if opcode & 8 else 30
+            address = (registers[pair] | registers[pair + 1] << 8) + offset
+            if address < 0x100:
+                assert 0x20 <= address < 0x100
+                output(address - 0x20, registers[destination])
+            else:
+                memory[address] = registers[destination]
             duration = 2
         elif opcode & 0xFF00 in (0x9800, 0x9A00):
             address, bit = (opcode >> 3) & 31, opcode & 7
