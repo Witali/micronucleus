@@ -1,0 +1,84 @@
+--- variants/strict_usb_optimized/micronucleus_t88_pass24.S	2026-10-27 08:49:48.366184229 +0000
++++ variants/strict_usb_optimized/micronucleus_t88_pass25.S	2026-10-27 09:06:49.194428767 +0000
+@@ -103,11 +103,11 @@
+ /* Device-descriptor bcdDevice identifies the complete known build on the host.
+  * No INFO, checksum table or firmware fingerprinting on the MCU. */
+ #if LED_MODE == NONE
+-#define BOOT_VERSION_BCD 0x0530
++#define BOOT_VERSION_BCD 0x0540
+ #elif LED_MODE == ACTIVE_HIGH
+-#define BOOT_VERSION_BCD 0x0531
++#define BOOT_VERSION_BCD 0x0541
+ #else
+-#define BOOT_VERSION_BCD 0x0532
++#define BOOT_VERSION_BCD 0x0542
+ #endif
+ #define USB_VENDOR_ID 0x16d0
+ #define USB_PRODUCT_ID 0x0753
+@@ -204,8 +204,6 @@
+ .byte LOW8(USB_VENDOR_ID), HIGH8(USB_VENDOR_ID), LOW8(USB_PRODUCT_ID), HIGH8(USB_PRODUCT_ID)
+ .byte LOW8(BOOT_VERSION_BCD), HIGH8(BOOT_VERSION_BCD), 0, 0, 0, 1
+ USB_handler:
+-push r28
+-push r29
+ eor r28, r28
+ usb_rx_wait_for_j:
+ inc r28
+@@ -339,7 +337,6 @@
+ subi r19, 0x01
+ in r16, _SFR_IO_ADDR(PIND)
+ brbc SREG_C, usb_rx_decode_bit6
+-rjmp usb_rx_overflow
+ usb_rx_overflow:
+ sbi _SFR_IO_ADDR(PCIFR), PCIF2
+ usb_rx_ignore_packet:
+@@ -383,8 +380,6 @@
+ sbrc r28, PCIF2
+ rjmp usb_rx_wait_for_j
+ usb_handler_return:
+-pop r29
+-pop r28
+ ret
+ usb_rx_handle_data:
+ ldd r18, Z+CTX_CURRENT_TOKEN
+@@ -559,8 +554,8 @@
+ led_init_done:
+ mov r3, r1
+ bootloader_poll_begin:
+-ldi r28, LOW8(USB_POLL_TIMEOUT_COUNT)
+-ldi r29, HIGH8(USB_POLL_TIMEOUT_COUNT)
++ldi r26, LOW8(USB_POLL_TIMEOUT_COUNT)
++ldi r27, HIGH8(USB_POLL_TIMEOUT_COUNT)
+ ldi r24, USB_RESET_SE0_SAMPLES
+ usb_poll_sample_bus:
+ in r25, _SFR_IO_ADDR(PIND)
+@@ -592,7 +587,7 @@
+ breq flash_commit_buffered_page
+ cpi r24, CMD_EXIT
+ brne bootloader_clear_command
+-or r28, r29
++or r26, r27
+ brne usb_control_process_received_packet
+ rjmp bootloader_start_application
+ flash_erase_selected_page:
+@@ -761,7 +756,7 @@
+ sbi _SFR_IO_ADDR(PCIFR), PCIF2
+ rjmp bootloader_poll_begin
+ usb_poll_advance_timeout:
+-sbiw r28, 1
++sbiw r26, 1
+ brbs SREG_Z, bootloader_poll_timeout
+ rjmp usb_poll_sample_bus
+ bootloader_poll_timeout:
+@@ -804,8 +799,9 @@
+ mov r3, r18
+ /* Host validates the block index. The shared erase/commit SPM executor
+  * STILL protects all pages >= BOOT_AT, including the loader itself. */
+-/* Discard low four block bits => align to Flash's 64-byte page. */
+-andi r24, 0xf0
++/* Host sends page-aligned Flash block for erase and page programming.
++ * Retain the low block bits: direct four-byte addressing is available.
++ * SPM erase/commit still internally aligns the physical page and guards BOOT_AT. */
+ lsl r24
+ rol r25
+ lsl r24

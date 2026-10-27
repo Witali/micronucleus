@@ -1,0 +1,53 @@
+{
+  "release": "Micronucleus+ Pass26, research candidate (not hardware validated)",
+  "date": "2026-10-27",
+  "target": "ATtiny88 / 16 MHz",
+  "protocol": "USB control v5.5; auto-increment cursor; fixed READ8/WRITE4; Select+Erase",
+  "flash_bytes": 8192,
+  "page_bytes": 64,
+  "eeprom_bytes": 64,
+  "usb_vid": "0x16d0",
+  "usb_pid": "0x753",
+  "warning": "No actual USB or ISP hardware verification. Inherits Pass25 RX-entry 4-cycle phase shift; RX r23 remap is still hardware-unverified; Power loss during RESET page erase may break boot.",
+  "builds": [
+    {
+      "led": "NONE",
+      "bcdDevice": "0x550",
+      "boot_at": "0x1b40",
+      "code_bytes": 1206,
+      "reserved_flash_bytes": 1216,
+      "app_bytes": 6972,
+      "USB_PHY_bytes": 492,
+      "code_sha256": "d713c5bb364bd1df7f8b48de0d77aad2acc33c353ea29df73b58c4e96b059459",
+      "full_sha256": "8305798a2bfc724d3800902bb0ffe6675454d5aec217a7dcc8f0ef0db9a5473c",
+      "body_file": "Pass26_off_body.bin",
+      "reset_vector_word": "0xcd9f"
+    },
+    {
+      "led": "ACTIVE_HIGH",
+      "bcdDevice": "0x551",
+      "boot_at": "0x1b00",
+      "code_bytes": 1220,
+      "reserved_flash_bytes": 1280,
+      "app_bytes": 6908,
+      "USB_PHY_bytes": 492,
+      "code_sha256": "699c623a20e3f0e96aa658cebec610650abd4f6a8fd70a2a6e01a844f0755ee1",
+      "full_sha256": "1e72c178f92f09f2954c8faae3a53c05f1e59ddfd95840e3139a0702528b902e",
+      "body_file": "Pass26_high_body.bin",
+      "reset_vector_word": "0xcd7f"
+    },
+    {
+      "led": "ACTIVE_LOW",
+      "bcdDevice": "0x552",
+      "boot_at": "0x1b00",
+      "code_bytes": 1218,
+      "reserved_flash_bytes": 1280,
+      "app_bytes": 6908,
+      "USB_PHY_bytes": 492,
+      "code_sha256": "ecad74a2f0cd5749f1a8d37b2359a966b7643f5fd575721dc156d56643f6f815",
+      "full_sha256": "465edd511f7383d3dad54ff96d213ebbbbba8c417d028f580d0271b8680836bc",
+      "body_file": "Pass26_low_body.bin",
+      "reset_vector_word": "0xcd7f"
+    }
+  ]
+}

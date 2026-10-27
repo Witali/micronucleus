@@ -1,0 +1,9 @@
+# check_build.py creates object and body scratch files at the repository root.
+/*.o
+/micronucleus_t88_*.bin
+/__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+/build/
+*.log.tmp
