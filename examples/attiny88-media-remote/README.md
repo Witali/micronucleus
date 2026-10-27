@@ -157,7 +157,10 @@ existing DATA CRC and USB suspend-power limitations.
 `controller.py` keeps the existing CLI and watch mode. `editor_ui.py` owns Tkinter
 widgets; `editor_state.py` owns editable layer bindings and saved-state checks.
 `device_session.py` owns the background command queue, polling, reconnects and
-mute feedback. Tk widgets are accessed only on the UI thread. The viewed layer
+mute feedback. `windows_hid.py` owns HID discovery and report transport;
+`windows_audio.py` reads the default audio endpoint, sharing only ctypes
+primitives through `windows_types.py`. Existing imports of `RemoteDevice` and
+`audio_state` from `windows_backend.py` remain supported. Tk widgets are accessed only on the UI thread. The viewed layer
 is independent of the active device layer; testing a saved binding selects its
 layer explicitly. Reconnecting reloads the configuration from the device.
 

@@ -1,6 +1,7 @@
 """Background device exchange; no Tkinter calls or editor state."""
 import queue
-from windows_backend import RemoteDevice, audio_state
+from windows_hid import RemoteDevice
+from windows_audio import audio_state
 
 
 def run_worker(commands, messages, stopping, find_device=RemoteDevice.find, read_audio=audio_state):

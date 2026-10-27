@@ -4,7 +4,8 @@ import argparse
 import time
 from protocol import Configuration, action_label, parse_action
 from editor_ui import gui
-from windows_backend import RemoteDevice, audio_state
+from windows_hid import RemoteDevice
+from windows_audio import audio_state
 
 
 def wait_device(wait):
