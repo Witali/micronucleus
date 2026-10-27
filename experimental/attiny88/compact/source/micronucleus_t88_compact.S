@@ -89,9 +89,15 @@ led_init_done:
  * Every predecessor preserves Y=USB_CONTEXT_BASE; X is the poll countdown.
  */
 bootloader_poll_begin:
-    ldi r26, LOW8(USB_POLL_TIMEOUT_COUNT)
-    ldi r27, HIGH8(USB_POLL_TIMEOUT_COUNT)
+/* Pre-decrement before sampling: one extra seed tick retains exactly the
+ * requested sample count while the nearby branch avoids both trampolines. */
+    ldi r26, LOW8(USB_POLL_TIMEOUT_COUNT + 1)
+    ldi r27, HIGH8(USB_POLL_TIMEOUT_COUNT + 1)
     ldi r24, USB_RESET_SE0_SAMPLES
+usb_poll_advance_timeout:
+    sbiw r26, 1
+bootloader_poll_timeout:
+    breq bootloader_process_pending_command
 usb_poll_sample_bus:
     in r25, _SFR_IO_ADDR(PIND)
     andi r25, USB_LINE_MASK
@@ -195,12 +201,6 @@ legacy_led_off_anchor:
 usb_poll_check_missed_packet:
     rcall usb_service_pending
     rjmp bootloader_poll_begin
-usb_poll_advance_timeout:
-    sbiw r26, 1
-    brbs SREG_Z, bootloader_poll_timeout
-    rjmp usb_poll_sample_bus
-bootloader_poll_timeout:
-    rjmp bootloader_process_pending_command
 /* Release USB pins/PCINT enables and jump to the host-prepared postscript.
  * The application owns its vector table; the bootloader only redirects RESET.
  */

@@ -23,17 +23,25 @@ The isolated dense sweep covers 3384 token/DATA chains per image across host
 clock endpoints, minimum gaps and quarter-cycle entry phases. The combined
 candidate retains the synchronized GPIO/PCINT and TX waveform checks.
 
+The poll loop saves four more bytes by pre-decrementing X before sampling.
+Seeding one extra tick lets the first sample fall through and removes two
+timeout jumps. A thirteen-cycle loop retains 6153 samples and a 79996-cycle
+quiet timeout (4.99975 ms). The five-cycle PCIF-to-handler call edge is unchanged.
+The combined source passes startup/deferred-command/RUN checks and 2160 actual
+main-poll captures across all three profiles; maximum physical entry is twenty
+cycles. Sustained SE0 clears both USB addresses after exactly one hundred samples.
+
 | Placement/profile | Pass28 bytes | Candidate bytes | New saving |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1102 | 1094 | 8 |
-| No LED, `0x1BC0`, 17-page milestone | 1106 | 1098 | 8 |
-| No LED, `0x1B80`, installed geometry | 1106 | 1098 | 8 |
-| Active high, `0x1B40` | 1124 | 1116 | 8 |
-| Active low, `0x1B40` | 1122 | 1114 | 8 |
+| No LED, `0x1C00` measurement | 1102 | 1090 | 12 |
+| No LED, `0x1BC0`, 17-page milestone | 1106 | 1094 | 12 |
+| No LED, `0x1B80`, installed geometry | 1106 | 1094 | 12 |
+| Active high, `0x1B40` | 1124 | 1112 | 12 |
+| Active low, `0x1B40` | 1122 | 1110 | 12 |
 
-The 17-page fit gate is still ten bytes over budget at this stage.
+The 17-page fit gate is still six bytes over budget at this stage.
 
-The combined source passes verify27.sh for all three existing fitting profiles:
+The PHY8 checkpoint passed verify27.sh for all three existing fitting profiles:
 15 negative PHY-audit cases per profile, complete standard/NVM/cursor tests,
 125943 no-packet intervals, 186 synchronized minimum-IPD scenarios and 12654
 TX waveform/state cases. The physical-SOP bound is 39 cycles; observed
@@ -51,7 +59,7 @@ python3 build_candidate.py --boot 0x1C00 --require-fit
 
 The fit gates remain strict. Exact-size regression expectations are the
 deployed reference sizes minus measured CANDIDATE_SAVINGS, which is currently
-50 bytes. No code, descriptor or reserved application bytes are excluded.
+54 bytes. No code, descriptor or reserved application bytes are excluded.
 
 The installed firmware remains e405ea7: 1148 bytes at `0x1B80`, USB profile
 0x0300. Frozen firmware27 images and host profile geometry remain unchanged.
