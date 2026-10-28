@@ -106,6 +106,8 @@ class CPU(Timed):
             self.setflag(5,(self.r[(word>>4)&31]|old_neg)&8)
         next_size=dec.decode(ins.address+ins.size).size if ins.op in SKIPS else None
         expected=instruction_cycles(ins,before_flags,self.pc,next_size)
-        if self.t-before_time!=expected:
+        # Compare the final clock against the same addition, rather than
+        # subtracting two fractional timestamps and losing a low-order bit.
+        if self.t!=before_time+expected:
             raise AssertionError(('AVR instruction cycles',ins.op,self.t-before_time,expected))
         self.peak=max(self.peak,len(self.raw_stack));return ins

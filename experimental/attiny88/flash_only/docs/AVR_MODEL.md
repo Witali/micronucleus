@@ -49,7 +49,10 @@ python3 -m tests35.test_avr_cycles
 python3 -m tests35.test_avr_model
 ```
 
-The fixed instruction/skip test executes 82 hand-encoded cases. It also walks
+The fixed instruction/skip test executes 268 hand-encoded cases, including
+fractional start phases. The clock guard compares the final time with start
+plus the integer cost, avoiding cancellation from subtracting two doubles.
+It also walks
 every linked code instruction, excluding the known descriptor bytes, to
 require an explicit timing class. At the 1382-byte default checkpoint this is
 671 instructions and 49 mnemonics.

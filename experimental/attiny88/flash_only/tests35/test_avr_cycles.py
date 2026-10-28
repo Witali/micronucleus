@@ -72,12 +72,13 @@ def test():
     count=0
     for name,words,expected in cases:
         install(cpu,pc,words+(0,0))
-        reset(cpu,pc)
-        ins=cpu.step()
-        assert ins.op==name,(name,ins.op,words)
-        assert cpu.t==100+expected,(name,cpu.t,expected)
-        assert cpu.steps==1
-        count+=1
+        for start in (100,100+1/3,100.677328003,24000+16_000_000/1_499_250):
+            reset(cpu,pc);cpu.t=start
+            ins=cpu.step()
+            assert ins.op==name,(name,ins.op,words)
+            assert cpu.t==start+expected,(name,cpu.t,expected)
+            assert cpu.steps==1
+            count+=1
     # Five skip instructions, both decisions, both next-instruction widths.
     # The LDS second word is deliberately also a plausible opcode: it must
     # never be treated as the beginning of another skipped instruction.
