@@ -11,9 +11,9 @@ from check_build import build
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'firmware35'
-PROFILES=[('NONE',0x1bc0,1034,0x0450,'off'),
-          ('ACTIVE_HIGH',0x1bc0,1054,0x0451,'high'),
-          ('ACTIVE_LOW',0x1bc0,1052,0x0452,'low')]
+PROFILES=[('NONE',0x1bc0,1036,0x0450,'off'),
+          ('ACTIVE_HIGH',0x1bc0,1056,0x0451,'high'),
+          ('ACTIVE_LOW',0x1bc0,1054,0x0452,'low')]
 
 def digest(data:bytes)->str:
     return hashlib.sha256(data).hexdigest()

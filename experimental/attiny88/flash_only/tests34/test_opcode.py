@@ -9,7 +9,7 @@ import tests.avr_exec as _avr_exec
 from functools import lru_cache
 _avr_exec.decode=lru_cache(maxsize=48)(_avr_exec.decode)
 
-MODES=[('NONE',0x1BC0,0x0450,1034),('ACTIVE_HIGH',0x1BC0,0x0451,1054),('ACTIVE_LOW',0x1BC0,0x0452,1052)]
+MODES=[('NONE',0x1BC0,0x0450,1036),('ACTIVE_HIGH',0x1BC0,0x0451,1056),('ACTIVE_LOW',0x1BC0,0x0452,1054)]
 
 def art(led='NONE',boot=0x1c00,source='source'):
     return build(f'{source}/micronucleus_t88_compact.S',mode=led,boot=boot)

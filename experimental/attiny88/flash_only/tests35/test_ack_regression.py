@@ -17,9 +17,9 @@ from tests34.test_pass33_ack import CPU
 def artifact(source, led, boot):
     return build(f'{source}/micronucleus_t88_compact.S', mode=led, boot=boot)
 
-MODES = [('NONE', 0x1BC0, 1034, 0x0450),
-         ('ACTIVE_HIGH', 0x1BC0, 1054, 0x0451),
-         ('ACTIVE_LOW', 0x1BC0, 1052, 0x0452)]
+MODES = [('NONE', 0x1BC0, 1036, 0x0450),
+         ('ACTIVE_HIGH', 0x1BC0, 1056, 0x0451),
+         ('ACTIVE_LOW', 0x1BC0, 1054, 0x0452)]
 
 STOPS = ('usb_tx_prepare_pending_reply', 'flash_erase_selected_page',
          'bootloader_clear_command', 'bootloader_start_application')

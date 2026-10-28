@@ -59,6 +59,9 @@ startup_check_sram_end:
     std Y+CTX_TX_LENGTH, r24
     ldi r24, USB_NO_MESSAGE
     std Y+CTX_MSG_LENGTH, r24
+    /* No page is selected after RESET. High 0xFF makes the final SPM
+     * guard reject COMMIT until SELECT installs a valid Flash page. */
+    mov r5, r24
     ldi r24, USB_INTERRUPT_ENABLE_MASK
     std Z+(_SFR_MEM_ADDR(PCMSK2) - _SFR_MEM_ADDR(WDTCSR)), r24
     std Z+(_SFR_MEM_ADDR(PCICR) - _SFR_MEM_ADDR(WDTCSR)), r24
