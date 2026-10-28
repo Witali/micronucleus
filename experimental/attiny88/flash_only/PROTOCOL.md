@@ -26,9 +26,14 @@ A replacement SETUP or bus reset cancels the obsolete transfer and deferred
 work. SET_ADDRESS takes effect only after its status ACK.
 
 USB status completion does not mean Flash has finished programming: SPM halts
-this CPU. The host leaves a configurable quiet interval and reads back each
+this CPU. The host defaults to a configurable 7 ms quiet interval and reads back each
 page. After an uncertain COMMIT it reads back before deciding what to do;
 it must not blindly issue another COMMIT.
+
+An invalid new SELECT, failed/short READ8, or RUN with either known or unknown
+completion invalidates the local page plan. Subsequent WRITE2/COMMIT requires
+a fresh validated selection. A successful READ8 preserves the staged words.
+The 7 ms default is the established host policy, not v4.1 hardware timing proof.
 
 Application images remain linked at zero. Only RESET is redirected, original
 interrupt vectors remain intact, and the four-byte postscript carries the

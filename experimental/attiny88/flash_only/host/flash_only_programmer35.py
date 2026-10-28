@@ -32,7 +32,7 @@ REQ_WRITE2 = 3
 REQ_RUN = 4
 REQ_COMMIT_PAGE = 5
 REQ_READ8 = 0xB0
-DEFAULT_FLASH_DELAY_MS = 15.0  # configurable; not a guaranteed worst-case limit
+DEFAULT_FLASH_DELAY_MS = 7.0  # established host policy; v4.1 has no board timing admission
 
 pack_application = core.pack_application
 parse_intel_hex = core.parse_intel_hex
@@ -55,6 +55,12 @@ class USBTransport:
         self._erased_page: int|None = None
         self._pending_words: set[int] = set()
 
+    def _invalidate_page(self):
+        """Forget all staging assumptions after an ambiguous USB transaction."""
+        self._selected_page=None
+        self._erased_page=None
+        self._pending_words.clear()
+
     def _out(self,opcode:int,value:int=0,index:int=0):
         return self.dev.ctrl_transfer(0x40,opcode,value,index,[],timeout=5000)
 
@@ -63,17 +69,13 @@ class USBTransport:
             raise ValueError(f'Flash page {address:#x} is unaligned or overlaps bootloader')
 
     def select_page(self,address:int,*,erase:bool=False):
+        # A new selection abandons the old local plan, even if validation or
+        # the USB request fails. COMMIT must never fall back to an old page.
+        self._invalidate_page()
         self._check_page(address)
-        try:
-            self._out(REQ_SELECT_ERASE if erase else REQ_SELECT,0,address)
-        except Exception:
-            self._selected_page=None
-            self._erased_page=None
-            self._pending_words.clear()
-            raise
+        self._out(REQ_SELECT_ERASE if erase else REQ_SELECT,0,address)
         self._selected_page=address
         self._erased_page=address if erase else None
-        self._pending_words.clear()
 
     def erase_page(self,address:int):
         self.select_page(address,erase=True)
@@ -91,9 +93,7 @@ class USBTransport:
             self._out(REQ_WRITE2,int.from_bytes(data,'little'),address)
         except Exception:
             # An ambiguous result is never silently advanced or committed.
-            self._selected_page=None
-            self._erased_page=None
-            self._pending_words.clear()
+            self._invalidate_page()
             raise
         self._pending_words.add(address)
 
@@ -105,22 +105,20 @@ class USBTransport:
             raise ValueError('Page does not contain all 32 word addresses')
         try:
             self._out(REQ_COMMIT_PAGE)
-        except Exception:
-            self._selected_page=None
-            self._pending_words.clear()
-            self._erased_page=None
-            raise
-        self._selected_page=None
-        self._erased_page=None
-        self._pending_words.clear()
+        finally:
+            self._invalidate_page()
 
     def read8(self,address:int,*,raw_flash:bool=False):
         limit=FLASH_BYTES if raw_flash else self.app_bytes
         if address%2 or address<0 or address+READ_BYTES>limit:
             raise ValueError('READ8 address unaligned or exceeds permitted range')
-        result=bytes(self.dev.ctrl_transfer(0xC0,REQ_READ8,0,address,READ_BYTES,timeout=5000))
-        if len(result)!=READ_BYTES:
-            raise IOError(f'Short READ8 from {address:#06x}, expected eight bytes')
+        try:
+            result=bytes(self.dev.ctrl_transfer(0xC0,REQ_READ8,0,address,READ_BYTES,timeout=5000))
+            if len(result)!=READ_BYTES:
+                raise IOError(f'Short READ8 from {address:#06x}, expected eight bytes')
+        except Exception:
+            self._invalidate_page()
+            raise
         return result
 
     def read8_firmware(self,address:int):
@@ -128,8 +126,10 @@ class USBTransport:
 
     def run(self):
         # Even if the response is lost, RUN may already have left the loader.
-        self._out(REQ_RUN)
-        self._selected_page=None
+        try:
+            self._out(REQ_RUN)
+        finally:
+            self._invalidate_page()
 
 
 def verify_page(t:USBTransport,position:int,data:bytes):
