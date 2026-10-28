@@ -78,3 +78,9 @@ Reset, SETUP and ACK also have different state ownership: reset clears the
 address and invalidates page selection, SETUP snapshots pending state, and an
 eligible ACK commits it. Combining these distinct contracts would remove
 required cancellation or retry behavior.
+
+## Share the standard GET_STATUS request check
+
+Device, interface and endpoint dispatch converge on one request-zero guard after their existing recipient, index and configuration checks. Unsupported request numbers still STALL. This removes six bytes without adding a poll; all 802 descriptor/PHY/ACK bytes stay identical. The exact composed image passes 2213 standard requests, 17 status cases, 57 completed control reads and 4032 real-IN foreground injections, retaining the same maximum 38-clock entry bound. The isolated before/after audit also passes 83 SETUP ownership cases, 864 IN responses and 16 zero-length direction sequences.
+
+Measured image: 1384 bytes.

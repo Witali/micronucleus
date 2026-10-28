@@ -20,11 +20,9 @@ usb_standard_dispatch:
     ldd r18, Y+CTX_CONFIGURATION
     cpi r18, 1
     brne usb_standard_stall
-    tst r25
-    breq usb_standard_get_status
     cpi r25, USB_REQ_GET_INTERFACE
     breq usb_standard_scratch_reply
-    rjmp usb_reply_stall
+    rjmp usb_standard_check_status
 usb_standard_scratch_reply:
 usb_reply_pointer_trampoline:
 legacy_led_on_anchor:
@@ -39,6 +37,9 @@ usb_standard_endpoint_in:
     andi r18, 0x7f
     or r18, r15
     brne usb_standard_stall
+/* Validated recipients share GET_STATUS's request-zero check. Keeping it
+ * beside endpoint validation preserves short-branch reach to STALL. */
+usb_standard_check_status:
     tst r25
     brne usb_standard_stall
 usb_standard_get_status:
@@ -48,12 +49,11 @@ usb_reply_use_scratch_buffer:
     ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
     rjmp usb_reply_use_flash_pointer
 usb_standard_device_in:
-    tst r25
-    breq usb_standard_get_status
     cpi r25, USB_REQ_GET_DESCRIPTOR
     breq usb_standard_check_get_descriptor
     cpi r25, USB_REQ_GET_CONFIGURATION
     breq usb_standard_get_configuration
+    rjmp usb_standard_check_status
 usb_standard_stall:
     rjmp usb_reply_stall
 usb_standard_check_get_descriptor:

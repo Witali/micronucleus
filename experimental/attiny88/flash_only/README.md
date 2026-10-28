@@ -19,8 +19,8 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1390-byte image has SHA-256
-`12b0c53742d82f0497fc83537eb7ec09eb2d2a15009bd4a37f72ae361288ad3b`.
+The current 1384-byte image has SHA-256
+`0e4e73da3b77873e34a9caa873d7622d87405bfc43a2cff282a6e630ff86878b`.
 
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
@@ -83,11 +83,11 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only audit checkpoint | 1390 |
+| Current Flash-only audit checkpoint | 1384 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference
-here. The current checkpoint is 58 bytes larger, with unresolved receiver work.
+here. The current checkpoint is 52 bytes larger, with unresolved receiver work.
 The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.
