@@ -312,6 +312,10 @@ usb_rx_accept_ack:
     ldi r19, USB_PID_NAK
     std Z+CTX_TX_LENGTH, r19
     /* SET_ADDRESS becomes effective only after ACK of status DATA1. */
+    /* Vendor WRITE4 kept the active address/CRC at SETUP; skip the
+     * unnecessary copy while meeting the next-packet receive budget. */
+    sbrc r3, USB_CURSOR_WRITE_PENDING_BIT
+    rjmp flash_buffer_ack_write4
     ldd r17, Z+CTX_NEW_DEVICE_ADDRESS
     std Z+CTX_DEVICE_ADDRESS, r17
     mov r8, r10
@@ -341,6 +345,10 @@ usb_rx_handle_data:
     cpi r16, USB_PID_DATA1
     brne usb_tx_send_ack
     /* USB8.5.3.1 permits any payload length for a read status inquiry. */
+/* Standard reads do not move the vendor cursor. Vendor READ8 publishes
+ * its consumed pointer once here; retrying this status copies the same value. */
+    sbrc r11, 6
+    movw r4, r14
 /* A valid OUT status also confirms the final IN when its ACK was lost. */
     ldi r19, USB_PID_NAK
     std Z+CTX_TX_LENGTH, r19
@@ -488,3 +496,30 @@ usb_return_polynomial:
     ldi r21, HIGH8(CRC16_POLYNOMIAL)
 usb_handler_return:
     ret
+
+flash_buffer_ack_write4:
+    /* Acknowledged WRITE4 must complete before accepting the next SETUP.
+     * Its empty status has no live payload CRC: R0/R1 can stage the words,
+     * and R1 is restored to zero before returning to the foreground. */
+    mov r3, r1
+    movw r22, r30
+    movw r30, r4
+    /* This loads only hardware-buffer slots. The deferred erase/page-write
+     * path retains the Flash boot-region guard before modifying Flash. */
+    movw r0, r12
+    out _SFR_IO_ADDR(SPMCSR), r29
+    spm
+    adiw r30, 2
+    movw r0, r14
+    out _SFR_IO_ADDR(SPMCSR), r29
+    spm
+    eor r1, r1
+    adiw r30, 2
+    movw r4, r30
+    andi r30, FLASH_PAGE_OFFSET_MASK
+    brne .Lack_write4_restore
+    ldi r18, SPM_PAGE_WRITE
+    mov r3, r18
+.Lack_write4_restore:
+    movw r30, r22
+    rjmp usb_handler_packet_done

@@ -9,6 +9,7 @@ python3 -m tests35.test_ep0_reply_fragments
 python3 -m tests35.test_tx_crc_payloads
 python3 -m tests35.test_ep0_read_completion
 python3 -m tests35.test_vendor_host_contract
+python3 -m tests35.test_sequential_wire
 python3 -m tests35.test_ep0_reset
 python3 -m tests35.test_ep0_shadow
 python3 -m tests35.test_ep0_ack_timeout

@@ -13,7 +13,7 @@ READ8 and the supported write commands; unknown opcodes currently STALL.
 Every vendor write explicitly selects write-status state before polling USB.
 Consequently an OUT cannot stand in for the ACK of its IN status packet,
 including for an out-of-contract vendor request received on the wire.
-Queued erase/commit/RUN work still requires that ACK, and reset/new SETUP
+Queued erase/program/RUN work still requires that ACK, and reset/new SETUP
 cancel stale work. The selected-page and boot-region protection remain.
 
 This host-only vendor-field contract does not relax USB token address,

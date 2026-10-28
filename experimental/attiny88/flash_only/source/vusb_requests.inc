@@ -3,7 +3,8 @@ bootloader_handle_vendor_request:
     brne bootloader_check_set_flash_address
 memory_read:
 memory_read_advance:
-    /* READ8 already owns its immutable Flash pointer in R14:R15. */
+    /* READ8 snapshots SELECT's cursor. OUT status later commits its advance. */
+    movw r14, r4
     ldi r24, USB_EP0_PAYLOAD_BYTES
     rjmp usb_reply_limit_length
 usb_reply_use_scratch_buffer:

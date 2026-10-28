@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build reproducible Pass35 bare code and fresh-ISP reference images.
+"""Build reproducible cursor-protocol code and fresh-ISP reference images.
 
-No hardware access. Flash-only 17-page ACK-safe experimental v4.1 variant.
+No hardware access. Flash-only v4.2 software audit checkpoint.
 """
 from __future__ import annotations
 import hashlib
@@ -59,12 +59,12 @@ def create():
             hashes.append((digest((OUT/fn).read_bytes()),fn))
         print(f'{led:12}: code {len(body):4} B; PHY {builds[-1]["usb_phy_bytes"]:3} B; boot=0x{boot:04x}; app={boot-4}; SHA256={digest(body)}')
     srcpaths=sorted((ROOT/'source').glob('*.inc'))+list((ROOT/'source').glob('*.S'))
-    meta={'title':'Micronucleus+ corrected Flash-only v4.1 audit checkpoint, 2026-10-28',
+    meta={'title':'Micronucleus+ cursor Flash-only v4.2 audit checkpoint, 2026-10-28',
           'target':'ATtiny88 external 16 MHz',
           'installed_or_hardware_tested':False,
           'artifact_kind':'software audit checkpoint; receiver qualification is open',
-          'protocol':'vendor v4.1: SELECT(1), SELECT+ERASE(2), WRITE2(3), RUN(4), COMMIT_PAGE(5), READ8(0xB0); absolute byte addresses',
-          'ack':'IN DATA held until ACK; deferred Flash SPM and RUN blocked while TX DATA remains unacknowledged; ACK eligibility marker is short-lived; idempotent WRITE2; COMMIT unknown completion checked via readback',
+          'protocol':'vendor v4.2: SELECT(1), SELECT+ERASE(2), WRITE4(3), RUN(4), READ8(0xB0); shared sequential cursor and automatic64-byte page programming',
+          'ack':'IN DATA held until ACK; deferred Flash SPM and RUN blocked while TX DATA remains unacknowledged; ACK eligibility marker is short-lived; WRITE4 word staging runs once inside eligible status ACK; automatic page write is deferred; ambiguous host completion stops the plan',
           'remaining_limitations':['Incoming USB DATA CRC16 not validated before ACK or afterward',
              'Legal dribble and crossover receiver qualification are still under audit',
              'No real hardware, analog waveform or hub testing',

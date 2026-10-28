@@ -1,21 +1,21 @@
 # Experimental Micronucleus+ for ATtiny88
 
-The separate [Flash-only v4.1 experiment](flash_only/README.md) imports the
+The separate [Flash-only cursor experiment](flash_only/README.md) imports the
 October 28 Pass35 handoff and audits its USB behavior alongside size work.
-It has its own absolute-address WRITE2/READ8 client and offline EEPROM-stage
+It has its own sequential WRITE4/READ8 client and offline EEPROM-stage
 planner. Current size optimization considers the no-LED variant. The
 EEPROM-capable compact v3.0 implementation remains separate; this import has
 not changed the installed board.
 
 The [compact Pass26 line](compact/README.md) imports the October 27 handoff
 on `feature/attiny88-compact-pass26`. Its v5.5 host and persistent memory cursor
-are separate from Block64 and the earlier optimized variants. The no-LED body
+are separate from Block 64 and the earlier optimized variants. The no-LED body
 is 1206 bytes at `0x1B40`; LED bodies are 1220/1218 bytes at `0x1B00`.
 Pass26 has offline validation only. Its original snapshot commit, earlier
 source checkpoints and complete archive are preserved in the
 [Pass26 provenance record](../../docs/attiny88-history/pass26/README.md).
 
-The separate [Block64 development line](block64/README.md) imports the complete
+The separate [Block 64 development line](block64/README.md) imports the complete
 October 26 handoff and develops its 64-byte control-transfer protocol on
 `feature/attiny88-block64`. It is also preserved in the default `master`
 branch under its own `block64/` directory. It has its own host, plan and software validation;
@@ -35,14 +35,14 @@ This directory contains the assembly development line imported from the October 
 
 | Variant | Code bytes | Boot address | Application bytes | Flash read |
 | --- | ---: | --- | ---: | --- |
-| Earlier packet/reset-corrected strict USB, pinned hardware target | 1344 | `0x1AC0` | 6844 | 1–8 bytes/request |
-| Latest optimized 20-page loader, LED off, software validated | 1262 | `0x1B00` | 6908 | 1–8 bytes/request |
-| Latest optimized loader, PD0 LED active high / low, software validated | 1280 / 1278 | `0x1B00` | 6908 | 1–8 bytes/request |
-| Preceding optimized 20-page loader, LED off, installed and hardware validated | 1274 | `0x1B00` | 6908 | 1–8 bytes/request |
-| Historical Fast Pass7, uncorrected | 1320 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
-| Historical strict Pass7, uncorrected | 1328 | `0x1AC0` | 6844 | Declared 1–8 bytes/request |
+| Earlier packet/reset-corrected strict USB, pinned hardware target | 1344 | `0x1AC0` | 6844 | 1Ã¢â‚¬â€œ8 bytes/request |
+| Latest optimized 20-page loader, LED off, software validated | 1262 | `0x1B00` | 6908 | 1Ã¢â‚¬â€œ8 bytes/request |
+| Latest optimized loader, PD0 LED active high / low, software validated | 1280 / 1278 | `0x1B00` | 6908 | 1Ã¢â‚¬â€œ8 bytes/request |
+| Preceding optimized 20-page loader, LED off, installed and hardware validated | 1274 | `0x1B00` | 6908 | 1Ã¢â‚¬â€œ8 bytes/request |
+| Historical Fast Pass 7, uncorrected | 1320 | `0x1AC0` | 6844 | Declared 1Ã¢â‚¬â€œ8 bytes/request |
+| Historical strict Pass 7, uncorrected | 1328 | `0x1AC0` | 6844 | Declared 1Ã¢â‚¬â€œ8 bytes/request |
 | Historical compact Pass4 | 1344 | `0x1AC0` | 6844 | 1 byte/request |
-| Rejected range-CRC Pass6 experiment | 1554 | `0x19C0` | 6588 | 1–8 bytes/request |
+| Rejected range-CRC Pass6 experiment | 1554 | `0x19C0` | 6588 | 1Ã¢â‚¬â€œ8 bytes/request |
 
 The corrected strict build supports standard Micronucleus Flash writes, application Flash reads, and read/write access to all 64 EEPROM bytes. The historical images declared these extensions but need the packet-level corrections described above. USB packet CRC remains enabled. The current target excludes the memory-range CRC experiment; verify readback on the host instead.
 
@@ -58,7 +58,7 @@ Default verified/release artifacts remain pinned to the earlier 1344-byte build.
 
 ## Build and check
 
-Use `python3 updater/build_optimized.py` for the latest optimized implementation and pass its firmware manifest to `updater/build.py`, as documented in the updater directory. `python3 updater/build_verified.py` and the default `python3 updater/build.py` retain the earlier pinned 1344-byte target. The commands below reproduce the original historical Pass7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
+Use `python3 updater/build_optimized.py` for the latest optimized implementation and pass its firmware manifest to `updater/build.py`, as documented in the updater directory. `python3 updater/build_verified.py` and the default `python3 updater/build.py` retain the earlier pinned 1344-byte target. The commands below reproduce the original historical Pass 7, not the corrected target. Its original handler-only tests did not cover complete USB request routing or watchdog-reset startup.
 
 Requirements: Python **3.10+**, Clang with the AVR backend, `llvm-objcopy`, `llvm-objdump`, GNU `avr-ld`, AVR-GCC and AVR-libc headers. In Ubuntu/WSL these tools are supplied by `clang`, `llvm`, `binutils-avr`, `gcc-avr` and `avr-libc`. No external Python packages are needed for offline builds or tests.
 
@@ -76,13 +76,13 @@ python3 tools/verify_history.py
 
 `sh verify.sh` runs the original fast-build checks. The strict builder and history verifier are separate checks. LLVM 18 leaves branch relocations in AVR object files, so the imported build scripts now invoke `avr-ld` before extracting binary bytes. This reproduces the archived firmware without modifying assembly instructions.
 
-Fast Pass7 body SHA-256: `6f573edc063f1e7751d551ac2ee3384ecfc92d807fa2db5e279e1d063327413d`.
+Fast Pass 7 body SHA-256: `6f573edc063f1e7751d551ac2ee3384ecfc92d807fa2db5e279e1d063327413d`.
 
 Strict USB body SHA-256: `fab49bebffe9a03c0db4504313e2af6c67678dde2b2211bf6dfe6d98fd9c4d5a`.
 
 ## Assembly labels
 
-The maintained [Fast Pass7 source](source/micronucleus_t88_plus.S) uses semantic
+The maintained [Fast Pass 7 source](source/micronucleus_t88_plus.S) uses semantic
 labels instead of the address-like names inherited from disassembly. Each
 renamed block has a short English comment describing its role. Names distinguish
 USB synchronization and NRZI receive paths (`usb_rx_*`), transmit/stuffing/EOP
@@ -97,7 +97,7 @@ three misleading named labels with their new names and purposes. For example,
 The former `usb_program_page` becomes `flash_buffer_append_word`: it stages
 one word with SPM; the separate `flash_commit_buffered_page` actually writes
 the page. `legacy_led_off_anchor` and `legacy_led_on_anchor` intentionally
-contain no instructions because those LED operations were removed in Pass7.
+contain no instructions because those LED operations were removed in Pass 7.
 
 This naming change preserves every instruction and all 97 mapped symbol
 addresses. The 1320-byte body and its SHA-256 above are unchanged. Tests and
@@ -110,7 +110,7 @@ by this readability update.
 
 ## Named constants and device definitions
 
-The Fast Pass7 source includes `<avr/io.h>` through the C preprocessor. The
+The Fast Pass 7 source includes `<avr/io.h>` through the C preprocessor. The
 build selects the unmodified official Microchip `iotn88.h` from the pinned
 [ATtiny_DFP 3.4.278 files](vendor/microchip/ATtiny_DFP-3.4.278/README.md).
 Register and bit names such as `DDRD`, `PCIFR`, `WDTCSR`, `EEPE` and `EEMPE`
@@ -138,7 +138,7 @@ python3 tools/import_microchip_device.py --check
 
 ## Files and protocol
 
-- `source/micronucleus_t88_plus.S`: historical Fast Pass7 source.
+- `source/micronucleus_t88_plus.S`: historical Fast Pass 7 source.
 - `firmware/`: archived fast body, fresh-device ISP HEX, and complete Flash image.
 - `variants/strict_usb_1328/`: historical strict source and images; its original 516-byte USB handler and 44-byte CRC routine are unchanged, but packet/reset fixes are needed.
 - `variants/strict_usb_verified/`: corrected 1344-byte target used in the successful USB upgrade and hardware memory tests.

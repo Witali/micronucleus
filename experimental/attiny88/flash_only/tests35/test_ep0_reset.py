@@ -33,7 +33,7 @@ def exit_action(art,tx_length,auto=False):
 
 def test():
     art=h.build();cases=0
-    for command in (3,4,5):
+    for command in (3,4,5,64):
         for rx_length in (0,1,11,255):
             new=reset(art,command,rx_length)
             assert new['action']=='idle' and new['command']==0,new

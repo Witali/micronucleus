@@ -1,4 +1,4 @@
-/* Micronucleus+ compact Pass35 ACK-safe SPM gate experimental candidate, ATtiny88 at 16 MHz.
+/* Micronucleus+ sequential Flash-only v4.2 experimental candidate, ATtiny88 at 16 MHz.
  * Derived from Witali/micronucleus Pass28 assembly; GPL-2.0-or-later.
  * Source modules follow the adjacent Block64 layout but use a separate protocol.
  * Original Micronucleus contributors' licensing/provenance remains in the
@@ -109,6 +109,8 @@ bootloader_dispatch_command:
 flash_erase_selected_page:
 flash_commit_buffered_page:
     movw r30, r4
+    sbrc r3, 2
+    sbiw r30, 2
 flash_do_spm:
     andi r30, FLASH_PAGE_ALIGN_MASK
 #if LOW8(BOOT_AT) == 0

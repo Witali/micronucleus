@@ -37,57 +37,48 @@ def test_flash():
     for led,boot,_,_ in MODES:
         a=art(led,boot)
         for page in range(0,8192,64):
-            for cmd in (1,2):
-                x=AVRExec(a);x.r[25]=cmd;x.r[29]=1
-                x.ram.update({27:page&255,28:page>>8})
-                x.r[14:16]=[page&255,page>>8]  # accepted SETUP register shadow
+            for command in (1,2):
+                x=AVRExec(a);x.r[25]=command;x.r[29]=1
+                x.r[14:16]=[page&255,page>>8]
                 assert x.run('bootloader_check_set_flash_address',stop=['usb_reply_empty'],limit=120)=='stop'
-                assert x.r[4:6]==[page&255,page>>8]
-                assert x.r[3]==cmd+1
-                assert x.spms and x.spms[-1][0]==0x11
-                x.spms.clear()
-                x.ram[15]=0x5a  # No unacknowledged outgoing DATA during standalone SPM test.
-                assert x.run('bootloader_dispatch_command',stop=['bootloader_clear_command'],limit=100)=='stop'
-                erases=[k for k in x.spms if k[0]==3]
-                assert len(erases)==(1 if cmd==2 and page<boot else 0),(led,page,cmd,erases)
-                checks+=1
-        for page in range(0,8192,64):
-            for idx in (0,2,16,30,62):
-                address=page+idx
-                x=AVRExec(a);x.r[29]=1;x.r[25]=3
-                x.r[4:6]=[page&255,page>>8]
-                x.ram.update({25:0x37,26:0x91,27:address&255,28:address>>8})
-                x.r[12:16]=[0x37,0x91,address&255,address>>8]
-                assert x.run('bootloader_check_write4',stop=['usb_reply_empty'],limit=120)=='stop'
-                assert x.r[1]==0 and x.r[4:6]==[page&255,page>>8]
-                loads=[k for k in x.spms if k[0]==1]
-                assert len(loads)==1 and loads[0][1:]==(address,0x9137),(led,page,idx,x.spms)
-                assert x.r[3]==0  # WRITE2 does not auto-commit.
-                checks+=1
-            for cmd in (4,5,6,0):
-                x=AVRExec(a);x.r[29]=1;x.r[25]=cmd
-                assert x.run('bootloader_check_write4' if cmd else 'bootloader_check_set_flash_address',stop=['usb_reply_empty','usb_reply_stall'],limit=100)=='stop'
-                expected='usb_reply_empty' if cmd in (4,5) else 'usb_reply_stall'
-                assert x.pc==a['symbols'][expected]
-                assert x.r[3]==(cmd if cmd in (4,5) else 0),(led,page,cmd,x.r[3])
-                checks+=1
-            for cmd in (3,5):
-                x=AVRExec(a);x.r[3]=cmd;x.r[4:6]=[page&255,page>>8];x.r[29]=1
-                x.ram[15]=0x5a  # No pending IN DATA; ACK-state gate permits SPM.
+                assert x.r[4:6]==[page&255,page>>8] and x.r[3]==command+1
+                assert x.spms[-1][0]==17
+                x.spms.clear();x.ram[15]=0x5a
                 assert x.run('bootloader_dispatch_command',stop=['bootloader_clear_command'],limit=120)=='stop'
-                real=[k for k in x.spms if k[0] in (3,5)]
-                assert len(real)==(1 if page<boot else 0),(led,page,cmd,real)
-                if real:assert real[0][0]==cmd and real[0][1]==page
+                actual=[row for row in x.spms if row[0]==3]
+                assert len(actual)==(command==2 and page<boot),(led,page,command,actual)
                 checks+=1
-        for adr in (0,2,14,254,256,boot-8,boot-2,boot,8184):
-            x=AVRExec(a);x.r[25]=0xb0;x.r[29]=1;x.r[4:6]=[0x55,0x19]
-            x.ram.update({27:adr&255,28:adr>>8})
-            x.r[14:16]=[adr&255,adr>>8]
+            for offset in range(0,64,4):
+                x=AVRExec(a);x.r[29]=1;x.r[3]=64
+                address=page+offset
+                x.r[4:6]=[address&255,address>>8]
+                x.r[12:16]=[0x37,0x91,0x25,0xa6];x.r[30:32]=[0,1]
+                assert x.run('flash_buffer_ack_write4',stop=['usb_handler_packet_done'],limit=120)=='stop'
+                assert x.spms==[(1,address,0x9137),(1,address+2,0xa625)]
+                assert x.r[4]|x.r[5]<<8==address+4
+                assert x.r[1]==0 and x.r[30:32]==[0,1]
+                assert x.r[3]==(5 if offset==60 else 0)
+                if offset==60:
+                    x.ram[15]=0x5a
+                    assert x.run('bootloader_dispatch_command',stop=['bootloader_clear_command'],limit=120)=='stop'
+                    writes=[row for row in x.spms if row[0]==5]
+                    assert len(writes)==(page<boot),(led,page,writes)
+                    if writes:assert writes[0][1]==page
+                checks+=1
+            for command in (0,5,6,255):
+                x=AVRExec(a);x.r[29]=1;x.r[25]=command
+                assert x.run('bootloader_check_set_flash_address',stop=['usb_reply_stall'],limit=120)=='stop'
+                assert not x.spms
+                checks+=1
+        for address in (0,2,14,254,256,boot-8,boot-2,boot,8184):
+            x=AVRExec(a);x.r[25]=0xb0;x.r[29]=1
+            x.r[4:6]=[address&255,address>>8]
+            x.r[14:16]=[0x55,0x19]  # Raw wIndex must not replace SELECT's cursor.
             assert x.run('bootloader_handle_vendor_request',stop=['usb_reply_limit_length'],limit=60)=='stop'
-            assert x.r[14:16]==[adr&255,adr>>8] and x.r[24]==8
-            assert x.r[4:6]==[0x55,0x19], 'READ8 must not move the write page selector'
+            assert x.r[14:16]==[address&255,address>>8] and x.r[24]==8
+            assert x.r[4:6]==[address&255,address>>8]
             checks+=1
-    print('PASS emitted AVR NVM opcode and boot-region protection checks:',checks)
+    print('PASS emitted SELECT/WRITE4/cursor/auto-page and boot protection:',checks)
 
 
 def test_ack():

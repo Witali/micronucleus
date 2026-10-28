@@ -68,7 +68,7 @@
 #define USB_PROTOCOL_BCD 0x0110
 #ifndef BOOT_VERSION_BCD
 #if LED_MODE == NONE && BOOT_AT == 0x1a40
-#define BOOT_VERSION_BCD 0x0460
+#define BOOT_VERSION_BCD 0x0470
 #else
 /* Alternate placements and LED modes are measurements, not recognized images. */
 #define BOOT_VERSION_BCD 0xffff
@@ -90,9 +90,9 @@
 #define USB_MAX_POWER_MA 100
 #define CMD_SET_MEMORY_ADDRESS 1
 #define CMD_SELECT_AND_ERASE 2
-#define CMD_WRITE2 3
+#define CMD_WRITE4 3
+#define USB_CURSOR_WRITE_PENDING_BIT 6
 #define CMD_EXIT 4
-#define CMD_COMMIT_PAGE SPM_PAGE_WRITE
 #define CMD_DEFERRED_MASK 0x3f
 #define REQ_UNIFIED_READ 0xb0
 #define STATUS_READY 0

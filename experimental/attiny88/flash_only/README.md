@@ -4,10 +4,11 @@ This separate experimental target imports Pass35 from the EEPROM handoff archive
 The EEPROM-capable [compact v3.0](../compact/README.md) remains available unchanged.
 No image in this directory has been installed or physically USB-tested.
 
-Vendor protocol v4.1 uses absolute-address WRITE2/READ8 and explicit page commit.
+Vendor protocol v4.2 uses sequential WRITE4/READ8 after SELECT, with automatic
+64-byte page programming and no separate COMMIT_PAGE command.
 It is incompatible with the v3.0 client. The corrected no-LED audit profile is
-0x0460 at 0x1A40, with 6716 application bytes. The active client rejects the
-unqualified archive profiles 0x0450..0x0452 and unknown identities before any
+0x0470 at 0x1A40, with 6716 application bytes. The active client rejects the
+archive and older audit profiles, including 0x0460, and unknown identities before any
 memory commands. Applications
 stay linked at zero, with RESET-only patching and a four-byte postscript under
 the [application contract](../compact/docs/APPLICATION_LAYOUT.md).
@@ -18,8 +19,8 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1388-byte image has SHA-256
-`f2fe76f34de1d0580a15c3ef0c296fe307f8064f4dccc6bf008d90a38901690c`.
+The current 1430-byte image has SHA-256
+`166ca3fcc502ee5e9a8c5b03d8c100970e940474b4cd01f35f18f70b5f73b032`.
 
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
@@ -42,9 +43,9 @@ archive/source hashes are in ARCHIVE_PROVENANCE.json.
 
 ## Scope and open findings
 
-The sole accepted USB exception is omitted received DATA CRC16 validation,
+The sole accepted USB exception is omitted received DATA CRC 16 validation,
 both before ACK and afterward.
-Outgoing CRC16, token CRC5/endpoint/length admission, retry/ACK ownership,
+Outgoing CRC 16, token CRC5/endpoint/length admission, retry/ACK ownership,
 SET_ADDRESS, reset cancellation and Flash guards require independent checks.
 The archive does not close those protocol findings; its tests are a baseline.
 Digital models at exactly 16 MHz do not establish electrical USB compliance.
@@ -55,7 +56,7 @@ software audit checkpoints while these findings are open. The existing board
 has not been changed. The no-LED receiver, control-state and token tests use
 the same linked AVR words that are exported, with independent waveform inputs.
 
-For this checkpoint, the software checks passed 2212 standard-request cases,
+For this checkpoint, the software checks passed 2213 standard-request cases,
 214272 token cases, 4032 foreground IN injections, 1889 complete-packet waveform
 cases, 57 control-read completion sequences and 12 vendor-status guard cases.
 The complete verification run fails when an ACK has one legal extra final one
@@ -82,23 +83,23 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only audit checkpoint | 1388 |
+| Current Flash-only audit checkpoint | 1430 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference
-here. The current checkpoint is 56 bytes larger, with unresolved receiver work.
+here. The current checkpoint is 98 bytes larger, with unresolved receiver work.
 The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.
 
 | Behavior | Official t88 v2.6 | Current Flash-only experiment |
 | --- | --- | --- |
-| Flash upload payload | Four bytes, advancing cursor | Two bytes, absolute address |
-| Page programming | Automatic at page boundary | Explicit COMMIT_PAGE |
-| Application Flash readback | No command in this protocol | READ8, including host verification |
+| Flash upload payload | Four bytes, advancing cursor | Four bytes, advancing cursor |
+| Page programming | Automatic at page boundary | Automatic at page boundary |
+| Application Flash readback | No command in this protocol | Sequential READ8, including host verification |
 | Permanent EEPROM USB access | None | None; separate offline temporary-app plan |
 | RESET redirection | Host postscript plus firmware RESET safety override | Host RESET/postscript packing |
-| Incoming CRC5 / CRC16 | Neither checked | CRC5 checked; DATA CRC16 explicitly waived |
+| Incoming CRC5 / CRC 16 | Neither checked | CRC5 checked; DATA CRC 16 explicitly waived |
 | IN retry state | Assumes successful ACK and frees TX on send | Cached DATA/PID retained until ACK/status completion |
 | SET_ADDRESS activation | During status DATA EOP | After eligible status ACK |
 | Host delay after programming | 7 ms normally; 5 ms in fast mode | Configurable, 7 ms default |
@@ -126,11 +127,24 @@ read path uses LPM. This is a source/disassembly finding, not a measured failure
 on hardware. The official 16 MHz PHY has not received the same waveform audit
 as this experiment; no relative timing-compliance claim follows from code size.
 
-The official uploader and this vendor v4.1 client are incompatible. At a
-64-byte page our WRITE2 path needs 32 staging requests instead of 16 WRITE4
-requests, plus explicit commit. No on-board throughput equivalence is claimed.
+The official uploader and this vendor v4.2 client are incompatible. Both use
+16 WRITE4 requests per 64-byte page. Our client separately erases and reads back
+pages; no on-board throughput equivalence is claimed.
 The upstream [command implementation](https://github.com/micronucleus/micronucleus/blob/4dd1b49f39cd9d6fc736a720777ed62f4564e0e2/firmware/main.c),
 [standard-request implementation](https://github.com/micronucleus/micronucleus/blob/4dd1b49f39cd9d6fc736a720777ed62f4564e0e2/firmware/usbdrv/usbdrv.c)
 and [host delay policy](https://github.com/micronucleus/micronucleus/blob/4dd1b49f39cd9d6fc736a720777ed62f4564e0e2/commandline/library/micronucleus_lib.c)
 are pinned to the compared commit. Only the selected t88 configuration is
 compared; upstream supports other AVR devices and clock/configuration options.
+
+## Cursor protocol change
+
+The preceding v4.1 audit was reduced from 1410 to 1388 bytes. The sequential
+READ8/WRITE4 implementation adds 42 bytes, measuring 1430 bytes at the same
+placement. This includes word staging at eligible status ACK, fixing a real
+minimum-gap next-SETUP race in the smaller foreground-staging prototype.
+
+The linked wire model passes96 WRITE4/status/retry exchanges,26 READ/cursor
+exchanges and99 host-rate/ACK-phase minimum-gap cases. The SRAM alternative
+uses 64 extra RAM bytes and measured 28 more code bytes after the shared structural
+reductions; combined erase/program would need about 10ms rather than 7ms. It
+remains isolated. See the [host contract](docs/HOST_CURSOR_PROTOCOL_4_2.md).

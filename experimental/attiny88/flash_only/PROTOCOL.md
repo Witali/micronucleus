@@ -1,58 +1,68 @@
-# Flash-only vendor protocol v4.1
+# Flash-only vendor protocol v4.2
 
 This target is separate from the EEPROM-capable v3.0 loader. The host selects
 geometry from an exact recognized bcdDevice before sending vendor commands.
 Unknown identities fail closed; neither a guessed RESET nor a command probe
 identifies a device layout.
 
-The current corrected no-LED candidate uses bcdDevice 0x0460, BOOT_AT 0x1A40,
-and a postscript at 0x1A3C. The original 0x0450..0x0452 archive profiles are
-preserved as audit inputs and rejected by this corrected client. No LED profile
-or alternate placement is admitted by the current client.
+The cursor no-LED candidate uses bcdDevice 0x0470, BOOT_AT 0x1A40 and a
+postscript at 0x1A3C. Earlier archive and absolute-address audit profiles are
+incompatible and rejected. Alternate placements and LED builds advertise
+0xFFFF unless explicitly assigned a new recognized layout.
 
 | Request | Host transfer | Parameters and meaning |
 | --- | --- | --- |
-| 1 SELECT | Vendor device OUT | wIndex is a 64-byte Flash page address; clear its temporary page buffer |
-| 2 SELECT+ERASE | Vendor device OUT | Select the page and defer physical erase until status ACK |
-| 3 WRITE2 | Vendor device OUT | wValue is one little-endian word; wIndex is its absolute byte address |
-| 4 RUN | Vendor device OUT | Defer application handoff until the status transfer completes |
-| 5 COMMIT_PAGE | Vendor device OUT | Commit the selected page after all 32 words have been staged |
-| 0xB0 READ8 | Vendor device IN | wIndex is an absolute Flash byte address; read up to eight bytes |
+| 1 SELECT | Vendor device OUT | wIndex selects a word-aligned common Flash cursor and clears the temporary page buffer |
+| 2 SELECT+ERASE | Vendor device OUT | Select an application page and erase it after eligible status ACK |
+| 3 WRITE4 | Vendor device OUT | wValue then wIndex carry four little-endian payload bytes; advance four bytes after status ACK |
+| 4 RUN | Vendor device OUT | Defer application handoff until eligible status ACK |
+| 0xB0 READ8 | Vendor device IN | wValue=wIndex=0; read up to eight bytes at the cursor, advancing by the actual count after valid OUT status |
 
-Vendor device OUT/IN use bmRequestType 0x40/0xC0. WRITE2 and READ8 have no
-automatic cursor advancement. EEPROM commands do not exist in this target.
-Vendor OUT parameters are entirely in SETUP, with wLength zero. The client
-validates vendor direction, recipient, length and parameters under the
-[host contract](docs/VENDOR_HOST_CONTRACT.md). The loader sorts standard,
-class/reserved and vendor request types; unsupported class/reserved requests
-return STALL. Interface class is vendor-specific.
-The host validates page/word bounds and the MCU retains the final SPM guard
-against erasing or writing its own bootloader pages.
+Opcode5 has no command. The 16th sequential WRITE4 fills the 64-byte page and
+queues automatic programming; no explicit COMMIT_PAGE transfer is needed.
+The host pads incomplete application pages with 0xFF and never mixes READ8
+into a partially staged write page. Standard USB queries do not move the
+vendor cursor. EEPROM commands do not exist in this permanent loader.
+
+Vendor OUT/IN use bmRequestType 0x40/0xC0. Vendor OUT parameters are entirely
+in SETUP with wLength zero. The client validates fields, geometry and complete
+page planning under the [cursor contract](docs/HOST_CURSOR_PROTOCOL_4_2.md).
+The loader separates standard, class/reserved and vendor requests; unsupported
+class/reserved requests STALL. The final MCU erase/page-program guard protects
+the bootloader. Buffer-slot loading cannot itself modify Flash.
 
 IN DATA/PID stays cached until an eligible, correctly framed ACK. Repeated IN
-before ACK must return the same bytes and PID. ACK eligibility is short-lived;
-the durable pending-DATA flag is separate and must block SPM/application exit.
-A replacement SETUP or bus reset cancels the obsolete transfer and deferred
-work. SET_ADDRESS takes effect only after its status ACK.
+before ACK returns identical bytes and PID. The short ACK eligibility marker
+is distinct from the durable outstanding-DATA flag. WRITE4 stages its two
+hardware-buffer words inside the validated status-ACK path, before a new
+SETUP can replace the accepted payload. That path advances the cursor once.
+Only the final slow page program remains deferred to the foreground.
+
+READ8 commits its consumed pointer on valid OUT status; repeated status copies
+the same pointer. Standard reads leave the cursor intact. A replacement SETUP
+or bus reset cancels the obsolete unacknowledged request and its queued work.
+SET_ADDRESS becomes active only after its status ACK.
 
 ACK eligibility and SETUP/OUT token authorization expire if no next SOP appears
 within the USB 16..18-bit-time transaction timeout. Cached IN DATA remains
-available for retry. A failed SYNC also cancels authorization. Accepted SETUP
-parameters remain in preserved registers, so ignored packets cannot overwrite
-the values used by foreground Flash commands. A valid control-read OUT status
-may confirm a final IN whose ACK was lost; it cannot replace a write's IN status.
+available for retry. Failed SYNC cancels authorization. Accepted SETUP fields
+stay in preserved registers, so ignored packets cannot change accepted data.
+A control-read OUT status may confirm final IN data whose ACK was lost; it
+cannot replace a write request's required IN status ACK.
 
-USB status completion does not mean Flash has finished programming: SPM halts
-this CPU. The host defaults to a configurable 7 ms quiet interval and reads back each
-page. It repeats readback across the entire image after all writes to detect
-later corruption of an earlier page before reporting success or sending RUN.
-After an uncertain COMMIT it reads back before deciding what to do;
-it must not blindly issue another COMMIT.
+USB status completion does not mean Flash has finished: SPM erase and page
+program halt this CPU. The host uses a configurable 7ms quiet interval after
+each separate erase/program operation. It verifies erased Flash, reselects
+the page because reads advanced the cursor, sends 16 WRITE4 requests, waits
+and verifies the page. A final whole-image pass detects later corruption of
+an earlier page before reporting success or allowing RUN.
 
-An invalid new SELECT, failed/short READ8, or RUN with either known or unknown
-completion invalidates the local page plan. Subsequent WRITE2/COMMIT requires
-a fresh validated selection. A successful READ8 preserves the staged words.
-The 7 ms default is the established host policy, not v4.1 hardware timing proof.
+Any ambiguous USB result invalidates the host cursor and erase/page plan.
+The same transport cannot continue or blindly replay WRITE4, including the
+last request whose automatic programming may already have completed. Start
+a new complete erase/verify/program plan. Hardware buffer words may not be
+loaded twice before clearing; even identical repeated loads are not assumed
+idempotent. See ATtiny88 datasheet section 19.0.2 and the independent NVM model.
 
 Application images remain linked at zero. Only RESET is redirected, original
 interrupt vectors remain intact, and the four-byte postscript carries the
@@ -63,9 +73,9 @@ EEPROM staging is an offline temporary-application plan. A reconnect is not an
 independent success proof and must not automatically permit main-image restore.
 All hardware programming remains outside software verification.
 
-The user-approved receive CRC exception is explicit: incoming DATA CRC16 is
+The user-approved receive CRC exception is explicit: incoming DATA CRC 16 is
 not validated, either before ACK or later. This includes SETUP's DATA packet.
-Outgoing DATA CRC16 and incoming token CRC5 remain required. Full-image final
+Outgoing DATA CRC 16 and incoming token CRC5 remain required. Full-image final
 readback improves detection of wrong writes but does not make this exception
 USB compliant. No additional protocol waiver is adopted.
 

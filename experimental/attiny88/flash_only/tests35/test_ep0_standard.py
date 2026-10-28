@@ -93,9 +93,13 @@ def test():
         cases+=1
     # Vendor direction/recipient/wLength validation belongs to the host.
     # Mandatory class/reserved errors remain in the all-bmRequestType loop.
-    for req in (1,2,3):
+    for req in (1,2):
         assert request(art,0x40,req,index=0x80,length=0)['kind']=='spm',req
         cases+=1
+    row=request(art,0x40,3,value=0x2211,index=0x4433,length=0)
+    assert row['kind']=='reply' and row['command']==64,row
+    assert request(art,0x40,5,length=0)['kind']=='stall'
+    cases+=2
     report=dict(bytes=art['size'],sha256=art['sha256'],cases=cases,
                 interface_class=configuration[14],standard='USB2.0 chapter9')
     print(json.dumps(report,indent=2),flush=True)
