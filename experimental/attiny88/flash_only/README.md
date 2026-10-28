@@ -66,6 +66,8 @@ checks does not qualify this image for hardware use.
 The [receiver admission notes](docs/USB_RX_QUALIFICATION.md) describe an
 additional mandatory ACK-to-next-SETUP regression. It verifies both old-word
 staging and reception of the next request at the physical two-bit minimum gap.
+The [specification-to-test matrix](docs/USB_REQUIREMENTS.md) also includes DATA
+framing, malformed packets, retry/reset ownership and separate signal timing.
 
 EEPROM is absent from this permanent loader. eeprom_stage/ is an offline planner
 for a temporary application and subsequent main-image restoration. USB
