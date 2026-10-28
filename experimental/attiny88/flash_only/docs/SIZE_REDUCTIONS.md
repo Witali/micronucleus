@@ -84,3 +84,39 @@ required cancellation or retry behavior.
 Device, interface and endpoint dispatch converge on one request-zero guard after their existing recipient, index and configuration checks. Unsupported request numbers still STALL. This removes six bytes without adding a poll; all 802 descriptor/PHY/ACK bytes stay identical. The exact composed image passes 2213 standard requests, 17 status cases, 57 completed control reads and 4032 real-IN foreground injections, retaining the same maximum 38-clock entry bound. The isolated before/after audit also passes 83 SETUP ownership cases, 864 IN responses and 16 zero-length direction sequences.
 
 Measured image: 1384 bytes.
+
+## Target placement audit at 0x1C00
+
+The production source at commit 68a4d21 measures 1380 bytes when built without
+LED at the intended 1 KiB start address, 0x1C00. It exceeds the 1024-byte region
+by 356 bytes. The four-byte difference from the 0x1A40 checkpoint comes from
+the shorter page-aligned Flash guard; it is not a new algorithmic reduction.
+This measurement advertises the unknown identity 0xFFFF and is not admitted
+by the client. Receiver qualification is still open at both placements.
+
+## Adjacent USB polls retained after timing measurements
+
+Each proposed removal saves two bytes, but merges instruction gaps beyond
+the currently admitted 38-clock receiver-entry envelope:
+
+| Poll removed | Legal request | IN SOP after SETUP ACK recovery J | Measured RX entry |
+| --- | --- | ---: | ---: |
+| Before message-length publication | SET_CONFIGURATION | 76 1/3 clocks | 43 2/3 clocks |
+| At reply-limiter entry | Interface GET_STATUS | 91 1/3 clocks | 39 2/3 clocks |
+| At EP0 packet preparation entry | SET_CONFIGURATION | 106 1/3 clocks | 43 2/3 clocks |
+
+All corners use a 1.5 Mbit/s host. Those individual tokens decoded; this does
+not prove admission for all phases outside the tested entry envelope. The
+final TX-length publication guard was retained throughout. No poll removal
+was integrated.
+
+## Packet-done counter seed retained
+
+Replacing the packet-done IN/SBRC pair with direct SBIC would save two bytes
+and one clock, but the IN also replaces R28 with the PCIF value before the
+next wait-for-J loop. The proposed proof that the old R28 could never be
+0xFF was disproved: a long malformed K ending in J on the 255th increment,
+followed by a wait-for-K timeout, reaches packet-done with R28=0xFF. This is
+reachable with a new SOP pending too. The direct-SBIC variant was not admitted;
+this counterexample disproves its proposed invariant rather than establishing
+its full behavior by itself.
