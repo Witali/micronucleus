@@ -125,6 +125,9 @@
 #define USB_RX_LEAP_PERIOD 3
 #define USB_RX_UNSTUFF7_LEAP_ADJUST 2
 #define USB_TX_BIT_COUNTER_SEED 0x3b
+#if USB_EOP_DELAY_LOOPS != USB_LINE_MASK
+#error TX reuses the USB line mask as its EOP delay count
+#endif
 #if (USB_SETUP_PENDING_VALUE & (1 << USB_SETUP_PENDING_BIT)) == 0
 #error Accepted SETUP must own the pending-state bit
 #endif

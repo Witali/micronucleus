@@ -456,7 +456,9 @@ usb_tx_send_bit7:
     rjmp .+0
 usb_tx_finish_eop:
     ori r16, (1 << USB_MINUS_BIT)
-    ldi r21, USB_EOP_DELAY_LOOPS
+    /* TX kept R21 at the line mask, already equal to the six-count delay.
+     * Reusing it removes LDI and makes SE0 21 clocks (1.3125us at 16 MHz),
+     * closer to two nominal low-speed bits and within USB Table 7-10. */
 usb_tx_eop_delay:
     dec r21
     brbc SREG_Z, usb_tx_eop_delay
