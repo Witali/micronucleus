@@ -50,7 +50,7 @@ interpretations; it does not relax the specification's maximum delay.
 
 ## Known failures remain mandatory
 
-At the 1384-byte strict checkpoint, legal dribble is rejected. A later scratch
+At the current 1382-byte strict checkpoint, legal dribble is rejected. A scratch
 receiver also admitted SETUP DATA with an illegal final zero; that finding is
 covered by `test_data_framing`. Its 6185 cases use valid CRC16 base packets and
 all 1..7-bit tail patterns across CRC-ending classes, plus truncated CRC fields
@@ -70,3 +70,8 @@ packet length, token CRC5, EOP recovery or any timing requirement.
 Digital instruction tests do not measure cable propagation, analog thresholds,
 pin rise/fall times or oscillator drift. Those need physical measurements;
 software tests must not be described as complete electrical USB certification.
+
+The [historical receive comparison](HISTORICAL_USB_RX.md) records which defects
+are inherited from official v2.6 / installed compact v3.0 and which appeared
+while making the newer receiver stricter. A historical driver's acceptance of
+legal dribble does not establish rejection of malformed partial tails.

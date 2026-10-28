@@ -103,6 +103,12 @@ The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.
 
+The [historical receive audit](docs/HISTORICAL_USB_RX.md) reconstructs that exact
+installed image and the official v2.6 tag. Both miss a directed 670 ns EOP
+corner. The old v3.0 accepts legal dribble but also publishes damaged stuffing
+and illegal partial DATA tails; its permissive EOF path is not a compliance
+reference for the stricter receiver.
+
 | Behavior | Official t88 v2.6 | Current Flash-only experiment |
 | --- | --- | --- |
 | Flash upload payload | Four bytes, advancing cursor | Four bytes, advancing cursor |
