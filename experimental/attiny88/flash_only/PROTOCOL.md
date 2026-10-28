@@ -27,7 +27,9 @@ work. SET_ADDRESS takes effect only after its status ACK.
 
 USB status completion does not mean Flash has finished programming: SPM halts
 this CPU. The host defaults to a configurable 7 ms quiet interval and reads back each
-page. After an uncertain COMMIT it reads back before deciding what to do;
+page. It repeats readback across the entire image after all writes to detect
+later corruption of an earlier page before reporting success or sending RUN.
+After an uncertain COMMIT it reads back before deciding what to do;
 it must not blindly issue another COMMIT.
 
 An invalid new SELECT, failed/short READ8, or RUN with either known or unknown

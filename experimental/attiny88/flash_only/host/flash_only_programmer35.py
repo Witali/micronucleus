@@ -184,6 +184,11 @@ def program_application(t:USBTransport,patched:core.PatchedImage,*,delay:float=D
         else:
             time.sleep(delay)
             verify_page(t,address,data)
+    # A later corrupt request can damage an already verified page, especially
+    # while incoming SETUP CRC16 remains waived. Recheck the complete image
+    # after all writes before reporting success or allowing RUN.
+    for address,data in pages:
+        verify_page(t,address,data)
     return True
 
 
