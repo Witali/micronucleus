@@ -64,9 +64,32 @@ class CPU(Timed):
         else:super().memwrite(address,value)
     def step(self):
         self.executing_pc=self.pc
+        word=self.flash[self.pc]|self.flash[self.pc+1]<<8
+        # A branch to the following instruction has the same final PC for
+        # both outcomes. Its taken condition still determines 1/2 cycles;
+        # the inherited timing layer cannot infer that condition from PC.
+        if word&0xfff8 in (0xf000,0xf400):
+            bit=word&7;branch_if_set=word&0xfff8==0xf000
+            taken=bool(self.flag(bit))==branch_if_set
+            self.visited.add(self.pc);self.pc+=2
+            self.t+=2 if taken else 1;self.steps+=1
+            return SimpleNamespace(op='brbs' if branch_if_set else 'brbc',
+                                   operands=str(bit)+',',target=self.pc,size=2)
+        # ASR is used by the table-free EOF mask classifier. It preserves
+        # the sign bit and SREG.H/T/I; V=N xor C and S=N xor V.
+        if word&0xfe0f==0x9405:
+            index=(word>>4)&31;old=self.r[index]
+            value=(old>>1)|(old&0x80)
+            self.r[index]=value
+            self.setflag(0,old&1);self.setflag(1,value==0)
+            self.setflag(2,value&0x80)
+            self.setflag(3,self.flag(2)^self.flag(0))
+            self.setflag(4,self.flag(2)^self.flag(3))
+            self.visited.add(self.pc);self.pc+=2;self.t+=1;self.steps+=1
+            return SimpleNamespace(op='asr',operands='r'+str(index),target=None,size=2)
         # SEC is one classic-AVR cycle and changes only SREG.C. The older
         # shared model omitted it because its original paths never use it.
-        if self.flash[self.pc]==0x08 and self.flash[self.pc+1]==0x94:
+        if word==0x9408:
             self.visited.add(self.pc);self.setflag(0,1)
             self.pc+=2;self.t+=1;self.steps+=1
             return SimpleNamespace(op='sec',operands='',target=None,size=2)
