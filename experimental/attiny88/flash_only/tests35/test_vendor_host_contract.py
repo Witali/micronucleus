@@ -12,7 +12,7 @@ def test():
             cpu.pc=cpu.labels['usb_setup_capture_fields']
             cpu.m[0x117:0x11f]=bytes([bm,command,0,0,0x80,0,8,0])
             cpu.r[6:8]=[8,0];cpu.r[12:16]=[0,0,0x80,0]
-            cpu.r[11]=0xff;cpu.m[0x10f]=12
+            cpu.r[11]=0xff;cpu.r[3]=11;cpu.m[0x10f]=0x5a
             for _ in range(3000):
                 if cpu.pc==cpu.labels['usb_rx_release_buffer']:break
                 cpu.step()

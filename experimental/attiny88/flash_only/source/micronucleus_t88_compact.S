@@ -88,7 +88,6 @@ bootloader_process_pending_command:
     /* Watchdog was disabled at RESET before the 301ms USB disconnect delay. */
 usb_control_process_received_packet:
     rcall usb_validate_setup
-    std Y+CTX_RX_LENGTH, r1
 bootloader_check_pending_command:
 .Lcommand_eeprom_idle:
 bootloader_dispatch_command:
@@ -177,7 +176,6 @@ bootloader_reset_control_state:
     mov r8, r17
     std Y+CTX_NEW_DEVICE_ADDRESS, r1
     std Y+CTX_CURRENT_TOKEN, r1
-    std Y+CTX_RX_LENGTH, r1
     movw r2, r24
     mov r11, r1
     ldi r17, USB_PID_NAK

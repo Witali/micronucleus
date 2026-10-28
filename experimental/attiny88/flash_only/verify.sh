@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 python3 tests34/test_opcode.py
 python3 tests34/test_standard.py
 python3 -m tests35.test_ep0_status
+python3 -m tests35.test_setup_pending_marker
 python3 -m tests35.test_ep0_zero_direction
 python3 -m tests35.test_ep0_reply_fragments
 python3 -m tests35.test_tx_crc_payloads

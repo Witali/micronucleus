@@ -24,14 +24,15 @@ def test():
         cpu.r[8]=0x10
         cpu.m[0x10f]=0x5a
         finish(cpu)
-        assert cpu.m[0x112]==0
+        assert cpu.r[3]==0
     bind(artifact)
     cpu=h.CPU(artifact,Bits(h.data_packet(bytes(range(8)))))
     cpu.r[8]=0x10
     cpu.m[0x10f]=0x5a
     cpu.m[0x114]=0x2d
     finish(cpu)
-    assert cpu.m[0x112]==11
+    assert cpu.r[3]==11 and cpu.m[0x10f]==0x5a
+    assert cpu.r[12:16]+cpu.r[6:8]==list(range(2,8))
     bind(artifact)
     cpu=h.CPU(artifact,Bits(b'\xd2'))
     cpu.r[2]=12

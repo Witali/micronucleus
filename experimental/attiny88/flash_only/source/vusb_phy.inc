@@ -39,7 +39,7 @@ usb_rx_delay_complete:
     andi r16, USB_LINE_MASK
     bst r16, USB_MINUS_BIT
     bld r18, 7
-    ldd r19, Z+CTX_RX_LENGTH
+    ldd r19, Z+CTX_TX_LENGTH
     ldi r21, 0x00
     ldi r23, USB_RX_BUFFER_BYTES
     rjmp usb_rx_sample_odd_bit
@@ -260,9 +260,6 @@ usb_rx_recovered_j:
     cpi r16, USB_PID_IN
     brne .Lrx_not_in
 usb_rx_handle_in:
-    cpi r19, 0x01
-    brbc SREG_S, usb_tx_send_nak
-    ldd r19, Z+CTX_TX_LENGTH
     sbrc r19, USB_HANDSHAKE_FLAG_BIT
     rjmp usb_tx_send_count_handshake
     mov r2, r19       /* a DATA packet was actually transmitted */
@@ -270,9 +267,6 @@ usb_rx_handle_in:
      * correct. Handshake TX's high zero is restored from Z before RX. */
     ldi r28, LOW8(USB_CONTEXT_BASE + CTX_TX_PID)
     rjmp usb_tx_acquire_bus
-usb_tx_send_nak:
-    ldi r20, USB_PID_NAK
-    rjmp usb_tx_prepare_handshake
 .Lrx_not_in:
     cpi r16, USB_PID_SETUP
     brbs SREG_Z, usb_rx_handle_setup_or_out
@@ -397,8 +391,11 @@ usb_rx_setup_data:
     ldd r15, Z+CTX_SETUP_INDEX_HIGH
     ldd r6, Z+CTX_SETUP_LENGTH_LOW
     ldd r7, Z+CTX_SETUP_LENGTH_HIGH
-    std Z+CTX_RX_LENGTH, r23
-    std Z+CTX_RX_TOKEN, r18
+    /* Only validated DATA0/SETUP installs this unique pending state.
+     * NAK retires the previous reply before another IN can see it. */
+    ldi r19, USB_PID_NAK
+    std Z+CTX_TX_LENGTH, r19
+    mov r3, r23
 usb_tx_send_ack:
     ldi r19, USB_PID_ACK
 usb_tx_send_count_handshake:

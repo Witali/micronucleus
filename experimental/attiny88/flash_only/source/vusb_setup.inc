@@ -1,23 +1,19 @@
 usb_validate_setup:
-    ldd r18, Y+CTX_RX_LENGTH
-    cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
-    brne .Lservice_done
-usb_validate_setup_token:
-    ldd r18, Y+CTX_RX_TOKEN
-    cpi r18, USB_PID_SETUP
-    brne .Lservice_done
+    /* Only accepted SETUP (11) owns bit3. Deferred command values
+     * 0,2,3,4,5,64 all leave it clear. Reset clears R3 as well. */
+    sbrs r3, USB_SETUP_PENDING_BIT
+    ret
     pop r18
     pop r18
-    std Y+CTX_RX_LENGTH, r1
 usb_setup_capture_fields:
 /* A new SETUP replaces the old control transfer before its status ACK;
  * never let a later reply unlock a stale erase/commit/RUN command. */
     mov r3, r1
+    /* Both RX callers dispatch here before polling again. Capture the raw
+     * two-byte header before that poll; the six payload fields are already
+     * protected in registers by the PHY. */
     ldd r24, Y+CTX_SETUP_REQUEST_TYPE
     ldd r25, Y+CTX_SETUP_REQUEST
-    /* Invalidate the old reply before an early cooperative poll. */
-    ldi r18, USB_PID_NAK
-    std Y+CTX_TX_LENGTH, r18
     rcall usb_service_pending
 /* With wLength zero USB ignores the direction bit: status is IN. Otherwise
  * preserve the accepted direction so an OUT cannot unlock a write's status. */

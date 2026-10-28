@@ -100,7 +100,7 @@ def test_ack():
                     assert m.mem[0x100+12]==(new if good else 0x08)
                     cases+=1
         for n in (4,8,12):
-            m=CPU(a);m.r[19]=0
+            m=CPU(a);m.r[19]=n
             m.mem[0x100+15]=n
             m.mem[0x100+12]=8
             m.mem[0x100+19]=0x14
@@ -108,7 +108,7 @@ def test_ack():
                 if i!=12:m.mem[0x100+i]=(i*13)&255
             original=dict(m.mem)
             for _ in range(6):
-                m.r[19]=0
+                m.r[19]=m.mem[0x100+15]  # RX already sampled TX_LENGTH.
                 assert m.run('usb_rx_handle_in',('usb_tx_acquire_bus',))=='usb_tx_acquire_bus'
                 assert m.mem==original and m.r[2]==n
                 cases+=1
@@ -122,7 +122,7 @@ def test_ack():
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a and m.mem[0x100+0]==0xff
             assert m.mem[0x100+12]==0 and m.mem[0x100+21]==0
             assert m.mem[0x100+19]==0
-            assert m.mem[0x100+18]==0 and m.mem[0x100+20]==0
+            assert m.mem[0x100+20]==0
             assert m.r[3]==0 and m.r[5]==0xff
             cases+=1
     print('PASS ACK packet/retry/bus-reset opcode cases:',cases)

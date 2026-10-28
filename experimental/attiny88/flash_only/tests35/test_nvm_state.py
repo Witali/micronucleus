@@ -26,7 +26,9 @@ def initialized(art,low):
     assert not cpu.raw_stack
     assert cpu.r[2:4]==[0,0] and cpu.r[5]==255
     assert cpu.r[6:8]==[0,0] and cpu.r[8]==0x10 and cpu.r[11]==0
-    assert [cpu.m[0x100+i] for i in (12,18,19,20,21)]==[0]*5
+    # Historical receive fields remain poisoned: only R3 owns new SETUP.
+    # The Flash guard sweep below must still reject every page-low poison.
+    assert [cpu.m[0x100+i] for i in (12,19,20,21)]==[0]*4
     assert cpu.m[0x10f]==0x5a and cpu.m[0x100]==255
     assert cpu.word(28)==0x100 and cpu.word(30)==0x60
     return cpu

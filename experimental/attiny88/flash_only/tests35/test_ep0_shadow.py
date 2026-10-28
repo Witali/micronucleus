@@ -52,14 +52,16 @@ def test():
     for rate in (1499250,1500000,1500750):
         for entry in (5,8,16,24,32,38):
             row=data_reply(after,entry=entry,rate=rate)
-            assert row['rx_length']==11 and row['current_token']==0,row
+            assert row['setup_pending'] and row['tx']==0x5a and row['current_token']==0,row
+            assert row['shadow']==list(SETUP[2:8]),row
             assert row['response']<=6.5*(32/3),row
             rows.append(row)
     assert data_reply(after,pid=0x4B)['response'] is None
     for payload in (b'',bytes(1),bytes(7)):
         assert data_reply(after,payload=payload)['response'] is None
     # A fresh SETUP must be accepted even while a previous one was staged.
-    assert data_reply(after,busy=11)['rx_length']==11
+    replacement=data_reply(after,busy=11)
+    assert replacement['setup_pending'] and replacement['shadow']==list(SETUP[2:8])
     assert data_reply(after,token=0)['response'] is None
     report=dict(bytes=after['size'],sha256=after['sha256'],
                 shadowed=new,max_ack_response=max(row['response'] for row in rows),

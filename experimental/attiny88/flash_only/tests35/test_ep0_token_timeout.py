@@ -46,7 +46,7 @@ def transaction(art,delay=None,rate=1_500_000,width=64/3,entry=8):
             if c.pc==0xfffe:break
             c.step()
         else:raise AssertionError('late DATA did not terminate')
-    return dict(expiry=expiry,decision=decision,token=c.m[0x114],rx_length=c.m[0x112])
+    return dict(expiry=expiry,decision=decision,token=c.m[0x114],setup_pending=c.r[3]==11,shadow=c.r[12:16]+c.r[6:8])
 
 def test():
     art=h.build();rows=[];cases=0
@@ -59,7 +59,8 @@ def test():
                 rows.append(row['expiry'])
                 for bits in (2,7.5,15.5,16,18,24):
                     row=transaction(art,delay=bits*period,rate=rate,width=width,entry=entry)
-                    assert row['rx_length']==(11 if bits<=16 else 0),(bits,rate,width,entry,row)
+                    assert row['setup_pending']==(bits<=16),(bits,rate,width,entry,row)
+                    if bits<=16:assert row['shadow']==[0x11,0x22,0x80,0,0,0],row
                     cases+=1
     report=dict(bytes=art['size'],sha256=art['sha256'],cases=cases,flag_store_range=[min(rows),max(rows)])
     print(json.dumps(report,indent=2),flush=True)

@@ -18,7 +18,6 @@ def one(mode,boot,caller,pending,ipd,phase=0,source="source",halt=False):
  s.r[16]=2;s.r[17]=6;s.r[21]=0;s.r[23]=0xff
  s.r[26]=0x10;s.r[27]=1 # nonzero poll countdown
  s.io[0x0a]=6;s.io[0x0b]=2
- s.m[0x100+18]=0 # no complete SETUP waiting
  s.m[0x100+15]=12 # DATA already transmitted, awaiting ACK
  s.m[0x100+0]=0xff # no additional reply
  r=s.run(limit=1600)

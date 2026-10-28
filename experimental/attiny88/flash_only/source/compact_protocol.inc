@@ -8,10 +8,8 @@
 #define CTX_REPLY_SCRATCH 16
 #define CTX_REPLY_SCRATCH_HIGH 17
 #define CTX_DEVICE_ADDRESS 12
-#define CTX_RX_TOKEN 13
 #define CTX_INPUT_BUFFER_OFFSET 14
 #define CTX_TX_LENGTH 15
-#define CTX_RX_LENGTH 18
 #define CTX_NEW_DEVICE_ADDRESS 19
 #define CTX_CURRENT_TOKEN 20
 #define CTX_CONFIGURATION 21
@@ -91,6 +89,8 @@
 #define CMD_SELECT_AND_ERASE 2
 #define CMD_WRITE4 3
 #define USB_CURSOR_WRITE_PENDING_BIT 6
+#define USB_SETUP_PENDING_BIT 3
+#define USB_SETUP_PENDING_VALUE (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
 #define CMD_EXIT 4
 #define CMD_DEFERRED_MASK 0x3f
 #define REQ_UNIFIED_READ 0xb0
@@ -125,6 +125,12 @@
 #define USB_RX_LEAP_PERIOD 3
 #define USB_RX_UNSTUFF7_LEAP_ADJUST 2
 #define USB_TX_BIT_COUNTER_SEED 0x3b
+#if (USB_SETUP_PENDING_VALUE & (1 << USB_SETUP_PENDING_BIT)) == 0
+#error Accepted SETUP must own the pending-state bit
+#endif
+#if (((CMD_SET_MEMORY_ADDRESS + 1) | (CMD_SELECT_AND_ERASE + 1) | CMD_EXIT | SPM_PAGE_WRITE | (1 << USB_CURSOR_WRITE_PENDING_BIT)) & (1 << USB_SETUP_PENDING_BIT)) != 0
+#error A deferred command collides with the accepted-SETUP state bit
+#endif
 #if PCINT18 != PCIE2
 #error The reused PCMSK2 and PCICR enable mask requires identical bit positions
 #endif

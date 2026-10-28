@@ -51,7 +51,7 @@ def run_matrix(artifact):
                         # Authorize a SETUP DATA and seed a valid stale packet:
                         # an early partial receive must not inherit and ACK it.
                         cpu.m[0x114]=0x2d
-                        cpu.m[0x112]=0
+                        cpu.r[3]=0
                         cpu.m[0x10f]=0x5a
                         cpu.m[0x116:0x116+len(packet)]=packet
                         first_eop=None
@@ -66,7 +66,7 @@ def run_matrix(artifact):
                             # Watch final handler effects, not merely the old
                             # complete-byte phase test: legal dribble may add a
                             # second accepted phase in a future receiver gate.
-                            if cpu.t<true_eop and cpu.m[0x112]:early=True
+                            if cpu.t<true_eop and cpu.r[3]==11:early=True
                         else:
                             raise AssertionError('USB handler did not return within its packet bound')
                         if any(time<true_eop and io==0x0a and value&6

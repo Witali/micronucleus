@@ -22,8 +22,9 @@ def request(art,bm,req,value=0,index=0,length=8,config=1):
     cpu.m[0x117:0x11f]=bytes([bm,req,value&255,value>>8,index&255,index>>8,length&255,length>>8])
     cpu.r[12:16]=[value&255,value>>8,index&255,index>>8]
     cpu.r[6:8]=[length&255,length>>8]
-    cpu.r[3]=5;cpu.r[4:6]=[0x80,0]
-    cpu.m[0x115]=config;cpu.m[0x10f]=12
+    # The real PHY acceptance path already retired old TX and owns R3.
+    cpu.r[3]=11;cpu.r[4:6]=[0x80,0]
+    cpu.m[0x115]=config;cpu.m[0x10f]=0x5a
     for _ in range(4000):
         if cpu.pc==cpu.labels['usb_rx_release_buffer']:
             count=cpu.m[0x100];ptr=cpu.word(14)
