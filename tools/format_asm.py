@@ -12,6 +12,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRS = ('experimental/attiny88/compact/source/',
+               'experimental/attiny88/flash_only/source/',
+               'experimental/attiny88/flash_only/eeprom_stage/',
                'experimental/attiny88/block64/source/',
                'experimental/attiny88/source/')
 FIRMWARE_FILES = {'firmware/crt1.S', 'firmware/osccal.S', 'firmware/osccalASM.S'}
