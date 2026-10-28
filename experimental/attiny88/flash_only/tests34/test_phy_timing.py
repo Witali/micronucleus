@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Emitted AVR code audit for unchanged USB bit loops and EOP J timing.
+"""Emitted AVR audit for unchanged TX/CRC loops and the EOP J-drive tail.
 
-This is a cycle/port model, not an electrical compliance test.
+RX admission is checked with independently encoded raw waveforms instead of
+requiring identity with the defective archive receiver. This audit checks the
+transmitter's preserved instruction stream, not electrical compliance.
 """
 import sys
 from pathlib import Path
@@ -20,8 +22,7 @@ def verify():
         n=build('source/micronucleus_t88_compact.S',mode=mode,boot=boot)
         o=build('reference_pass33/micronucleus_t88_compact.S',mode=mode,boot=boot)
         a=AVRExec(n);b=AVRExec(o)
-        for begin,end in [('usb_rx_sample_odd_bit','usb_rx_overflow'),
-                          ('usb_crc16_mix_byte','usb_crc16_payload_complete')]:
+        for begin,end in [('usb_crc16_mix_byte','usb_crc16_payload_complete')]:
             x,y=section(n,begin,end),section(o,begin,end)
             assert len(x)==len(y),(mode,begin,len(x),len(y))
             for i in range(0,len(x),2):
@@ -32,16 +33,23 @@ def verify():
         begin='usb_tx_begin_byte';end='usb_tx_finish_eop'
         x,y=section(n,begin,end),section(o,begin,end)
         assert len(x)==len(y)
+        useful_token_stores=0
         for i in range(0,len(x),2):
             w,v=int.from_bytes(x[i:i+2],'little'),int.from_bytes(y[i:i+2],'little')
             if w!=v:
+                if (w,v)==(0x8a14,0xc000):  # STD Z+20,R1 replaces RJMP .+0.
+                    assert n['symbols'][begin]+i==n['symbols']['usb_tx_finish_eop']-8
+                    useful_token_stores+=1
+                    continue
                 assert ((w&0xf000)==(v&0xf000) and w&0xf000 in (0xc000,0xd000)) or ((w&0xfc07)==(v&0xfc07) and (w&0xf000)==0xf000),(mode,'TX',hex(i),hex(w),hex(v))
+        assert useful_token_stores==1
         def decoded(art,exe):
-            return [(exe.ins.get(pc) or exe.decode_missing(pc))[:2] for pc in range(art['symbols']['usb_tx_eop_delay']+4,art['symbols']['usb_return_context'],2)]
+            end=art['symbols'].get('usb_tx_bus_released',art['symbols']['usb_return_context'])
+            return [(exe.ins.get(pc) or exe.decode_missing(pc))[:2] for pc in range(art['symbols']['usb_tx_eop_delay']+4,end,2)]
         now,old=decoded(n,a),decoded(o,b)
         assert now==[
             ('out','0xb, r16'),('in','r17, 0xa'),('out','0x1b, r17'),
-            ('andi','r17, 0xf9'),('rcall','.+8'),('out','0xa, r17'),('cbi','0xb, 0x1')
+            ('andi','r17, 0xf9'),('rcall',now[4][1]),('out','0xa, r17'),('cbi','0xb, 0x1')
         ],(mode,now)
         assert old==[
             ('out','0xb, r16'),('sbi','0x1b, 0x2'),('in','r17, 0xa'),
@@ -63,6 +71,9 @@ def verify():
         old_to_release=sum(CYC[k] for k,_ in old[1:-2])
         new_to_release=sum(CYC[k] for k,_ in now[1:-2])+CYC['ret']
         assert old_to_release==new_to_release==10,(mode,old_to_release,new_to_release)
+        # Include the DDR OUT instruction: actively driven J lasts 11 cycles.
+        driven_j_cycles=new_to_release+CYC['out']
+        assert driven_j_cycles==11
         # Flag clearing after J starts: old SBI is two cycles; new IN+OUT
         # also two cycles. DDRD bit2 is always output for the EOP.
         old_clear=CYC[old[1][0]]
@@ -78,6 +89,6 @@ def verify():
                 assert (ddr&~0x06)==(prior&~0x06), "EOP must preserve unrelated DDRD pins"
         # One extra return frame during J delay: SRAM stack has room;
         # the loader starts only after RESET with stack reset to RAMEND.
-        print('PASS',mode,'USB NRZI / CRC opcode invariance; EOP timing',old_to_release,'cycles; 256 DDR masks')
+        print('PASS',mode,'TX NRZI/CRC opcode audit; J drive',driven_j_cycles,'cycles; 256 DDR masks')
 
 if __name__=='__main__':verify()

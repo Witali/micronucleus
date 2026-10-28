@@ -3,6 +3,20 @@ set -eu
 cd "$(dirname "$0")"
 python3 tests34/test_opcode.py
 python3 tests34/test_standard.py
+python3 -m tests35.test_ep0_status
+python3 -m tests35.test_ep0_reply_fragments
+python3 -m tests35.test_ep0_read_completion
+python3 -m tests35.test_vendor_host_contract
+python3 -m tests35.test_ep0_reset
+python3 -m tests35.test_ep0_shadow
+python3 -m tests35.test_ep0_ack_timeout
+python3 -m tests35.test_ep0_token_timeout
+python3 -m tests35.test_ep0_polling
+python3 -m tests35.test_ep0_failed_sync
+python3 -m tests35.test_token_crc5
+python3 -m tests35.test_rx_context_restore
+python3 -m tests35.test_usb_rx_waveforms
+python3 -m tests35.test_usb_crossover
 python3 tests34/test_phy_timing.py
 python3 tests34/test_host.py
 python3 tests35/test_host_fail_closed.py

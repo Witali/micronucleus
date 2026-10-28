@@ -48,6 +48,9 @@ class CPU:
             elif op=='tst':
                 self.Z=int(self.r[rn(a[0])]==0);self.S=int(bool(self.r[rn(a[0])]&0x80))
             elif op=='mov':self.r[rn(a[0])]=self.r[rn(a[1])]
+            elif op=='movw':
+                destination,source=rn(a[0]),rn(a[1])
+                self.r[destination:destination+2]=self.r[source:source+2]
             elif op=='clr':self.r[rn(a[0])]=0;self.Z=1
             elif op=='eor':
                 d=rn(a[0]);self.r[d]^=self.r[rn(a[1])];self.Z=int(self.r[d]==0)

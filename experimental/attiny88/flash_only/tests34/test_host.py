@@ -12,7 +12,7 @@ from host import flash_only_programmer35 as host
 from eeprom_stage.plan_two_stage import KNOWN_BCD_BOOT
 
 class Mock:
-    def __init__(self,revision=0x0450):
+    def __init__(self,revision=next(iter(host.USB_PROFILES))):
         self.idVendor,self.idProduct,self.bcdDevice=host.USB_VID,host.USB_PID,revision
         self.flash=bytearray([0xFF])*8192
         self.page=None
@@ -61,7 +61,7 @@ class Mock:
 
 def test_host():
     count=0
-    for bcd in (0x0450,0x0451,0x0452):
+    for bcd in host.USB_PROFILES:
         dev=Mock(bcd);t=host.USBTransport(dev)
         assert t.boot_at==KNOWN_BCD_BOOT[bcd]
         for bad in (t.boot_at,t.boot_at+64,8192,-64,1):
@@ -82,7 +82,7 @@ def test_host():
         assert dev.commits[-1]==0x80
         assert dev.flash[0x80:0xC0]==b''.join((i*7).to_bytes(2,'little') for i in range(0,64,2))
         count+=1
-    for old in (0x0300,0x0410,0x0420,0x9999):
+    for old in (0x0300,0x0410,0x0420,0x0450,0x0451,0x0452,0xFFFF,0x9999):
         dev=Mock(old)
         try:host.USBTransport(dev)
         except ValueError:pass

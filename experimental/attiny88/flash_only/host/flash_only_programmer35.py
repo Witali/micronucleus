@@ -12,15 +12,12 @@ from pathlib import Path
 import time
 try:
     from . import image_core as core
+    from .profiles import BOOT_AT, USB_PROFILES
 except ImportError:
     import image_core as core
+    from profiles import BOOT_AT, USB_PROFILES
 
 USB_VID, USB_PID = 0x16D0, 0x0753
-USB_PROFILES = {
-    0x0450: ('Pass35 ACK TX-state guard / no LED', 0x1BC0, 1032),
-    0x0451: ('Pass35 ACK TX-state guard / LED active-high', 0x1BC0, 1052),
-    0x0452: ('Pass35 ACK TX-state guard / LED active-low', 0x1BC0, 1050),
-}
 FLASH_BYTES = 8192
 PAGE_BYTES = 64
 WORD_BYTES = 2
@@ -196,11 +193,11 @@ def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('application',nargs='?',type=Path,help='Original (unpatched) .bin or .hex')
     ap.add_argument('--out',type=Path,help='Prepare patched full application Intel HEX offline')
-    ap.add_argument('--boot-at',type=lambda v:int(v,0),default=0x1C00,help='Offline-only geometry; hardware always uses bcdDevice')
+    ap.add_argument('--boot-at',type=lambda v:int(v,0),default=BOOT_AT,help='Offline-only geometry; hardware always uses bcdDevice')
     ap.add_argument('--identify',action='store_true',help='Only read USB device descriptor identity')
     ap.add_argument('--execute',action='store_true',help='Program connected board (experimental)')
     ap.add_argument('--i-have-isp-recovery',action='store_true',help='Acknowledge ISP and backup availability')
-    ap.add_argument('--accept-untested-usb',action='store_true',help='Acknowledge hardware/CRC5/OUT ACK limitations')
+    ap.add_argument('--accept-untested-usb',action='store_true',help='Acknowledge missing hardware admission and incoming DATA CRC16 validation')
     ap.add_argument('--run',action='store_true',help='Run application after successful programming (requires --execute)')
     ap.add_argument('--flash-delay-ms',type=float,default=DEFAULT_FLASH_DELAY_MS)
     args=ap.parse_args(argv)

@@ -7,15 +7,21 @@ usb_tx_prepare_pending_reply:
     sbrs r24, USB_HANDSHAKE_FLAG_BIT
     rjmp bootloader_check_idle_timeout
     ldd r24, Y+CTX_MSG_LENGTH
-    cpi r24, USB_NO_MESSAGE
-    brbs SREG_Z, bootloader_check_idle_timeout
+    /* Every supported reply is <=18 bytes. A negative subtraction
+     * remainder therefore marks completion without normalizing to0xFF. */
+    sbrc r24, USB_MESSAGE_DONE_BIT
+    rjmp bootloader_check_idle_timeout
     mov r23, r24
     subi r23, USB_EP0_PAYLOAD_BYTES
-    brsh usb_tx_prepare_data_packet
-    ldi r23, USB_NO_MESSAGE
-    rjmp .Ltx_store_remainder
+    brlo .Ltx_store_remainder
 usb_tx_prepare_data_packet:
     ldi r24, USB_EP0_PAYLOAD_BYTES
+    /* SUBI's Z flag survives BRLO/LDI. Suppress a speculative ZLP only
+     * when this full packet reaches wLength. A shorter source still needs
+     * the usual terminating ZLP, so its exact-length flag remains clear. */
+    brne .Ltx_store_remainder
+    sbrc r11, USB_REPLY_EXACT_LENGTH_BIT
+    ldi r23, USB_NO_MESSAGE
 .Ltx_store_remainder:
     std Y+CTX_MSG_LENGTH, r23
     ldi r18, USB_DATA_PID_TOGGLE

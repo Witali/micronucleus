@@ -33,6 +33,7 @@
 #define USB_PID_OUT 0xe1
 #define USB_PID_ACK 0xd2
 #define USB_PID_NAK 0x5a
+#define USB_PID_STALL 0x1e
 #define USB_DATA_PID_TOGGLE (USB_PID_DATA0 ^ USB_PID_DATA1)
 #define USB_REQUEST_TYPE_MASK 0x60
 #define USB_REQUEST_VENDOR_IN 0xc0
@@ -50,7 +51,10 @@
 #define USB_RX_BUFFER_BYTES (USB_EP0_PAYLOAD_BYTES + USB_RX_PACKET_OVERHEAD)
 #define USB_FULL_TX_PACKET_BYTES (USB_EP0_PAYLOAD_BYTES + USB_TX_PACKET_OVERHEAD)
 #define USB_NO_MESSAGE 0xff
+/* Lengths 0..18 are live; exhausted subtraction remainders use bit 7. */
+#define USB_MESSAGE_DONE_BIT 7
 #define USB_HANDSHAKE_FLAG_BIT 4
+#define USB_REPLY_EXACT_LENGTH_BIT 5
 #define USB_HANDSHAKE_REGISTER 20
 #define USB_HANDSHAKE_TX_BYTES 2
 #define USB_HANDSHAKE_END_POINTER (USB_HANDSHAKE_REGISTER + USB_HANDSHAKE_TX_BYTES)
@@ -63,12 +67,11 @@
 #define FLASH_WRITE_DELAY_MS 5
 #define USB_PROTOCOL_BCD 0x0110
 #ifndef BOOT_VERSION_BCD
-#if LED_MODE == NONE
-#define BOOT_VERSION_BCD 0x0450
-#elif LED_MODE == ACTIVE_HIGH
-#define BOOT_VERSION_BCD 0x0451
+#if LED_MODE == NONE && BOOT_AT == 0x1a40
+#define BOOT_VERSION_BCD 0x0460
 #else
-#define BOOT_VERSION_BCD 0x0452
+/* Alternate placements and LED modes are measurements, not recognized images. */
+#define BOOT_VERSION_BCD 0xffff
 #endif
 #endif
 #define USB_VENDOR_ID 0x16d0
@@ -99,13 +102,14 @@
 #define BOOT_POLL_INTERVAL_MS 5
 #define USB_POLL_LOOP_CYCLES 13
 #define USB_POLL_TIMEOUT_COUNT ((CPU_CLOCK_HZ / 1000) * BOOT_POLL_INTERVAL_MS / USB_POLL_LOOP_CYCLES)
-#define BOOT_AUTO_EXIT_MS 6000
+#define BOOT_AUTO_EXIT_MS 5120
 #define BOOT_IDLE_TIMEOUT_POLLS (BOOT_AUTO_EXIT_MS / BOOT_POLL_INTERVAL_MS)
 #define USB_DISCONNECT_OUTER_LOOPS USB_CONTEXT_BYTES
 #define USB_DISCONNECT_INNER_LOOPS 27359
 #define USB_RESET_SE0_SAMPLES 100
 #define USB_RESYNC_IDLE_SAMPLES 28
-#define USB_NEXT_DATA_WAIT_COUNT 10
+#define USB_NEXT_DATA_WAIT_COUNT 28
+#define USB_ACK_WAIT_COUNT 33
 #define USB_EOP_DELAY_LOOPS 6
 #define CRC16_POLYNOMIAL 0xa001
 #define CRC_BIT_COUNTER_INCREMENT 32
@@ -144,7 +148,14 @@
 #if USB_FULL_TX_PACKET_BYTES > 255
 #error Packet length must not carry out of X low byte
 #endif
+#if HIGH8(USB_CONTEXT_BASE + USB_CONTEXT_BYTES - 1) != HIGH8(USB_CONTEXT_BASE)
+#error The optimized RX and DATA-TX paths require one context SRAM page
+#endif
 #if HIGH8(BOOT_AT + USB_CONFIGURATION_OFFSET) != HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
 #error Shared standard reply pointer high byte requires one Flash page
+#endif
+/* The high-bit completion tag requires all live reply lengths below 128. */
+#if USB_DEVICE_DESCRIPTOR_BYTES >= 128 || USB_CONFIGURATION_TOTAL_BYTES >= 128 || USB_EP0_PAYLOAD_BYTES >= 128
+#error Reply lengths must fit below the high-bit completion tag
 #endif
 #endif

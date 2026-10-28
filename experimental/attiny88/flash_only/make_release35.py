@@ -8,12 +8,11 @@ import hashlib
 import json
 from pathlib import Path
 from check_build import build
+from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'firmware35'
-PROFILES=[('NONE',0x1bc0,1032,0x0450,'off'),
-          ('ACTIVE_HIGH',0x1bc0,1052,0x0451,'high'),
-          ('ACTIVE_LOW',0x1bc0,1050,0x0452,'low')]
+PROFILES=[('NONE',BOOT_AT,NO_LED_CODE_BYTES,BCD_DEVICE,'off')]
 
 def digest(data:bytes)->str:
     return hashlib.sha256(data).hexdigest()
@@ -42,7 +41,7 @@ def create():
         full=bytearray(b'\xff')*8192
         full[:2]=reset.to_bytes(2,'little')
         full[boot:boot+len(body)]=body
-        stem='Pass35_'+suffix
+        stem='FlashOnly_corrected_'+suffix
         body_fn=stem+'_body.bin'
         isp_fn=stem+'_ISP_FRESH_8192.bin'
         hex_fn=stem+'_ISP_FRESH_EXPERIMENTAL.hex'
@@ -60,14 +59,14 @@ def create():
             hashes.append((digest((OUT/fn).read_bytes()),fn))
         print(f'{led:12}: code {len(body):4} B; PHY {builds[-1]["usb_phy_bytes"]:3} B; boot=0x{boot:04x}; app={boot-4}; SHA256={digest(body)}')
     srcpaths=sorted((ROOT/'source').glob('*.inc'))+list((ROOT/'source').glob('*.S'))
-    meta={'title':'Micronucleus+ Pass35, experimental v4.1, 2026-10-28',
+    meta={'title':'Micronucleus+ corrected Flash-only v4.1 audit checkpoint, 2026-10-28',
           'target':'ATtiny88 external 16 MHz',
           'installed_or_hardware_tested':False,
+          'artifact_kind':'software audit checkpoint; receiver qualification is open',
           'protocol':'vendor v4.1: SELECT(1), SELECT+ERASE(2), WRITE2(3), RUN(4), COMMIT_PAGE(5), READ8(0xB0); absolute byte addresses',
           'ack':'IN DATA held until ACK; deferred Flash SPM and RUN blocked while TX DATA remains unacknowledged; ACK eligibility marker is short-lived; idempotent WRITE2; COMMIT unknown completion checked via readback',
-          'remaining_limitations':['Incoming USB DATA CRC16 not validated before ACK',
-             'USB token CRC5/endpoint admission incomplete',
-             'Malformed or duplicate SETUP/OUT acceptance not fully USB 2.0 compliant',
+          'remaining_limitations':['Incoming USB DATA CRC16 not validated before ACK or afterward',
+             'Legal dribble and crossover receiver qualification are still under audit',
              'No real hardware, analog waveform or hub testing',
              'Power loss during RESET-page erase/write may require ISP',
              'Flash SPM stalls CPU, host must wait before next USB request'],

@@ -13,7 +13,7 @@ def run(arguments):
     return subprocess.run(arguments, check=True, capture_output=True, text=True).stdout
 
 
-def build(where='source', led='NONE', boot=0x1C00, save=True):
+def build(where='source', led='NONE', boot=0x1A40, save=True):
     source_dir = (ROOT / where).resolve()
     if not source_dir.is_relative_to(ROOT):
         raise ValueError('Source must belong to this variant')
@@ -45,7 +45,7 @@ def build(where='source', led='NONE', boot=0x1C00, save=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--where', default='source')
-    parser.add_argument('--boot', default=0x1C00, type=lambda value: int(value, 0))
+    parser.add_argument('--boot', default=0x1A40, type=lambda value: int(value, 0))
     parser.add_argument('--all-led', action='store_true')
     parser.add_argument('--require-fit', action='store_true')
     args = parser.parse_args()

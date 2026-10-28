@@ -14,6 +14,7 @@ import argparse, hashlib, json, subprocess, shutil, sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from host.image_core import image_from_file,pack_application,record,image_to_hex as hex_image
+from host.profiles import USB_PROFILES
 
 FLASH_BYTES=8192
 PAGE_BYTES=64
@@ -28,6 +29,7 @@ KNOWN_BCD_BOOT={0x0300:0x1B80,0x0301:0x1B40,0x0302:0x1B40,
                 0x0440:0x1C00,0x0441:0x1BC0,0x0442:0x1BC0,
                 0x0443:0x1BC0,0x0444:0x1BC0,0x0445:0x1BC0,
                 0x0450:0x1BC0,0x0451:0x1BC0,0x0452:0x1BC0}
+KNOWN_BCD_BOOT.update({bcd:profile[1] for bcd,profile in USB_PROFILES.items()})
 STAGE_DATA_ADDR=0x60
 STAGE_IMAGE_BYTES=STAGE_DATA_ADDR+EEPROM_BYTES
 
@@ -41,9 +43,9 @@ ASM='''/* ATtiny88 one-shot EEPROM installer. 16 MHz (clock speed irrelevant to 
  * EEPROM image starts at byte address 0x60 in program Flash.
  * No stack, interrupts, USB driver, RAM or static runtime required.
  */
-.section .text
-.org 0
-.global stage_reset
+    .section .text
+    .org 0
+    .global stage_reset
 stage_reset:
     rjmp stage_entry
 stage_entry:

@@ -12,14 +12,15 @@ from tests35.foreground import one
 from check_build import build
 from tests.avr_exec import AVRExec
 from tests34.test_pass33_ack import CPU
+from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
 
 @lru_cache(maxsize=32)
 def artifact(source, led, boot):
     return build(f'{source}/micronucleus_t88_compact.S', mode=led, boot=boot)
 
-MODES = [('NONE', 0x1BC0, 1032, 0x0450),
-         ('ACTIVE_HIGH', 0x1BC0, 1052, 0x0451),
-         ('ACTIVE_LOW', 0x1BC0, 1050, 0x0452)]
+MODES = [('NONE', BOOT_AT, NO_LED_CODE_BYTES, BCD_DEVICE),
+         ('ACTIVE_HIGH', BOOT_AT, None, 0xFFFF),
+         ('ACTIVE_LOW', BOOT_AT, None, 0xFFFF)]
 
 STOPS = ('usb_tx_prepare_pending_reply', 'flash_erase_selected_page',
          'bootloader_clear_command', 'bootloader_start_application')
@@ -42,7 +43,8 @@ def test():
     cases = 0
     for led, boot, size, bcd in MODES:
         art = artifact('source', led, boot)
-        assert len(art['body']) == size and boot + size <= 8192
+        if size is not None:
+            assert len(art['body']) == size and boot + size <= 8192
         assert int.from_bytes(art['body'][32:34], 'little') == bcd
         # The persistent TX buffer, NOT R2 ACK-eligibility, controls whether
         # an SPM or RUN can safely start after transmitting a DATA packet.

@@ -16,7 +16,7 @@ bootloader_start:
     .byte USB_CONFIGURATION_HEADER_BYTES, USB_DESCRIPTOR_CONFIGURATION
     .byte LOW8(USB_CONFIGURATION_TOTAL_BYTES), HIGH8(USB_CONFIGURATION_TOTAL_BYTES)
     .byte 1, 1, 0, USB_CONFIGURATION_ATTRIBUTES, (USB_MAX_POWER_MA / 2)
-    .byte USB_INTERFACE_DESCRIPTOR_BYTES, USB_DESCRIPTOR_INTERFACE, 0, 0, 0, 0, 0, 0, 0
+    .byte USB_INTERFACE_DESCRIPTOR_BYTES, USB_DESCRIPTOR_INTERFACE, 0, 0, 0, USB_CLASS_VENDOR_SPECIFIC, 0, 0, 0
     .byte USB_DEVICE_DESCRIPTOR_BYTES, USB_DESCRIPTOR_DEVICE
     .byte LOW8(USB_PROTOCOL_BCD), HIGH8(USB_PROTOCOL_BCD), USB_CLASS_VENDOR_SPECIFIC, 0, 0, USB_EP0_PAYLOAD_BYTES
     .byte LOW8(USB_VENDOR_ID), HIGH8(USB_VENDOR_ID), LOW8(USB_PRODUCT_ID), HIGH8(USB_PRODUCT_ID)
@@ -52,7 +52,10 @@ startup_check_sram_end:
     brne usb_disconnect_delay_outer
     cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
     movw r2, r24
+    ldi r17, 0x10
+    mov r8, r17
     movw r6, r24
+    mov r11, r1
     /* r3 is the pending SPM/RUN command, initialized via MOVW r2:r3 above.
      * Persistent r4:r5 is the selected Flash page; READ8/WRITE2 have explicit addresses. */
     ldi r24, USB_PID_NAK
@@ -80,13 +83,23 @@ usb_poll_sample_bus:
 usb_poll_check_reset_duration:
     subi r24, 0x01
     brbc SREG_Z, usb_poll_check_packet_pending
+/* A bus reset aborts the control pipe, including queued Flash/RUN work.
+ * The reset branch proves countdown R24=0 and masked SE0 sample R25=0. */
     std Y+CTX_CONFIGURATION, r1
     std Y+CTX_DEVICE_ADDRESS, r1
-    mov r2, r1
+    ldi r17, 0x10
+    mov r8, r17
+    std Y+CTX_NEW_DEVICE_ADDRESS, r1
+    std Y+CTX_CURRENT_TOKEN, r1
+    std Y+CTX_RX_LENGTH, r1
+    movw r2, r24
+    mov r11, r1
     ldi r17, USB_PID_NAK
     std Y+CTX_TX_LENGTH, r17
     ldi r17, USB_NO_MESSAGE
     std Y+CTX_MSG_LENGTH, r17
+/* SELECT must establish a new Flash page after reset. */
+    mov r5, r17
 usb_poll_check_packet_pending:
     sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp .Lpacket_pending
@@ -162,6 +175,11 @@ usb_poll_check_missed_packet:
     rcall usb_service_pending
     rjmp bootloader_poll_begin
 bootloader_start_application:
+/* The idle-timeout path reaches here directly too: an outstanding DATA
+ * packet must remain available for retry until ACK/reset/new SETUP. */
+    ldd r18, Y+CTX_TX_LENGTH
+    sbrs r18, USB_HANDSHAKE_FLAG_BIT
+    rjmp usb_tx_prepare_pending_reply
 led_exit:
 #if LED_DDR_IO == 0x0a
 #if LED_MODE == ACTIVE_HIGH

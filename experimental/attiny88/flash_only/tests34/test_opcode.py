@@ -7,9 +7,11 @@ from check_build import build
 from tests.avr_exec import AVRExec
 import tests.avr_exec as _avr_exec
 from functools import lru_cache
+from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
 _avr_exec.decode=lru_cache(maxsize=48)(_avr_exec.decode)
 
-MODES=[('NONE',0x1BC0,0x0450,1032),('ACTIVE_HIGH',0x1BC0,0x0451,1052),('ACTIVE_LOW',0x1BC0,0x0452,1050)]
+MODES=[('NONE',BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES),
+       ('ACTIVE_HIGH',BOOT_AT,0xFFFF,None),('ACTIVE_LOW',BOOT_AT,0xFFFF,None)]
 
 def art(led='NONE',boot=0x1c00,source='source'):
     return build(f'{source}/micronucleus_t88_compact.S',mode=led,boot=boot)
@@ -17,7 +19,8 @@ def art(led='NONE',boot=0x1c00,source='source'):
 def test_profiles():
     for led,boot,bcd,size in MODES:
         a=art(led,boot)
-        assert len(a['body'])==size and boot+size<=8192,(led,len(a['body']))
+        if size is not None:
+            assert len(a['body'])==size and boot+size<=8192,(led,len(a['body']))
         assert int.from_bytes(a['body'][32:34],'little')==bcd
         assert 'R_AVR_' not in subprocess.check_output(['llvm-objdump','-r',str(a['obj'])],text=True)
         assert '*UND*' not in subprocess.check_output(['llvm-objdump','-t',str(a['obj'])],text=True)
@@ -25,7 +28,8 @@ def test_profiles():
         off=w&0xfff
         if off&0x800:off-=4096
         assert ((at//2+1+off)&0xfff)*2==boot-4
-        print('PROFILE',led,'code',size,'boot',hex(boot),'postscript',hex(boot-4))
+        if size is not None:
+            print('PROFILE',led,'code',size,'boot',hex(boot),'postscript',hex(boot-4))
 
 
 def test_flash():
@@ -36,6 +40,7 @@ def test_flash():
             for cmd in (1,2):
                 x=AVRExec(a);x.r[25]=cmd;x.r[29]=1
                 x.ram.update({27:page&255,28:page>>8})
+                x.r[14:16]=[page&255,page>>8]  # accepted SETUP register shadow
                 assert x.run('bootloader_check_set_flash_address',stop=['usb_reply_empty'],limit=120)=='stop'
                 assert x.r[4:6]==[page&255,page>>8]
                 assert x.r[3]==cmd+1
@@ -52,6 +57,7 @@ def test_flash():
                 x=AVRExec(a);x.r[29]=1;x.r[25]=3
                 x.r[4:6]=[page&255,page>>8]
                 x.ram.update({25:0x37,26:0x91,27:address&255,28:address>>8})
+                x.r[12:16]=[0x37,0x91,address&255,address>>8]
                 assert x.run('bootloader_check_write4',stop=['usb_reply_empty'],limit=120)=='stop'
                 assert x.r[1]==0 and x.r[4:6]==[page&255,page>>8]
                 loads=[k for k in x.spms if k[0]==1]
@@ -60,7 +66,9 @@ def test_flash():
                 checks+=1
             for cmd in (4,5,6,0):
                 x=AVRExec(a);x.r[29]=1;x.r[25]=cmd
-                assert x.run('bootloader_check_write4' if cmd else 'bootloader_check_set_flash_address',stop=['usb_reply_empty'],limit=100)=='stop'
+                assert x.run('bootloader_check_write4' if cmd else 'bootloader_check_set_flash_address',stop=['usb_reply_empty','usb_reply_stall'],limit=100)=='stop'
+                expected='usb_reply_empty' if cmd in (4,5) else 'usb_reply_stall'
+                assert x.pc==a['symbols'][expected]
                 assert x.r[3]==(cmd if cmd in (4,5) else 0),(led,page,cmd,x.r[3])
                 checks+=1
             for cmd in (3,5):
@@ -74,8 +82,9 @@ def test_flash():
         for adr in (0,2,14,254,256,boot-8,boot-2,boot,8184):
             x=AVRExec(a);x.r[25]=0xb0;x.r[29]=1;x.r[4:6]=[0x55,0x19]
             x.ram.update({27:adr&255,28:adr>>8})
-            assert x.run('bootloader_handle_vendor_request',stop=['usb_reply_set_pointer'],limit=60)=='stop'
-            assert x.r[18:20]==[adr&255,adr>>8] and x.r[24]==8
+            x.r[14:16]=[adr&255,adr>>8]
+            assert x.run('bootloader_handle_vendor_request',stop=['usb_reply_limit_length'],limit=60)=='stop'
+            assert x.r[14:16]==[adr&255,adr>>8] and x.r[24]==8
             assert x.r[4:6]==[0x55,0x19], 'READ8 must not move the write page selector'
             checks+=1
     print('PASS emitted AVR NVM opcode and boot-region protection checks:',checks)
@@ -121,9 +130,9 @@ def test_ack():
             assert m.run('usb_poll_check_reset_duration',('usb_poll_check_packet_pending',))=='usb_poll_check_packet_pending'
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a and m.mem[0x100+0]==0xff
             assert m.mem[0x100+12]==0 and m.mem[0x100+21]==0
-            # NEW_DEVICE_ADDRESS is overwritten by the next valid SETUP;
-            # it need not be cleared separately by bus reset.
-            assert m.mem[0x100+19]==99
+            assert m.mem[0x100+19]==0
+            assert m.mem[0x100+18]==0 and m.mem[0x100+20]==0
+            assert m.r[3]==0 and m.r[5]==0xff
             cases+=1
     print('PASS ACK packet/retry/bus-reset opcode cases:',cases)
 
