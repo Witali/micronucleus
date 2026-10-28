@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Offline-only EEPROM initialization stage for ATtiny88 Micronucleus+ flash-only v4.0.
+"""Offline-only EEPROM initialization stage for ATtiny88 Flash-only loaders.
 
 No USB I/O and NO automatic programming. Requires LLVM AVR assembler (clang)
-plus llvm-objcopy and llvm-objdump. The EEPROM data is embedded in a throw-away
-application. Host must replace it with the real application after reboot.
+plus avr-ld, llvm-nm, llvm-objcopy and llvm-objdump. EEPROM data is embedded
+in a temporary application. Main-app replacement requires independent success
+verification; a reboot alone is insufficient.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-import argparse, hashlib, json, subprocess, shutil
+import argparse, hashlib, json, subprocess, shutil, sys
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from host.image_core import image_from_file
 
 FLASH_BYTES=8192
 PAGE_BYTES=64
@@ -110,27 +115,9 @@ def hex_image(data:bytes)->str:
     return '\n'.join([*(record(i,data[i:i+16]) for i in range(0,len(data),16)),record(0,b'',1)])+'\n'
 
 def load_image(path:Path)->dict[int,int]:
-    if path.suffix.lower()=='.bin':
-        return dict(enumerate(path.read_bytes()))
-    if path.suffix.lower() not in ('.hex','.ihex'):
-        raise ValueError('Application must be a BIN or Intel HEX file')
-    offset=0; out={};eof=False
-    for ln,line in enumerate(path.read_text().splitlines(),1):
-        raw=bytes.fromhex(line.strip().removeprefix(':'))
-        if not line.startswith(':') or len(raw)<5 or len(raw)!=5+raw[0] or sum(raw)&255:
-            raise ValueError(f'Invalid HEX record on line {ln}')
-        n,a,b,t=raw[:4]; pos=offset+(a<<8)+b
-        if t==0:
-            for k,v in enumerate(raw[4:4+n]):
-                if pos+k in out and out[pos+k]!=v: raise ValueError('Conflicting Intel HEX data')
-                out[pos+k]=v
-        elif t==1: eof=True; break
-        elif t==4 and n==2:offset=int.from_bytes(raw[4:6],'big')<<16
-        elif t==2 and n==2:offset=int.from_bytes(raw[4:6],'big')<<4
-        elif t in (3,5):continue
-        else:raise ValueError(f'Unsupported Intel HEX record type {t} at line {ln}')
-    if not eof:raise ValueError('Intel HEX lacks end record')
-    return out
+    """Use the same strict original-image parser as the Flash programmer."""
+    return image_from_file(path)
+
 
 @dataclass
 class Patched:
@@ -171,11 +158,15 @@ def make_asm(image:bytes)->str:
     return ASM.replace('{DATA}','\n'.join(lines))
 
 def compile_stage(source:Path)->bytes:
-    clang=shutil.which('clang');objcopy=shutil.which('llvm-objcopy');objdump=shutil.which('llvm-objdump')
-    if not all((clang,objcopy,objdump)):
-        raise RuntimeError('clang (AVR backend), llvm-objcopy and llvm-objdump are required')
+    clang=shutil.which('clang');objcopy=shutil.which('llvm-objcopy');objdump=shutil.which('llvm-objdump');linker=shutil.which('avr-ld');nm=shutil.which('llvm-nm')
+    if not all((clang,objcopy,objdump,linker,nm)):
+        raise RuntimeError('clang (AVR backend), avr-ld, llvm-nm, llvm-objcopy and llvm-objdump are required')
     obj=source.with_suffix('.o');out=source.with_suffix('.bin')
-    subprocess.run([clang,'-target','avr','-mmcu=attiny88','-x','assembler-with-cpp','-c',str(source),'-o',str(obj)],check=True,capture_output=True)
+    reloc=source.with_suffix('.reloc.o')
+    subprocess.run([clang,'-target','avr','-mmcu=attiny88','-x','assembler-with-cpp','-c',str(source),'-o',str(reloc)],check=True,capture_output=True)
+    subprocess.run([linker,'-m','avr25','-Ttext=0','-e','stage_reset','-o',str(obj),str(reloc)],check=True,capture_output=True)
+    undefined=subprocess.run([nm,'--undefined-only',str(obj)],check=True,capture_output=True,text=True).stdout
+    if undefined.strip():raise RuntimeError('Linked EEPROM stage has undefined symbols')
     rel=subprocess.run([objdump,'-r',str(obj)],check=True,capture_output=True,text=True).stdout
     if 'R_AVR_' in rel:raise RuntimeError('Assembler left unresolved AVR relocations')
     subprocess.run([objcopy,'-O','binary','-j','.text',str(obj),str(out)],check=True,capture_output=True)
@@ -208,15 +199,19 @@ def make_plan(ee:bytes,application:Path,out_dir:Path,boot_at:int):
         'stage_reset_target':f'0x{prepared_stage.app_target_byte:04X}',
         'main_reset_target':f'0x{prepared_main.app_target_byte:04X}',
         'execute':False,'physical_validation':False,
+        'automatic_main_installation_allowed':False,
+        'independent_eeprom_success_verification_required':True,
         'steps':['Backup current Flash and EEPROM if possible, confirm correct USB device profile',
-                 'Upload stage_raw_application.bin through the matching flash_only_programmer.py client (which patches RESET/postscript), OR use a separately validated sparse-page uploader; verify Flash',
+                 'Upload stage_raw_application.bin through the client matching the detected protocol (flash_only_programmer35.py for v4.1) (which patches RESET/postscript), OR use a separately validated sparse-page uploader; verify Flash',
                  'Send RUN; temporary app programs/reads back EEPROM; successful verification triggers WDT reset',
                  'Wait for bootloader USB re-enumeration with bounded timeout; no connection means failure',
-                 'Upload the ORIGINAL main application through the matching flash_only_programmer.py client, which patches RESET/postscript; replace/verify ALL pages including stage bytes',
+                 'STOP: independently verify EEPROM-stage success before replacing it; USB re-enumeration alone is not proof',
+                 'Only after independently verified EEPROM-stage success, manually upload the ORIGINAL main application through the client matching the detected protocol (flash_only_programmer35.py for v4.1); replace/verify ALL pages including stage bytes',
                  'Send RUN only after complete main Flash verification'],
-        'warnings':['DO NOT feed *_PREPATCHED_direct_page_only.hex into host/flash_only_programmer.py: double RESET/postscript patching will corrupt entry points',
+        'warnings':['DO NOT feed *_PREPATCHED_direct_page_only.hex into host/flash_only_programmer35.py: double RESET/postscript patching will corrupt entry points',
                     'No separate EEPROM readback from the permanent bootloader',
-                    'A USB reconnect is a completion signal under tested reset assumptions, not cryptographic verification',
+                    'USB reconnect may also follow power loss or external reset and does not prove the EEPROM verification completed',
+                    'No authoritative automatic stage-success mechanism is implemented; this output remains an offline plan only',
                     'Standard compact_programmer27.py writes ALL app pages; the optional 4-page sparse-stage plan needs an independently validated uploader',
                     'A power loss before installing the final app leaves the temporary app installed',
                     'Chip Erase may erase EEPROM depending on fuse EESAVE; use page erase only',
