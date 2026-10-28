@@ -17,6 +17,7 @@ class CPU:
         self.x=AVRExec(art)
         self.sym=art['symbols'];self.r=[0]*32;self.mem={};self.Z=0;self.C=0;self.S=0;self.io={};self.trace=[]
         self.r[28]=self.r[30]=0;self.r[29]=self.r[31]=1
+        self.calls=[]
     def run(self,start,ends,limit=100):
         pc=self.sym[start];targets={self.sym[e]:e for e in ends}
         for _ in range(limit):
@@ -66,6 +67,12 @@ class CPU:
                     bit=int(a[0],0);flag={0:self.C,1:self.Z,4:self.S}[bit];take=bool(flag) if op=='brbs' else not flag
                 if take:q+=int(a[-1].replace('.',''),0)
             elif op=='rjmp':q+=int(arg.replace('.',''),0)
+            elif op=='rcall':
+                self.calls.append(q)
+                q+=int(arg.replace('.',''),0)
+            elif op=='ret':
+                assert self.calls,'Return without a matching call'
+                q=self.calls.pop()
             elif op=='sbrc':
                 if not self.r[rn(a[0])]&1<<int(a[1],0):q+=self.x.size_at(q)
             else:raise AssertionError((hex(pc),op,arg))

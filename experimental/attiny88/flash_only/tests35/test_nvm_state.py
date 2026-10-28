@@ -14,6 +14,7 @@ def initialized(art,low):
     cpu.pc=cpu.labels['startup_check_sram_end']
     cpu.r[1]=0;cpu.r[24:26]=[0,0];cpu.r[28:32]=[0,1,0x60,0]
     cpu.r[2:6]=[12,5,low,0xa5];cpu.r[6:8]=[0xa5,0x5a];cpu.r[11]=0xe0
+    cpu.r[8]=0xa5
     cpu.m[0x100:0x12c]=bytes((i*37+low)&255 for i in range(44))
     visited=set()
     for _ in range(100):

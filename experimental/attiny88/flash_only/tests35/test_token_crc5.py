@@ -5,6 +5,7 @@ really correspond to complete bytes. This suite does not assume that proof.
 """
 from tests35 import ep0_model as h
 from tests35.ep0_cases import bind
+from tests35.test_nvm_state import initialized
 
 
 def crc5(value):
@@ -59,18 +60,9 @@ def dispatch(cpu,artifact,pid,word,address=0,length=3,pair=None,last_odd=h.J):
 def test():
     artifact=h.build()
     bind(artifact)
-    cpu=h.CPU(artifact,Quiet())
-    # Run the emitted cold initialization, rather than trusting the fixture's
-    # default cache. LDI R17,0x10 / MOV R8,R17 must be in the startup path.
-    lo=artifact['symbols']['startup']-artifact['boot']
-    hi=artifact['symbols']['led_init']-artifact['boot']
-    encoded=bytes.fromhex('10e1812e')
-    starts=[offset for offset in range(lo,hi-3,2)
-            if artifact['body'][offset:offset+4]==encoded]
-    assert len(starts)==1
-    cpu.pc=artifact['boot']+starts[0]
-    cpu.r[8],cpu.r[17]=0xA5,0xFF
-    cpu.step();cpu.step()
+    # Execute the real cold-start call with a poisoned cache. The shared
+    # initializer's location and instruction spelling are not the contract.
+    cpu=initialized(artifact,0xa5)
     assert cpu.r[8]==0x10
     cpu.pc=artifact['symbols']['usb_poll_check_reset_duration']
     cpu.r[24:26]=[1,0]
@@ -99,7 +91,9 @@ def test():
         for last_odd in (0,2,4,6):
             assert dispatch(cpu,artifact,0x69,crc5(0)<<11,pair=pair,last_odd=last_odd)==(pair==0x52 and last_odd!=0)
             cases+=1
-    for address in range(256):
+    # USB9.4.6 leaves values above127 undefined; only valid addresses have
+    # a required endpoint-zero CRC/cache outcome.
+    for address in range(128):
         reset(cpu,artifact,42)
         canonical=address&127
         before=cpu.r[8]
@@ -120,7 +114,7 @@ def test():
             cpu.step()
         else:raise AssertionError('Eligible ACK did not complete')
         assert cpu.m[0x10C]==canonical and cpu.r[8]==cpu.r[10]
-    print('PASS',cases,'token address/endpoint/CRC5/count/phase cases and256 canonical atomic address-cache commits')
+    print('PASS',cases,'token address/endpoint/CRC5/count/phase cases and128 valid atomic address-cache commits')
 
 
 if __name__=='__main__':test()
