@@ -15,15 +15,14 @@ usb_reply_set_pointer:
     movw r14, r18
 usb_reply_limit_length:
     rcall usb_service_pending
-    mov r25, r6
-    cp r24, r25
+    cp r24, r6
     cpc r1, r7
     /* Carry marks a source shorter than wLength. SBC preserves that carry
      * while saving the read-only flag: FF needs a terminating ZLP,
      * 00 reaches wLength and suppresses an extra full-packet ZLP. */
     sbc r12, r12
     brlo usb_reply_store_length
-    mov r24, r25
+    mov r24, r6
 usb_reply_store_length:
     /* Poll before publishing: a replacement SETUP abandons this reply. */
     rcall usb_service_pending
