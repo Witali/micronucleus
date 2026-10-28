@@ -1,5 +1,12 @@
 # Experimental Micronucleus+ for ATtiny88
 
+The separate [Flash-only v4.1 experiment](flash_only/README.md) imports the
+October 28 Pass35 handoff and audits its USB behavior alongside size work.
+It has its own absolute-address WRITE2/READ8 client and offline EEPROM-stage
+planner. Current size optimization considers the no-LED variant. The
+EEPROM-capable compact v3.0 implementation remains separate; this import has
+not changed the installed board.
+
 The [compact Pass26 line](compact/README.md) imports the October 27 handoff
 on `feature/attiny88-compact-pass26`. Its v5.5 host and persistent memory cursor
 are separate from Block64 and the earlier optimized variants. The no-LED body
