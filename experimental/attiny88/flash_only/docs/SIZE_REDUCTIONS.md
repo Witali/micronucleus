@@ -55,3 +55,26 @@ Measured image: 1394 bytes.
 The quiet USB service path falls through to the existing SETUP validator return, saving two bytes. Quiet polling adds two cycles and a pending packet enters RX one cycle earlier; all 802 descriptor/PHY/ACK bytes remain identical. The composed image passes 83 ownership and caller-state cases, 864 IN responses, 96 sequential WRITE4 and 26 READ exchanges, 99 minimum-gap ACK-to-SETUP cases and 4032 real-IN foreground injections (maximum entry 38 cycles).
 
 Measured image: 1392 bytes.
+
+## Share one-byte reply setup and publication
+
+GET_INTERFACE and GET_CONFIGURATION share the one-byte availability instruction and the existing pointer, length and publication tail. The common code is kept in vusb_replies.inc and included beside the interface path to allow fallthrough while retaining AVR short-branch range. The composed image keeps all 802 descriptor/PHY/ACK bytes identical; 108 OUT waveforms match event-for-event. GET_INTERFACE prepares its reply two clocks earlier, while GET_CONFIGURATION and GET_STATUS retain their timing. Standard requests, 57 complete reads, sequential write/read/retry cases and 4032 real-IN foreground injections pass.
+
+Measured image: 1390 bytes.
+
+## Shared helpers rejected after measurement
+
+Similar-looking instructions are not automatically a useful subroutine. These
+isolated measurements retain the inlined implementation in the active source:
+
+| Proposed extraction | Code-size change | Timing or contract result |
+| --- | ---: | --- |
+| Two WRITE4 hardware-buffer word loads | 0 bytes | Adds 14 clocks and two stack bytes between ACK and the next SETUP. |
+| Common TX-length load | +4 bytes | Call and return exceed the cost of the duplicated load. |
+| OUT/STALL message-state stores | 0 bytes | Adds seven clocks; a control-read status ACK takes 71 clocks, beyond the nominal 6.5-bit bound. |
+| SELECT/deferred-SPM opcode setup | +4 bytes | Register adaptation and calls outweigh the duplicate instructions. |
+
+Reset, SETUP and ACK also have different state ownership: reset clears the
+address and invalidates page selection, SETUP snapshots pending state, and an
+eligible ACK commits it. Combining these distinct contracts would remove
+required cancellation or retry behavior.

@@ -29,8 +29,10 @@ usb_standard_scratch_reply:
 usb_reply_pointer_trampoline:
 legacy_led_on_anchor:
 ee_return_one:
-    ldi r24, 1
-    rjmp usb_reply_use_scratch_buffer
+    ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
+/* Place the shared publisher here so GET_INTERFACE falls through and
+ * device-OUT conditional branches remain inside AVR's short-branch span. */
+#include "vusb_replies.inc"
 usb_standard_endpoint_in:
 /* Only endpoint zero exists; either direction of its address is valid. */
     mov r18, r14
@@ -41,7 +43,10 @@ usb_standard_endpoint_in:
     brne usb_standard_stall
 usb_standard_get_status:
     ldi r24, USB_STATUS_REPLY_BYTES
-    rjmp usb_reply_use_scratch_buffer
+/* The two-byte zero reply bypasses the one-byte availability entry. */
+usb_reply_use_scratch_buffer:
+    ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
+    rjmp usb_reply_use_flash_pointer
 usb_standard_device_in:
     tst r25
     breq usb_standard_get_status
@@ -67,11 +72,6 @@ usb_standard_check_get_descriptor:
     ldi r18, LOW8(BOOT_AT + USB_CONFIGURATION_OFFSET)
 desc_ptr:
     ldi r24, USB_DEVICE_DESCRIPTOR_BYTES
-    rjmp usb_reply_use_flash_pointer
-usb_standard_get_configuration:
-    ldd r18, Y+CTX_CONFIGURATION
-    subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
-    ldi r24, 1
     rjmp usb_reply_use_flash_pointer
 usb_standard_device_out:
     mov r24, r12
@@ -109,3 +109,9 @@ usb_standard_check_configuration:
     brsh usb_standard_stall
     std Y+CTX_CONFIGURATION, r24
     rjmp usb_reply_empty
+
+/* This placement keeps device-OUT dispatch inside its short-branch span. */
+usb_standard_get_configuration:
+    ldd r18, Y+CTX_CONFIGURATION
+    subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
+    rjmp usb_reply_one_byte_flash
