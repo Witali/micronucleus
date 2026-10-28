@@ -40,10 +40,24 @@ class PageCPU(h.CPU):
             else:raise AssertionError(('unexpected SPM operation',command))
         return super().step()
 
-def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=1500000,ack_phase=0):
+def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=1500000,ack_phase=0,
+                  ack_extra_ones=0,ack_eop_cycles=None):
     period=16000000/rate
+    assert 0<=ack_extra_ones<=4
     def bits(packet,**kwargs):
-        if packet==b'\xd2':kwargs['start']=kwargs.get('start',0)+ack_phase
+        if packet==b'\xd2':
+            kwargs['start']=kwargs.get('start',0)+ack_phase
+            if ack_extra_ones or ack_eop_cycles is not None:
+                from tests35.phy_model import from_bits
+                # Append raw final ones after encoding. A hub may extend the
+                # final run to six; it does not add another stuffed symbol.
+                raw=Bits(packet,rate=rate).bits+[1]*ack_extra_ones
+                wave=from_bits(raw,rate,2*period if ack_eop_cycles is None else ack_eop_cycles)
+                start=kwargs['start']
+                wave.start=start;wave.end+=start
+                wave.boundaries=[t+start for t in wave.boundaries]
+                wave.pin_edges=[t+start for t in wave.pin_edges]
+                return wave
         return Bits(packet,rate=rate,**kwargs)
     before=len(cpu.nvm);cursor=cpu.r[4]|cpu.r[5]<<8
     setup=bytes([0x40,opcode,value&255,value>>8,index&255,index>>8,0,0])
@@ -52,23 +66,31 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
     cpu.pc=cpu.labels['USB_handler'];cpu.m[0x114]=0x2d
     wire=bits(h.data_packet(setup),start=cpu.t+16)
     cpu.t=wire.start+8;replace_wire(cpu,wire)
-    tx=None;phase='setup';statuses=0
+    tx=None;phase='setup';statuses=0;acks=0;accepted_followup=False;followup_end=None
+    following=bytes([0x40,3,0x55,0x66,0x77,0x88,0,0])
     for _ in range(150000):
         if followup and cpu.status_acked and cpu.pc==cpu.labels['usb_rx_setup_data']:
             # A new minimum-gap SETUP may arrive immediately after the ACK.
             # It must not cancel a successfully completed previous WRITE4.
             assert len([row for row in cpu.nvm[before:] if row[0]==1])==2,('new SETUP overtook WRITE4',cpu.nvm[before:])
             assert cpu.r[4]|cpu.r[5]<<8==cursor+4
-            return
+            assert bytes(cpu.m[0x116:0x121])==h.data_packet(following),'next SETUP bytes corrupted'
+            accepted_followup=True
         if cpu.pc==cpu.labels['usb_tx_acquire_bus']:
             tx=('handshake',cpu.r[20]) if cpu.r[19]==2 else ('data',cpu.m[0x101])
+            if followup and cpu.status_acked and cpu.r[3]==11 and tx==('handshake',0xd2):
+                assert accepted_followup,'next SETUP ACK without its DATA'
+                assert cpu.r[12:16]+cpu.r[6:8]==list(following[2:]),'next SETUP shadow corrupted'
+                assert cpu.r[1]==0 and acks==1 and statuses==(2 if retry else 1)
+                return
             if tx[0]=='data':
                 statuses+=1
                 assert cpu.r[19]==4 and tx[1]==0x4b
                 if opcode==3:
                     assert len(cpu.nvm)==before and cpu.r[4]|cpu.r[5]<<8==cursor
         if cpu.pc==cpu.labels['usb_rx_accept_ack']:
-            assert phase=='status';cpu.status_acked=True
+            assert phase=='status';cpu.status_acked=True;acks+=1
+            assert acks==1,'old status ACK accepted more than once'
         pc=cpu.pc;ins=cpu.step()
         if ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:
             if tx==('handshake',0xd2) and phase=='setup':
@@ -80,8 +102,8 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
                           start=cpu.t+(500 if retry and statuses==1 else 2*period))
                 if followup and not (retry and statuses==1):
                     token=bits(h.token(0x2d),start=wire.boundaries[-2]+2*period)
-                    following=bytes([0x40,3,0x55,0x66,0x77,0x88,0,0])
                     data=bits(h.data_packet(following),start=token.boundaries[-2]+2*period)
+                    followup_end=data.end
                     wire=Joined(Joined(wire,token),data)
                 replace_wire(cpu,wire)
             else:raise AssertionError(('unexpected reply',tx,phase))
@@ -89,6 +111,8 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
             assert statuses==(2 if retry else 1)
             assert cpu.r[3]==0
             return
+        if followup_end is not None and cpu.t>followup_end+1000:
+            raise AssertionError(('next SETUP not accepted',hex(cpu.pc),cpu.t,cpu.r[3],cpu.r[4]|cpu.r[5]<<8,cpu.nvm[before:]))
     raise AssertionError(('request did not finish',opcode,phase,hex(cpu.pc),cpu.t))
 
 def read_request(cpu,length=8,retry=False,standard=False):
