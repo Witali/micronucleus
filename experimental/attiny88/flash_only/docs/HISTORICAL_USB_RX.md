@@ -102,7 +102,13 @@ It does not excuse stuffing, framing, missing CRC bytes, token CRC5 or timing.
 The current [requirements matrix](USB_REQUIREMENTS.md) remains the admission
 gate; neither historical version is a complete compliance reference.
 
-Local evidence is under validation/historical-usb-audit in the workspace:
+Reproduce the compact observations from this directory's parent with
+`python tools/historical_usb/audit.py --full-tail-matrix`. The maintained
+[historical audit tools](../tools/historical_usb/README.md) also prepare and
+check the pinned official v2.6 body. Scripts, public symbols and source hashes
+are in the repository; generated bodies, archives and reports remain ignored.
+
+Additional local evidence is under validation/historical-usb-audit in the workspace:
 upstream26/provenance.json and upstream_model.py;
 compact30/provenance.json, build/artifact.json and token-control-results.json;
 raw_compact30.py and raw_compact30/results.json. Source reconstruction and
