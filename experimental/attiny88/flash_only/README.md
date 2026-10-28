@@ -22,6 +22,11 @@ before treating an optimized image as usable.
 The current 1384-byte image has SHA-256
 `0e4e73da3b77873e34a9caa873d7622d87405bfc43a2cff282a6e630ff86878b`.
 
+The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
+That region would start at 0x1B00 on this 8 KiB device. A recognized final
+profile requires both a fitting image and passing USB admission checks;
+the current audit profile below has not moved to that target placement.
+
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
 advertise 0xFFFF unless an explicit new profile is supplied; the active client

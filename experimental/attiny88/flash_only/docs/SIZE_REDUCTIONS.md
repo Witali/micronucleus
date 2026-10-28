@@ -85,7 +85,7 @@ Device, interface and endpoint dispatch converge on one request-zero guard after
 
 Measured image: 1384 bytes.
 
-## Target placement audit at 0x1C00
+## Historical 1 KiB placement audit at 0x1C00
 
 The production source at commit 68a4d21 measures 1380 bytes when built without
 LED at the intended 1 KiB start address, 0x1C00. It exceeds the 1024-byte region
@@ -120,3 +120,13 @@ followed by a wait-for-K timeout, reaches packet-done with R28=0xFF. This is
 reachable with a new SOP pending too. The direct-SBIC variant was not admitted;
 this counterexample disproves its proposed invariant rather than establishing
 its full behavior by itself.
+
+## Current 1280-byte target at 0x1B00
+
+The current target is 1 KiB plus 256 bytes, or 1280 bytes, without LED.
+This region starts at 0x1B00. The strict source at 68a4d21 measures 1380 bytes
+there, exceeding the target by 100 bytes; the measurement hash is
+`4982b48f1f8f6efa479d29204cda697b448ca3fcc5fa3c0a05f696307fc4ec50`.
+It remains an unknown-profile measurement with open receiver findings.
+Required framing/timing corrections are not yet included in that count, so
+the 100-byte difference is not a prediction of the remaining final work.
