@@ -14,6 +14,7 @@ python3 -m tests35.test_out_completion_lifetime
 python3 -m tests35.test_vendor_host_contract
 python3 -m tests35.test_sequential_wire
 python3 -m tests35.test_tx_eop_counter
+python3 -m tests35.test_tx_digital
 python3 -m tests35.test_ep0_reset
 python3 -m tests35.test_ep0_shadow
 python3 -m tests35.test_ep0_ack_timeout
@@ -25,6 +26,7 @@ python3 -m tests35.test_rx_context_restore
 python3 -m tests35.test_usb_rx_waveforms
 python3 -m tests35.test_ack_followup
 python3 -m tests35.test_data_framing
+python3 -m tests35.test_rx_jitter_spec
 python3 -m tests35.test_usb_crossover
 python3 tests34/test_phy_timing.py
 python3 tests34/test_host.py
