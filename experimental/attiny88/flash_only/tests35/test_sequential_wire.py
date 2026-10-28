@@ -67,8 +67,19 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
     wire=bits(h.data_packet(setup),start=cpu.t+16)
     cpu.t=wire.start+8;replace_wire(cpu,wire)
     tx=None;phase='setup';statuses=0;acks=0;accepted_followup=False;followup_end=None
+    followup_ack=False;followup_eop=False
     following=bytes([0x40,3,0x55,0x66,0x77,0x88,0,0])
     for _ in range(150000):
+        if followup_ack:
+            # The public boundary is before any later RX or foreground
+            # dispatch. A SETUP may be shadowed during ACK completion,
+            # provided no subsequent token can overwrite its raw header.
+            assert cpu.pc not in (cpu.labels['USB_handler'],cpu.labels['usb_rx_wait_for_j']), 'RX overtook accepted SETUP'
+            if cpu.pc in (cpu.labels['usb_validate_setup'],cpu.labels['bootloader_process_pending_command']):
+                assert followup_eop and cpu.io.get(0x0a,0)&6==0,'SETUP returned before ACK release'
+                assert cpu.r[12:16]+cpu.r[6:8]==list(following[2:]),'next SETUP shadow corrupted'
+                assert cpu.r[1]==0 and acks==1 and statuses==(2 if retry else 1)
+                return
         if followup and cpu.status_acked and cpu.pc==cpu.labels['usb_rx_setup_data']:
             # A new minimum-gap SETUP may arrive immediately after the ACK.
             # It must not cancel a successfully completed previous WRITE4.
@@ -80,9 +91,7 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
             tx=('handshake',cpu.r[20]) if cpu.r[19]==2 else ('data',cpu.m[0x101])
             if followup and cpu.status_acked and cpu.r[3]==11 and tx==('handshake',0xd2):
                 assert accepted_followup,'next SETUP ACK without its DATA'
-                assert cpu.r[12:16]+cpu.r[6:8]==list(following[2:]),'next SETUP shadow corrupted'
-                assert cpu.r[1]==0 and acks==1 and statuses==(2 if retry else 1)
-                return
+                followup_ack=True
             if tx[0]=='data':
                 statuses+=1
                 assert cpu.r[19]==4 and tx[1]==0x4b
@@ -93,7 +102,9 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
             assert acks==1,'old status ACK accepted more than once'
         pc=cpu.pc;ins=cpu.step()
         if ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:
-            if tx==('handshake',0xd2) and phase=='setup':
+            if followup_ack:
+                followup_eop=True;replace_wire(cpu,Quiet())
+            elif tx==('handshake',0xd2) and phase=='setup':
                 phase='status';replace_wire(cpu,bits(h.token(0x69),start=cpu.t+2*period))
             elif tx==('handshake',0x5a):
                 replace_wire(cpu,bits(h.token(0x69),start=cpu.t+500))
