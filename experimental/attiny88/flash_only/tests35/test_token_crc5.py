@@ -48,6 +48,10 @@ def dispatch(cpu,artifact,pid,word,address=0,length=3,pair=None,last_odd=h.J):
     cpu.r[16],cpu.r[17]=0,last_odd
     cpu.r[22]=(0x55-length)&255 if pair is None else pair
     cpu.r[23]=(11-length)&255
+    # A real decoder also advances its committed-byte pointer. Keep both
+    # observations consistent: the composed receiver derives count from Y,
+    # avoiding the countdown's phantom byte on interrupted bit6/7 paths.
+    cpu.r[28]=(0x16+length)&255
     cpu.m[0x116:0x119]=bytes((pid,word&255,word>>8))
     ends={artifact['symbols'][name]:name for name in
           ('usb_rx_handle_in','usb_rx_handle_setup_or_out','usb_rx_ignore_packet')}
