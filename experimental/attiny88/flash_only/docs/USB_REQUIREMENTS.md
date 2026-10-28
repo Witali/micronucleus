@@ -13,6 +13,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | SETUP still contains eight payload bytes and both CRC bytes; truncated fields cannot manufacture a byte | Chapter 8 packet/control formats | `test_data_framing`, `test_setup_pending_marker`, `test_rx_context_restore` |
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, raw PID-admission matrix, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_usb_crossover` |
+| A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
@@ -56,6 +57,11 @@ all 1..7-bit tail patterns across CRC-ending classes, plus truncated CRC fields
 and missing CRC bytes. `test_ack_followup` separately catches a completed old
 write followed by a lost minimum-gap SETUP. These failures must be fixed;
 neither test is an expected-failure waiver.
+
+`test_token_crossover_admission` adds 5454 negative cases. A short possible
+GPIO both-low observation inside a fourth token byte must not be mistaken for
+EOP after a valid three-byte prefix. This gate passes on the strict receiver
+and exposes additional false NAK responses in an unadmitted dribble prototype.
 
 The sole approved exception is omitted incoming DATA CRC16 value validation,
 before and after ACK. It does not waive PID, stuffing, byte framing, minimum
