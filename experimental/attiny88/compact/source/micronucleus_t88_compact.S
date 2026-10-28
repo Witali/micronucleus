@@ -114,7 +114,7 @@ usb_poll_check_packet_pending:
     rjmp usb_poll_advance_timeout
     rcall USB_handler
 bootloader_process_pending_command:
-    wdr
+/* Startup disabled WDT before disconnect; no loader path enables it again. */
 /* The main path proves length without paying a subroutine return on idle.
  * A valid SETUP shares the token validator and discards this one call frame. */
 usb_control_process_received_packet:

@@ -32,10 +32,14 @@ length fast path creates that frame with RCALL. Ordinary data PUSH/POP and
 RCALL/RET use one physical stack in both current executors. Field capture must
 see an empty stack, including when a fresh SETUP replaces a partial reply.
 
+The watchdog is disabled before disconnect and remains disabled throughout
+the loader. Only the startup WDR is needed. Runtime code must not add another
+WDTCSR writer without revisiting the emitted-code lifetime audit and timing.
+
 ## Archived Pass26 contract
 
 The table, selector encoding and profile addresses below describe the imported
-Pass26 checkpoint, not the active Pass28 source or installed compact 3.0 loader.
+Pass26 checkpoint, not the active candidate or installed compact 3.0 loader.
 
 | Register | Live state / reuse |
 | --- | --- |

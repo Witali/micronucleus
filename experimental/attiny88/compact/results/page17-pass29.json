@@ -1,0 +1,59 @@
+{
+  "milestone": "17 Flash pages",
+  "verified_on": "2026-10-28",
+  "mcu": "ATtiny88",
+  "cpu_hz": 16000000,
+  "boot_at": "0x1BC0",
+  "capacity_bytes": 1088,
+  "body_bytes": 1088,
+  "remaining_bytes": 0,
+  "body_sha256": "824b9eca8d86e96f2f1b22854131871d574942cbed4ee19d06516a8d11b21194",
+  "validated_placements": [
+    {
+      "led": "NONE",
+      "boot_at": "0x1B80",
+      "body_bytes": 1088,
+      "body_sha256": "f6b3e3d764e1759461508d8f62fb6b0e58eabae333720576c61d41ba76079d67"
+    },
+    {
+      "led": "ACTIVE_HIGH",
+      "boot_at": "0x1B40",
+      "body_bytes": 1108,
+      "body_sha256": "a6107c507f48f22904505e34ed4723cace772d4e96d61f5981dde36f96d53131"
+    },
+    {
+      "led": "ACTIVE_LOW",
+      "boot_at": "0x1B40",
+      "body_bytes": 1106,
+      "body_sha256": "ec6f5407f130302c0c95b311d972d4bb7c9e08589ddf9087a4ed008477554ec7"
+    },
+    {
+      "led": "NONE",
+      "boot_at": "0x1BC0",
+      "body_bytes": 1088,
+      "body_sha256": "824b9eca8d86e96f2f1b22854131871d574942cbed4ee19d06516a8d11b21194"
+    }
+  ],
+  "checks": {
+    "no_packet_intervals": 167924,
+    "synchronized_scenarios": 248,
+    "tx_waveform_cases": 16872,
+    "main_poll_captures": 2880,
+    "cursor_cases": 262144,
+    "configuration_cases": 524288,
+    "main_entry_cases": 4096
+  },
+  "physical_sop_bound_cycles": 39,
+  "peak_stack_bytes": 6,
+  "driven_j_cycles": 11,
+  "measurement_at_0x1C00": {
+    "body_bytes": 1084,
+    "goal_bytes": 1024,
+    "over_budget_bytes": 60,
+    "body_sha256": "02743ed4866deb939fef589a036a0c4eeb7d7c93888b9970975f9db159c94be1"
+  },
+  "hardware_programmed": false,
+  "deployment_requires_new_profile": true,
+  "protocol_findings": "docs/USB_PROTOCOL.md",
+  "verification": "sh verify27.sh"
+}

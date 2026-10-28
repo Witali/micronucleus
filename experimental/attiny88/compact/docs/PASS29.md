@@ -40,35 +40,50 @@ flags are unchanged. Startup, exact-opcode audits and 16872 TX waveform/state
 cases pass across four placements; NONE rejects 19 audit mutants and LED
 profiles reject 18. The PHY is now 466 bytes in NONE, 468 with LED.
 
+The final two-byte reduction removes the periodic WDR after startup has already
+disabled the watchdog. The startup WDR and timed disable remain. An emitted-code
+lifetime audit closes direct WDTCSR writes and all non-context Z stores; it
+pins the four startup stores for watchdog/PCINT initialization. Main-entry
+tests execute all 1024 RX length/token combinations with real stack bytes,
+checking both valid SETUP capture and invalid reception paths.
+
 | Placement/profile | Pass28 bytes | Candidate bytes | New saving |
 | --- | ---: | ---: | ---: |
-| No LED, `0x1C00` measurement | 1102 | 1086 | 16 |
-| No LED, `0x1BC0`, 17-page milestone | 1106 | 1090 | 16 |
-| No LED, `0x1B80`, installed geometry | 1106 | 1090 | 16 |
-| Active high, `0x1B40` | 1124 | 1110 | 14 |
-| Active low, `0x1B40` | 1122 | 1108 | 14 |
+| No LED, `0x1C00` measurement | 1102 | 1084 | 18 |
+| No LED, `0x1BC0`, 17-page milestone | 1106 | 1088 | 18 |
+| No LED, `0x1B80`, installed geometry | 1106 | 1088 | 18 |
+| Active high, `0x1B40` | 1124 | 1108 | 16 |
+| Active low, `0x1B40` | 1122 | 1106 | 16 |
 
-The 17-page fit gate is still two bytes over budget at this stage.
+The strict 17-page size gate passes exactly: 1088 bytes at 0x1BC0, ending at
+0x2000 exclusive. The 1024-byte goal remains sixty bytes over budget when
+measured at its own 0x1C00 boundary.
 
-The PHY8 checkpoint passed verify27.sh for all three existing fitting profiles:
-15 negative PHY-audit cases per profile, complete standard/NVM/cursor tests,
-125943 no-packet intervals, 186 synchronized minimum-IPD scenarios and 12654
-TX waveform/state cases. The physical-SOP bound is 39 cycles; observed
-synchronized entry is at most 37 2/3 cycles, response 44 1/3 cycles and peak
-stack six bytes. The new 0x1BC0 placement is measured separately until its
-own page-boundary admission.
+The final combined source passes verify27.sh for all three existing fitting
+profiles and the new NONE placement at 0x1BC0. This includes complete standard,
+NVM/cursor and watchdog/frame tests, 167924 no-packet intervals, 248 synchronized
+minimum-IPD scenarios, 16872 TX waveform/state cases and 2880 actual main-poll
+captures. The physical-SOP bound is 39 cycles; observed synchronized entry is
+at most 37 2/3 cycles, response 44 1/3 cycles and peak stack six bytes.
+The reproducible body hashes and test counts are recorded in
+[the milestone result](../results/page17-pass29.json).
+
+These are emitted-instruction and digital GPIO/PCINT model checks at exactly
+16 MHz. They do not add electrical measurements or close the documented
+protocol findings. The 17-page image has not been installed on hardware.
 
 ## Verification and release boundary
 
 ```sh
 sh verify27.sh
+python3 tests27/page17.py
 python3 build_candidate.py --boot 0x1BC0 --require-fit
 python3 build_candidate.py --boot 0x1C00 --require-fit
 ```
 
 The fit gates remain strict. Exact-size regression expectations are the
 deployed reference sizes minus measured CANDIDATE_SAVINGS, which is currently
-58 bytes for NONE and 56 for LED profiles. No code, descriptor or reserved
+60 bytes for NONE and 58 for LED profiles. No code, descriptor or reserved
 application bytes are excluded.
 
 The installed firmware remains e405ea7: 1148 bytes at `0x1B80`, USB profile

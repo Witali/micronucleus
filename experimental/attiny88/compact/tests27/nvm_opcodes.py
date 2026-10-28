@@ -42,6 +42,50 @@ def preserve_usb_registers(machine):
     assert machine.r[8] == 0xA5
 
 
+def check_main_entry_frames(artifact):
+    """Execute main reception with real call bytes, including SETUP tail exit."""
+    from tests27 import cooperative_usb as usb
+    usb.configure(artifact)
+    for length in range(256):
+        for token in (0, 0x2D, 0x69, 0xE1):
+            machine = usb.CPU(usb.meta, {'memory': bytearray(0x300), 'registers': [0] * 32})
+            machine.flash = usb.FlashView(machine.flash, machine.base)
+            machine.r[21], machine.r[29], machine.r[3] = 0xA0, 1, 5
+            machine.r[4:6], machine.r[24:26] = [0, 1], [0xA5, 0x5A]
+            machine.m[0x112], machine.m[0x10D] = length, token
+            machine.m[0x117:0x119] = bytes((0xC0, 0xB0))
+            machine.m[0x10C] = 0x24
+            machine.io = usb.PinIO(machine, usb.Stream())
+            machine.io.cleared_at = 0
+            machine.pc = machine.labels['bootloader_process_pending_command']
+            accepted = length == 11 and token == 0x2D
+            target = 'usb_setup_capture_fields' if accepted else 'bootloader_check_pending_command'
+            for _ in range(100):
+                if machine.pc == machine.labels[target]:
+                    break
+                machine.executing_pc = machine.pc
+                machine.step()
+            else:
+                raise AssertionError(('Main entry failed to reach its owner', length, token))
+            assert not machine.raw_stack and machine.peak_stack <= 2
+            assert machine.m[0x112] == 0 and machine.r[3] == 5
+            assert machine.word(4) == 0x100 and not machine.nvm_events
+            if accepted:
+                assert machine.peak_stack == 2
+                # The original header must be cached before the first poll.
+                for _ in range(30):
+                    if machine.pc == machine.labels['usb_service_pending']:
+                        break
+                    machine.executing_pc = machine.pc
+                    machine.step()
+                else:
+                    raise AssertionError('SETUP capture did not reach cooperative service')
+                assert machine.r[24:26] == [0xC0, 0xB0]
+                assert machine.r[9] == 0xC3 and machine.m[0x10F] == 0x5A
+                assert machine.m[0x113] == 0x24 and len(machine.raw_stack) == 2
+    print('PASS 1024 main RX length/token entries; empty stack at owner, valid header cached before poll')
+
+
 def check_main_gate_and_layout(artifact):
     """Keep deferred SPM/RUN gated, and never fall into nearby NVM handlers."""
     for stale_request in range(256):
@@ -52,9 +96,9 @@ def check_main_gate_and_layout(artifact):
         assert machine.r[3] == 0 and pointer(machine) == 0x100
         assert not machine.spms and not machine.io_events
         preserve_usb_registers(machine)
-    entry = artifact['symbols']['bootloader_process_pending_command']
-    offset = entry - artifact['boot']
-    assert artifact['body'][offset:offset + 2] == b'\xa8\x95'  # WDR has no modeled register effect.
+    from tests27.watchdog_lifetime import check_watchdog_lifetime
+    check_watchdog_lifetime(artifact)
+    check_main_entry_frames(artifact)
     for pending, eecr in ((1, 0), (4, 0), (0, 1), (0, 2), (0, 4), (0, 255)):
         for command in (3, 4, 5):
             machine = new_machine(artifact)
