@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emitted AVR audit for unchanged TX/CRC loops and the EOP J-drive tail.
+"""Emitted AVR audit for TX loops and the EOP J-drive tail.
 
 RX admission is checked with independently encoded raw waveforms instead of
 requiring identity with the defective archive receiver. This audit checks the
@@ -22,13 +22,6 @@ def verify():
         n=build('source/micronucleus_t88_compact.S',mode=mode,boot=boot)
         o=build('reference_pass33/micronucleus_t88_compact.S',mode=mode,boot=boot)
         a=AVRExec(n);b=AVRExec(o)
-        for begin,end in [('usb_crc16_mix_byte','usb_crc16_payload_complete')]:
-            x,y=section(n,begin,end),section(o,begin,end)
-            assert len(x)==len(y),(mode,begin,len(x),len(y))
-            for i in range(0,len(x),2):
-                w,v=int.from_bytes(x[i:i+2],'little'),int.from_bytes(y[i:i+2],'little')
-                if w!=v:
-                    assert ((w&0xf000)==(v&0xf000) and w&0xf000 in (0xc000,0xd000)) or ((w&0xfc07)==(v&0xfc07) and (w&0xf000)==0xf000),(mode,begin,hex(i),hex(w),hex(v))
         # Unchanged TX NRZI/bit-stuffing instructions; changed just after J.
         begin='usb_tx_begin_byte';end='usb_tx_finish_eop'
         x,y=section(n,begin,end),section(o,begin,end)

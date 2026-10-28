@@ -33,8 +33,10 @@ usb_tx_initialize_payload_crc:
 usb_tx_copy_flash_payload:
     rcall usb_service_pending
     movw r30, r14
-    cp r1, r24
-    breq usb_crc16_payload_complete
+    /* The low counter stores bytes still to fetch minus one. The high
+     * three bits remain the packed eight-step CRC bit phase. */
+    subi r24, 1
+    brlo usb_crc16_payload_complete
     lpm r18, Z+
     st X+, r18
     movw r14, r30
@@ -52,7 +54,6 @@ usb_crc16_advance_bit_count:
     subi r24, LOW8(-CRC_BIT_COUNTER_INCREMENT)
     brbs SREG_C, usb_crc16_shift_bit
 usb_crc16_byte_complete:
-    dec r24
     rjmp usb_tx_copy_flash_payload
 usb_crc16_payload_complete:
 usb_tx_append_payload_crc:
