@@ -109,7 +109,10 @@
 #define USB_RESYNC_IDLE_SAMPLES 28
 /* The strict EOF path's shorter CPC validation needs one extra wait loop.
  * Recalibrate this count if the receiver's EOF normalization changes. */
+/* A separately timed PHY supplies its own calibrated token-to-DATA wait. */
+#ifndef USB_NEXT_DATA_WAIT_COUNT
 #define USB_NEXT_DATA_WAIT_COUNT 29
+#endif
 #define USB_ACK_WAIT_COUNT 33
 #define USB_EOP_DELAY_LOOPS 6
 #define CRC16_POLYNOMIAL 0xa001

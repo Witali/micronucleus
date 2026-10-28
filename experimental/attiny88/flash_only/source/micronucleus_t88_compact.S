@@ -21,7 +21,12 @@ bootloader_start:
     .byte LOW8(USB_PROTOCOL_BCD), HIGH8(USB_PROTOCOL_BCD), USB_CLASS_VENDOR_SPECIFIC, 0, 0, USB_EP0_PAYLOAD_BYTES
     .byte LOW8(USB_VENDOR_ID), HIGH8(USB_VENDOR_ID), LOW8(USB_PRODUCT_ID), HIGH8(USB_PRODUCT_ID)
     .byte LOW8(BOOT_VERSION_BCD), HIGH8(BOOT_VERSION_BCD), 0, 0, 0, 1
-#include "vusb_phy.inc"
+/* Audit variants can replace the PHY while sharing the same EP0/NVM owner.
+ * The default expands to the original include and emits identical bytes. */
+#ifndef USB_PHY_SOURCE
+#define USB_PHY_SOURCE "vusb_phy.inc"
+#endif
+#include USB_PHY_SOURCE
 flash_buffer_append_word:
 flash_buffer_load_word:
 startup:

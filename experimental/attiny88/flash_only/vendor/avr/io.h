@@ -25,6 +25,7 @@
 #define SPH 0x3e
 #define MCUSR _SFR_IO8(0x34)
 #define GPIOR0 _SFR_IO8(0x1e)
+#define GPIOR2 _SFR_IO8(0x2b)
 #define WDTCSR _SFR_MEM8(0x60)
 #define DDRD _SFR_IO8(0x0a)
 #define PORTD _SFR_IO8(0x0b)
