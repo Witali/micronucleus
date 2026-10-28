@@ -13,7 +13,7 @@ import argparse, hashlib, json, subprocess, shutil, sys
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from host.image_core import image_from_file
+from host.image_core import image_from_file,pack_application,record,image_to_hex as hex_image
 
 FLASH_BYTES=8192
 PAGE_BYTES=64
@@ -88,8 +88,9 @@ verify_next:
     inc r16
     dec r17
     brne verify_next
-    /* Success is signaled by rebooting into Micronucleus. The host must
-     * observe the loader and install the final app before its idle exit.
+    /* Verification completion requests a reboot into Micronucleus. A USB
+     * reconnect alone is ambiguous; require independent success evidence
+     * before replacing this temporary app with the main application.
      * The bootloader itself clears WDRF and disables WDT at entry. */
     wdr
     ldi r18, 0x18                /* WDCE | WDE */
@@ -107,13 +108,6 @@ stage_data:
 {DATA}
 '''
 
-def record(addr:int, data:bytes=b'', typ:int=0)->str:
-    r=bytes((len(data),(addr>>8)&255,addr&255,typ))+data
-    return ':'+(r+bytes(((-sum(r))&255,))).hex().upper()
-
-def hex_image(data:bytes)->str:
-    return '\n'.join([*(record(i,data[i:i+16]) for i in range(0,len(data),16)),record(0,b'',1)])+'\n'
-
 def load_image(path:Path)->dict[int,int]:
     """Use the same strict original-image parser as the Flash programmer."""
     return image_from_file(path)
@@ -128,29 +122,13 @@ class Patched:
     app_target_byte:int
 
 def patch_for_loader(raw:dict[int,int],boot_at:int)->Patched:
+    """Keep the planner's geometry bound; share RESET/postscript packing."""
     if boot_at%64 or not (0x100<=boot_at<=0x1C00):
         raise ValueError('Unknown or unaligned loader boundary')
-    if any(not 0<=a<boot_at-4 for a in raw):
-        raise ValueError('Image contains the reserved postscript or bootloader area')
-    buf=bytearray(b'\xff'*boot_at)
-    for a,v in raw.items():
-        if not 0<=v<=255:raise ValueError('Bad image byte')
-        buf[a]=v
-    ins=int.from_bytes(buf[:2],'little')
-    if ins==0x940C:
-        target=int.from_bytes(buf[2:4],'little')
-    elif ins&0xF000==0xC000:
-        off=ins&0xFFF
-        if off&0x800:off-=4096
-        target=(1+off)&0xfff
-    else:raise ValueError(f'Invalid application reset vector {ins:#06x}')
-    if not 0<=target*2<boot_at-4:
-        raise ValueError('Application RESET points outside app area')
-    boot_word=0xC000|((boot_at//2-1)&0xFFF)
-    ps_word=0xC000|((target - ((boot_at-4)//2) - 1)&0xFFF)
-    buf[:2]=boot_word.to_bytes(2,'little')
-    buf[boot_at-4:boot_at-2]=ps_word.to_bytes(2,'little')
-    return Patched(bytes(buf),ins,boot_word,ps_word,target*2)
+    prepared=pack_application(raw,boot_at=boot_at)
+    original_reset=raw.get(0,255)|(raw.get(1,255)<<8)
+    return Patched(prepared.image,original_reset,prepared.boot_reset_word,
+                   prepared.postscript_reset_word,prepared.reset_target_word*2)
 
 def make_asm(image:bytes)->str:
     if len(image)!=64:raise ValueError('ATtiny88 has exactly 64 EEPROM bytes')
