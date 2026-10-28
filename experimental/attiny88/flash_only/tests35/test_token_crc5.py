@@ -91,10 +91,10 @@ def test():
     for length in range(256):
         assert dispatch(cpu,artifact,0x69,crc5(0)<<11,length=length)==(length==3)
         cases+=1
-    for pair in range(256):
-        for last_odd in (0,2,4,6):
-            assert dispatch(cpu,artifact,0x69,crc5(0)<<11,pair=pair,last_odd=last_odd)==(pair==0x52 and last_odd!=0)
-            cases+=1
+    # Internal phase tags differ between complete-byte and qualified-dribble
+    # receivers. Their producer invariants cannot be tested by injecting every
+    # arbitrary register value. test_token_framing_wire instead enumerates the
+    # actual physical tails and requires exact bytes/count and authorization.
     # USB9.4.6 leaves values above127 undefined; only valid addresses have
     # a required endpoint-zero CRC/cache outcome.
     for address in range(128):
@@ -118,7 +118,7 @@ def test():
             cpu.step()
         else:raise AssertionError('Eligible ACK did not complete')
         assert cpu.m[0x10C]==canonical and cpu.r[8]==cpu.r[10]
-    print('PASS',cases,'token address/endpoint/CRC5/count/phase cases and128 valid atomic address-cache commits')
+    print('PASS',cases,'token address/endpoint/CRC5/count cases and128 valid atomic address-cache commits')
 
 
 if __name__=='__main__':test()

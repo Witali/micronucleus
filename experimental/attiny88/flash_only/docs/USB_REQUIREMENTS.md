@@ -14,10 +14,12 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, raw PID-admission matrix, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
+| Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
 | A following transaction at the physical two-bit gap must be received intact | Section 7.1.18.1 | `test_ack_followup`, `test_sequential_wire` |
+| Foreground delay cannot corrupt an IN token or its complete reply; later observed entries retain jitter tolerance | Sections 7.1.11, 7.1.15.1 and 7.1.18.1 | `test_ep0_polling`, `test_rx_late_entry` |
 | ACK/token response eligibility expires no earlier than 16 and before 18 bit periods | Section 7.1.19.1 | `test_ep0_ack_timeout`, `test_ep0_token_timeout`, dribble deadline matrix |
 | DATA/PID remain immutable until eligible ACK or control-status completion; repeats do not duplicate a write | Chapter 8 transaction/retry rules | `test_ack_regression`, `test_ep0_read_completion`, `test_sequential_wire` |
 | New SETUP and reset cancel old transfer ownership; no stale erase/program/RUN is released | Chapter 8 control transfers, Chapter 9 reset states | `test_setup_pending_marker`, `test_ep0_shadow`, `test_ep0_reset`, `test_nvm_state` |
@@ -31,6 +33,11 @@ Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
 
 ## Signal oracle scope
+
+The [AVR model audit](AVR_MODEL.md) checks explicit instruction-cycle classes,
+conditional/skip timing, arithmetic flags and the distinction between GPIO
+access phase and instruction completion. Unsupported timing cannot silently
+default to one clock.
 
 `test_tx_digital` independently decodes emitted NRZI and stuffed symbols,
 including a stuffed zero after the final data bit. An exhaustive byte/run
