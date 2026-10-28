@@ -49,3 +49,9 @@ Measured image: 1396 bytes.
 The read limiter compares R24 directly with the preserved R6 length byte and uses R6 for the bounded result. Removing the temporary R25 copy saves two bytes and one foreground cycle. The physical receiver/transmitter prefix is unchanged; 2213 standard requests, 57 completed reads, the sequential write/read/retry cases and 4032 foreground injections pass.
 
 Measured image: 1394 bytes.
+
+## Share the service return with SETUP validation
+
+The quiet USB service path falls through to the existing SETUP validator return, saving two bytes. Quiet polling adds two cycles and a pending packet enters RX one cycle earlier; all 802 descriptor/PHY/ACK bytes remain identical. The composed image passes 83 ownership and caller-state cases, 864 IN responses, 96 sequential WRITE4 and 26 READ exchanges, 99 minimum-gap ACK-to-SETUP cases and 4032 real-IN foreground injections (maximum entry 38 cycles).
+
+Measured image: 1392 bytes.

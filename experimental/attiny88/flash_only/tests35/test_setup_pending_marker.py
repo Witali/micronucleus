@@ -71,6 +71,19 @@ def in_response(art,address,length,rate,width,entry):
 
 def test():
     art=h.build();bind(art);cases=0
+    # A quiet cooperative poll must preserve the entire interrupted CRC,
+    # cached header, cursor and command state. It shares the validator RET.
+    for state in STATES[:-1]:
+        cpu=seeded(art,state)
+        cpu.r[0]=0x39;cpu.r[24:26]=[0xc2,0xd3]
+        before=cpu.r[:],bytes(cpu.m)
+        cpu.pc=cpu.labels['usb_service_pending']
+        for _ in range(12):
+            if cpu.pc==0xfffe:break
+            cpu.step()
+        assert cpu.pc==0xfffe and (cpu.r[:],bytes(cpu.m))==before
+        assert not cpu.nvm
+        cases+=1
     for state in STATES:
         cpu=seeded(art,state)
         old_packet=bytes(cpu.m[0x101:0x10c])

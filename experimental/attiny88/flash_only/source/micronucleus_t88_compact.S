@@ -188,9 +188,9 @@ bootloader_reset_control_state:
 #include "compact_memory.inc"
 #include "vusb_requests.inc"
 usb_service_pending:
-    sbis _SFR_IO_ADDR(PCIFR), PCIF2
-.Lservice_done:
-    ret
+    /* Quiet calls share the validator RET. A pending packet reaches RX
+     * one clock earlier; its accepted SETUP still aborts the caller. */
+    sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rcall USB_handler
 #include "vusb_setup.inc"
 #include "vusb_standard.inc"
