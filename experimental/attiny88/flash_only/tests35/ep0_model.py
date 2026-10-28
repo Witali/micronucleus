@@ -8,6 +8,7 @@ from pathlib import Path
 from functools import lru_cache
 from types import SimpleNamespace
 import hashlib,os,sys
+from tests35.avr_cycles import cycles as instruction_cycles, SKIPS
 ROOT=Path(__file__).resolve().parents[1]
 BACKEND=Path(os.environ.get('MICRONUCLEUS_TEST_MODEL_ROOT',ROOT.parent/'compact'))
 saved_argv=sys.argv[:]
@@ -62,9 +63,14 @@ class CPU(Timed):
     def memwrite(self,address,value):
         if address<32:self.r[address]=value&255
         else:super().memwrite(address,value)
+    def add8(self,d,k,carry=0,oldz=False):
+        # ADC sets Z from this byte's result; unlike SBC/CPC it does not
+        # preserve a previous zero. Keep the archived backend unchanged.
+        return super().add8(d,k,carry,oldz=False)
     def step(self):
         self.executing_pc=self.pc
         word=self.flash[self.pc]|self.flash[self.pc+1]<<8
+        before_flags=self.flags;before_time=self.t
         # A branch to the following instruction has the same final PC for
         # both outcomes. Its taken condition still determines 1/2 cycles;
         # the inherited timing layer cannot infer that condition from PC.
@@ -93,4 +99,13 @@ class CPU(Timed):
             self.visited.add(self.pc);self.setflag(0,1)
             self.pc+=2;self.t+=1;self.steps+=1
             return SimpleNamespace(op='sec',operands='',target=None,size=2)
-        ins=super().step();self.peak=max(self.peak,len(self.raw_stack));return ins
+        old_neg=self.r[(word>>4)&31] if word&0xfe0f==0x9401 else None
+        ins=super().step()
+        if old_neg is not None:
+            # NEG's half borrow is result bit3 OR original operand bit3.
+            self.setflag(5,(self.r[(word>>4)&31]|old_neg)&8)
+        next_size=dec.decode(ins.address+ins.size).size if ins.op in SKIPS else None
+        expected=instruction_cycles(ins,before_flags,self.pc,next_size)
+        if self.t-before_time!=expected:
+            raise AssertionError(('AVR instruction cycles',ins.op,self.t-before_time,expected))
+        self.peak=max(self.peak,len(self.raw_stack));return ins

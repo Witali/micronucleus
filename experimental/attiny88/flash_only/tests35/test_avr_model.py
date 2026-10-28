@@ -63,5 +63,45 @@ def test():
     assert not cpu.bus_events
     print('PASS BRBS/BRBC zero and signed offsets, all flags and SREG states:',branch_cases,'cases',flush=True)
 
+    # ADC does not chain the old Z flag. Mathematical signed/range and
+    # nibble arithmetic provide independent flag oracles for every operand.
+    install(cpu,pc,0x1f01)  # ADC R16,R17
+    adc_cases=0
+    for left in range(256):
+        for right in range(256):
+            for carry in (0,1):
+                total=left+right+carry;result=total%256
+                signed=(left if left<128 else left-256)+(right if right<128 else right-256)+carry
+                overflow=int(not -128<=signed<=127);negative=int(result>=128)
+                expected=(int(total>=256)|(int(result==0)<<1)|(negative<<2)|
+                          (overflow<<3)|((negative^overflow)<<4)|
+                          (int((left%16)+(right%16)+carry>=16)<<5))
+                for old_zero in (0,1):
+                    for upper in (0,64,128,192):
+                        begin(cpu,pc,upper|0x3c|(old_zero<<1)|carry)
+                        cpu.r[16:18]=[left,right]
+                        instruction=cpu.step()
+                        assert instruction.op=='adc' and cpu.r[16]==result
+                        assert cpu.r[17]==right and cpu.flags==upper|expected
+                        assert cpu.t==101 and cpu.pc==pc+2 and cpu.steps==1
+                        adc_cases+=1
+    print('PASS ADC all operand pairs, carry, prior Z and preserved T/I:',adc_cases,'cases',flush=True)
+
+    install(cpu,pc,0x9501)  # NEG R16, including its half-carry flag.
+    neg_cases=0
+    for value in range(256):
+        result=(-value)%256;negative=int(result>=128);overflow=int(value==128)
+        affected=(int(value!=0)|(int(result==0)<<1)|(negative<<2)|
+                  (overflow<<3)|((negative^overflow)<<4)|
+                  (int(bool((value|result)&8))<<5))
+        for flags in range(256):
+            begin(cpu,pc,flags);cpu.r[16]=value
+            instruction=cpu.step()
+            assert instruction.op=='neg' and cpu.r[16]==result
+            assert cpu.flags==(flags&0xc0)|affected
+            assert cpu.t==101 and cpu.pc==pc+2 and cpu.steps==1
+            neg_cases+=1
+    print('PASS NEG all operands and initial SREG states:',neg_cases,'cases',flush=True)
+
 
 if __name__=='__main__':test()
