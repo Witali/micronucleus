@@ -34,10 +34,10 @@ def test():
             row=out(art,direction=0,command=command,pid=pid)
             assert row['tx']==0x1e and row['remaining']==0xff and row['command']==0,row
             cases+=1
-    # Strict supported policy is zero-length status; malformed CRC length is ignored.
+    # USB8.5.3.1 permits a nonempty read status; missing CRC bytes remain ignored.
     for payload in (bytes(1),bytes(8)):
         row=out(art,payload=payload)
-        assert row['tx']==0x1e and row['remaining']==0xff,row;cases+=1
+        assert row['tx']==0x5a and row['remaining']==0xff,row;cases+=1
     for packet in (b'\x4b',b'\x4b\x00'):
         row=out(art,packet=packet)
         assert row['tx']==12 and row['remaining']==7,row;cases+=1

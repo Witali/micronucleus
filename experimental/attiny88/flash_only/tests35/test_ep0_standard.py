@@ -65,6 +65,10 @@ def test():
             row=request(art,0x80,6,descriptor<<8,length=length)
             assert row['kind']=='reply' and row['payload']==payload[:min(length,18)].hex(),(descriptor,length,row)
             cases+=1
+    # USB9.4.7 explicitly leaves a nonzero upper wValue undefined.
+    # This implementation uses the low configuration byte, avoiding a guard.
+    row=request(art,0,9,0x101,length=0)
+    assert row['kind']=='reply' and row['config']==1,row
     # Independent negative oracle: unsupported standard requests always STALL.
     for bm in (0,0x80,0x81,0x82):
         supported={0:{5,9},0x80:{0,6,8},0x81:{0,10},0x82:{0}}[bm]
@@ -83,7 +87,7 @@ def test():
         (0x81,0,0,0,0),(0x81,10,0,0,0),(0x81,0,0,1,1),
         (0x81,10,0,1,1),(0x81,0,0,0x100,1),
         (0x82,0,0,1,1),(0x82,0,0,0x81,1),(0x82,0,0,0x100,1),
-        (0,9,2,0,1),(0,9,255,0,1),(0,9,256,0,1),
+        (0,9,2,0,1),(0,9,255,0,1),
         (0x80,6,0x300,0,1),(0x80,6,0x101,0,1),(0x80,6,0x200,1,1)]:
         assert request(art,bm,req,value,index,config=config)['kind']=='stall',(bm,req,value,index,config)
         cases+=1

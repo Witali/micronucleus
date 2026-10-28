@@ -18,8 +18,8 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1410-byte image has SHA-256
-`cf6ecc21f6bb7fbf25dd91ba98b8fbf4c4f9804f8f9c4301fdf52f3dbc55f3fc`.
+The current 1408-byte image has SHA-256
+`d7f817ee872f9d481c1d2bce756ee3ba73dcc3b8ed8d40ffe9dcdd8e5ca9405a`.
 
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
@@ -55,7 +55,7 @@ software audit checkpoints while these findings are open. The existing board
 has not been changed. The no-LED receiver, control-state and token tests use
 the same linked AVR words that are exported, with independent waveform inputs.
 
-For this checkpoint, the software checks passed 2213 standard-request cases,
+For this checkpoint, the software checks passed 2212 standard-request cases,
 214272 token cases, 4032 foreground IN injections, 1889 complete-packet waveform
 cases, 57 control-read completion sequences and 12 vendor-status guard cases.
 The complete verification run fails when an ACK has one legal extra final one
@@ -82,11 +82,11 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only audit checkpoint | 1410 |
+| Current Flash-only audit checkpoint | 1408 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference
-here. The current checkpoint is 78 bytes larger, with unresolved receiver work.
+here. The current checkpoint is 76 bytes larger, with unresolved receiver work.
 The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.
@@ -117,8 +117,8 @@ status, configuration and interface queries, but limited request-shape checking
 and a zero-length default for unsupported requests. This experiment adds
 explicit standard/class/vendor separation, STALL paths, preserved SETUP fields,
 reset cancellation and exact-length reply completion. These are tested subsets,
-not proof of all Chapter 9 behavior. The current full-byte request decoder also
-needs review for zero-length requests whose direction bit is ignored by USB.
+not proof of all Chapter 9 behavior. Zero-length requests ignore their direction
+bit as required by USB 9.3.1; 16 wire sequences cover IN status and retries.
 
 The compiled upstream t88 image warrants a separate standard-reply check:
 GET_STATUS and GET_CONFIGURATION select SRAM reply pointers, while the selected

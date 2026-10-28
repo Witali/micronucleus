@@ -340,8 +340,7 @@ usb_rx_handle_data:
 /* Status uses DATA1. ACK an old toggle without accepting it again. */
     cpi r16, USB_PID_DATA1
     brne usb_tx_send_ack
-    cpi r23, USB_RX_PACKET_OVERHEAD
-    brne usb_rx_protocol_stall
+    /* USB8.5.3.1 permits any payload length for a read status inquiry. */
 /* A valid OUT status also confirms the final IN when its ACK was lost. */
     ldi r19, USB_PID_NAK
     std Z+CTX_TX_LENGTH, r19

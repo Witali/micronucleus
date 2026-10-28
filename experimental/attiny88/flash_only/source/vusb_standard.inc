@@ -77,7 +77,6 @@ usb_standard_device_out:
     mov r24, r12
     cpi r25, USB_REQ_SET_ADDRESS
     brne usb_standard_check_configuration
-    andi r24, 0x7f
     std Y+CTX_NEW_DEVICE_ADDRESS, r24
     /* Cache the pending address CRC before exposing its status DATA. Each
      * bit services USB; a replacement SETUP aborts this calculation. */
@@ -106,8 +105,7 @@ usb_standard_check_configuration:
     brne usb_standard_stall
 /* This descriptor exposes only configuration 1; zero deconfigures it. */
     cpi r24, 2
-    /* CPC compares without modifying the accepted high-value shadow. */
-    cpc r13, r1
+    /* USB9.4.7 leaves nonzero upper wValue undefined; use its low byte. */
     brsh usb_standard_stall
     std Y+CTX_CONFIGURATION, r24
     rjmp usb_reply_empty

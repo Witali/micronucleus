@@ -25,6 +25,12 @@ usb_setup_capture_fields:
     mov r18, r6
     or r18, r7
     brne .Lsetup_has_data_stage
+    /* USB9.3.1 ignores D7 with no Data stage. Canonicalize the dispatch:
+     * supported standard GET codes are even, supported writes are odd.
+     * Vendor routing uses only TYPE; its no-data writes set R11 separately. */
+    ori r24, 0x80
+    sbrc r25, 0
+    andi r24, 0x7f
     mov r11, r1
 .Lsetup_has_data_stage:
     ldd r18, Y+CTX_DEVICE_ADDRESS
