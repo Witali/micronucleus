@@ -108,7 +108,9 @@
 #define USB_DISCONNECT_INNER_LOOPS 27359
 #define USB_RESET_SE0_SAMPLES 100
 #define USB_RESYNC_IDLE_SAMPLES 28
-#define USB_NEXT_DATA_WAIT_COUNT 28
+/* The strict EOF path's shorter CPC validation needs one extra wait loop.
+ * Recalibrate this count if the receiver's EOF normalization changes. */
+#define USB_NEXT_DATA_WAIT_COUNT 29
 #define USB_ACK_WAIT_COUNT 33
 #define USB_EOP_DELAY_LOOPS 6
 #define CRC16_POLYNOMIAL 0xa001

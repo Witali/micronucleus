@@ -246,16 +246,16 @@ usb_rx_recovered_j:
     cpi r16, USB_PID_DATA1
     brbs SREG_Z, usb_rx_handle_data
     /* Tokens contain PID and sixteen address/endpoint/CRC bits. */
+    /* Treat length, address/endpoint and CRC5 as one virtual compare.
+     * CPC preserves a cleared Z, so no later field can cancel a mismatch. */
     cpi r23, 3
-    brne usb_rx_ignore_packet
     ldd r18, Z+CTX_DEVICE_ADDRESS
     ldd r17, Z+(CTX_RX_BUFFER + USB_PACKET_ADDRESS_OFFSET)
-    cpse r17, r18
-    rjmp usb_rx_ignore_packet
+    cpc r17, r18
     /* Cache endpoint-zero CRC5 per address, without a lookup table.
      * The full-byte comparison also rejects endpoint bits 1..3. */
     ldd r17, Z+(CTX_RX_BUFFER + (USB_PACKET_ADDRESS_OFFSET + 1))
-    cp r17, r8
+    cpc r17, r8
     brne usb_rx_ignore_packet
     cpi r16, USB_PID_IN
     brne .Lrx_not_in
