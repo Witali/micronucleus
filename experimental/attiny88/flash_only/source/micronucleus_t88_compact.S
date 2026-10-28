@@ -51,20 +51,8 @@ startup_check_sram_end:
     cpi r28, LOW8(USB_CONTEXT_BASE)
     brne usb_disconnect_delay_outer
     cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
-    movw r2, r24
-    ldi r17, 0x10
-    mov r8, r17
     movw r6, r24
-    mov r11, r1
-    /* r3 is the pending SPM/RUN command, initialized via MOVW r2:r3 above.
-     * Persistent r4:r5 is the selected Flash page; READ8/WRITE2 have explicit addresses. */
-    ldi r24, USB_PID_NAK
-    std Y+CTX_TX_LENGTH, r24
-    ldi r24, USB_NO_MESSAGE
-    std Y+CTX_MSG_LENGTH, r24
-    /* No page is selected after RESET. High 0xFF makes the final SPM
-     * guard reject COMMIT until SELECT installs a valid Flash page. */
-    mov r5, r24
+    rcall bootloader_reset_control_state
     ldi r24, USB_INTERRUPT_ENABLE_MASK
     std Z+(_SFR_MEM_ADDR(PCMSK2) - _SFR_MEM_ADDR(WDTCSR)), r24
     std Z+(_SFR_MEM_ADDR(PCICR) - _SFR_MEM_ADDR(WDTCSR)), r24
@@ -85,21 +73,7 @@ usb_poll_check_reset_duration:
     brbc SREG_Z, usb_poll_check_packet_pending
 /* A bus reset aborts the control pipe, including queued Flash/RUN work.
  * The reset branch proves countdown R24=0 and masked SE0 sample R25=0. */
-    std Y+CTX_CONFIGURATION, r1
-    std Y+CTX_DEVICE_ADDRESS, r1
-    ldi r17, 0x10
-    mov r8, r17
-    std Y+CTX_NEW_DEVICE_ADDRESS, r1
-    std Y+CTX_CURRENT_TOKEN, r1
-    std Y+CTX_RX_LENGTH, r1
-    movw r2, r24
-    mov r11, r1
-    ldi r17, USB_PID_NAK
-    std Y+CTX_TX_LENGTH, r17
-    ldi r17, USB_NO_MESSAGE
-    std Y+CTX_MSG_LENGTH, r17
-/* SELECT must establish a new Flash page after reset. */
-    mov r5, r17
+    rcall bootloader_reset_control_state
 usb_poll_check_packet_pending:
     sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp .Lpacket_pending
@@ -192,6 +166,25 @@ led_exit_done:
     sts _SFR_MEM_ADDR(PCMSK2), r1
 app_jump:
     .word (AVR_RJMP_OPCODE | (((bootloader_start - POSTSCRIPT_BYTES - app_jump - AVR_WORD_BYTES) / AVR_WORD_BYTES) & AVR_RJMP_OFFSET_MASK))
+/* Both callers prove R24:R25 zero. Initialize only the live control state;
+ * ACK eligibility, stale deferred commands and page selection all fail closed. */
+bootloader_reset_control_state:
+    std Y+CTX_CONFIGURATION, r1
+    std Y+CTX_DEVICE_ADDRESS, r1
+    ldi r17, 0x10
+    mov r8, r17
+    std Y+CTX_NEW_DEVICE_ADDRESS, r1
+    std Y+CTX_CURRENT_TOKEN, r1
+    std Y+CTX_RX_LENGTH, r1
+    movw r2, r24
+    mov r11, r1
+    ldi r17, USB_PID_NAK
+    std Y+CTX_TX_LENGTH, r17
+    ldi r17, USB_NO_MESSAGE
+    std Y+CTX_MSG_LENGTH, r17
+/* SELECT must establish a new Flash page after reset. */
+    mov r5, r17
+    ret
 #include "compact_memory.inc"
 #include "vusb_requests.inc"
 usb_service_pending:

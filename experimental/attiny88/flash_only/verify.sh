@@ -25,7 +25,7 @@ python3 tests35/test_host_fail_closed.py
 python3 tests35/test_final_readback.py
 python3 eeprom_stage/test_stage.py
 python3 tests35/test_eeprom_plan_gate.py
-python3 tests35/test_nvm_state.py
+python3 -m tests35.test_nvm_state
 python3 tests35/test_ack_regression.py
 python3 make_release35.py
 python3 verify_release35.py
