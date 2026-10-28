@@ -36,6 +36,11 @@ class AVRExec:
                 elif (word & 0xff00) in (0x9600,0x9700):
                     reg=24+2*((word>>4)&3);imm=((word>>2)&0x30)|(word&15)
                     local[at]=('sbiw' if word&0x100 else 'adiw',f'r{reg}, {imm}',2)
+                elif (word&0xfe0f) in (0x9403,0x940a):
+                    local[at]=('inc' if word&0xf==3 else 'dec',f'r{(word>>4)&31}',2)
+                elif (word&0xfc00)==0x2c00:
+                    d=(word>>4)&31;sr=(word&15)|((word>>5)&16)
+                    local[at]=('mov',f'r{d}, r{sr}',2)
                 elif word==0x95e8:
                     local[at]=('spm','',2)
                 elif (word&0xf000)==0xc000:
@@ -62,6 +67,11 @@ class AVRExec:
             raise AssertionError(('missing opcode outside body',hex(pc)))
         off=pc-self.art['boot'];word=int.from_bytes(self.art['body'][off:off+2],'little')
         if word==0x95e8:return ('spm','',2)
+        if (word&0xfe0f) in (0x9403,0x940a):
+            return ('inc' if word&0xf==3 else 'dec',f'r{(word>>4)&31}',2)
+        if (word&0xfc00)==0x2c00:
+            d=(word>>4)&31;source=(word&15)|((word>>5)&16)
+            return ('mov',f'r{d}, r{source}',2)
         if word==0x9508:return ('ret','',2)
         if word==0:return ('nop','',2)
         if (word&0xff00)==0x0100:
