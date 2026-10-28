@@ -18,12 +18,12 @@ usb_reply_limit_length:
     mov r25, r6
     cp r24, r25
     cpc r1, r7
+    /* Carry marks a source shorter than wLength. SBC preserves that carry
+     * while saving the read-only flag: FF needs a terminating ZLP,
+     * 00 reaches wLength and suppresses an extra full-packet ZLP. */
+    sbc r12, r12
     brlo usb_reply_store_length
     mov r24, r25
-    /* This source satisfies wLength: an exact final full packet needs no
-     * extra ZLP. All accepted read request types leave R11 bit5 available. */
-    ldi r18, (1 << USB_REPLY_EXACT_LENGTH_BIT)
-    or r11, r18
 usb_reply_store_length:
     /* Poll before publishing: a replacement SETUP abandons this reply. */
     rcall usb_service_pending

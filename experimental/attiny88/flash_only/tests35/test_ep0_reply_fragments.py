@@ -38,6 +38,7 @@ def check_art(artifact):
         payload=bytes(cpu.flash[pointer+i] for i in range(length))
         cpu.r[14:16]=[pointer&255,pointer>>8]
         cpu.r[9]=0xc3
+        cpu.r[12]=0xff  # source shorter than requested wLength
         cpu.m[0x100]=length
         cpu.m[0x10f]=0x5a
         sizes=[];remaining=length

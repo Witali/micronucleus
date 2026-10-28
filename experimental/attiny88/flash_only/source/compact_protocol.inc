@@ -54,7 +54,6 @@
 /* Lengths 0..18 are live; exhausted subtraction remainders use bit 7. */
 #define USB_MESSAGE_DONE_BIT 7
 #define USB_HANDSHAKE_FLAG_BIT 4
-#define USB_REPLY_EXACT_LENGTH_BIT 5
 #define USB_HANDSHAKE_REGISTER 20
 #define USB_HANDSHAKE_TX_BYTES 2
 #define USB_HANDSHAKE_END_POINTER (USB_HANDSHAKE_REGISTER + USB_HANDSHAKE_TX_BYTES)

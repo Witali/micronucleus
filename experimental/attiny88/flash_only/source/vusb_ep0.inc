@@ -18,9 +18,9 @@ usb_tx_prepare_data_packet:
     ldi r24, USB_EP0_PAYLOAD_BYTES
     /* SUBI's Z flag survives BRLO/LDI. Suppress a speculative ZLP only
      * when this full packet reaches wLength. A shorter source still needs
-     * the usual terminating ZLP, so its exact-length flag remains clear. */
+     * the usual terminating ZLP, marked by R12 bit7. */
     brne .Ltx_store_remainder
-    sbrc r11, USB_REPLY_EXACT_LENGTH_BIT
+    sbrs r12, 7
     ldi r23, USB_NO_MESSAGE
 .Ltx_store_remainder:
     std Y+CTX_MSG_LENGTH, r23
