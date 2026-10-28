@@ -23,7 +23,8 @@ def test():
     # Control-read OUT status verifies final DATA despite a lost IN ACK.
     for tx in (12,0x5a):
         row=out(art,tx=tx)
-        assert row==dict(tx=0x5a,remaining=0xff,command=0,rx_length=0,token=0),row
+        assert row['remaining']&0x80 and row['tx']==0x5a,row
+        assert row['command']==0 and row['rx_length']==0 and row['token']==0,row
         cases+=1
     # A repeated old toggle is ACKed/discarded and preserves pending data.
     row=out(art,pid=0xc3)
@@ -37,7 +38,7 @@ def test():
     # USB8.5.3.1 permits a nonempty read status; missing CRC bytes remain ignored.
     for payload in (bytes(1),bytes(8)):
         row=out(art,payload=payload)
-        assert row['tx']==0x5a and row['remaining']==0xff,row;cases+=1
+        assert row['tx']==0x5a and row['remaining']&0x80,row;cases+=1
     for packet in (b'\x4b',b'\x4b\x00'):
         row=out(art,packet=packet)
         assert row['tx']==12 and row['remaining']==7,row;cases+=1

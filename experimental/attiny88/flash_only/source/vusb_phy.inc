@@ -346,8 +346,9 @@ usb_rx_handle_data:
 /* A valid OUT status also confirms the final IN when its ACK was lost. */
     ldi r19, USB_PID_NAK
     std Z+CTX_TX_LENGTH, r19
-    ldi r19, USB_NO_MESSAGE
-    std Z+CTX_MSG_LENGTH, r19
+    /* R18 still holds validated OUT (E1), whose bit7 marks completion.
+     * Reuse it without a new load; the common ACK entry sets the PID. */
+    std Z+CTX_MSG_LENGTH, r18
     rjmp usb_tx_send_ack
 usb_rx_protocol_stall:
 /* A protocol error terminates the write without allowing STALL's handshake

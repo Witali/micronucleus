@@ -66,7 +66,7 @@ def test():
     art=h.build();rows=[]
     for gap in range(22,121,2):
         row=control_read(art,status_gap=gap)
-        assert row['tx']==0x5a and row['message']==0xff,(gap,row)
+        assert row['tx']==0x5a and row['message']&0x80,(gap,row)
         assert [len(bytes.fromhex(p[1])) for p in row['data']]==[8],row
         assert row['data'][0][1]==art['body'][20:28].hex(),row
         rows.append(row)
@@ -75,7 +75,7 @@ def test():
             (7,18,'descriptor',[7]),(9,18,'descriptor',[8,1])]:
         row=control_read(art,requested,available,64,kind)
         assert [len(bytes.fromhex(p[1])) for p in row['data']]==lengths,row
-        assert row['tx']==0x5a and row['message']==0xff,row
+        assert row['tx']==0x5a and row['message']&0x80,row
         assert [p[0] for p in row['data']]==[0x4b if i%2==0 else 0xc3 for i in range(len(lengths))],row
         rows.append(row)
     responses=[row['status_response'] for row in rows]

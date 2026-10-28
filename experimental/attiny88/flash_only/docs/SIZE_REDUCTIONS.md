@@ -130,3 +130,9 @@ there, exceeding the target by 100 bytes; the measurement hash is
 It remains an unknown-profile measurement with open receiver findings.
 Required framing/timing corrections are not yet included in that count, so
 the 100-byte difference is not a prediction of the remaining final work.
+
+## Reuse the accepted OUT token as reply completion
+
+R18 still contains the validated OUT PID E1 when control-read status completes. Its bit7 already denotes a finished message, so storing R18 directly removes a redundant LDI and saves two bytes and one OUT-response clock. All128 negative completion values suppress publication; the lifetime regression covers100 delayed builder passes, IN retries, duplicate OUT, a new SETUP/read and reset. Independent324-case GPIO comparison shifts accepted OUT replies exactly one clock earlier; it does not close existing short-EOP receiver timing failures. Standard status and57 completed-read sequences pass on the composed image.
+
+Measured image: 1382 bytes.
