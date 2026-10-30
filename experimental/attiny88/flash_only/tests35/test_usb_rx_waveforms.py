@@ -9,9 +9,14 @@ from tests35.phy_model import *
 
 def receive(art, packet, wave, entry):
     cpu=CPU(art,wave,entry)
+    exits=complete_frame_entries(art)
     for _ in range(10000):
-        if cpu.pc==art['symbols']['usb_rx_framing_valid']:
-            assert bytes(cpu.m[0x116:0x116+len(packet)])==packet,('decoded bytes',packet.hex(),entry,wave.period)
+        if cpu.pc in exits:
+            # Incoming DATA CRC16 values may be discarded under the sole
+            # approved waiver. Both CRC byte positions/count still matter;
+            # PID/payload and all token/handshake bytes must remain exact.
+            meaningful=len(packet)-2 if packet[0] in (0xc3,0x4b) else len(packet)
+            assert bytes(cpu.m[0x116:0x116+meaningful])==packet[:meaningful],('decoded bytes',packet.hex(),entry,wave.period)
             assert cpu.r[23]==len(packet),('decoded length',packet.hex(),cpu.r[23])
             return cpu
         if cpu.pc==0xFFFE:break
@@ -21,8 +26,9 @@ def receive(art, packet, wave, entry):
 
 def rejects_framing(art, wave, entry):
     cpu=CPU(art,wave,entry)
+    exits=complete_frame_entries(art)
     for _ in range(10000):
-        if cpu.pc==art['symbols']['usb_rx_framing_valid']:return False
+        if cpu.pc in exits:return False
         if cpu.pc==0xFFFE:return True
         cpu.step()
     raise AssertionError('partial frame did not finish')

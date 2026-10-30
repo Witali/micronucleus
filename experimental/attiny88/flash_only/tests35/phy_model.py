@@ -12,6 +12,17 @@ def image_decode(base,body,pc):
 def cached_decode(pc):return image_decode(dec.START,dec.raw,pc)
 
 
+def complete_frame_entries(art):
+    """Observe complete framing before authorization, including private DATA.
+
+    Some samplers dispatch DATA separately to keep its ACK turnaround short.
+    Neither entry by itself proves live recovery J or accepted control state.
+    """
+    return {art['symbols'][name] for name in
+            ('usb_rx_framing_valid', 'usb_rx_data_live_j')
+            if name in art['symbols']}
+
+
 def probe(art,packet,entry=8,address=0,cache=0x10,period=None,wave=None):
     dec.decode=cached_decode
     wave=wave or Wave(packet,start=0,**({'rate':16_000_000/period} if period is not None else {}))

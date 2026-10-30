@@ -9,10 +9,10 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | --- | --- | --- |
 | NRZI and eight-symbol low-speed SYNC | Sections 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_tx_digital` |
 | Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital` |
-| Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms` |
+| Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix` |
 | SETUP still contains eight payload bytes and both CRC bytes; truncated fields cannot manufacture a byte | Chapter 8 packet/control formats | `test_data_framing`, `test_setup_pending_marker`, `test_rx_context_restore` |
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, raw PID-admission matrix, `test_usb_rx_waveforms` |
-| Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_usb_crossover` |
+| Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
@@ -57,13 +57,21 @@ interpretations; it does not relax the specification's maximum delay.
 
 ## Known failures remain mandatory
 
-At the current 1382-byte strict checkpoint, legal dribble is rejected. A scratch
+At the strict checkpoint, legal dribble is rejected. A scratch
 receiver also admitted SETUP DATA with an illegal final zero; that finding is
 covered by `test_data_framing`. Its 6185 cases use valid CRC16 base packets and
 all 1..7-bit tail patterns across CRC-ending classes, plus truncated CRC fields
 and missing CRC bytes. `test_ack_followup` separately catches a completed old
 write followed by a lost minimum-gap SETUP. These failures must be fixed;
 neither test is an expected-failure waiver.
+
+`test_rx_eop_matrix` combines 9,072 legal DATA-tail cases with 16,128
+certified-jitter cases. It checks actual PID/payload bytes, complete byte count,
+caller restoration and recovery-J-to-response timing. Complete-frame observation
+includes the private DATA exit used by a faster dispatch; authorization and
+live-J checks remain independently required. Incoming numeric CRC storage is
+excluded only under the existing DATA CRC16 waiver. A shared decoder defect
+cannot be cleared by an executor-parity comparison.
 
 `test_token_crossover_admission` adds 5454 negative cases. A short possible
 GPIO both-low observation inside a fourth token byte must not be mistaken for
