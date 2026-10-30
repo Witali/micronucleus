@@ -46,6 +46,7 @@ CHECKS = (
     ('test_data_framing', 'test'),
     ('test_token_crossover_admission', 'test'),
     ('test_rx_jitter_spec', 'test'),
+    ('test_rx_aperiodic', 'test'),
     ('test_rx_eop_matrix', 'test'),
 )
 RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_and_eop')

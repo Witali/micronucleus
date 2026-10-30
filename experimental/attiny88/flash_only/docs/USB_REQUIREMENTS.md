@@ -16,7 +16,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
-| Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`; opcode identity alone is insufficient |
+| Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
 | A following transaction at the physical two-bit gap must be received intact | Section 7.1.18.1 | `test_ack_followup`, `test_sequential_wire` |
 | An ordinary malformed packet cancels authorization and permits a separate valid SETUP after its real EOP and legal host gap | Sections 7.1.10, 7.1.18.1 and 7.1.19.1, Chapter 8 error handling | `test_rx_resync` |
@@ -84,6 +84,16 @@ arbitrary jitter history. The test also applies a conservative response gate
 using the smaller of host bit period and the certified 85/8-clock unstuffed
 response cadence. This is a stricter engineering check across timing-reference
 interpretations; it does not relax the specification's maximum delay.
+
+`test_rx_aperiodic` independently certifies 180 ordinary DATA0 waveforms with
+rounded, nonperiodic SYNC/data edge correlations, both short/long EOP and finite
+fractional-entry windows. It consumes frequency error from the same 75/45 ns
+interval budget. PID/payload/count, accepted SETUP, one ACK, response timing,
+caller/stack and released pins remain required; numeric CRC16 storage is the
+sole exception. The 1536-byte composed receiver fails 30 cases inherited from
+the preceding 1542-byte image: some never observe SE0, others reject framing
+after observing it. Two small proposed SYNC corrections add failures and were
+rejected. These are mandatory regressions, not expected-failure waivers.
 
 ## Known failures remain mandatory
 

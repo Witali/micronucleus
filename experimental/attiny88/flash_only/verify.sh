@@ -33,6 +33,7 @@ python3 -m tests35.test_ack_followup
 python3 -m tests35.test_data_framing
 python3 -m tests35.test_token_crossover_admission
 python3 -m tests35.test_rx_jitter_spec
+python3 -m tests35.test_rx_aperiodic
 python3 -m tests35.test_rx_eop_matrix
 python3 -m tests35.test_rx_late_entry
 python3 -m tests35.test_usb_crossover
