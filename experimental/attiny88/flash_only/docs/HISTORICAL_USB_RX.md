@@ -61,6 +61,42 @@ historical instructions. They do not mean ordinary host transmissions always
 fail: the normal two-bit source EOP is longer. USB 2.0 Table 7-10 nevertheless
 requires the receiver to accept a 670 ns SE0.
 
+## Where the larger experiment spends Flash
+
+Permanent EEPROM commands are already absent from the Flash-only target. The
+imported Pass35 baseline was 1034 bytes without LED; the smaller baseline also
+predates the receive and control-state corrections. Compact v3.0, including its
+EEPROM commands, remains a separate target.
+
+The composed no-LED checkpoint at `a617db5` measures 1534 bytes at 0x1A00,
+SHA256 `b7083fa0978e13d0f001c8e2dadbd31fb71d2fb6e9584c66e3b56a9d1e51c074`.
+Linked symbol boundaries give this comparison with the exact installed v3.0:
+
+| Linked region | Installed v3.0 | Composed checkpoint | Change |
+| --- | ---: | ---: | ---: |
+| RESET branch and descriptors, before USB_handler | 38 | 38 | 0 |
+| USB_handler through the byte before startup | 494 | 928 | +434 |
+| Startup and remaining code | 616 | 568 | -48 |
+| Total code bytes | 1148 | 1534 | +386 |
+
+The USB region includes receive/transmit, framing, token checks, ACK ownership
+and acknowledged-write staging. It is not a pure per-feature accounting:
+Flash staging also moved into the ACK path, and the two placements use different
+Flash-boundary guards. In particular, the -48-byte remainder is not an isolated
+measurement of EEPROM removal.
+
+The measured growth is concentrated in USB processing. The earlier receiver
+omitted mandatory-symbol validation, exact token admission and CRC5, and
+complete-byte/dribble classification. Control changes also preserve retry DATA
+until an eligible ACK, defer SET_ADDRESS activation and protect pending SETUP
+fields from a later packet. Their smaller predecessors are not equivalent
+protocol implementations. Numeric incoming DATA CRC16 checking remains omitted.
+
+The 1534-byte image is an experimental checkpoint with unresolved short-EOP and
+aperiodic-jitter receive failures, not a qualified replacement for the board.
+See the [composed receiver](../variants/combined_rx/README.md) for newer measured
+checkpoints and their separate verification scope.
+
 ## Compact v3.0 directed corpus
 
 The DATA corpus uses 24 valid CRC16 base packets: eight final-CRC classes each
