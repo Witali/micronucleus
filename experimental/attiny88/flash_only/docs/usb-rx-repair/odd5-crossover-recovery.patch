@@ -1,0 +1,62 @@
+--- a/experimental/attiny88/flash_only/variants/combined_rx/vusb_phy.inc
++++ b/experimental/attiny88/flash_only/variants/combined_rx/vusb_phy.inc
+@@ -216,7 +216,7 @@
+ usb_rx_dribble_odd_end:
+     in r16, _SFR_IO_ADDR(PIND)
+     andi r16, USB_LINE_MASK
+-    brne usb_rx_reject_stuff_late
++    brne usb_rx_recover_odd5_crossover
+     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
+     rjmp usb_rx_end_packet
+ usb_rx_unstuff_odd_bit:
+@@ -251,7 +251,31 @@
+ usb_rx_odd5_shift_bit6:
+     subi r17, 1
+     ror r18
+-    rjmp .+0
++    rjmp usb_rx_odd5_observe_bit7
++/* A recovered crossover is not EOF. Position5 has only bits6/7 left,
++ * so the normal path's two-clock delay can repay confirmation latency.
++ * Validate the mandatory transition before installing either counter. */
++usb_rx_recover_odd5_crossover:
++    cp r17, r16
++    breq usb_rx_reject_stuff_late
++    mov r17, r16
++    subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
++    /* Odd1/3 still use their original discard path. This bounded repair
++     * has no budget to repay their different following pair schedule. */
++    brbs SREG_C, usb_rx_reject_stuff_late
++    subi r23, 1
++    in r16, _SFR_IO_ADDR(PIND)
++    brbs SREG_C, usb_rx_odd_overflow_local
++    andi r16, USB_LINE_MASK
++    eor r17, r16
++    tst r21
++    brbc SREG_N, usb_rx_recovered_odd5_shift_bit6
++    subi r21, LOW8(-USB_RX_LEAP_PERIOD)
++    nop
++usb_rx_recovered_odd5_shift_bit6:
++    subi r17, 1
++    ror r18
++usb_rx_odd5_observe_bit7:
+     nop
+     in r17, _SFR_IO_ADDR(PIND)
+     andi r17, USB_LINE_MASK
+@@ -265,6 +289,8 @@
+     rjmp usb_rx_store_decoded_byte
+ usb_rx_odd_overflow_local:
+     rjmp usb_rx_overflow
++usb_rx_odd_eop_local:
++    rjmp usb_rx_end_packet
+ usb_rx_unstuff_odd_next_even:
+     /* This is the first stuff in this byte at position1 or3: R20=0.
+      * Retire the correction after the next-even sample, preserving its
+@@ -272,7 +298,7 @@
+     andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+     in r16, _SFR_IO_ADDR(PIND)
+     andi r16, USB_LINE_MASK
+-    brbs SREG_Z, usb_rx_eop_jump_late
++    brbs SREG_Z, usb_rx_odd_eop_local
+     eor r17, r16
+     subi r17, 1
+     ror r18

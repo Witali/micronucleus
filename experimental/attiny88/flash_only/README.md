@@ -55,6 +55,11 @@ archive/source hashes are in ARCHIVE_PROVENANCE.json.
 
 ## Scope and open findings
 
+The [full no-LED firmware audit](docs/USB_AUDIT_2026_10_30.md) records the complete
+42-group selected-image result, host/Flash checks, remaining failures and measured
+loop tradeoffs. Larger independent repair controls are preserved for review;
+the active receiver remains experimental.
+
 The sole accepted USB exception is omitted received DATA CRC 16 validation,
 both before ACK and afterward.
 Outgoing CRC 16, token CRC5/endpoint/length admission, retry/ACK ownership,

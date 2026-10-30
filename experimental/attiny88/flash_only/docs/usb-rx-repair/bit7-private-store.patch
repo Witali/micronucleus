@@ -1,0 +1,50 @@
+--- a/experimental/attiny88/flash_only/variants/combined_rx/vusb_phy.inc
++++ b/experimental/attiny88/flash_only/variants/combined_rx/vusb_phy.inc
+@@ -78,7 +78,7 @@
+     eor r20, r18
+     andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+     subi r21, USB_RX_UNSTUFF7_LEAP_ADJUST
+-    rjmp usb_rx_store_decoded_byte
++    rjmp usb_rx_store_bit7_byte
+ usb_rx_reject_stuff:
+     rjmp usb_rx_ignore_packet
+ usb_rx_confirm_raw_byte_eop:
+@@ -170,6 +170,7 @@
+     brbc SREG_C, usb_rx_unstuff_even_bit
+ usb_rx_shift_stuff_mask:
+     lsr r20
++usb_rx_shift_stuff_mask_once:
+     lsr r20
+ usb_rx_sample_odd_bit:
+     in r17, _SFR_IO_ADDR(PIND)
+@@ -278,6 +279,30 @@
+     ror r18
+     ldi r20, 0x08
+     subi r21, LOW8(-1)
++    rjmp usb_rx_sample_odd_bit
++/* Bit7's mandatory zero is already observed. Commit its completed byte
++ * before sampling next bit0: only that sample moves two clocks later.
++ * The next odd observation and every later fractional clock are unchanged. */
++usb_rx_store_bit7_byte:
++    st Y+, r20
++    in r16, _SFR_IO_ADDR(PIND)
++    andi r16, USB_LINE_MASK
++    breq usb_rx_confirm_bit7_byte_eop
++    eor r17, r16
++    eor r20, r20
++    subi r17, 1
++    ror r18
++    /* History cannot need stuffing; R20=0. Reuse one existing one-clock
++     * mask shift before the odd sample instead of a private delay NOP. */
++    rjmp usb_rx_shift_stuff_mask_once
++usb_rx_confirm_bit7_byte_eop:
++    in r16, _SFR_IO_ADDR(PIND)
++    andi r16, USB_LINE_MASK
++    breq usb_rx_end_packet
++    /* A recovered crossover supplies the same known-zero bit as the
++     * shared byte-boundary path; its completed byte is already stored. */
++    eor r20, r20
++    lsr r18
+     rjmp usb_rx_sample_odd_bit
+ usb_rx_overflow:
+     sbi _SFR_IO_ADDR(PCIFR), PCIF2
