@@ -1,0 +1,10 @@
+import {readFile} from 'node:fs/promises';
+import {loadMicroMusic, runRequest} from './core.mjs';
+const filename = process.argv[2];
+if (!filename) throw new Error('Usage: node run.mjs request.json; set MICROMUSIC_ROOT.');
+const request = JSON.parse((await readFile(filename, 'utf8')).replace(/^\uFEFF/, ''));
+const library = await loadMicroMusic();
+const requests = Array.isArray(request) ? request : [request];
+const results = [];
+for (const item of requests) results.push(await runRequest(item, library));
+process.stdout.write(JSON.stringify(Array.isArray(request) ? results : results[0], null, 2) + '\n');
