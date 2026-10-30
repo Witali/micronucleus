@@ -52,6 +52,7 @@ def test():
     requests=[(0x80,6,0x100,0,18,1),(0x80,6,0x200,0,18,1),
               (0x81,10,0,0,1,1),(0x81,10,0,0,1,0),
               (0x81,0,0,0,2,1),(0x81,0,0,0,2,0),(0x82,0,0,0x80,2,1),
+              (0x82,12,0,0,2,1),  # Unsupported endpoint request takes STALL.
               (0,5,37,0,0,1),(0,9,1,0,0,1),(0,9,0,0,0,1),
               (0xc0,0xb0,0,0x80,8,1),(0x20,2,0,0x80,0,1)]
     for bm,req,value,index,length,config in requests:

@@ -19,15 +19,15 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1370-byte image has SHA-256
-`2f4add441571b7712454fcb4eebba7a3c9eead95b6937a86a3eec12148f491f1`.
+The current 1368-byte image has SHA-256
+`eaee7dd4f6daf04c65b7eed344c6fefd695f0bd4fd842edf503104dbcf82675b`.
 
 That count belongs to the strict-source audit checkpoint. The separately
 selected [composed receiver](variants/combined_rx/README.md) currently measures
-1520 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
+1518 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
 the legal-dribble/receive work; its remaining receive and protocol-error timing
 findings are mandatory. Both targets omit permanent EEPROM commands. The
-composed image remains 240 bytes above the 1280-byte target.
+composed image remains 238 bytes above the 1280-byte target.
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
@@ -101,11 +101,11 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only audit checkpoint | 1370 |
+| Current Flash-only audit checkpoint | 1368 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference
-here. The current checkpoint is 38 bytes larger, with unresolved receiver work.
+here. The current checkpoint is 36 bytes larger, with unresolved receiver work.
 The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.

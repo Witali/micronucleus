@@ -197,3 +197,9 @@ retain exactly their inherited failures. Independent integration with the OUT
 guard change proves 327 instructions and 105 edges preserve the same RX clocks.
 
 Measured composed image: 1520 bytes at 0x1A00; strict source remains 1370 bytes.
+
+## Let shared GET_STATUS validation fall through to its reply
+
+Move the common request-zero guard immediately before the zero reply. Interface GET_STATUS falls through it, GET_INTERFACE skips it, and endpoint validation jumps back to it. Removing two old jumps and adding one saves two bytes with every recipient, index, configuration, request check and USB poll retained. Valid device/interface GET_STATUS paths are two/four clocks faster; endpoint success is unchanged. The endpoint unsupported-request path adds two clocks and is now included in the foreground sweep. All 2231 standard requests, 4032 original foreground cases and 336 added endpoint-error timing cases pass, with the unchanged 40.677328-clock maximum entry. The composed image is 1518 bytes; required receiver and protocol-error timing findings remain open.
+
+Measured image: 1368 bytes.

@@ -31,12 +31,12 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1520 bytes**, SHA256
-`8c10ab9cad5dc59d2c5bcd98de64ce09c33a0c4fd61b0e74f9cfd1176dab80eb`.
-It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with sixteen bytes spare.
-The source is 130 bytes smaller than the preceding 1650-byte receiver. It still
+The current composed checkpoint is **1518 bytes**, SHA256
+`9a83db9b5e82fce247010f3734075d0747cae3c137c05c30509d64a229af57bc`.
+It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with eighteen bytes spare.
+The source is 132 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1520 bytes, 240 bytes over capacity;
+At the target placement 0x1B00 it remains 1518 bytes, 238 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
@@ -94,6 +94,14 @@ composition independently proves 327 instructions and 105 edges. Framing,
 mandatory stuffing, PID, token/crossover, deadlines, 1485 minimum-gap exchanges
 and 12096 periodic-jitter cases pass on the isolated sharing change. The full
 25200 EOP and 180 aperiodic results preserve their exact inherited failures.
+
+Shared GET_STATUS validation falls through to its reply, saving two more bytes
+in the common control code. All guards and USB polls remain. The specified
+device/interface paths are faster; endpoint success keeps its timing. The
+unsupported endpoint-request path is two clocks later and joins the maintained
+foreground sweep. All 4368 foreground exchanges pass across the original and
+added isolated sweeps, with the same 40.677328-clock maximum entry. Standard,
+reply/state and outgoing CRC checks pass on the exact 1518-byte body.
 
 An additional 6048-case OUT response audit finds existing protocol-error STALL
 deadline failures. Persistent STALL meets the bound in all 4032 cases. Newly
