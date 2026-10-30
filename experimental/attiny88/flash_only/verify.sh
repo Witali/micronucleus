@@ -20,6 +20,7 @@ python3 -m tests35.test_ep0_reset
 python3 -m tests35.test_ep0_shadow
 python3 -m tests35.test_ep0_ack_timeout
 python3 -m tests35.test_ep0_token_timeout
+python3 -m tests35.test_dribble_deadlines
 python3 -m tests35.test_ep0_polling
 python3 -m tests35.test_ep0_failed_sync
 python3 -m tests35.test_rx_resync

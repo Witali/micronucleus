@@ -21,7 +21,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | A following transaction at the physical two-bit gap must be received intact | Section 7.1.18.1 | `test_ack_followup`, `test_sequential_wire` |
 | An ordinary malformed packet cancels authorization and permits a separate valid SETUP after its real EOP and legal host gap | Sections 7.1.10, 7.1.18.1 and 7.1.19.1, Chapter 8 error handling | `test_rx_resync` |
 | Foreground delay cannot corrupt an IN token or its complete reply; later observed entries retain jitter tolerance | Sections 7.1.11, 7.1.15.1 and 7.1.18.1 | `test_ep0_polling`, `test_rx_late_entry` |
-| ACK/token response eligibility expires no earlier than 16 and before 18 bit periods | Section 7.1.19.1 | `test_ep0_ack_timeout`, `test_ep0_token_timeout`, dribble deadline matrix |
+| ACK/token response eligibility expires no earlier than 16 and before 18 bit periods | Section 7.1.19.1 | `test_ep0_ack_timeout`, `test_ep0_token_timeout`, `test_dribble_deadlines` |
 | DATA/PID remain immutable until eligible ACK or control-status completion; repeats do not duplicate a write | Chapter 8 transaction/retry rules | `test_ack_regression`, `test_ep0_read_completion`, `test_sequential_wire` |
 | New SETUP and reset cancel old transfer ownership; no stale erase/program/RUN is released | Chapter 8 control transfers, Chapter 9 reset states | `test_setup_pending_marker`, `test_ep0_shadow`, `test_ep0_reset`, `test_nvm_state` |
 | Standard requests, recipients, zero-length direction, SET_ADDRESS status sequencing and protocol STALL are correct | Chapter 9, Sections 9.3.1 and 9.4 | `tests34/test_standard.py`, `test_ep0_standard`, `test_ep0_zero_direction`, `test_ep0_status` |
@@ -34,6 +34,15 @@ Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
 
 ## Signal oracle scope
+
+`test_dribble_deadlines` preserves 108 quiet-token and 540 paired-packet probes
+at the historical timeout extrema. Legal final-one dribble, three host rates,
+short/full EOPs and signed skew exercise four ending classes. The final PIN
+observation must lie in the rate-specific 16..18-bit window. Actual 2/16/18-bit
+token-to-DATA gaps also check complete payload, SETUP shadow, cursor/status
+commit, exactly one ACK and rejection without state changes. Late foreground
+reentry advances the same CPU clock phase instead of resetting device state.
+The strict receiver still fails required dribble cases; they are not waived.
 
 `test_pid_admission` checks all 256 PID bytes in ACK, token, SETUP DATA and OUT
 DATA shapes, then exercises selected classes at host-rate, EOP-width and entry

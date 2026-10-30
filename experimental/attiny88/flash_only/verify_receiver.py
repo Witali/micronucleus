@@ -33,6 +33,7 @@ CHECKS = (
     ('test_ep0_shadow', 'test'),
     ('test_ep0_ack_timeout', 'test'),
     ('test_ep0_token_timeout', 'test'),
+    ('test_dribble_deadlines', 'test'),
     ('test_ep0_polling', 'test'),
     ('test_rx_late_entry', 'test'),
     ('test_ep0_failed_sync', 'test'),
