@@ -136,3 +136,9 @@ the 100-byte difference is not a prediction of the remaining final work.
 R18 still contains the validated OUT PID E1 when control-read status completes. Its bit7 already denotes a finished message, so storing R18 directly removes a redundant LDI and saves two bytes and one OUT-response clock. All128 negative completion values suppress publication; the lifetime regression covers100 delayed builder passes, IN retries, duplicate OUT, a new SETUP/read and reset. Independent324-case GPIO comparison shifts accepted OUT replies exactly one clock earlier; it does not close existing short-EOP receiver timing failures. Standard status and57 completed-read sequences pass on the composed image.
 
 Measured image: 1382 bytes.
+
+## Count disconnect slices without clearing inactive buffers
+
+Replace the startup buffer-clear store and comparison with a YL countdown. The reset initializer owns all live USB state; received and transmit bytes become readable only after complete publication. The no-LED body shrinks by 2 bytes, while the USB receive/transmit instructions and their timing are unchanged. A new cold-start regression poisons all registers and USB SRAM across 256 seeds, checks 1536 initial packet cases and verifies the first descriptor payload and outgoing CRC. All 1536 existing unselected erase/commit guard cases across the LED modes and all 32 reset/handoff cases pass. This remains an audit checkpoint with the existing receiver qualification findings.
+
+Measured image: 1380 bytes.

@@ -8,11 +8,11 @@ def initialized(art,low):
     bind(art)
     cpu=h.CPU(art,Quiet())
     cpu.raw_stack.clear()
-    # The disconnect counter has reached zero and the last SRAM byte has
-    # been cleared. Deliberately poison context/registers here so the shared
+    # The inner disconnect counter has reached zero in the final slice.
+    # Deliberately poison context/registers here so the shared
     # initializer, rather than the model's zero defaults, proves its contract.
-    cpu.pc=cpu.labels['startup_check_sram_end']
-    cpu.r[1]=0;cpu.r[24:26]=[0,0];cpu.r[28:32]=[0,1,0x60,0]
+    cpu.pc=cpu.labels['usb_disconnect_next_slice']
+    cpu.r[1]=0;cpu.r[24:26]=[0,0];cpu.r[28:32]=[1,1,0x60,0]
     cpu.r[2:6]=[12,5,low,0xa5];cpu.r[6:8]=[0xa5,0x5a];cpu.r[11]=0xe0
     cpu.r[8]=0xa5
     cpu.m[0x100:0x12c]=bytes((i*37+low)&255 for i in range(44))

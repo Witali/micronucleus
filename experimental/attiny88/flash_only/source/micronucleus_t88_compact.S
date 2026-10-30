@@ -50,10 +50,11 @@ usb_disconnect_delay_outer:
 usb_disconnect_delay_inner:
     sbiw r24, 1
     brne usb_disconnect_delay_inner
-startup_clear_sram_byte:
-    st -Y, r1
-startup_check_sram_end:
-    cpi r28, LOW8(USB_CONTEXT_BASE)
+usb_disconnect_next_slice:
+    /* Reset initializes every live control field below. RX and cached TX
+     * bytes are read only after publication, so clearing them is redundant.
+     * Count disconnect slices in YL, ending at the context page's base. */
+    dec r28
     brne usb_disconnect_delay_outer
     cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
     movw r6, r24
