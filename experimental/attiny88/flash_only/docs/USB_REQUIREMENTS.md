@@ -11,7 +11,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital` |
 | Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix` |
 | SETUP still contains eight payload bytes and both CRC bytes; truncated fields cannot manufacture a byte | Chapter 8 packet/control formats | `test_data_framing`, `test_setup_pending_marker`, `test_rx_context_restore` |
-| Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, raw PID-admission matrix, `test_usb_rx_waveforms` |
+| Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, `test_pid_admission`, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
@@ -34,6 +34,13 @@ Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
 
 ## Signal oracle scope
+
+`test_pid_admission` checks all 256 PID bytes in ACK, token, SETUP DATA and OUT
+DATA shapes, then exercises selected classes at host-rate, EOP-width and entry
+corners: 3040 cases. It observes responses, accepted SETUP, cursor/address
+effects, actual token-wait I/O, live CRC-register preservation and stack balance.
+A visit to a generic dispatcher before exact validation never counts as
+acceptance. This finite matrix does not claim all possible packet histories.
 
 The [AVR model audit](AVR_MODEL.md) checks explicit instruction-cycle classes,
 conditional/skip timing, arithmetic flags and the distinction between GPIO
