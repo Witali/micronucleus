@@ -16,12 +16,12 @@ token-to-DATA wait. No CRC or decode lookup table is added.
 | Accepted SETUP shadow and OUT-status retirement after transmitted ACK | The scheduled receiver experiment |
 | Source waveform and EOP generation | Current 21-clock SE0 / 11-clock J transmitter |
 
-The selected body is measured at 0x1800 and advertises the noncanonical 0xFFFF
+The selected body is measured at 0x1A00 and advertises the noncanonical 0xFFFF
 identity. The host rejects this geometry. This directory does not add a release
 profile or a hardware installation path.
 
 ```sh
-python3 build.py --where variants/combined_rx --boot 0x1800 --require-fit
+python3 build.py --where variants/combined_rx --boot 0x1a00 --require-fit
 python3 verify_receiver.py --exhaustive
 ```
 
@@ -31,33 +31,43 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1542 bytes**, SHA256
-`f43e9db867ad39a6de8c255ae797aa7732a98dc63ead86485f080c819d60003a`.
-It is 108 bytes smaller than the preceding 1650-byte composed receiver at the
-same measurement placement. It still exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1542 bytes, 262 bytes over capacity;
+The current composed checkpoint is **1536 bytes**, SHA256
+`cd2c7951f12c88f315ae534a8207d1aacb7f3a8c9ed1c15241c61c10c976e1f7`.
+It fits exactly in the 24 Flash pages from 0x1A00 to 0x1FFF. The source is
+114 bytes smaller than the preceding 1650-byte composed receiver. It still
+exceeds the 1280-byte objective.
+At the target placement 0x1B00 it remains 1536 bytes, 256 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
 and bounded live-J recovery. Ordinary and corrected-byte producers use the same
 three-clock history-test tail. ACK retains its earlier captured-J path; token
 and DATA dispatch use the common live bus check with an explicit observation
-bound. No request, field check or timeout is removed. The shared current startup
-and GET_CONFIGURATION dispatch contribute another four bytes of savings.
+bound. No request, field check or timeout is removed. Shared startup, standard
+reply publication and CRC5 finalization contribute another ten bytes of savings.
+GET_CONFIGURATION and GET_INTERFACE still return exactly one byte for their
+specified wLength=1; other lengths are explicitly unspecified by USB9.4.2/9.4.4.
 
 The independently frozen PHY, with the preceding main source, is 1546 bytes,
 SHA256 `8fccb164f4b9e9d753be3c7338118cbc471718d46f5bef84fbfb820491dcaeb1`.
 It passes 6185 DATA framing, 11475 physical token-tail/authorization, 5454
 overlong-token crossover, 3040 PID-effect, 225 ACK-followup, 2016 receiver-jitter
-and 324 token-deadline cases. The current 1542-byte composition additionally
+and 324 token-deadline cases. The preceding 1542-byte composition additionally
 passes all 72 ordinary error-recovery cases and the control/Flash/read/TX checks
 recorded by the selected-image verifier. Its startup is checked with 1536
 poisoned-state/first-packet cases, including the first descriptor's CRC.
-The completed selected-image run passed 32 of 33 groups; its sole failing
+Its completed selected-image run passed 32 of 33 groups; its sole failing
 group is the EOP matrix below. The 3040 PID-effect and 72 recovery cases also
 passed separately on these exact bytes and are now wired into the verifier.
 An additional 108 quiet-token and 540 paired-packet deadline-extrema check
 passes, including all four dribble phase classes and 2/16/18-bit host gaps.
+
+The current 1536-byte composition passes 2231 standard cases, 213248 token-field
+cases and 128 atomic address/cache commits, 2304 outgoing CRC payloads, 33 reply
+fragments, status/read/reset/shadow checks and 225 minimum-gap exchanges.
+Foreground checks at 0x1800 retain the measured 40.6773-clock maximum entry.
+The complete 968-byte descriptor/PHY/acknowledged-write prefix is byte-identical
+to the previous 1542-byte image; these reductions do not fix its receive defects.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:
@@ -67,6 +77,11 @@ The report records both missing decode and missing response for that one case.
 All other cases in that sweep pass, with response times 39.6417..67.2191 clocks.
 The conservative recovered-crossover reception path also needs qualification.
 These findings remain mandatory; this is an experiment, not a release.
+
+Legal aperiodic SYNC/data jitter also exposes inherited receive failures outside
+that periodic matrix. The maintained aperiodic regression preserves those valid
+waveforms and rejects proposed SYNC changes that add new failures. Periodic
+jitter corners alone do not establish arbitrary-history receive correctness.
 
 Incoming DATA CRC16 value checking remains the sole approved exception.
 Neither that exception nor correct reception of dribble permits malformed

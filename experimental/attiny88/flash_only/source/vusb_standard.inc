@@ -21,15 +21,17 @@ usb_standard_dispatch:
     cpi r18, 1
     brne usb_standard_stall
     cpi r25, USB_REQ_GET_INTERFACE
-    breq usb_standard_scratch_reply
+    breq usb_standard_get_status
     rjmp usb_standard_check_status
+usb_standard_get_status:
 usb_standard_scratch_reply:
 usb_reply_pointer_trampoline:
 legacy_led_on_anchor:
 ee_return_one:
     ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
-/* Place the shared publisher here so GET_INTERFACE falls through and
- * device-OUT conditional branches remain inside AVR's short-branch span. */
+/* GET_STATUS uses both zero bytes. GET_INTERFACE and GET_CONFIGURATION
+ * specify wLength=1, so the common limiter returns exactly one byte for
+ * their specified requests. USB9.4.2/9.4.4 leave other lengths undefined. */
 #include "vusb_replies.inc"
 usb_standard_endpoint_in:
 /* Only endpoint zero exists; either direction of its address is valid. */
@@ -42,12 +44,7 @@ usb_standard_endpoint_in:
 usb_standard_check_status:
     tst r25
     brne usb_standard_stall
-usb_standard_get_status:
-    ldi r24, USB_STATUS_REPLY_BYTES
-/* The two-byte zero reply bypasses the one-byte availability entry. */
-usb_reply_use_scratch_buffer:
-    ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
-    rjmp usb_reply_use_flash_pointer
+    rjmp usb_standard_get_status
 usb_standard_device_in:
     cpi r25, USB_REQ_GET_DESCRIPTOR
     breq usb_standard_check_get_descriptor
@@ -56,7 +53,7 @@ usb_standard_device_in:
 usb_standard_get_configuration:
     ldd r18, Y+CTX_CONFIGURATION
     subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
-    rjmp usb_reply_one_byte_flash
+    rjmp usb_reply_two_byte_flash
 usb_standard_stall:
     rjmp usb_reply_stall
 usb_standard_check_get_descriptor:

@@ -154,3 +154,9 @@ Measured image: 1378 bytes.
 The final five-bit CRC state has bit 4 equal to the last feedback carry. SWAP followed by ROR therefore produces the same endpoint-zero wire byte as three LSL instructions, saving 2 bytes and one clock without a table. Final SREG.C can differ; it is dead before the next carry-dependent branch. All 213248 token field/address/length cases and all 128 atomic pending-address/cache/status-ACK commits pass on the emitted image. Receiver qualification remains open.
 
 Measured image: 1376 bytes.
+
+## Share small standard replies under their specified lengths
+
+GET_INTERFACE reuses GET_STATUS zero bytes. GET_CONFIGURATION retains its configuration-value pointer and shares two-byte availability/publication. USB 2.0 sections 9.4.2 and 9.4.4 specify wLength=1 and explicitly leave other lengths unspecified; the existing limiter still returns exactly one byte for every specified request. All recipient, interface/configuration and descriptor guards and all USB polls remain. The change saves 4 bytes. With the separate CRC5 reduction, the composed image is exactly 1536 bytes at 0x1A00 with unknown identity FFFF, reaching the next 64-byte boundary. Standard, CRC/cache, retry/state, 4032 foreground and 225 minimum-gap checks pass. Receiver qualification and the 1280-byte objective remain open.
+
+Measured image: 1372 bytes.

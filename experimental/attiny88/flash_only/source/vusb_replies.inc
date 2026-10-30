@@ -1,8 +1,8 @@
 /* Shared EP0 reply publication. Standard Flash replies provide R18, the
  * source pointer's low byte; READ8 enters the limiter with R14:R15 set.
  * A replacement SETUP at either poll abandons the interrupted reply. */
-usb_reply_one_byte_flash:
-    ldi r24, 1
+usb_reply_two_byte_flash:
+    ldi r24, USB_STATUS_REPLY_BYTES
 usb_reply_use_flash_pointer:
     ldi r19, HIGH8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 14)
 usb_reply_set_pointer:

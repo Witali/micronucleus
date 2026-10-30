@@ -33,6 +33,19 @@ Names without a directory are modules under `tests35/`. The full gate is
 Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
 
+## Shared small standard replies
+
+USB2.0 sections 9.4.2 and 9.4.4 specify wLength=1 for GET_CONFIGURATION and
+GET_INTERFACE and explicitly leave other lengths unspecified (printed
+pages 253/254). GET_INTERFACE shares GET_STATUS's two-zero source. GET_CONFIGURATION keeps
+its configuration-value pointer and shares the same two-byte availability
+and publication entry. The existing wLength limiter still returns exactly
+one byte for each specified request, or two for a specified GET_STATUS.
+Recipient, interface-existence, configuration and descriptor checks remain.
+Positive fixtures use the specified lengths; malformed-length tests still
+require bounded read-only handling and unchanged command/configuration/address
+state. This uses an explicit specification allowance and adds no USB waiver.
+
 ## Signal oracle scope
 
 `test_dribble_deadlines` preserves 108 quiet-token and 540 paired-packet probes
