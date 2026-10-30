@@ -160,3 +160,9 @@ Measured image: 1376 bytes.
 GET_INTERFACE reuses GET_STATUS zero bytes. GET_CONFIGURATION retains its configuration-value pointer and shares two-byte availability/publication. USB 2.0 sections 9.4.2 and 9.4.4 specify wLength=1 and explicitly leave other lengths unspecified; the existing limiter still returns exactly one byte for every specified request. All recipient, interface/configuration and descriptor guards and all USB polls remain. The change saves 4 bytes. With the separate CRC5 reduction, the composed image is exactly 1536 bytes at 0x1A00 with unknown identity FFFF, reaching the next 64-byte boundary. Standard, CRC/cache, retry/state, 4032 foreground and 225 minimum-gap checks pass. Receiver qualification and the 1280-byte objective remain open.
 
 Measured image: 1372 bytes.
+
+## Reuse the validated OUT token for protocol-error completion
+
+A protocol error already has a validated OUT token (E1), whose high bit satisfies the existing message-completion contract. Store that token instead of loading a separate FF marker. This saves 2 bytes and one clock on the error response, preserves STALL and queued-command cancellation, and changes no transmitted payload. Both PHY variants use their own live token register. Nineteen status cases now include pending WRITE4, while all 128 negative-marker lifetime cases, delayed builders, reset/replacement, pending-SETUP and 3040 PID-effect checks pass. The composed image is 1534 bytes, with receiver findings still mandatory.
+
+Measured image: 1370 bytes.

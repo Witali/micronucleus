@@ -502,8 +502,8 @@ usb_rx_protocol_stall:
     mov r3, r1
     ldi r19, USB_PID_STALL
     std Z+CTX_TX_LENGTH, r19
-    ldi r20, USB_NO_MESSAGE
-    std Z+CTX_MSG_LENGTH, r20
+    /* The private validated OUT token (E1) also marks message completion. */
+    std Z+CTX_MSG_LENGTH, r24
     rjmp usb_tx_send_count_handshake
 usb_tx_stuff_regular_bit:
     eor r16, r21

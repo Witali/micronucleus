@@ -31,12 +31,12 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1536 bytes**, SHA256
-`cd2c7951f12c88f315ae534a8207d1aacb7f3a8c9ed1c15241c61c10c976e1f7`.
-It fits exactly in the 24 Flash pages from 0x1A00 to 0x1FFF. The source is
-114 bytes smaller than the preceding 1650-byte composed receiver. It still
+The current composed checkpoint is **1534 bytes**, SHA256
+`b7083fa0978e13d0f001c8e2dadbd31fb71d2fb6e9584c66e3b56a9d1e51c074`.
+It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with two bytes spare.
+The source is 116 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1536 bytes, 256 bytes over capacity;
+At the target placement 0x1B00 it remains 1534 bytes, 254 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
@@ -45,6 +45,8 @@ three-clock history-test tail. ACK retains its earlier captured-J path; token
 and DATA dispatch use the common live bus check with an explicit observation
 bound. No request, field check or timeout is removed. Shared startup, standard
 reply publication and CRC5 finalization contribute another ten bytes of savings.
+Reusing the validated OUT token as a protocol-error completion marker saves
+another two bytes without changing STALL, reply lifetime or command cancellation.
 GET_CONFIGURATION and GET_INTERFACE still return exactly one byte for their
 specified wLength=1; other lengths are explicitly unspecified by USB9.4.2/9.4.4.
 
@@ -62,12 +64,15 @@ passed separately on these exact bytes and are now wired into the verifier.
 An additional 108 quiet-token and 540 paired-packet deadline-extrema check
 passes, including all four dribble phase classes and 2/16/18-bit host gaps.
 
-The current 1536-byte composition passes 2231 standard cases, 213248 token-field
+The preceding 1536-byte composition passes 2231 standard cases, 213248 token-field
 cases and 128 atomic address/cache commits, 2304 outgoing CRC payloads, 33 reply
 fragments, status/read/reset/shadow checks and 225 minimum-gap exchanges.
 Foreground checks at 0x1800 retain the measured 40.6773-clock maximum entry.
-The complete 968-byte descriptor/PHY/acknowledged-write prefix is byte-identical
-to the previous 1542-byte image; these reductions do not fix its receive defects.
+Its complete 968-byte descriptor/PHY/acknowledged-write prefix is byte-identical
+to the previous 1542-byte image. The current 1534-byte image additionally passes
+19 status, all 128 negative-marker lifetime, reset, pending-SETUP and 3040 PID
+effect checks. The error response is one clock earlier; these changes do not
+fix the receive defects below.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:

@@ -30,10 +30,10 @@ def test():
     row=out(art,pid=0xc3)
     assert row['tx']==12 and row['remaining']==7,row;cases+=1
     # A write has IN status: an unrelated OUT cannot stand in for its ACK.
-    for command in (3,4,5):
+    for command in (3,4,5,64):
         for pid in (0xc3,0x4b):
             row=out(art,direction=0,command=command,pid=pid)
-            assert row['tx']==0x1e and row['remaining']==0xff and row['command']==0,row
+            assert row['tx']==0x1e and row['remaining']&0x80 and row['command']==0,row
             cases+=1
     # USB8.5.3.1 permits a nonempty read status; missing CRC bytes remain ignored.
     for payload in (bytes(1),bytes(8)):
