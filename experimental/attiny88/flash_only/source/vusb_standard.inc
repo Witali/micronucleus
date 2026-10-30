@@ -52,8 +52,11 @@ usb_standard_device_in:
     cpi r25, USB_REQ_GET_DESCRIPTOR
     breq usb_standard_check_get_descriptor
     cpi r25, USB_REQ_GET_CONFIGURATION
-    breq usb_standard_get_configuration
-    rjmp usb_standard_check_status
+    brne usb_standard_check_status
+usb_standard_get_configuration:
+    ldd r18, Y+CTX_CONFIGURATION
+    subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
+    rjmp usb_reply_one_byte_flash
 usb_standard_stall:
     rjmp usb_reply_stall
 usb_standard_check_get_descriptor:
@@ -109,9 +112,3 @@ usb_standard_check_configuration:
     brsh usb_standard_stall
     std Y+CTX_CONFIGURATION, r24
     rjmp usb_reply_empty
-
-/* This placement keeps device-OUT dispatch inside its short-branch span. */
-usb_standard_get_configuration:
-    ldd r18, Y+CTX_CONFIGURATION
-    subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
-    rjmp usb_reply_one_byte_flash

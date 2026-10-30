@@ -142,3 +142,9 @@ Measured image: 1382 bytes.
 Replace the startup buffer-clear store and comparison with a YL countdown. The reset initializer owns all live USB state; received and transmit bytes become readable only after complete publication. The no-LED body shrinks by 2 bytes, while the USB receive/transmit instructions and their timing are unchanged. A new cold-start regression poisons all registers and USB SRAM across 256 seeds, checks 1536 initial packet cases and verifies the first descriptor payload and outgoing CRC. All 1536 existing unselected erase/commit guard cases across the LED modes and all 32 reset/handoff cases pass. This remains an audit checkpoint with the existing receiver qualification findings.
 
 Measured image: 1380 bytes.
+
+## Let GET_CONFIGURATION fall through its dispatch test
+
+Move the existing GET_CONFIGURATION body beside its request comparison and invert the conditional branch. This removes one jump without removing any request validation or USB poll. Together with the preceding startup change, the no-LED source is 4 bytes smaller than the 1382-byte checkpoint: 1378 bytes at 0x1A40, or 1374 bytes at the 1280-byte target placement 0x1B00 (still 94 bytes over). Independent checks pass 2213 standard requests, 4032 complete foreground IN exchanges with the unchanged 38-clock maximum entry, and 268 AVR instruction/skip-cycle fixtures. Receiver qualification remains open.
+
+Measured image: 1378 bytes.
