@@ -166,3 +166,19 @@ Measured image: 1372 bytes.
 A protocol error already has a validated OUT token (E1), whose high bit satisfies the existing message-completion contract. Store that token instead of loading a separate FF marker. This saves 2 bytes and one clock on the error response, preserves STALL and queued-command cancellation, and changes no transmitted payload. Both PHY variants use their own live token register. Nineteen status cases now include pending WRITE4, while all 128 negative-marker lifetime cases, delayed builders, reset/replacement, pending-SETUP and 3040 PID-effect checks pass. The composed image is 1534 bytes, with receiver findings still mandatory.
 
 Measured image: 1370 bytes.
+
+## Share OUT admission and handshake setup in the composed receiver
+
+The combined_rx variant validates DATA1/DATA0 before one common length,
+persistent-STALL and read-direction guard. Only DATA1 installs the post-ACK
+completion marker. Literal ACK/STALL PIDs use R20 directly; R19 becomes the
+handshake count before bus acquisition. Unchanged TX stuffing helpers move
+inside the existing pre-SE0 jump gap. This saves eight bytes without removing a
+field or state check. All 58368 dispatch-state comparisons, status/lifetime,
+TX waveform and minimum-gap write/read checks pass. The 25200 EOP and 180
+aperiodic cases retain their inherited failures. Additional OUT timing corners
+preserve or improve protocol-error STALL, reducing deadline failures from489 to
+464; that remaining defect is not waived. The smaller 1524-byte trial added
+timing failures and was rejected.
+
+Measured composed image: 1526 bytes at0x1A00; strict source remains1370 bytes.

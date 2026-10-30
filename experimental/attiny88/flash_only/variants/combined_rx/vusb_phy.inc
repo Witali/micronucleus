@@ -459,68 +459,18 @@ usb_handler_packet_done:
     sbrc r28, PCIF2
     rjmp usb_rx_wait_for_j
     rjmp usb_return_context
-usb_rx_handle_data:
-    /* Only validated OUT is negative in the private token context. */
-    tst r24
-    brmi usb_rx_out_data
-    cpi r24, USB_PID_SETUP
-    breq usb_rx_setup_data
-    rjmp usb_rx_setup_reject
-usb_rx_out_data:
-    cpi r16, USB_PID_DATA1
-    brne usb_rx_out_duplicate
-    cpi r23, USB_RX_PACKET_OVERHEAD
-    brlo usb_rx_setup_reject
-/* R19 was loaded from TX_LENGTH during fixed-time RX and remains live.
- * Foreground code cannot run between that load and this status check. */
-    cpi r19, USB_PID_STALL
-    breq usb_tx_send_count_handshake
-/* OUT is status only for an accepted control read. A write's required IN
- * status ACK must never be replaced by an unrelated OUT transaction. */
-    sbrs r11, 7
-    rjmp usb_rx_protocol_stall
-    /* USB8.5.3.1 permits any payload length for a read status inquiry. */
-/* Accepted read-status completion is committed after its ACK, before
- * returning to any caller or receiving another packet. Other deferred
- * commands are nonnegative; the validated OUT PID is a unique marker. */
-    mov r3, r24
-    rjmp usb_tx_send_ack
-usb_rx_out_duplicate:
-    /* The broad early DATA route must still reject every unsupported PID. */
-    cpi r16, USB_PID_DATA0
-    brne usb_rx_setup_reject
-    cpi r23, USB_RX_PACKET_OVERHEAD
-    brlo usb_rx_setup_reject
-    cpi r19, USB_PID_STALL
-    breq usb_tx_send_count_handshake
-    sbrs r11, 7
-    rjmp usb_rx_protocol_stall
-    rjmp usb_tx_send_ack
 usb_rx_protocol_stall:
 /* A protocol error terminates the write without allowing STALL's handshake
  * marker to release a queued erase, page commit or application handoff. */
     mov r3, r1
-    ldi r19, USB_PID_STALL
-    std Z+CTX_TX_LENGTH, r19
+    ldi r20, USB_PID_STALL
+    std Z+CTX_TX_LENGTH, r20
     /* The private validated OUT token (E1) also marks message completion. */
     std Z+CTX_MSG_LENGTH, r24
-    rjmp usb_tx_send_count_handshake
-usb_tx_stuff_regular_bit:
-    eor r16, r21
-    ldi r17, 0x00
-    rjmp usb_tx_stuff_regular_delay
-usb_tx_stuff_regular_delay:
-    nop
-    out _SFR_IO_ADDR(PORTD), r16
-    rjmp usb_tx_check_regular_stuffing
-usb_tx_stuff_bit6:
-    eor r16, r21
-    ldi r17, 0x00
-    adc r18, r18
-    rjmp usb_tx_send_bit6
-usb_tx_stuff_bit7:
-    ldi r17, 0x00
-    rjmp usb_tx_send_bit7
+    rjmp usb_tx_prepare_handshake
+usb_tx_send_count_handshake:
+    mov r20, r19
+    rjmp usb_tx_prepare_handshake
 usb_rx_setup_reject:
     /* Authorized SETUP/OUT already closed R2 at its valid token. An
      * unpaired or rejected DATA must also close an earlier IN window. */
@@ -540,10 +490,39 @@ usb_rx_setup_data:
     ldi r19, USB_PID_NAK
     std Z+CTX_TX_LENGTH, r19
     mov r3, r23
+    ldi r20, USB_PID_ACK
+    rjmp usb_tx_prepare_handshake
+usb_rx_handle_data:
+    /* Only validated OUT is negative in the private token context. */
+    tst r24
+    brmi usb_rx_out_data
+    cpi r24, USB_PID_SETUP
+    breq usb_rx_setup_data
+    rjmp usb_rx_setup_reject
+usb_rx_out_data:
+    /* Validate each legal DATA toggle before sharing the status guards. */
+    cpi r16, USB_PID_DATA1
+    breq usb_rx_out_status
+    cpi r16, USB_PID_DATA0
+    brne usb_rx_setup_reject
+usb_rx_out_status:
+    cpi r23, USB_RX_PACKET_OVERHEAD
+    brlo usb_rx_setup_reject
+/* R19 was loaded from TX_LENGTH during fixed-time RX and remains live.
+ * Foreground code cannot run between that load and this status check. */
+    cpi r19, USB_PID_STALL
+    breq usb_tx_send_count_handshake
+/* OUT is status only for an accepted control read. A write's required IN
+ * status ACK must never be replaced by an unrelated OUT transaction. */
+    sbrs r11, 7
+    rjmp usb_rx_protocol_stall
+    /* DATA0 is acknowledged without accepting the completed status again.
+     * DATA1 alone installs the validated OUT marker for post-ACK retirement.
+     * USB8.5.3.1 permits any payload length for a read status inquiry. */
+    sbrc r16, 3
+    mov r3, r24
 usb_tx_send_ack:
-    ldi r19, USB_PID_ACK
-usb_tx_send_count_handshake:
-    mov r20, r19
+    ldi r20, USB_PID_ACK
 usb_tx_prepare_handshake:
     ldi r28, LOW8(USB_HANDSHAKE_REGISTER)
     ldi r29, HIGH8(USB_HANDSHAKE_REGISTER)
@@ -594,7 +573,24 @@ usb_tx_send_bit7:
     /* Consume the token during the required four-cycle TX-EOP alignment.
      * Z still holds the context base; STD costs the same two cycles as RJMP. */
     std Z+CTX_CURRENT_TOKEN, r1
-    rjmp .+0
+    rjmp usb_tx_begin_se0
+usb_tx_stuff_regular_bit:
+    eor r16, r21
+    ldi r17, 0x00
+    rjmp usb_tx_stuff_regular_delay
+usb_tx_stuff_regular_delay:
+    nop
+    out _SFR_IO_ADDR(PORTD), r16
+    rjmp usb_tx_check_regular_stuffing
+usb_tx_stuff_bit6:
+    eor r16, r21
+    ldi r17, 0x00
+    adc r18, r18
+    rjmp usb_tx_send_bit6
+usb_tx_stuff_bit7:
+    ldi r17, 0x00
+    rjmp usb_tx_send_bit7
+usb_tx_begin_se0:
     out _SFR_IO_ADDR(PORTD), r16
     /* SE0 remains in USB Low-Speed timing window for DATA and handshake. */
     rjmp .+0

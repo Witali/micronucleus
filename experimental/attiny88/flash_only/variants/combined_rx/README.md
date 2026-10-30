@@ -31,12 +31,12 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1534 bytes**, SHA256
-`b7083fa0978e13d0f001c8e2dadbd31fb71d2fb6e9584c66e3b56a9d1e51c074`.
-It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with two bytes spare.
-The source is 116 bytes smaller than the preceding 1650-byte receiver. It still
+The current composed checkpoint is **1526 bytes**, SHA256
+`7cb3aa05834738da05a4e5b0cc6a1d5840a1057564e5b033332e5a652b7b6a72`.
+It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with ten bytes spare.
+The source is 124 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1534 bytes, 254 bytes over capacity;
+At the target placement 0x1B00 it remains 1526 bytes, 246 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
@@ -69,10 +69,28 @@ cases and 128 atomic address/cache commits, 2304 outgoing CRC payloads, 33 reply
 fragments, status/read/reset/shadow checks and 225 minimum-gap exchanges.
 Foreground checks at 0x1800 retain the measured 40.6773-clock maximum entry.
 Its complete 968-byte descriptor/PHY/acknowledged-write prefix is byte-identical
-to the previous 1542-byte image. The current 1534-byte image additionally passes
+to the previous 1542-byte image. The preceding 1534-byte image additionally passes
 19 status, all 128 negative-marker lifetime, reset, pending-SETUP and 3040 PID
 effect checks. The error response is one clock earlier; these changes do not
 fix the receive defects below.
+
+Sharing DATA0/DATA1 OUT guards and loading literal handshake PIDs directly saves
+another eight bytes. Exact PID, length, direction and persistent STALL checks
+remain. Only validated DATA1 retires the read after ACK; DATA0 is acknowledged
+without accepting the status again. The unchanged TX stuffing helpers occupy
+the existing pre-SE0 jump gap. All 58368 linked dispatch-state comparisons pass,
+including full context, Y/Z, caller byte, handshake count and T/I flags. Status,
+reply lifetime, TX waveform and minimum-gap write/read tests pass. SETUP ACK is
+one clock later, IN NAK/STALL two clocks later, and accepted OUT ACK one/two
+clocks earlier. The complete 25200 EOP cases retain the same single failed
+waveform, and the 180 aperiodic cases retain the same 30 failing identities.
+
+An additional 6048-case OUT response audit finds existing protocol-error STALL
+deadline failures. Persistent STALL meets the bound in all 4032 cases. Newly
+detected protocol errors exceed it in 464 of 2016 cases, down from 489 in the
+1534-byte parent; the worst response improves from 75.2830 to 73.2830 clocks.
+These failures remain mandatory. The rejected 1524-byte attempt added failures
+and was not integrated. No optional protocol behavior was removed by this change.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:
