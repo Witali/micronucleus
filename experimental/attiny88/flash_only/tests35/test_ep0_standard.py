@@ -30,13 +30,13 @@ def request(art,bm,req,value=0,index=0,length=8,config=1):
             count=cpu.m[0x100];ptr=cpu.word(14)
             if cpu.m[0x10f]==0x1e:
                 assert count==0xff and cpu.r[3]==0 and cpu.r[6:8]==[0,0]
-                return dict(kind='stall')
+                return dict(kind='stall',config=cpu.m[0x115],pending=cpu.m[0x113],command=cpu.r[3],address=cpu.m[0x10c])
             payload=bytes(cpu.flash[ptr+i] for i in range(count)) if count else b''
-            return dict(kind='reply',count=count,payload=payload.hex(),config=cpu.m[0x115],pending=cpu.m[0x113],command=cpu.r[3])
+            return dict(kind='reply',count=count,payload=payload.hex(),config=cpu.m[0x115],pending=cpu.m[0x113],command=cpu.r[3],address=cpu.m[0x10c])
         if cpu.pc==cpu.labels['bootloader_check_idle_timeout']:
             assert cpu.m[0x10f]==0x1e and cpu.m[0x100]==0xff
             assert cpu.r[3]==0 and cpu.r[6:8]==[0,0]
-            return dict(kind='stall')
+            return dict(kind='stall',config=cpu.m[0x115],pending=cpu.m[0x113],command=cpu.r[3],address=cpu.m[0x10c])
         at=cpu.pc-art['boot']
         if art['body'][at:at+2]==b'\xe8\x95':
             return dict(kind='spm',command=cpu.r[3],address=cpu.word(30))
@@ -51,9 +51,24 @@ def test():
         (0x81,0,0,0,1,b'\0\0'),(0x82,0,0,0,0,b'\0\0'),
         (0x82,0,0,0x80,1,b'\0\0'),(0x81,10,0,0,1,b'\0'),
         (0x80,8,0,0,0,b'\0'),(0x80,8,0,0,1,b'\1')]:
-        row=request(art,bm,req,value,index,config=config)
+        # USB9.4.2/9.4.4 specify one byte; GET_STATUS specifies two.
+        # Malformed lengths have no fixed availability requirement.
+        length=1 if req in (8,10) else 2
+        row=request(art,bm,req,value,index,length=length,config=config)
         assert row['kind']=='reply' and row['payload']==payload.hex(),(bm,req,row)
         assert row['command']==0;cases+=1
+    # USB9.4.2/9.4.4 leave malformed lengths unspecified. Still require
+    # bounded read-only handling: no SPM, command, configuration or address
+    # mutation. Do not require the former one-byte source availability.
+    for bm,req,configs in ((0x80,8,(0,1)),(0x81,10,(1,))):
+        for config in configs:
+            for length in (0,2,8,255,256,65535):
+                row=request(art,bm,req,length=length,config=config)
+                assert row['kind'] in ('reply','stall'),(bm,req,length,row)
+                if row['kind']=='reply':
+                    assert 0<=row['count']<=min(length,8),(bm,req,length,row)
+                assert row['command']==0 and row['config']==config and row['pending']==0 and row['address']==0,row
+                cases+=1
     for bm,req,value in [(0,5,37),(0,9,0),(0,9,1)]:
         row=request(art,bm,req,value)
         assert row['kind']=='reply' and row['count']==0 and row['command']==0,row
