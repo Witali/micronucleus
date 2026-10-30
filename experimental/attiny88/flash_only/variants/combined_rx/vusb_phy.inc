@@ -454,15 +454,6 @@ usb_handler_packet_done:
     sbrc r28, PCIF2
     rjmp usb_rx_wait_for_j
     rjmp usb_return_context
-usb_rx_protocol_stall:
-/* A protocol error terminates the write without allowing STALL's handshake
- * marker to release a queued erase, page commit or application handoff. */
-    mov r3, r1
-    ldi r20, USB_PID_STALL
-    std Z+CTX_TX_LENGTH, r20
-    /* The private validated OUT token (E1) also marks message completion. */
-    std Z+CTX_MSG_LENGTH, r24
-    rjmp usb_tx_prepare_handshake
 usb_tx_send_count_handshake:
     mov r20, r19
     rjmp usb_tx_prepare_handshake
@@ -509,8 +500,15 @@ usb_rx_out_status:
     breq usb_tx_send_count_handshake
 /* OUT is status only for an accepted control read. A write's required IN
  * status ACK must never be replaced by an unrelated OUT transaction. */
-    sbrs r11, 7
-    rjmp usb_rx_protocol_stall
+    sbrc r11, 7
+    rjmp usb_rx_out_read_status
+usb_rx_protocol_stall:
+    /* PHY owns the response until post-handshake retirement. Negative R3
+     * records the validated OUT; literal STALL distinguishes it from ACK. */
+    mov r3, r24
+    ldi r20, USB_PID_STALL
+    rjmp usb_tx_prepare_handshake
+usb_rx_out_read_status:
     /* DATA0 is acknowledged without accepting the completed status again.
      * DATA1 alone installs the validated OUT marker for post-ACK retirement.
      * USB8.5.3.1 permits any payload length for a read status inquiry. */
@@ -650,11 +648,17 @@ usb_tx_finish_handshake:
     rjmp usb_return_context
 
 usb_tx_commit_read_status:
+    /* No receive or foreground work can precede this retirement. Both
+     * accepted read status and protocol errors own negative R3; only STALL
+     * has bit2 among the transmitted ACK/NAK/STALL handshake PIDs. */
     mov r3, r1
+    sbrc r20, 2
+    rjmp usb_tx_commit_out_state
     sbrc r11, 6
     movw r4, r14
-    ldi r19, USB_PID_NAK
-    std Z+CTX_TX_LENGTH, r19
+    ldi r20, USB_PID_NAK
+usb_tx_commit_out_state:
+    std Z+CTX_TX_LENGTH, r20
     /* R24 still holds the validated OUT token, a negative done marker. */
     std Z+CTX_MSG_LENGTH, r24
     rjmp usb_return_context

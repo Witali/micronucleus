@@ -19,6 +19,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
 | Persistent and newly generated OUT protocol STALL obey the same physical response deadline without releasing pending writes | Sections 7.1.18.1 and 8.5.3.4 | `test_out_response_timing` |
+| The next minimum-gap IN sees STALL and a replacement SETUP recovers the pipe after error retirement; canceled work cannot run | Sections 7.1.18.1 and 8.5.3.4 | `test_stall_followup` |
 | A following transaction at the physical two-bit gap must be received intact | Section 7.1.18.1 | `test_ack_followup`, `test_sequential_wire` |
 | An ordinary malformed packet cancels authorization and permits a separate valid SETUP after its real EOP and legal host gap | Sections 7.1.10, 7.1.18.1 and 7.1.19.1, Chapter 8 error handling | `test_rx_resync` |
 | Foreground delay cannot corrupt an IN token or its complete reply; later observed entries retain jitter tolerance | Sections 7.1.11, 7.1.15.1 and 7.1.18.1 | `test_ep0_polling`, `test_rx_late_entry` |
@@ -128,10 +129,19 @@ empty/eight-byte payloads, all legal final-one tails, slow/fast host, short/long
 EOP, signed skew, entry phase and existing/new STALL state. It checks the actual
 STALL PID/count, command cancellation, completion marker, cursor, caller/stack,
 released pins and physical recovery-J-to-first-K time. The 1526-byte composed
-checkpoint passes all 4032 persistent-STALL cases but fails the deadline in 464
+checkpoint passed all 4032 persistent-STALL cases but failed the deadline in 464
 of 2016 newly generated protocol-error STALL cases (maximum 73.2830 clocks).
-The 1534-byte parent had 489 such failures. The strict test rejects all remaining
-errors; these are not unspecified-request allowances or expected failures.
+The 1534-byte parent had 489 such failures. Deferring error retirement to the
+post-handshake owner fixes all of them at zero byte cost: all 6048 cases now
+pass, with new-error responses at 40.7139..68.2830 clocks. This is a timing fix,
+not an unspecified-request allowance or an expected-failure exception.
+
+`test_stall_followup` adds 576 physical two-bit-gap error-STALL followups across
+queued erase/write/RUN states, both DATA toggles, standard/vendor write flags,
+host rates and entry phases. Next-IN retains STALL; replacement SETUP accepts
+the new request. It requires retirement before later receive/foreground code,
+caller/stack restoration, unchanged cursor and no stale NVM work. A next physical
+SYNC may already have begun while retirement runs; intact reception is tested.
 
 At the strict checkpoint, legal dribble is rejected. A scratch
 receiver also admitted SETUP DATA with an illegal final zero; that finding is

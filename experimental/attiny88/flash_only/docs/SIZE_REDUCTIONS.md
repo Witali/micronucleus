@@ -203,3 +203,20 @@ Measured composed image: 1520 bytes at 0x1A00; strict source remains 1370 bytes.
 Move the common request-zero guard immediately before the zero reply. Interface GET_STATUS falls through it, GET_INTERFACE skips it, and endpoint validation jumps back to it. Removing two old jumps and adding one saves two bytes with every recipient, index, configuration, request check and USB poll retained. Valid device/interface GET_STATUS paths are two/four clocks faster; endpoint success is unchanged. The endpoint unsupported-request path adds two clocks and is now included in the foreground sweep. All 2231 standard requests, 4032 original foreground cases and 336 added endpoint-error timing cases pass, with the unchanged 40.677328-clock maximum entry. The composed image is 1518 bytes; required receiver and protocol-error timing findings remain open.
 
 Measured image: 1368 bytes.
+
+## Use post-handshake ownership for protocol-error retirement
+
+Validated OUT has closed R2, so its transmitted STALL must take the existing
+post-handshake retirement path before another receiver or foreground instruction.
+Use its negative OUT marker in R3 and the surviving literal handshake in R20 to
+share that owner with accepted read completion. Error command cancellation and
+TX_LENGTH/MSG_LENGTH stores move after the response; read completion keeps its
+cursor and NAK behavior. The two removed stores pay for two added retirement
+instructions, keeping size unchanged. Protocol-error response starts five clocks
+earlier, fixing all 464 inherited deadline failures. All 6048 timing cases and
+576 minimum-gap IN/SETUP followups pass, along with 1485 ACK followups and the
+state/read/write/TX checks. The existing aperiodic and short-EOP receive failures
+remain open. No field check or protocol behavior is waived.
+
+Measured composed image: 1518 bytes at 0x1A00 after the separate two-byte standard
+fallthrough saving; strict source remains 1368 bytes.

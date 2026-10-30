@@ -25,7 +25,7 @@ The current 1368-byte image has SHA-256
 That count belongs to the strict-source audit checkpoint. The separately
 selected [composed receiver](variants/combined_rx/README.md) currently measures
 1518 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
-the legal-dribble/receive work; its remaining receive and protocol-error timing
+the legal-dribble/receive work; its remaining receive
 findings are mandatory. Both targets omit permanent EEPROM commands. The
 composed image remains 238 bytes above the 1280-byte target.
 

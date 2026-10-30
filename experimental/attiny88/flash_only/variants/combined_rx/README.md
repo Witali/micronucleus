@@ -32,7 +32,7 @@ for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
 The current composed checkpoint is **1518 bytes**, SHA256
-`9a83db9b5e82fce247010f3734075d0747cae3c137c05c30509d64a229af57bc`.
+`bc4faea264abcd7382f3dca31824fd44536838e71337471db91fbe3d57a9f818`.
 It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with eighteen bytes spare.
 The source is 132 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
@@ -103,16 +103,31 @@ foreground sweep. All 4368 foreground exchanges pass across the original and
 added isolated sweeps, with the same 40.677328-clock maximum entry. Standard,
 reply/state and outgoing CRC checks pass on the exact 1518-byte body.
 
-An additional 6048-case OUT response audit finds existing protocol-error STALL
-deadline failures. Persistent STALL meets the bound in all 4032 cases. Newly
-detected protocol errors exceed it in 464 of 2016 cases, down from 489 in the
-1534-byte parent; the worst response improves from 75.2830 to 73.2830 clocks.
-These failures remain mandatory. The rejected 1524-byte attempt added failures
-and was not integrated. No optional protocol behavior was removed by this change.
+An additional 6048-case OUT response audit found protocol-error STALL deadline
+failures in the preceding composition: 464 of 2016 new-error cases, down from
+489 in the 1534-byte parent. The rejected 1524-byte attempt added failures and
+was not integrated.
+
+Error retirement now uses the existing post-handshake path. Validated OUT has
+closed R2, so its negative R3 marker must be retired before any later receiver
+or foreground code runs. The transmitted literal STALL distinguishes error
+retirement from an accepted read ACK. Command cancellation and both state stores
+finish there; no stale SPM/RUN or old DATA can be released. This begins the
+protocol-error response five clocks earlier without changing code size. All
+6048 OUT timing cases pass: new STALL is 40.7139..68.2830 clocks and persistent
+STALL 38.7139..66.2830. Ordinary read ACK is one clock later and remains in bounds.
+All 576 new minimum-gap IN/SETUP followups, 1485 ACK followups, ownership/lifetime,
+read/write and TX checks pass on the isolated fix. The full 25200 EOP and 180
+aperiodic matrices retain only their inherited receiver failures.
+
+The actual 1518-byte composition independently passes all 6048 OUT timing and
+576 STALL-followup cases, 3040 PID effects, 19 status cases, all 15 SETUP service
+callers and 864 response waves, completion lifetime and context restoration.
+Its 739 linked instructions all have explicit AVR cycle classifications.
 
 The 1534-byte parent also completed an exhaustive selected-image run: 35 of 37
 groups passed, with only aperiodic reception and the EOP matrix failing. The
-new OUT response gate above is now a separate required group, making 38 groups;
+new OUT response and STALL-followup gates add two required groups, making 39;
 do not interpret the older report as a complete current-image verification.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
