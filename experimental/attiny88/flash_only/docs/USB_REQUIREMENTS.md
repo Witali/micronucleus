@@ -46,6 +46,31 @@ Positive fixtures use the specified lengths; malformed-length tests still
 require bounded read-only handling and unchanged command/configuration/address
 state. This uses an explicit specification allowance and adds no USB waiver.
 
+## Explicitly permitted simplifications
+
+Minimize the implementation using allowances that apply to this low-speed,
+single-interface, default-setting, endpoint-zero-only device. For each proposed
+omission, record the specification clause, its applicability and the smaller
+implementation before making it a test expectation. Do not require a particular
+reply for inputs whose behavior the specification explicitly leaves unspecified;
+keep bounded execution and memory/command safety for those inputs.
+
+| Specification allowance | Minimal implementation retained |
+| --- | --- |
+| Sections 9.4.2 and 9.4.4 leave other GET_CONFIGURATION/GET_INTERFACE lengths unspecified. | Share GET_STATUS's two-byte availability and the existing length limiter; the specified one-byte requests still return one byte. This saves four code bytes. |
+| Section 9.4.8 makes SET_DESCRIPTOR optional. | No mutable-descriptor handler; the ordinary unsupported-request STALL handles it. |
+| Section 9.4.10 permits STALL for SET_INTERFACE when only the default setting exists. | No alternate-setting state or SET_INTERFACE success handler. GET_INTERFACE still reports setting zero. |
+| Section 9.4.5 says the Halt feature is neither required nor recommended for the Default Control Pipe; section 8.5.3.4 distinguishes functional from protocol stall. | No persistent EP0 Halt feature or set/clear-Halt machinery. Required protocol STALL lasts until the next SETUP. |
+| Section 8.5.3.1 allows any received packet length as a control-read status inquiry. | Accept a completely framed status packet without a zero-payload-length check. Both CRC-byte positions and DATA-toggle ownership remain required. |
+| Section 9.4.6 leaves SET_ADDRESS values above127 and nonzero wIndex/wLength unspecified. Section 9.4.7 similarly leaves nonzero wIndex/wLength/upper wValue unspecified. | Do not add request-shape checks for those undefined cases. Keep valid address activation after its status ACK and configuration-value validation. |
+| Section 7.1.15.1 allows trading source-driver jitter against clock accuracy within total upstream limits. | Keep the compact fractional TX schedule when its independently measured total error meets the applicable limits; do not impose the tighter downstream-driver limits on this device. |
+
+Except for the four-byte shared-reply reduction, these are existing omissions
+or choices, not additional measured savings. Permanent EEPROM commands, strings,
+alternate configurations and nonzero endpoints are also absent from this target.
+The explicit incoming DATA CRC16 waiver below is a separate project deviation,
+not a claim that this check is optional for a USB control endpoint.
+
 ## Signal oracle scope
 
 `test_dribble_deadlines` preserves 108 quiet-token and 540 paired-packet probes
