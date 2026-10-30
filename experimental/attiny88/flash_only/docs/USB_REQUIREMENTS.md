@@ -19,6 +19,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
 | A following transaction at the physical two-bit gap must be received intact | Section 7.1.18.1 | `test_ack_followup`, `test_sequential_wire` |
+| An ordinary malformed packet cancels authorization and permits a separate valid SETUP after its real EOP and legal host gap | Sections 7.1.10, 7.1.18.1 and 7.1.19.1, Chapter 8 error handling | `test_rx_resync` |
 | Foreground delay cannot corrupt an IN token or its complete reply; later observed entries retain jitter tolerance | Sections 7.1.11, 7.1.15.1 and 7.1.18.1 | `test_ep0_polling`, `test_rx_late_entry` |
 | ACK/token response eligibility expires no earlier than 16 and before 18 bit periods | Section 7.1.19.1 | `test_ep0_ack_timeout`, `test_ep0_token_timeout`, dribble deadline matrix |
 | DATA/PID remain immutable until eligible ACK or control-status completion; repeats do not duplicate a write | Chapter 8 transaction/retry rules | `test_ack_regression`, `test_ep0_read_completion`, `test_sequential_wire` |
@@ -72,6 +73,14 @@ includes the private DATA exit used by a faster dispatch; authorization and
 live-J checks remain independently required. Incoming numeric CRC storage is
 excluded only under the existing DATA CRC16 waiver. A shared decoder defect
 cannot be cleared by an executor-parity comparison.
+
+`test_rx_resync` checks 72 ordinary error-recovery cases through actual foreground
+polling: an existing bad-stuff DATA or illegal ACK zero-tail fixture, its real
+EOP, and a separate valid SETUP. The host waits 18 bits after DATA and two bits
+after ACK. The strict checkpoint loses the next SETUP in 12 short-EOP ACK-tail
+cases while preserving command/cursor/address/reply state. The reviewed
+1,654-byte receiver passes all 72. This is bounded recovery evidence, not a proof
+of quarantine against arbitrary malformed streams or arbitrary recovery gaps.
 
 `test_token_crossover_admission` adds 5454 negative cases. A short possible
 GPIO both-low observation inside a fourth token byte must not be mistaken for

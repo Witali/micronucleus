@@ -22,6 +22,7 @@ python3 -m tests35.test_ep0_ack_timeout
 python3 -m tests35.test_ep0_token_timeout
 python3 -m tests35.test_ep0_polling
 python3 -m tests35.test_ep0_failed_sync
+python3 -m tests35.test_rx_resync
 python3 -m tests35.test_token_crc5
 python3 -m tests35.test_token_framing_wire
 python3 -m tests35.test_rx_context_restore
