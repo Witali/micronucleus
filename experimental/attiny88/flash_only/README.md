@@ -22,6 +22,13 @@ before treating an optimized image as usable.
 The current 1370-byte image has SHA-256
 `2f4add441571b7712454fcb4eebba7a3c9eead95b6937a86a3eec12148f491f1`.
 
+That count belongs to the strict-source audit checkpoint. The separately
+selected [composed receiver](variants/combined_rx/README.md) currently measures
+1520 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
+the legal-dribble/receive work; its remaining receive and protocol-error timing
+findings are mandatory. Both targets omit permanent EEPROM commands. The
+composed image remains 240 bytes above the 1280-byte target.
+
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
 profile requires both a fitting image and passing USB admission checks;

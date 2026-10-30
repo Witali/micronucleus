@@ -177,8 +177,23 @@ inside the existing pre-SE0 jump gap. This saves eight bytes without removing a
 field or state check. All 58368 dispatch-state comparisons, status/lifetime,
 TX waveform and minimum-gap write/read checks pass. The 25200 EOP and 180
 aperiodic cases retain their inherited failures. Additional OUT timing corners
-preserve or improve protocol-error STALL, reducing deadline failures from489 to
+preserve or improve protocol-error STALL, reducing deadline failures from 489 to
 464; that remaining defect is not waived. The smaller 1524-byte trial added
 timing failures and was rejected.
 
-Measured composed image: 1526 bytes at0x1A00; strict source remains1370 bytes.
+Measured composed image: 1526 bytes at 0x1A00; strict source remains 1370 bytes.
+
+## Share identical receive-tail jumps
+
+Normal and odd-stuff rejection use the existing late-stuff rejection jump.
+The qualified late-EOP branch reuses the normal confirmer's existing accept
+jump. Removing three duplicate two-cycle jumps saves six bytes; confirmation
+samples, phase/count adjustments and every path's elapsed clocks remain.
+All 308 receiver instructions and 99 relative edges map to identical relocated
+instructions/targets; 46080 executed tail states also match full state and GPIO.
+Framing, mandatory-stuff, token/PID, deadlines, 1485 minimum-gap exchanges and
+12096 periodic-jitter cases pass. The full 25200 EOP and 180 aperiodic matrices
+retain exactly their inherited failures. Independent integration with the OUT
+guard change proves 327 instructions and 105 edges preserve the same RX clocks.
+
+Measured composed image: 1520 bytes at 0x1A00; strict source remains 1370 bytes.

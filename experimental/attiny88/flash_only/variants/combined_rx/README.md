@@ -31,12 +31,12 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1526 bytes**, SHA256
-`7cb3aa05834738da05a4e5b0cc6a1d5840a1057564e5b033332e5a652b7b6a72`.
-It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with ten bytes spare.
-The source is 124 bytes smaller than the preceding 1650-byte receiver. It still
+The current composed checkpoint is **1520 bytes**, SHA256
+`8c10ab9cad5dc59d2c5bcd98de64ce09c33a0c4fd61b0e74f9cfd1176dab80eb`.
+It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with sixteen bytes spare.
+The source is 130 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1526 bytes, 246 bytes over capacity;
+At the target placement 0x1B00 it remains 1520 bytes, 240 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
@@ -85,12 +85,27 @@ one clock later, IN NAK/STALL two clocks later, and accepted OUT ACK one/two
 clocks earlier. The complete 25200 EOP cases retain the same single failed
 waveform, and the 180 aperiodic cases retain the same 30 failing identities.
 
+Sharing three identical receive-tail jumps saves another six bytes. Distinct
+even/odd confirmation samples and phase/count adjustments remain. Linked graph
+comparison proves all 308 original RX instructions and 99 relative edges keep
+their opcodes, control flow and clocks; 46080 tail-state executions agree in
+registers, full SREG, SRAM and GPIO observations. The integrated 1526-to-1520
+composition independently proves 327 instructions and 105 edges. Framing,
+mandatory stuffing, PID, token/crossover, deadlines, 1485 minimum-gap exchanges
+and 12096 periodic-jitter cases pass on the isolated sharing change. The full
+25200 EOP and 180 aperiodic results preserve their exact inherited failures.
+
 An additional 6048-case OUT response audit finds existing protocol-error STALL
 deadline failures. Persistent STALL meets the bound in all 4032 cases. Newly
 detected protocol errors exceed it in 464 of 2016 cases, down from 489 in the
 1534-byte parent; the worst response improves from 75.2830 to 73.2830 clocks.
 These failures remain mandatory. The rejected 1524-byte attempt added failures
 and was not integrated. No optional protocol behavior was removed by this change.
+
+The 1534-byte parent also completed an exhaustive selected-image run: 35 of 37
+groups passed, with only aperiodic reception and the EOP matrix failing. The
+new OUT response gate above is now a separate required group, making 38 groups;
+do not interpret the older report as a complete current-image verification.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:

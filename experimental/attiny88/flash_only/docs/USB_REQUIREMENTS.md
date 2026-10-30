@@ -128,9 +128,9 @@ empty/eight-byte payloads, all legal final-one tails, slow/fast host, short/long
 EOP, signed skew, entry phase and existing/new STALL state. It checks the actual
 STALL PID/count, command cancellation, completion marker, cursor, caller/stack,
 released pins and physical recovery-J-to-first-K time. The 1526-byte composed
-checkpoint passes all 4032 persistent-STALL cases but fails the deadline in464
-of2016 newly generated protocol-error STALL cases (maximum73.2830 clocks).
-The 1534-byte parent had489 such failures. The strict test rejects all remaining
+checkpoint passes all 4032 persistent-STALL cases but fails the deadline in 464
+of 2016 newly generated protocol-error STALL cases (maximum 73.2830 clocks).
+The 1534-byte parent had 489 such failures. The strict test rejects all remaining
 errors; these are not unspecified-request allowances or expected failures.
 
 At the strict checkpoint, legal dribble is rejected. A scratch

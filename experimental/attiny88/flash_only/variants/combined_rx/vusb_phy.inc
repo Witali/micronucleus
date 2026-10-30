@@ -195,10 +195,9 @@ usb_rx_normal_odd_eop:
      * opposite-register confirmation exactly four clocks after first SE0. */
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
-    brne usb_rx_normal_eop_reject
+    brne usb_rx_reject_stuff_late
+usb_rx_eop_jump_late:
     rjmp usb_rx_end_packet
-usb_rx_normal_eop_reject:
-    rjmp usb_rx_ignore_packet
 usb_rx_dribble_even_end:
     /* Two SE0 samples four cycles apart exclude a <=210ns crossover.
      * The first sample moved earlier, so670ns receiver EOP still fits.
@@ -214,16 +213,12 @@ usb_rx_dribble_even_end:
     rjmp usb_rx_end_packet
 usb_rx_reject_stuff_late:
     rjmp usb_rx_ignore_packet
-usb_rx_eop_jump_late:
-    rjmp usb_rx_end_packet
 usb_rx_dribble_odd_end:
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
-    brne usb_rx_reject_stuff_odd_local
+    brne usb_rx_reject_stuff_late
     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
     rjmp usb_rx_end_packet
-usb_rx_reject_stuff_odd_local:
-    rjmp usb_rx_ignore_packet
 usb_rx_unstuff_odd_bit:
     /* The first observation qualifies EOF. A distinct normal-phase sample
      * validates the mandatory transition even at permitted source jitter. */
@@ -236,7 +231,7 @@ usb_rx_unstuff_odd_bit:
      * Reuse the four-cycle SE0 qualification before any cursor advance. */
     brbs SREG_Z, usb_rx_dribble_odd_end
     cp r17, r16
-    breq usb_rx_reject_stuff_odd_local
+    breq usb_rx_reject_stuff_late
     mov r17, r16
     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
     brbs SREG_C, usb_rx_unstuff_odd_next_even
