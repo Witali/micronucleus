@@ -127,8 +127,11 @@ Its 739 linked instructions all have explicit AVR cycle classifications.
 
 The 1534-byte parent also completed an exhaustive selected-image run: 35 of 37
 groups passed, with only aperiodic reception and the EOP matrix failing. The
-new OUT response and STALL-followup gates add two required groups, making 39;
+new OUT response and STALL-followup gates initially raised the selection to 39;
 do not interpret the older report as a complete current-image verification.
+The current selector has 42 groups after adding 975 transmitted-EOP cases,
+512 explicit-artifact unselected-page guards and the 396-case centered-crossover
+receive regression. Standalone NVM checks retain independent LED-mode builds.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:
@@ -137,6 +140,11 @@ SE0 width 10.72 clocks, J/K edge offsets -0.55/+0.55 clocks, entry 24.75 clocks.
 The report records both missing decode and missing response for that one case.
 All other cases in that sweep pass, with response times 39.6417..67.2191 clocks.
 The conservative recovered-crossover reception path also needs qualification.
+The new centered 150 ns, zero-jitter corpus gives 14 discarded packets out of
+396 plausible signal cases. Their mandatory stuffed transitions are rejected
+when a transient zero recovers to J/K instead of being decoded. CRC-only storage
+differences in the older stress corpus are excluded only under the numeric CRC
+waiver; valid payload/count reception remains required.
 These findings remain mandatory; this is an experiment, not a release.
 
 Legal aperiodic SYNC/data jitter also exposes inherited receive failures outside

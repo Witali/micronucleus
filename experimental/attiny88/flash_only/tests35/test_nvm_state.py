@@ -34,10 +34,11 @@ def initialized(art,low):
     return cpu
 
 
-def check():
+def check(artifact=None):
     cases=0
-    for mode in ('NONE','ACTIVE_HIGH','ACTIVE_LOW'):
-        art=h.build(mode=mode)
+    artifacts=((artifact,) if artifact is not None else
+               tuple(h.build(mode=mode) for mode in ('NONE','ACTIVE_HIGH','ACTIVE_LOW')))
+    for art in artifacts:
         for low in range(256):
             cpu=initialized(art,low)
             for command in (3,5):
@@ -51,7 +52,9 @@ def check():
                 else:raise AssertionError('unselected erase/commit did not abort')
                 assert cpu.r[5]==255
                 cases+=1
-    print('PASS',cases,'poisoned-startup unselected erase/commit cases across all low bytes and LED modes')
+    scope=('for the explicitly selected artifact' if artifact is not None else
+           'across all low bytes and independently built LED modes')
+    print('PASS',cases,'poisoned-startup unselected erase/commit cases',scope)
 
 
 if __name__=='__main__':check()

@@ -29,6 +29,7 @@ CHECKS = (
     ('test_out_completion_lifetime', 'test'),
     ('test_vendor_host_contract', 'test'),
     ('test_sequential_wire', 'check'),
+    ('test_tx_eop_counter', 'test'),
     ('test_tx_digital', 'test'),
     ('test_ep0_reset', 'test'),
     ('test_startup_state', 'test'),
@@ -49,6 +50,7 @@ CHECKS = (
     ('test_token_crossover_admission', 'test'),
     ('test_rx_jitter_spec', 'test'),
     ('test_rx_aperiodic', 'test'),
+    ('test_rx_crossover_legal', 'test'),
     ('test_rx_eop_matrix', 'test'),
 )
 RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_and_eop')
@@ -102,6 +104,8 @@ def main():
     for module, function in CHECKS:
         imported = importlib.import_module('tests35.'+module)
         execute(module, getattr(imported, function))
+    nvm = importlib.import_module('tests35.test_nvm_state')
+    execute('test_nvm_state', lambda: nvm.check(art))
     raw = importlib.import_module('tests35.test_usb_rx_waveforms')
     for name in RAW_CHECKS:
         execute('test_usb_rx_waveforms.'+name, lambda name=name: getattr(raw, name)(art))

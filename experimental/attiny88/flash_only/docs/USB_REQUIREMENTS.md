@@ -14,6 +14,7 @@ Firmware identity or a smaller binary alone is never an admission criterion.
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, `test_pid_admission`, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
+| A plausible centered 150 ns single-ended crossover preserves reception, not only silence before the real EOP | Sections 7.1.2.1 and 7.1.4.1, Table 7-10 | `test_rx_crossover_legal` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |
@@ -34,6 +35,15 @@ Names without a directory are modules under `tests35/`. The full gate is
 `sh verify.sh`; `USB_PHY_EXHAUSTIVE=1` expands supported phase/rate matrices.
 Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
+
+`verify_receiver.py --exhaustive` selects one linked no-LED image for 42 groups,
+including transmitted-EOP measurement and 512 explicit-artifact poisoned-page
+guards. The standalone NVM test still builds three independent LED modes for
+1536 cases; selecting one image must not substitute it for those other modes.
+Host packing, failure/readback behavior, offline EEPROM planning, historical
+opcode/reference checks and canonical release generation remain separate checks.
+The strict-source recognized release roundtrip does not qualify an unknown-profile
+composed image at another address.
 
 ## Shared small standard replies
 
@@ -171,6 +181,22 @@ of quarantine against arbitrary malformed streams or arbitrary recovery gaps.
 GPIO both-low observation inside a fourth token byte must not be mistaken for
 EOP after a valid three-byte prefix. This gate passes on the strict receiver
 and exposes additional false NAK responses in an unadmitted dribble prototype.
+
+The older 3564-case GPIO crossover stress report includes 714 exact-wire
+mismatches on the 1518-byte image: 700 discarded packets and 14 differences
+confined to numeric CRC16 storage. Only the latter are covered by the existing
+waiver. The endpoint-placed 210 ns stress observations do not each have an
+independently established analog realization, so that total is not a count of
+proved physically compliant failures.
+
+`test_rx_crossover_legal` instead preserves 396 centered 150 ns cases with zero
+injected jitter. Its documented monotonic ramp witness crosses differentially
+at the center, at 1.3 V, with equal 282.857 ns rise/fall times; a 2.0 V
+single-ended threshold gives the 150 ns both-low interval. The 1518-byte image
+discards 14 cases at mandatory stuffed transitions. All 382 accepted cases
+preserve PID/payload/count, SETUP ownership, caller/stack and pin release.
+Rejection prevents a false EOP but does not establish required crossover receive
+tolerance. This required regression remains strict while firmware repair is open.
 
 The sole approved exception is omitted incoming DATA CRC16 value validation,
 before and after ACK. It does not waive PID, stuffing, byte framing, minimum
