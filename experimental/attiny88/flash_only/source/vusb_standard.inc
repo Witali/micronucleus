@@ -99,9 +99,10 @@ usb_standard_device_out:
 .Laddress_crc5_advance:
     dec r25
     brne .Laddress_crc5_bit
-    lsl r10
-    lsl r10
-    lsl r10
+    /* The final feedback carry equals CRC bit4. SWAP preserves it, so
+     * ROR after SWAP emits the same endpoint-zero wire byte as three LSLs. */
+    swap r10
+    ror r10
     rjmp usb_reply_empty
 usb_standard_check_configuration:
     cpi r25, USB_REQ_SET_CONFIGURATION

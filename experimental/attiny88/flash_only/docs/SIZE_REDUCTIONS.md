@@ -148,3 +148,9 @@ Measured image: 1380 bytes.
 Move the existing GET_CONFIGURATION body beside its request comparison and invert the conditional branch. This removes one jump without removing any request validation or USB poll. Together with the preceding startup change, the no-LED source is 4 bytes smaller than the 1382-byte checkpoint: 1378 bytes at 0x1A40, or 1374 bytes at the 1280-byte target placement 0x1B00 (still 94 bytes over). Independent checks pass 2213 standard requests, 4032 complete foreground IN exchanges with the unchanged 38-clock maximum entry, and 268 AVR instruction/skip-cycle fixtures. Receiver qualification remains open.
 
 Measured image: 1378 bytes.
+
+## Use the final CRC5 feedback carry
+
+The final five-bit CRC state has bit 4 equal to the last feedback carry. SWAP followed by ROR therefore produces the same endpoint-zero wire byte as three LSL instructions, saving 2 bytes and one clock without a table. Final SREG.C can differ; it is dead before the next carry-dependent branch. All 213248 token field/address/length cases and all 128 atomic pending-address/cache/status-ACK commits pass on the emitted image. Receiver qualification remains open.
+
+Measured image: 1376 bytes.
