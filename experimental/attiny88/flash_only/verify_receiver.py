@@ -19,6 +19,7 @@ CHECKS = (
     ('test_avr_cycles', 'test'),
     ('test_ep0_standard', 'test'),
     ('test_ep0_status', 'test'),
+    ('test_out_response_timing', 'test'),
     ('test_setup_pending_marker', 'test'),
     ('test_ep0_zero_direction', 'test'),
     ('test_ep0_reply_fragments', 'test'),
