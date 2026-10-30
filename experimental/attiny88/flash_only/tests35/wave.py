@@ -132,8 +132,8 @@ class Sim:
             elif op=='cpse':
                 if self.rd(aa[0])==self.rd(aa[1]):
                     c=2;self.pc+=self.d.size_at(self.pc)
-        elif op in ('brne','breq','brsh','brlo','brmi','brpl','brge','brlt','brbs','brbc'):
-            cond={'brne':lambda: not f['Z'],'breq':lambda:f['Z'],'brsh':lambda:not f['C'],'brlo':lambda:f['C'],'brmi':lambda:f['N'],'brpl':lambda:not f['N'],'brge':lambda:not f['S'],'brlt':lambda:f['S'],'brbs':lambda:f[{0:'C',1:'Z',2:'N',3:'V',4:'S',6:'T'}[int(aa[0],0)]],'brbc':lambda:not f[{0:'C',1:'Z',2:'N',3:'V',4:'S',6:'T'}[int(aa[0],0)]]}[op]()
+        elif op in ('brne','breq','brsh','brlo','brmi','brpl','brge','brlt','brbs','brbc','brts','brtc'):
+            cond={'brne':lambda: not f['Z'],'breq':lambda:f['Z'],'brsh':lambda:not f['C'],'brlo':lambda:f['C'],'brmi':lambda:f['N'],'brpl':lambda:not f['N'],'brge':lambda:not f['S'],'brlt':lambda:f['S'],'brts':lambda:f['T'],'brtc':lambda:not f['T'],'brbs':lambda:f[{0:'C',1:'Z',2:'N',3:'V',4:'S',6:'T'}[int(aa[0],0)]],'brbc':lambda:not f[{0:'C',1:'Z',2:'N',3:'V',4:'S',6:'T'}[int(aa[0],0)]]}[op]()
             if cond:self.pc+=int(aa[-1].replace('.',''),0);c=2
         elif op=='rjmp':self.pc+=int(args.replace('.',''),0);c=2
         elif op=='rcall':self.stack.append(self.pc);self.pc+=int(args.replace('.',''),0);c=3

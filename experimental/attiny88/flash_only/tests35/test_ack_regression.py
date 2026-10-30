@@ -76,6 +76,7 @@ def test():
                 cases += 1
             cpu = CPU(art)
             cpu.r[23], cpu.r[2] = 1, marker
+            cpu.r[21] = 2  # Captured recovery J at this post-framing entry.
             cpu.mem.update({0x100+15:12, 0x100+12:0x06, 0x100+19:0x2e})
             assert cpu.run('usb_rx_check_ack', ('usb_handler_packet_done',), limit=75) == 'usb_handler_packet_done'
             assert cpu.r[2] == 0 and cpu.mem[0x100+15] == 0x5a and cpu.mem[0x100+12] == 0x2e

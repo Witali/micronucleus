@@ -79,3 +79,12 @@ instruction-start PIN value; it must not silently sample a newer PIN value.
 The PCINT pipeline and write-one-to-clear ordering require separate device
 fixtures. Neither instruction agreement between two emulators nor these
 digital fixtures establishes analog USB compliance or a measured board clock.
+
+## Legacy ACK adapters
+
+The older direct-opcode ACK adapter also executes ANDI, preserving carry and
+setting its tracked zero/signed result flags. Its post-framing fixtures seed
+captured recovery J instead of relying on an uninitialized pin-evidence field.
+The finite waveform adapter recognizes BRTS/BRTC as the disassembler aliases of
+BRBS/BRBC on T, with the same taken/untaken cycles. These repairs restore the
+older ACK/cached-TX and unsafe-reference checks; they do not modify firmware.

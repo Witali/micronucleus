@@ -91,6 +91,8 @@ def test_ack():
             for plen in (0,1,2,3,11,12):
                 for new in (0,0x14,0x30):
                     m=CPU(a);m.r[23]=plen;m.r[2]=marker
+                    # This direct entry follows framing's recovery-J capture.
+                    m.r[21]=2
                     m.mem.update({0x100+15:12,0x100+12:0x08,0x100+19:new})
                     end=m.run('usb_rx_check_ack',('usb_handler_packet_done','usb_rx_ignore_packet'))
                     good=bool(marker) and plen==1
@@ -113,6 +115,7 @@ def test_ack():
                 assert m.mem==original and m.r[2]==n
                 cases+=1
             m.r[23]=1
+            m.r[21]=2  # Captured recovery J at the post-framing direct entry.
             m.run('usb_rx_check_ack',('usb_handler_packet_done','usb_rx_ignore_packet'))
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a
         for old in (0,1,3,19,62):
