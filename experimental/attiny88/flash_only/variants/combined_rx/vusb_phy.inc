@@ -72,7 +72,7 @@ usb_rx_unstuff_bit7:
 /* The correction mask has bit7 clear. XOR before clearing history gives
  * the same decoded final one, saving the old ORI correction instruction.
  * Do the correction and fractional accounting before reading the mandatory
- * zero: useful work moves that sample three clocks beyond a legal crossover,
+ * zero: useful work moves that sample three clocks later,
  * while the following bit0 observation keeps its established clock. */
     mov r16, r17
     eor r20, r18
@@ -215,8 +215,9 @@ usb_rx_advance_bit_pair:
     in r16, _SFR_IO_ADDR(PIND)
     brne usb_rx_decode_bit6
     rjmp usb_rx_terminal_bit6
-/* Initial safety probe: two normal partial-EOP observations must span
- * at least four clocks. Recovery/short-EOP timing is measured separately. */
+/* Initial safety probe: observations span four clocks, exceeding one
+ * 210 ns excursion. This does not exclude DIFFERENT adjacent excursions;
+ * the dated USB audit and mixed-pulse regression retain that open finding. */
 usb_rx_normal_even_eop:
 usb_rx_normal_odd_eop:
     /* Both producers preserve R17 as their phase marker and use the same
@@ -227,7 +228,8 @@ usb_rx_normal_odd_eop:
 usb_rx_eop_jump_late:
     rjmp usb_rx_end_packet
 usb_rx_dribble_even_end:
-    /* Two SE0 samples four cycles apart exclude a <=210ns crossover.
+    /* Two SE0 samples four cycles apart exclude one <=210ns crossover.
+     * Differently placed adjacent crossovers still need qualification repair.
      * The first sample moved earlier, so670ns receiver EOP still fits.
      * Its opposite register already has the required zero phase marker. */
     in r17, _SFR_IO_ADDR(PIND)
@@ -835,8 +837,9 @@ usb_rx_terminal_loop:
     brcc usb_rx_terminal_reject
     rjmp usb_rx_terminal_loop
 usb_rx_terminal_confirm:
-    /* Four clocks between full SE0 observations exceed the permitted 210 ns
-     * crossover. Only qualified EOP publishes the final byte and full count. */
+    /* Four clocks exceed one permitted 210 ns crossover, but adjacent
+     * excursions are an open qualification finding. This legacy qualifier
+     * gates publication of the final byte and complete count. */
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
     brne usb_rx_terminal_reject

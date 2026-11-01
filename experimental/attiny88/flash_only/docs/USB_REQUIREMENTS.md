@@ -10,7 +10,7 @@ Current selection and exact results are recorded in the
 at 0x1900. Named older checkpoints below retain their historical findings;
 default standalone `source/` tests still target the legacy strict fixture.
 `sh verify.sh` checks the corrected selection and separate legacy fixtures.
-The newly witnessed asymmetric 210 ns regression remains mandatory and red on
+The newly witnessed asymmetric 210 ns regressions remain mandatory and red on
 the 1788-byte checkpoint; see the current audit rather than interpreting its
 earlier 54-group pass as complete qualification.
 
@@ -23,6 +23,7 @@ earlier 54-group pass as complete qualification.
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, `test_pid_admission`, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
+| Separate adjacent transients cannot impersonate one EOP and authorize transmission during the host packet | Sections 7.1.4.1, 7.1.13 and Chapter 8 token framing | `test_token_crossover_admission` adjacent-pulse cases |
 | A plausible centered 150 ns single-ended crossover preserves reception, not only silence before the real EOP | Sections 7.1.2.1 and 7.1.4.1, Table 7-10 | `test_rx_crossover_legal` |
 | Monotonic matched 300 ns edges may produce asymmetric 210 ns single-ended crossover intervals without shifting differential jitter | Sections 7.1.2.1, 7.1.4.1 and 7.1.13.1.1 | `test_rx_crossover_asymmetric`, `test_rx_crossover_payloads` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |

@@ -8,7 +8,7 @@ SE0 from -10 to +200 ns about the unchanged differential crossing:
   rising: (-60 ns,.33 V), (0,1.3), (200,2.0), (240,2.97)
   falling: (-60 ns,2.97 V), (-10,2.0), (0,1.3), (240,.33)
 
-Interpolate monotonically, extend the outer segments to 0/3.3 V, then clamp.
+Interpolate monotonically, adding 0/3.3 V rail endpoints at -70/+250 ns.
 Both line 10..90 times are 300 ns, exactly matched; differential 10..90 also
 takes 300 ns. The unique differential crossing remains t=0 at 1.3 V.
 Reverse time and swap rising/falling roles for SE0 from -200 to +10 ns.
@@ -40,8 +40,8 @@ def threshold_time(points, threshold):
 
 def signal_witnesses():
     """Certify both asymmetric placements independently of the GPIO decoder."""
-    rise = [(-60, .33), (0, 1.3), (200, 2), (240, 2.97)]
-    fall = [(-60, 2.97), (-10, 2), (0, 1.3), (240, .33)]
+    rise = [(-70, 0), (-60, .33), (0, 1.3), (200, 2), (240, 2.97), (250, 3.3)]
+    fall = [(-70, 3.3), (-60, 2.97), (-10, 2), (0, 1.3), (240, .33), (250, 0)]
     mirrored_rise = [(-time, voltage) for time, voltage in reversed(fall)]
     mirrored_fall = [(-time, voltage) for time, voltage in reversed(rise)]
     certificates = []
@@ -56,11 +56,15 @@ def signal_witnesses():
         assert up == down == 300 and 75 <= up <= 300
         # Strictly rising minus strictly falling has one differential zero.
         assert (0, 1.3) in rising and (0, 1.3) in falling
+        start = threshold_time(rising, .33)
+        end = threshold_time(rising, 2.97)
+        assert start == threshold_time(falling, 2.97)
+        assert end == threshold_time(falling, .33)
+        assert (start, .33) in rising and (start, 2.97) in falling
+        assert (end, 2.97) in rising and (end, .33) in falling
+        assert end-start == 300
         assert rising[0][0] == falling[0][0]
         assert rising[-1][0] == falling[-1][0]
-        assert abs(rising[0][1]-falling[0][1]+2.64) < 1e-12
-        assert abs(rising[-1][1]-falling[-1][1]-2.64) < 1e-12
-        assert rising[-1][0]-rising[0][0] == 300
         low_start = threshold_time(falling, 2)
         low_end = threshold_time(rising, 2)
         assert low_end-low_start == 210
@@ -68,6 +72,7 @@ def signal_witnesses():
         certificates.append(dict(rising_points_ns_v=rising, falling_points_ns_v=falling,
                                  threshold_v=2, low_interval_ns=[low_start, low_end],
                                  line_10_to_90_ns=[up, down], differential_10_to_90_ns=300,
+                                 full_transition_interval_ns=[rising[0][0], rising[-1][0]],
                                  differential_crossing_ns=0, crossing_v=1.3))
     return certificates
 
