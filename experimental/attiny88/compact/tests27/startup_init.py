@@ -63,10 +63,16 @@ def check_startup(artifact):
             memory[address] = registers[destination]
             clears.append(address)
             duration = 2
-        elif opcode & 0xD208 == 0x8208:
+        elif opcode & 0xD208 in (0x8208, 0x8200):
+            # Execute real Y/Z indirect stores, including memory-mapped IO.
             offset = (opcode & 7) | ((opcode >> 7) & 24) | ((opcode >> 8) & 32)
-            address = (registers[28] | registers[29] << 8) + offset
-            memory[address] = registers[destination]
+            pair = 28 if opcode & 8 else 30
+            address = (registers[pair] | registers[pair + 1] << 8) + offset
+            if address < 0x100:
+                assert 0x20 <= address < 0x100
+                output(address - 0x20, registers[destination])
+            else:
+                memory[address] = registers[destination]
             duration = 2
         elif opcode & 0xFF00 in (0x9800, 0x9A00):
             address, bit = (opcode >> 3) & 31, opcode & 7
@@ -97,7 +103,7 @@ def check_startup(artifact):
     expected[0x100:0x12C] = bytes(44)
     expected[0x10F], expected[0x100] = 0x5A, 0xFF
     assert memory == expected, 'Clear/store escaped the exact USB context'
-    assert registers[1] == registers[3] == registers[8] == 0
+    assert registers[1] == registers[3] == registers[2] == 0
     assert registers[4:8] == [0] * 4 and registers[28:30] == [0, 1]
     assert io[0x1E] == 0x0B and io[0x34] == io[0x40] == 0
     watchdog = [(t, value) for t, address, value in writes if address == 0x40]

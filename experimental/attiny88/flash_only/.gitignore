@@ -1,0 +1,4 @@
+/build/
+/firmware35/
+__pycache__/
+*.pyc

@@ -1,0 +1,75 @@
+{
+  "archive": "Micronucleus_EEPROM_Handoff_Pass35.zip",
+  "archive_sha256": "5790ed15566803f19412578f7ba1772947cc62a31d94c7b58bc2690e43caa0fb",
+  "archive_manifest_entries_verified": 192,
+  "baseline": "Pass35 Flash-only v4.1",
+  "original_source_sha256": {
+    "compact_memory.inc": "69562ff500e157ea0f4f85698364cf5b9eea0aa636d1f2ea458842d0e921b6fa",
+    "compact_protocol.inc": "ff22f669d5441682c8ecd2f07eb488ee1c40c5119cb16090fda5664d51d7ea7e",
+    "device_attiny88.inc": "904b626ae0b8fe97fcd479e9766568a068fb76ce28d79cc274b223b03e1a2464",
+    "micronucleus_t88_compact.S": "31c78a6c449bfd2ce367837f3dabf5fa216d13214dfd24fc0255667ab1fcac80",
+    "vusb_ep0.inc": "dbcea4df521c04a0ed86478cc6b7254751c2368a3c517e9e31cd881ed08a9966",
+    "vusb_phy.inc": "593df53fe723f8113f337286fd141818fc766cd3628dbd4e390b3d459e85660d",
+    "vusb_requests.inc": "2240e85d185d605dae1959b152c3e27975b8c0f10a9b36c8f51221310d89cd5a",
+    "vusb_setup.inc": "7d8b0e29feaffea0d3a26d4fc677445c139f5caf77732d2f7727965880028fe6",
+    "vusb_standard.inc": "a72fdbdbd2c26d5c4cab2b971f7cdd7d083564231f5998f4e9f57eff7a965f9c"
+  },
+  "original_builds": [
+    {
+      "led": "NONE",
+      "bcdDevice": "0x0450",
+      "boot_at": "0x1bc0",
+      "code_bytes": 1034,
+      "reserved_bytes": 1088,
+      "app_bytes": 7100,
+      "postscript_at": "0x1bbc",
+      "code_sha256": "24324fae8bf852fe116a7556979d17aee5e265575e72bc4bf445ce81b7874b63",
+      "isp_sha256": "615043eba95ecb33874790f29349a20b101a44f3335af6d1cd0cb93374e314b7",
+      "body_file": "Pass35_off_body.bin",
+      "isp_bin": "Pass35_off_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass35_off_ISP_FRESH_EXPERIMENTAL.hex",
+      "usb_phy_bytes": 496
+    },
+    {
+      "led": "ACTIVE_HIGH",
+      "bcdDevice": "0x0451",
+      "boot_at": "0x1bc0",
+      "code_bytes": 1054,
+      "reserved_bytes": 1088,
+      "app_bytes": 7100,
+      "postscript_at": "0x1bbc",
+      "code_sha256": "c88fbe74c71335275fb8b089db9abcbfbe17f2305374e75b2ef951721e565686",
+      "isp_sha256": "9a52190133fb06863e6f5c12ef8e83bdb5c432c646df1979bd537f091cf498d4",
+      "body_file": "Pass35_high_body.bin",
+      "isp_bin": "Pass35_high_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass35_high_ISP_FRESH_EXPERIMENTAL.hex",
+      "usb_phy_bytes": 496
+    },
+    {
+      "led": "ACTIVE_LOW",
+      "bcdDevice": "0x0452",
+      "boot_at": "0x1bc0",
+      "code_bytes": 1052,
+      "reserved_bytes": 1088,
+      "app_bytes": 7100,
+      "postscript_at": "0x1bbc",
+      "code_sha256": "c3ea96dbf8757e7477cce83d54c84e42c2603ef071ab10225f57d9d5a7ba2e44",
+      "isp_sha256": "3636faa81e22e50fb39b1995948489837d776be236f421d800f5271fc53dbe55",
+      "body_file": "Pass35_low_body.bin",
+      "isp_bin": "Pass35_low_ISP_FRESH_8192.bin",
+      "isp_hex": "Pass35_low_ISP_FRESH_EXPERIMENTAL.hex",
+      "usb_phy_bytes": 496
+    }
+  ],
+  "imported_runtime": "source/",
+  "frozen_import_reference": "reference_pass35/",
+  "preserved_legacy_variant": "../compact/",
+  "hardware_programmed": false,
+  "omitted": [
+    "Nested original ZIPs and full fresh-ISP images",
+    "Rejected unsafe1024 prototypes",
+    "Unused Pass31 tests and source",
+    "Russian handoff instructions; relevant contracts are documented in English",
+    "Unused legacy host clients and unadopted optional EEPROM footer helper"
+  ]
+}

@@ -61,7 +61,7 @@ def main():
         machine.r[25] = request
         machine.ram.update({27: 0, 28: 0})
         machine.run('bootloader_handle_vendor_request', stop=('usb_rx_release_buffer',), limit=250)
-        assert machine.r[8] == 0 and machine.r[3] in (0, 2)
+        assert machine.r[2] == 0 and machine.r[3] in (0, 2)
         assert all(event[0] == 0x11 for event in machine.spms), (request, machine.spms)
         assert not any(event[1] in (0x1F, 0x20, 0x21) for event in machine.io_events)
     metadata = dict(protocol='3.0', bcdDevice='0x0390', read_only=True,

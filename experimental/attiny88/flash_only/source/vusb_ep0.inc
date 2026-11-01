@@ -1,0 +1,66 @@
+usb_rx_release_buffer:
+usb_tx_prepare_pending_reply:
+    eor r0, r0
+    ldi r25, 0x00
+    rcall usb_service_pending
+    ldd r24, Y+CTX_TX_LENGTH
+    sbrs r24, USB_HANDSHAKE_FLAG_BIT
+    rjmp bootloader_check_idle_timeout
+    ldd r24, Y+CTX_MSG_LENGTH
+    /* Every supported reply is <=18 bytes. A negative subtraction
+     * remainder therefore marks completion without normalizing to0xFF. */
+    sbrc r24, USB_MESSAGE_DONE_BIT
+    rjmp bootloader_check_idle_timeout
+    mov r23, r24
+    subi r23, USB_EP0_PAYLOAD_BYTES
+    brlo .Ltx_store_remainder
+usb_tx_prepare_data_packet:
+    ldi r24, USB_EP0_PAYLOAD_BYTES
+    /* SUBI's Z flag survives BRLO/LDI. Suppress a speculative ZLP only
+     * when this full packet reaches wLength. A shorter source still needs
+     * the usual terminating ZLP, marked by R12 bit7. */
+    brne .Ltx_store_remainder
+    sbrs r12, 7
+    ldi r23, USB_NO_MESSAGE
+.Ltx_store_remainder:
+    std Y+CTX_MSG_LENGTH, r23
+    ldi r18, USB_DATA_PID_TOGGLE
+    eor r9, r18
+    std Y+CTX_TX_PID, r9
+usb_tx_initialize_payload_crc:
+    ldi r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
+    ldi r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
+usb_tx_copy_flash_payload:
+    rcall usb_service_pending
+    movw r30, r14
+    /* The low counter stores bytes still to fetch minus one. The high
+     * three bits remain the packed eight-step CRC bit phase. */
+    subi r24, 1
+    brlo usb_crc16_payload_complete
+    lpm r18, Z+
+    st X+, r18
+    movw r14, r30
+usb_crc16_mix_byte:
+    eor r0, r18
+usb_crc16_shift_bit:
+    rcall usb_service_pending
+    sec
+    ror r25
+    ror r0
+    brbs SREG_C, usb_crc16_advance_bit_count
+    eor r0, r29
+    eor r25, r21
+usb_crc16_advance_bit_count:
+    subi r24, LOW8(-CRC_BIT_COUNTER_INCREMENT)
+    brbs SREG_C, usb_crc16_shift_bit
+usb_crc16_byte_complete:
+    rjmp usb_tx_copy_flash_payload
+usb_crc16_payload_complete:
+usb_tx_append_payload_crc:
+usb_crc16_append:
+    st X+, r0
+    st X+, r25
+usb_crc16_core_end:
+usb_tx_publish_packet_length:
+    rcall usb_service_pending
+    std Y+CTX_TX_LENGTH, r26

@@ -1,5 +1,8 @@
 # Modular compact candidate, Pass27
 
+This records the deployed reference checkpoint. Active size reductions are
+tracked separately in [Pass28](PASS28.md); the release artifacts remain frozen.
+
 Current public protocol: [3.0](../PROTOCOL_v3_0.md), device revisions 0x0300..0x0302.
 
 The active development source now follows the neighboring Block64 organization.

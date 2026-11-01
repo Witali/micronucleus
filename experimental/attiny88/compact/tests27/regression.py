@@ -15,7 +15,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from check_build import build
-from build_candidate import SOURCE, checked_build
+from build_candidate import SOURCE, checked_build, CANDIDATE_SAVINGS
 from audit_phy27 import audit_candidate
 from test_read_previous import decode
 from tests27 import avr_exec27 as avr_exec
@@ -70,6 +70,7 @@ def check_standard(artifact, mode):
     old = build(ROOT / 'variants/strict_usb_optimized/micronucleus_t88_pass26.S',
                 mode, artifact['boot'])
     branches, states = audit_candidate(old, artifact, '')
+    check_phy_audit_mutations(old, artifact)
     print('PASS PHY: unchanged RX schedule,', branches, 'branch targets,', states,
           'flag-liveness states; independent TX/return contracts')
     # Compare observable USB data/state, not intentionally removed scratch stores.
@@ -83,6 +84,54 @@ def check_standard(artifact, mode):
     expected = {'NONE': 0x0300, 'ACTIVE_HIGH': 0x0301, 'ACTIVE_LOW': 0x0302}[mode]
     assert int.from_bytes(descriptor[12:14], 'little') == expected
     print('PASS', mode, 'distinct candidate descriptor')
+
+
+def check_phy_audit_mutations(reference, artifact):
+    """Ensure the timing/ABI audit rejects broken replacements, not just passes."""
+    mutations = (
+        ('entry context copy', 'USB_handler', 0, lambda word: word ^ 1),
+        ('return context copy', 'usb_return_context', 0, lambda word: word ^ 1),
+        ('seed call target', 'usb_rx_delay_complete', 4, lambda word: word + 1),
+        ('RX length address', 'usb_rx_delay_complete', 14, lambda word: word ^ 1),
+        ('DATA flag', 'usb_rx_handle_data', 12, lambda word: word & ~7),
+        ('IN flag', 'usb_rx_handle_in', 2, lambda word: word & ~7),
+        ('RX pointer subtract', 'usb_rx_end_packet', 4, lambda word: 0),
+        ('IN pointer low byte', 'usb_rx_handle_in', 14, lambda word: word ^ 1),
+        ('token PCIF bit', 'usb_rx_wait_for_data', 0, lambda word: word ^ 1),
+        ('chain PCIF bit', 'usb_handler_packet_done', 0, lambda word: word ^ 1),
+        ('DATA wait count', 'usb_rx_handle_setup_or_out', 0, lambda word: word ^ 1),
+        ('TX rate', 'usb_tx_begin_byte', 0, lambda word: 0xE365),
+        ('J delay', 'usb_tx_finish_eop', 16, lambda word: 0),
+        ('released port bit', 'usb_tx_finish_eop',
+         22 if artifact['mode'] == 'NONE' else 24, lambda word: word ^ 3),
+        ('stuff zero address', 'usb_tx_stuff_regular_bit', 2, lambda word: word ^ 1),
+        ('stuff output address', 'usb_tx_stuff_regular_delay', 0, lambda word: word ^ 1),
+        ('release DDR source', 'usb_tx_finish_eop', 12, lambda word: word ^ 1),
+    )
+    if artifact['mode'] == 'NONE':
+        start = artifact['symbols']['startup'] - artifact['boot']
+        end = artifact['symbols']['led_init'] - artifact['boot']
+        sites = [at for at in range(start, end, 2)
+                 if artifact['body'][at:at + 2] == b'\x51\x9a']
+        assert len(sites) == 1  # SBI DDRD, USB-minus
+        mutations += (('non-USB DDRD enable', 'startup', sites[0] - start,
+                       lambda word: word ^ 1),)
+    for name, symbol, offset, transform in mutations:
+        raw = bytearray(artifact['body'])
+        at = artifact['symbols'][symbol] + offset - artifact['boot']
+        raw[at:at + 2] = transform(int.from_bytes(raw[at:at + 2], 'little')).to_bytes(2, 'little')
+        try:
+            audit_candidate(reference, dict(artifact, body=bytes(raw)), '')
+        except (AssertionError, KeyError):
+            continue
+        raise AssertionError('PHY audit accepted mutation: ' + name)
+    try:
+        audit_candidate(reference, artifact, 'U missing_operand')
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError('PHY audit accepted unresolved symbol')
+    print('PASS', artifact['mode'], len(mutations) + 1, 'negative PHY audit cases')
 
 
 def check_tx_bytes(artifact):
@@ -102,7 +151,7 @@ def check_tx_bytes(artifact):
                 machine.r[24] = length
                 machine.r[0] = machine.r[25] = 0
                 machine.r[21] = 0xA0
-                machine.r[2] = 0xA5  # The former source register is now free.
+                machine.r[8] = 0xA5  # The former source register is now free.
                 pointer = offset | (0x8000 if source == 'eeprom' else 0)
                 machine.r[14:16] = [pointer & 255, pointer >> 8]
                 for index, value in enumerate(payload):
@@ -115,7 +164,7 @@ def check_tx_bytes(artifact):
                 actual = bytes(machine.data_memory[0x102 + i] for i in range(length + 2))
                 assert actual == payload + usb_crc(payload), (source, offset, payload, actual)
                 assert machine.r[14] | (machine.r[15] << 8) == pointer + length
-                assert machine.r[2] == 0xA5
+                assert machine.r[8] == 0xA5
                 count += 1
     print('PASS', count, 'actual-opcode payload/independent CRC/register-cursor cases')
 
@@ -169,7 +218,8 @@ def test():
         _name, boot, expected_size = host.USB_PROFILES[version]
         artifact = checked_build(mode, boot)
         assert artifact['size'] <= 8192 - boot
-        assert artifact['size'] == expected_size, (mode, artifact['size'], expected_size)
+        candidate_size = expected_size - CANDIDATE_SAVINGS[mode]
+        assert artifact['size'] == candidate_size, (mode, artifact['size'], candidate_size)
         check_startup(artifact)
         check_standard(artifact, mode)
         nvm_opcodes.check_nvm(artifact)

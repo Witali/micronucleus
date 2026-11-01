@@ -1,16 +1,18 @@
-/* Parse staged SETUP before deferred work. Token reception overwrites
- * RX bytes 22..24, so capture bmRequestType/bRequest before any service. */
-usb_control_process_received_packet:
-/* Y is restored by external PHY return, or retained on poll timeout. */
+/* Shared SETUP validation and capture. The cooperative PHY path falls
+ * through with its original call frame; main RCALLs the token entry only
+ * after proving the exact length. Invalid paths RET through that same frame.
+ * Both accepted paths discard exactly one frame before tail dispatch. */
+usb_validate_setup:
     ldd r18, Y+CTX_RX_LENGTH
-    ldd r19, Y+CTX_RX_TOKEN
-    std Y+CTX_RX_LENGTH, r1
     cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
-    brne bootloader_check_pending_command
-    cpi r19, USB_PID_SETUP
-    brne bootloader_check_pending_command
-/* The cooperative helper enters here only after proving exact SETUP
- * length/token, restoring Y, releasing RX_LENGTH and discarding its call. */
+    brne .Lservice_done
+usb_validate_setup_token:
+    ldd r18, Y+CTX_RX_TOKEN
+    cpi r18, USB_PID_SETUP
+    brne .Lservice_done
+    pop r18
+    pop r18
+    std Y+CTX_RX_LENGTH, r1
 usb_setup_capture_fields:
     ldd r24, Y+CTX_SETUP_REQUEST_TYPE
     ldd r25, Y+CTX_SETUP_REQUEST

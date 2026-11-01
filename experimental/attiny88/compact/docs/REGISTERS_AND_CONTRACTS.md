@@ -1,4 +1,45 @@
-# Pass26 registers and invariants
+# Registers and invariants
+
+## Current compact candidate
+
+The active source uses R2 as the remaining asynchronous EEPROM byte count;
+R8 is free and is poisoned by regression fixtures. Startup clears the count
+and deferred command together with MOVW R2,R24 after the countdown reaches zero.
+R3 holds only 0 (idle), 2 (SELECT), 3 (erase), 4 (RUN), or 5 (page commit).
+The dispatcher consumes R3 directly; all public opcode/prior-state transitions
+are checked before relying on its bit pattern.
+
+R9 holds the DATA PID. R14:R15 is the reply byte cursor, with R15 bit 7 selecting
+EEPROM. The PHY and NVM worker preserve these registers. R4:R5 remains the shared
+memory cursor; SELECT uses a byte address. Current layout/profile rules are in
+[APPLICATION_LAYOUT.md](APPLICATION_LAYOUT.md), and size/timing evidence is in
+[PASS29.md](PASS29.md); the preceding checkpoint is [PASS28.md](PASS28.md).
+
+Every external PHY call requires the full Y pointer to equal USB_CONTEXT_BASE.
+Entry copies Y into Z; no RX/TX instruction modifies that Z base. Every external
+return restores Y with MOVW. Foreground instructions after startup preserve Y,
+and both emitted-code and synchronized-execution checks enforce this contract.
+
+Context byte CTX_INPUT_BUFFER_OFFSET (14) is a permanent zero after startup.
+The current PHY loads it in useful two-cycle delay slots. No runtime context
+writer may repurpose that byte; the emitted-code audit enforces this invariant.
+NONE additionally preserves zero non-USB DDRD bits from RESET, allowing atomic
+EOP release to use the same zero. LED profiles retain dynamic DDR preservation.
+
+The shared SETUP validator has exactly one caller frame on either entry. Its
+accepted path POPs two return-address bytes before capturing fields; the main
+length fast path creates that frame with RCALL. Ordinary data PUSH/POP and
+RCALL/RET use one physical stack in both current executors. Field capture must
+see an empty stack, including when a fresh SETUP replaces a partial reply.
+
+The watchdog is disabled before disconnect and remains disabled throughout
+the loader. Only the startup WDR is needed. Runtime code must not add another
+WDTCSR writer without revisiting the emitted-code lifetime audit and timing.
+
+## Archived Pass26 contract
+
+The table, selector encoding and profile addresses below describe the imported
+Pass26 checkpoint, not the active candidate or installed compact 3.0 loader.
 
 | Register | Live state / reuse |
 | --- | --- |

@@ -34,7 +34,9 @@ def main():
     for mode, name, version in PROFILES:
         _, boot, expected = USB_PROFILES[version]
         artifact = checked_build(mode, boot)
-        assert artifact['size'] == expected <= 8192 - boot
+        assert artifact['size'] == expected <= 8192 - boot, (
+            'Frozen Pass27 builder requires the e405ea7 source checkpoint; '
+            'do not overwrite release images with a size-reduction candidate', mode, artifact['size'], expected)
         reference = build(ROOT / 'variants/strict_usb_optimized/micronucleus_t88_pass26.S', mode, boot)
         audit_candidate(reference, artifact, '')
         descriptor = artifact['body'][20:38]

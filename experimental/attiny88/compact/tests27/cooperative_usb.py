@@ -72,6 +72,10 @@ class CPU(Timed):
   if address<32:self.r[address]=value&255
   else:super().memwrite(address,value)
  def step(self):
+  if self.pc==self.labels['usb_setup_capture_fields']:
+   assert not self.raw_stack,('SETUP capture retained a return frame',self.raw_stack)
+  if self.pc==self.labels['USB_handler']:
+   assert self.word(28)==0x100,('PHY requires Y=context',hex(self.pc),self.word(28))
   if self.pc in (self.labels['USB_handler'],self.labels['usb_rx_found_k']):
    assert self.r[29]==1,('PHY requires YH=1',hex(self.pc),self.r[29])
   dec.START=self.base;dec.raw=bytes(self.flash[self.base:]);ins=dec.decode(self.pc)
@@ -196,7 +200,7 @@ def run(abort=False,first_sop=24,setup=None,memory='flash',_retain_cpu=False):
  for when in entries:
   prior=[w for w in stream.waves if w.start<=when]
   if prior:entry_delays.append(when-max(prior,key=lambda w:w.start).start)
- result={'abort':abort,'setup':setup,'memory':memory,'first_sop':first_sop,'frames':frames,'peak_stack_bytes':cpu.peak_stack,'stack_bytes_at_DATA_release':len(cpu.raw_stack),'handler_entries':entries,'handler_entry_callers':entry_callers,'handler_entry_delays':entry_delays,'response_delays':response_delays,'host_packets':[dict(start=w.start,packet=w.packet.hex()) for w in stream.waves],'collected_hex':bytes(collected).hex(),'active_address':cpu.m[0x10c],'pending_address':cpu.m[0x113],'configuration':cpu.m[0x115],'cursor':cpu.word(4),'queued_command':cpu.r[3],'nvm_events':cpu.nvm_events,'eeprom_remaining':cpu.r[8],'eeprom_address':cpu.io.get(0x21),'eeprom_data':cpu.io.get(0x20),'cycles':cpu.t}
+ result={'abort':abort,'setup':setup,'memory':memory,'first_sop':first_sop,'frames':frames,'peak_stack_bytes':cpu.peak_stack,'stack_bytes_at_DATA_release':len(cpu.raw_stack),'handler_entries':entries,'handler_entry_callers':entry_callers,'handler_entry_delays':entry_delays,'response_delays':response_delays,'host_packets':[dict(start=w.start,packet=w.packet.hex()) for w in stream.waves],'collected_hex':bytes(collected).hex(),'active_address':cpu.m[0x10c],'pending_address':cpu.m[0x113],'configuration':cpu.m[0x115],'cursor':cpu.word(4),'queued_command':cpu.r[3],'nvm_events':cpu.nvm_events,'eeprom_remaining':cpu.r[2],'eeprom_address':cpu.io.get(0x21),'eeprom_data':cpu.io.get(0x20),'cycles':cpu.t}
 
  return (result,cpu) if _retain_cpu else result
 
@@ -210,8 +214,8 @@ def check_eeprom_completion(cpu):
     payload = bytes((0x11, 0x22, 0x33, 0x44))
     started = len(cpu.eeprom_events)
     assert 0 <= started <= 4
-    assert cpu.r[8] == 4 - started and cpu.word(4) == 0x8020 + started
-    assert bytes(cpu.r[10:10 + cpu.r[8]]) == payload[started:]
+    assert cpu.r[2] == 4 - started and cpu.word(4) == 0x8020 + started
+    assert bytes(cpu.r[10:10 + cpu.r[2]]) == payload[started:]
     completed = 0
 
     def complete_hardware_write():
@@ -233,12 +237,12 @@ def check_eeprom_completion(cpu):
         else:
             raise AssertionError('EEPROM worker failed to return to polling')
         assert not cpu.raw_stack and cpu.r[1] == 0
-        if cpu.r[8] == 0:
+        if cpu.r[2] == 0:
             break
     complete_hardware_write()
     assert cpu.eeprom_events == list(zip(range(0x20, 0x24), payload))
     assert cpu.eeprom[0x20:0x24] == payload and cpu.word(4) == 0x8024
-    assert cpu.r[8] == 0
+    assert cpu.r[2] == 0
 
 
 def check_case(**options):
@@ -316,7 +320,7 @@ def check_pending_run(artifact):
         cpu = CPU(meta, {'memory': bytearray(0x300), 'registers': [0] * 32})
         cpu.flash = FlashView(cpu.flash, cpu.base)
         cpu.pc = cpu.labels['bootloader_process_pending_command']
-        cpu.r[21], cpu.r[28], cpu.r[29], cpu.r[3], cpu.r[8] = 0xA0, 0, 1, 4, pending
+        cpu.r[21], cpu.r[28], cpu.r[29], cpu.r[3], cpu.r[2] = 0xA0, 0, 1, 4, pending
         cpu.r[26], cpu.r[27] = counter & 255, counter >> 8
         cpu.m[0x100], cpu.m[0x10F] = 0xFF, 0x5A
         cpu.flash.memory[art['boot'] - 3] = 0
@@ -366,7 +370,7 @@ def simulate(request,value,descriptor,length,kind='flash',data=0x55,idle=0,pendi
  if request==0xb0:c.r[4]=0;c.r[5]=0x80 if kind=='eeprom' else 5
  index=0x8020 if kind=='eeprom' else 0x100
  c.m[0x117:0x11f]=bytes([0xc0 if request==0xb0 else 0x80 if request in [0,6,8,10] else 0x40 if request in [1,2,3,4] else 0,request,value,descriptor,index&255,index>>8,length&255,length>>8])
- c.r[8]=pending;c.io=Reads(c,Stream());c.io.cleared_at=0;c.io[0x1f]=eecr
+ c.r[2]=pending;c.io=Reads(c,Stream());c.io.cleared_at=0;c.io[0x1f]=eecr
  if not rx_staged:c.m[0x112]=0
  if app_present:c.flash.memory[art['boot']-3]=0
  for _ in range(10000):
@@ -378,6 +382,24 @@ def simulate(request,value,descriptor,length,kind='flash',data=0x55,idle=0,pendi
   delay=5
   gaps.append(dict(gap_cycles=right[0]-left[0],pending_entry_bound=right[0]-left[0]+delay,previous_pc=hex(left[1]),next_pc=hex(right[1]),request=request,value=value,descriptor=descriptor,length=length,kind=kind,data=data,idle=idle))
  return gaps
+
+
+def check_setup_stack_guard(artifact):
+    """A missing frame-discard POP must fail at actual SETUP field capture."""
+    raw = bytearray(artifact['body'])
+    at = artifact['symbols']['usb_validate_setup_token'] + 6 - artifact['boot']
+    assert raw[at:at + 2] == b'\x2f\x91'  # POP R18
+    raw[at:at + 2] = b'\0\0'              # NOP leaves half a return frame.
+    configure(dict(artifact, body=bytes(raw)))
+    try:
+        simulate(6, 0, 1, 18)
+    except AssertionError as error:
+        assert error.args[0][0] == 'SETUP capture retained a return frame', error
+    else:
+        raise AssertionError('Missing SETUP frame-discard POP was accepted')
+    finally:
+        configure(artifact)
+    print('PASS', artifact['mode'], 'SETUP frame-discard mutation rejected by byte-stack execution')
 
 
 def check_poll_gaps(artifact):
@@ -415,6 +437,7 @@ def check_poll_gaps(artifact):
 
 
 def check(artifact):
+    check_setup_stack_guard(artifact)
     check_pending_run(artifact)
     check_poll_gaps(artifact)
     check_waveforms(artifact)

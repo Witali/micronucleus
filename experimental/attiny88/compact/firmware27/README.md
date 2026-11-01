@@ -29,7 +29,8 @@ CPU halts. Incoming DATA CRC16 omission is an accepted exception; token admissio
 ACK-driven retry and reset/error behavior still have known protocol gaps.
 See `docs/USB_PROTOCOL.md` and `docs/USB_TIMING.md` in the source tree.
 
-Rebuild from the compact directory with `python3 build_firmware27.py` using
+Rebuild from the compact directory at the frozen e405ea7 checkpoint with
+`python3 build_firmware27.py`, using
 Clang/LLVM 18.1.3 and AVR binutils 2.26.20160125. The builder checks physical fit,
 profile/descriptor identity, undefined operands, emitted PHY contracts, RESET
 destination, and an independently parsed HEX round trip. `SHA256SUMS.txt`

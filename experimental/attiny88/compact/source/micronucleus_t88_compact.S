@@ -1,4 +1,4 @@
-/* Micronucleus+ compact Pass27 research candidate, ATtiny88 at 16 MHz.
+/* Micronucleus+ compact Pass28 research candidate, ATtiny88 at 16 MHz.
  * Based on the preserved Pass26 assembly checkpoint; GPL-2.0-or-later.
  * Source modules follow the adjacent Block64 layout but use a separate protocol.
  * Original Micronucleus contributors' licensing/provenance remains in the
@@ -33,7 +33,6 @@ flash_buffer_load_word:
  */
 startup:
     eor r1, r1
-    mov r8, r1             /* no pending EEPROM write */
 /* Datasheet-defined RESET defaults: SPL/SPH=RAMEND, SREG=0.
  * This firmware entry is legal only through hardware RESET or WDT RESET;
  * a direct software jump into the bootloader without RESET is unsupported. */
@@ -47,9 +46,14 @@ main:
     in r24, _SFR_IO_ADDR(MCUSR)
     out _SFR_IO_ADDR(GPIOR0), r24
     out _SFR_IO_ADDR(MCUSR), r1
+/* Keep one base pointer for the timed watchdog pair and the later PCINT
+ * enables. The disconnect loop does not touch Z; nearby STD stores save
+ * words without changing the two-cycle watchdog write separation. */
+    ldi r30, LOW8(_SFR_MEM_ADDR(WDTCSR))
+    mov r31, r1
     ldi r24, WATCHDOG_UNLOCK_MASK
-    sts _SFR_MEM_ADDR(WDTCSR), r24
-    sts _SFR_MEM_ADDR(WDTCSR), r1
+    st Z, r24
+    st Z, r1
     sbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
 /* Reuse the SRAM cursor as the disconnect-delay outer counter. Clear one
  * byte after each delay, so all 44 bytes are zero and Y=0x0100 before USB
@@ -67,6 +71,8 @@ startup_check_sram_end:
     cpi r28, LOW8(USB_CONTEXT_BASE)
     brne usb_disconnect_delay_outer
     cbi _SFR_IO_ADDR(DDRD), USB_MINUS_BIT
+/* The countdown ends at zero; clear queue count R2 and command R3 together. */
+    movw r2, r24
     movw r4, r24
     movw r6, r24
     ldi r24, USB_PID_NAK
@@ -74,19 +80,24 @@ startup_check_sram_end:
     ldi r24, USB_NO_MESSAGE
     std Y+CTX_MSG_LENGTH, r24
     ldi r24, USB_INTERRUPT_ENABLE_MASK
-    sts _SFR_MEM_ADDR(PCMSK2), r24
-    sts _SFR_MEM_ADDR(PCICR), r24
+    std Z+(_SFR_MEM_ADDR(PCMSK2) - _SFR_MEM_ADDR(WDTCSR)), r24
+    std Z+(_SFR_MEM_ADDR(PCICR) - _SFR_MEM_ADDR(WDTCSR)), r24
 led_init:
     LED_INIT
 led_init_done:
-    mov r3, r1
 /* Poll for up to 5 ms, recognizing sustained SE0 as a USB bus reset.
  * Every predecessor preserves Y=USB_CONTEXT_BASE; X is the poll countdown.
  */
 bootloader_poll_begin:
-    ldi r26, LOW8(USB_POLL_TIMEOUT_COUNT)
-    ldi r27, HIGH8(USB_POLL_TIMEOUT_COUNT)
+/* Pre-decrement before sampling: one extra seed tick retains exactly the
+ * requested sample count while the nearby branch avoids both trampolines. */
+    ldi r26, LOW8(USB_POLL_TIMEOUT_COUNT + 1)
+    ldi r27, HIGH8(USB_POLL_TIMEOUT_COUNT + 1)
     ldi r24, USB_RESET_SE0_SAMPLES
+usb_poll_advance_timeout:
+    sbiw r26, 1
+bootloader_poll_timeout:
+    breq bootloader_process_pending_command
 usb_poll_sample_bus:
     in r25, _SFR_IO_ADDR(PIND)
     andi r25, USB_LINE_MASK
@@ -103,38 +114,44 @@ usb_poll_check_packet_pending:
     rjmp usb_poll_advance_timeout
     rcall USB_handler
 bootloader_process_pending_command:
-    wdr
-#include "vusb_setup.inc"
+/* Startup disabled WDT before disconnect; no loader path enables it again. */
+/* The main path proves length without paying a subroutine return on idle.
+ * A valid SETUP shares the token validator and discards this one call frame. */
+usb_control_process_received_packet:
+    ldd r18, Y+CTX_RX_LENGTH
+    cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
+    brne .Lsetup_not_received
+    rcall usb_validate_setup_token
+.Lsetup_not_received:
+    std Y+CTX_RX_LENGTH, r1
 bootloader_check_pending_command:
 /* EEPROM writes must complete before SPM erase/write/exit. This gate also
  * holds an older deferred RUN until a later EEPROM queue has fully drained.
  * With only two readiness sites, these inline IN/OR pairs save a helper/RET. */
     in r24, _SFR_IO_ADDR(EECR)
-    or r24, r8
-    breq .Lcommand_eeprom_idle
-.Lcommand_wait_for_poll:
-    rjmp usb_tx_prepare_pending_reply
+    or r24, r2
+    brne usb_tx_prepare_pending_reply
 .Lcommand_eeprom_idle:
 /* Deferred operations run after the USB polling window. R3 uses the real
  * SPM command (erase=3, commit=5), RUN=4, SELECT marker=2, or idle=0.
  * SPM is forbidden while the asynchronous EEPROM worker is active.
  */
 bootloader_dispatch_command:
-    mov r24, r3
 /* Only pending erase (3) and page-write (5) have bit zero set.
  * SELECT leaves 2, RUN leaves 4, and idle leaves 0. */
-    sbrc r24, 0
+    sbrc r3, 0
     rjmp flash_erase_selected_page
-    cpi r24, CMD_EXIT
-    brne bootloader_clear_command
+/* Only 0/2/3/4/5 are reachable: after odd SPM commands, bit2 identifies RUN. */
+    sbrs r3, 2
+    rjmp bootloader_clear_command
     or r26, r27
-    brne .Lcommand_wait_for_poll
+    brne usb_tx_prepare_pending_reply
     rjmp bootloader_start_application
 flash_erase_selected_page:
 flash_commit_buffered_page:
     movw r30, r4
 /* WRITE ends at the next page; ERASE starts at the selected page. */
-    sbrc r24, 2
+    sbrc r3, 2
     sbiw r30, AVR_WORD_BYTES
 /* Align to a physical page and protect every address at/above BOOT_AT.
  * The shared executor is the final guard for both erase and write requests.
@@ -150,14 +167,12 @@ flash_do_spm:
     cpc r31, r18
 #endif
     brsh bootloader_clear_command
-    out _SFR_IO_ADDR(SPMCSR), r24
+    out _SFR_IO_ADDR(SPMCSR), r3
     spm
 bootloader_clear_command:
     mov r3, r1
-/* NVM handlers sit near the vendor dispatcher for short conditional branches.
- * The ordinary main-loop path must jump over their callable-only fragment. */
-    rjmp usb_tx_prepare_pending_reply
-#include "compact_memory.inc"
+/* Both idle and completed SPM paths fall into packet preparation. Keeping
+ * that hot continuation nearby removes the distant-TX branch trampoline. */
 #include "vusb_ep0.inc"
 
 /* Service at most one EEPROM byte per iteration, advance idle timeout,
@@ -186,12 +201,6 @@ legacy_led_off_anchor:
 usb_poll_check_missed_packet:
     rcall usb_service_pending
     rjmp bootloader_poll_begin
-usb_poll_advance_timeout:
-    sbiw r26, 1
-    brbs SREG_Z, bootloader_poll_timeout
-    rjmp usb_poll_sample_bus
-bootloader_poll_timeout:
-    rjmp bootloader_process_pending_command
 /* Release USB pins/PCINT enables and jump to the host-prepared postscript.
  * The application owns its vector table; the bootloader only redirects RESET.
  */
@@ -211,6 +220,10 @@ led_exit_done:
 app_jump:
     .word (AVR_RJMP_OPCODE | (((bootloader_start - POSTSCRIPT_BYTES - app_jump - AVR_WORD_BYTES) / AVR_WORD_BYTES) & AVR_RJMP_OFFSET_MASK))
 
+/* Callable request handlers remain adjacent for their short BRxx edges.
+ * app_jump above prevents ordinary execution from falling into this block. */
+#include "compact_memory.inc"
+#include "vusb_requests.inc"
 #include "vusb_standard.inc"
 #include "compact_eeprom.inc"
 
@@ -220,21 +233,10 @@ app_jump:
  */
 usb_service_pending:
     sbis _SFR_IO_ADDR(PCIFR), PCIF2
-    ret
-/* R0/R24/R25 are preserved by PHY, so the CRC state needs no spill. */
-    rcall USB_handler
-    ldd r18, Y+CTX_RX_LENGTH
-    cpi r18, (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
-    brne .Lservice_done
-    ldd r18, Y+CTX_RX_TOKEN
-    cpi r18, USB_PID_SETUP
-    brne .Lservice_done
-/* The previous builder has no stack frame beyond this helper call. */
-    pop r18
-    pop r18
-/* Length, token and Y are already validated. Reuse that proof and capture
- * the new fields before any further polling can overwrite RX bytes. */
-    std Y+CTX_RX_LENGTH, r1
-    rjmp usb_setup_capture_fields
 .Lservice_done:
     ret
+/* The invalid SETUP validator shares this fast RET. On a new SETUP the
+ * accepted path below falls directly into field capture after discarding
+ * the original caller frame; it does not return to an obsolete builder. */
+    rcall USB_handler
+#include "vusb_setup.inc"

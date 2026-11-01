@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Build reproducible cursor-protocol code and fresh-ISP reference images.
+
+No hardware access. Flash-only v4.2 software audit checkpoint.
+"""
+from __future__ import annotations
+import hashlib
+import json
+from pathlib import Path
+from check_build import build
+from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
+
+ROOT=Path(__file__).resolve().parent
+OUT=ROOT/'firmware35'
+PROFILES=[('NONE',BOOT_AT,NO_LED_CODE_BYTES,BCD_DEVICE,'off')]
+
+def digest(data:bytes)->str:
+    return hashlib.sha256(data).hexdigest()
+
+def intelhex_sparse(data:bytes)->str:
+    lines=[]
+    for start in range(0,len(data),16):
+        chunk=data[start:start+16]
+        if all(x==0xff for x in chunk):continue
+        record=bytes([len(chunk),start>>8,start&255,0])+chunk
+        lines.append(':'+ (record+bytes([(-sum(record))&255])).hex().upper())
+    lines.append(':00000001FF')
+    return '\n'.join(lines)+'\n'
+
+def create():
+    OUT.mkdir(exist_ok=True)
+    builds=[];hashes=[]
+    for led,boot,expected,bcd,suffix in PROFILES:
+        a=build('source/micronucleus_t88_compact.S',mode=led,boot=boot)
+        body=a['body']
+        assert len(body)==expected and boot+len(body)<=8192,(led,len(body),expected)
+        assert int.from_bytes(body[32:34],'little')==bcd
+        assert body[:2]!=b'\xff\xff'
+        reserved=8192-boot
+        reset=0xc000|((boot//2-1)&0xfff)
+        full=bytearray(b'\xff')*8192
+        full[:2]=reset.to_bytes(2,'little')
+        full[boot:boot+len(body)]=body
+        stem='FlashOnly_corrected_'+suffix
+        body_fn=stem+'_body.bin'
+        isp_fn=stem+'_ISP_FRESH_8192.bin'
+        hex_fn=stem+'_ISP_FRESH_EXPERIMENTAL.hex'
+        (OUT/body_fn).write_bytes(body)
+        (OUT/isp_fn).write_bytes(full)
+        (OUT/hex_fn).write_text(intelhex_sparse(full),encoding='ascii')
+        builds.append({'led':led,'bcdDevice':f'0x{bcd:04x}',
+            'boot_at':f'0x{boot:04x}', 'code_bytes':len(body),
+            'reserved_bytes':reserved,'app_bytes':boot-4,
+            'postscript_at':f'0x{boot-4:04x}',
+            'code_sha256':digest(body),'isp_sha256':digest(full),
+            'body_file':body_fn,'isp_bin':isp_fn,'isp_hex':hex_fn,
+            'usb_phy_bytes':a['symbols']['startup']-a['symbols']['USB_handler']})
+        for fn in (body_fn,isp_fn,hex_fn):
+            hashes.append((digest((OUT/fn).read_bytes()),fn))
+        print(f'{led:12}: code {len(body):4} B; PHY {builds[-1]["usb_phy_bytes"]:3} B; boot=0x{boot:04x}; app={boot-4}; SHA256={digest(body)}')
+    srcpaths=sorted((ROOT/'source').glob('*.inc'))+list((ROOT/'source').glob('*.S'))
+    meta={'title':'Micronucleus+ cursor Flash-only v4.2 audit checkpoint, 2026-10-28',
+          'target':'ATtiny88 external 16 MHz',
+          'installed_or_hardware_tested':False,
+          'artifact_kind':'software audit checkpoint; receiver qualification is open',
+          'protocol':'vendor v4.2: SELECT(1), SELECT+ERASE(2), WRITE4(3), RUN(4), READ8(0xB0); shared sequential cursor and automatic64-byte page programming',
+          'ack':'IN DATA held until ACK; deferred Flash SPM and RUN blocked while TX DATA remains unacknowledged; ACK eligibility marker is short-lived; WRITE4 word staging runs once inside eligible status ACK; automatic page write is deferred; ambiguous host completion stops the plan',
+          'remaining_limitations':['Incoming USB DATA CRC16 not validated before ACK or afterward',
+             'Legal dribble and crossover receiver qualification are still under audit',
+             'No real hardware, analog waveform or hub testing',
+             'Power loss during RESET-page erase/write may require ISP',
+             'Flash SPM stalls CPU, host must wait before next USB request'],
+          'source_sha256':{p.name:digest(p.read_bytes()) for p in srcpaths},
+          'builds':builds}
+    (OUT/'manifest.json').write_text(json.dumps(meta,indent=2,ensure_ascii=False)+'\n',encoding='utf8')
+    hashes.append((digest((OUT/'manifest.json').read_bytes()),'manifest.json'))
+    (OUT/'SHA256SUMS.txt').write_text(''.join(f'{s}  {n}\n' for s,n in hashes),encoding='ascii')
+    return meta
+if __name__=='__main__':create()

@@ -1,0 +1,81 @@
+{
+  "pinned": "4dd1b49f39cd9d6fc736a720777ed62f4564e0e2",
+  "release_tag": "v2.6",
+  "release_commit": "882e7b4af38cb2795353e4e99336616963c6cd12",
+  "zip_sha256": "db31ca472647b6399cdbadb042557d9149ca9015dc4cc6e48b74a7b4499847da",
+  "files": [
+    {
+      "file": "Readme.md",
+      "pinned_sha256": "6d1d433448742fc61e8f227177735030074daff647455000c9272063960b6af7",
+      "tag_sha256": "4d065af41386a690c4290030c9852e8227193529ca225a98632732f10963c054",
+      "identical": false,
+      "normalized_identical": false
+    },
+    {
+      "file": "firmware/main.c",
+      "pinned_sha256": "7bdc98aba46b552562ea62696b97381b246713e1ae9e1c40a5f878c900d9831d",
+      "tag_sha256": "40dde81125c35228db1ee13d6cfcc88e3e89f7400f0bdc07c3f34dee67941dbb",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbconfig.h",
+      "pinned_sha256": "b49931a6d024ffa388d2a0f702c6cec26d28ce8b3036dc59cca17c1af7e8cf76",
+      "tag_sha256": "d95114af83a1781f432cbfbc8f15d09081e2e72924924e716c67e58022dc98ca",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbdrv/usbdrv.c",
+      "pinned_sha256": "e5a4ecbd0d0a0b85b92b232a50f062deec9152c9aaf97227a62873d1d93cf281",
+      "tag_sha256": "a5573343f80b6cf678ce93462b3a82b05892e5482b9b02a80802e8fc958084f2",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbdrv/usbdrv.h",
+      "pinned_sha256": "b9600ab5dd73ef275a922f1be51455408bfb4bd3ca63dfa8e38e150274261e19",
+      "tag_sha256": "d9fc59857d67d2fa6ddd91ce7bdf884140a72681c1a7b65a2bc6498a816ff18e",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbdrv/usbdrvasm.S",
+      "pinned_sha256": "e68a532cb5df2ddce4d306b914a62690f3f06affb81a40c421f6743d6bff3275",
+      "tag_sha256": "9f9e2c9cff843f94c46308431ad7f3ddbfb74285d48d7918f7e8061497285d71",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbdrv/usbdrvasm16.inc",
+      "pinned_sha256": "ffe2ed3dc1ef3b5736bc4853074d5f078bcf9401bac2bcf717046508110eb05f",
+      "tag_sha256": "fbd6af85bae6529dd4f7ac09cb9b0e94b98a4e53afa378061352f345415c4b0a",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/usbdrv/asmcommon.inc",
+      "pinned_sha256": "beea9c9bf3defbe54b8f93f3994a752c8f95f7d9609f923fa239c28177312ddd",
+      "tag_sha256": "2fdad6078e3403fd817990894d2ea8847dbf4dd5b7890d38ee5022aec06af7c2",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/configuration/t88_default/Makefile.inc",
+      "pinned_sha256": "e516022fccbc00f62e934c07aaff288179237389eeadd61b1c97034fc473cdd5",
+      "tag_sha256": "e39a61494d695febccced370759b9cef77783aef9318051bf4c33851151f3325",
+      "identical": false,
+      "normalized_identical": true
+    },
+    {
+      "file": "firmware/configuration/t88_default/bootloaderconfig.h",
+      "pinned_sha256": "8d15c6b6caa681bf7cedb7cadd34ae2755e96daee80dab909120adadc6827f62",
+      "tag_sha256": "8707a91fa31b439a1bc44806170412591887718ad243acc818e85ac114688bea",
+      "identical": false,
+      "normalized_identical": true
+    }
+  ],
+  "body_sha256": "ec361683baa476be66826c884f2f3759b63451225a35d40a5318d8d1f8ce24bf",
+  "body_bytes": 1332,
+  "boot": 6720
+}

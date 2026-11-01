@@ -103,7 +103,7 @@ def main():
         nvm.set_pointer(machine, cursor)
         machine.r[25] = 4
         machine.run('bootloader_check_set_flash_address', stop=('usb_reply_empty',))
-        assert machine.r[3] == 0 and machine.r[8] == 0 and not machine.spms
+        assert machine.r[3] == 0 and machine.r[2] == 0 and not machine.spms
     nvm.check_eeprom_write4(artifact)
 
     entry_source = out / 'micronucleus_t88_benchmark_entry.S'
