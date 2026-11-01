@@ -161,6 +161,13 @@ and missing CRC bytes. `test_ack_followup` separately catches a completed old
 write followed by a lost minimum-gap SETUP. These failures must be fixed;
 neither test is an expected-failure waiver.
 
+The independent Pass40-derived `test_rx_legal_dribble` adds 720 cases, or 5760
+with `USB_PHY_EXHAUSTIVE=1`: eligible ACK final tails, valid-CRC SETUP tails,
+seven-one rejection, exact publication/ACK ownership, GPIO release and physical
+turnaround. Its encoder is independent of the older waveform builders. The
+[import record](PASS40_IMPORT.md) distinguishes failures in the small archived
+receiver from the composed receiver's results.
+
 `test_rx_eop_matrix` combines 9,072 legal DATA-tail cases with 16,128
 certified-jitter cases. It checks actual PID/payload bytes, complete byte count,
 caller restoration and recovery-J-to-response timing. Complete-frame observation
