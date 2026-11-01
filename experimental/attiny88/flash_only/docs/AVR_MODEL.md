@@ -88,3 +88,18 @@ captured recovery J instead of relying on an uninitialized pin-evidence field.
 The finite waveform adapter recognizes BRTS/BRTC as the disassembler aliases of
 BRBS/BRBC on T, with the same taken/untaken cycles. These repairs restore the
 older ACK/cached-TX and unsafe-reference checks; they do not modify firmware.
+
+## Physical execution geometry
+
+`check_build.build()` returns execution artifacts only when all code lies inside
+the ATtiny88's physical 8 KiB Flash. Its default placement follows
+`host.profiles.BOOT_AT`; standalone legacy executors and current/reference
+comparisons use that same valid placement. `build.build()` remains available
+for overflow size measurements. A measured overflowing image must not be
+executed by a model as though the target had additional Flash.
+
+`sh verify.sh` invokes the selected no-LED receiver verifier once with
+`--exhaustive` and forwards its arguments, including `--source` and `--boot`.
+Independent legacy, host, EEPROM, LED initialization and strict-source packaging
+checks keep their own recognized geometry. Their passing results qualify those
+fixtures separately from the selected experimental receiver.

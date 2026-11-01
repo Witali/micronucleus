@@ -10,6 +10,7 @@ from pathlib import Path
 R=Path(__file__).resolve().parents[1];sys.path.insert(0,str(R))
 from check_build import build
 from tests.avr_exec import AVRExec
+from host.profiles import BOOT_AT
 
 CYC={'in':1,'out':1,'andi':1,'sbi':2,'cbi':2,'rjmp':2,'rcall':3,'ret':4}
 
@@ -18,7 +19,7 @@ def section(x,lo,hi):
     return x['body'][a-x['boot']:b-x['boot']]
 
 def verify():
-    for mode,boot in [('NONE',0x1c00),('ACTIVE_HIGH',0x1bc0),('ACTIVE_LOW',0x1bc0)]:
+    for mode,boot in [(mode,BOOT_AT) for mode in ('NONE','ACTIVE_HIGH','ACTIVE_LOW')]:
         n=build('source/micronucleus_t88_compact.S',mode=mode,boot=boot)
         o=build('reference_pass33/micronucleus_t88_compact.S',mode=mode,boot=boot)
         a=AVRExec(n);b=AVRExec(o)

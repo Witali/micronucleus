@@ -13,7 +13,7 @@ _avr_exec.decode=lru_cache(maxsize=48)(_avr_exec.decode)
 MODES=[('NONE',BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES),
        ('ACTIVE_HIGH',BOOT_AT,0xFFFF,None),('ACTIVE_LOW',BOOT_AT,0xFFFF,None)]
 
-def art(led='NONE',boot=0x1c00,source='source'):
+def art(led='NONE',boot=BOOT_AT,source='source'):
     return build(f'{source}/micronucleus_t88_compact.S',mode=led,boot=boot)
 
 def test_profiles():

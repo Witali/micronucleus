@@ -53,6 +53,7 @@ CHECKS = (
     ('test_data_framing', 'test'),
     ('test_rx_overflow', 'test'),
     ('test_rx_terminal_crc', 'test'),
+    ('test_rx_terminal_bounds', 'test'),
     ('test_token_crossover_admission', 'test'),
     ('test_rx_jitter_spec', 'test'),
     ('test_rx_aperiodic', 'test'),
@@ -80,9 +81,10 @@ def main():
         parser.error('--source must belong to the Flash-only directory')
     source = source_dir.relative_to(h.ROOT).as_posix()
     linked = h.build
-    art = linked(source=source, mode='NONE', boot=args.boot)
-    if art['boot'] < 0 or art['boot'] + art['size'] > 8192:
-        parser.error('Receiver execution requires code inside physical 8 KiB Flash; use a lower --boot')
+    try:
+        art = linked(source=source, mode='NONE', boot=args.boot)
+    except ValueError as error:
+        parser.error(str(error))
 
     def selected(source='source', mode='NONE', boot=None):
         """Keep explicit reference builds independent of the selected candidate."""
@@ -121,6 +123,17 @@ def main():
     raw = importlib.import_module('tests35.test_usb_rx_waveforms')
     for name in RAW_CHECKS:
         execute('test_usb_rx_waveforms.'+name, lambda name=name: getattr(raw, name)(art))
+
+    # Retain the conservative DATA crossover safety oracle, including
+    # endpoint-placed stress separately from certified receive tolerances.
+    crossover = importlib.import_module('tests35.test_usb_crossover')
+
+    def check_crossover_safety():
+        result = crossover.run_matrix(art)
+        print('PASS conservative DATA crossover safety:', result['cases'],
+              'cases; no premature admission or drive', flush=True)
+
+    execute('test_usb_crossover', check_crossover_safety)
 
     failed = sum(not row['passed'] for row in report['results'])
     print(f'{art["size"]} bytes; {len(report["results"])-failed}/{len(report["results"])} groups pass; report {output}')

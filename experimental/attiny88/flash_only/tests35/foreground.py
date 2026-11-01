@@ -4,6 +4,7 @@ from functools import lru_cache
 Uses linked Pass34 binary and simple clocked PIN/PCIF simulation.
 """
 from .wave import Sim,build,PERIOD
+from host.profiles import BOOT_AT
 
 @lru_cache(maxsize=16)
 def artifact(mode,boot,source):
@@ -24,7 +25,7 @@ def one(mode,boot,caller,pending,ipd,phase=0,source="source",halt=False):
  return s,r
 
 if __name__=='__main__':
- for mode,boot in [('NONE',0x1c00),('ACTIVE_HIGH',0x1bc0),('ACTIVE_LOW',0x1bc0)]:
+ for mode,boot in [(mode,BOOT_AT) for mode in ('NONE','ACTIVE_HIGH','ACTIVE_LOW')]:
   for caller in ['bootloader_process_pending_command','usb_validate_setup']:
    for pending in (0,3,5):
     for ipd in (2*PERIOD,4*PERIOD,7*PERIOD):

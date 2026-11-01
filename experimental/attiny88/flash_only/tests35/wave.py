@@ -9,6 +9,7 @@ from bisect import bisect_right
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from check_build import build
+from host.profiles import BOOT_AT
 from tests.avr_exec import AVRExec
 
 J,K,SE0=2,4,0
@@ -202,7 +203,7 @@ class Sim:
 
 def run_sweep():
     arts=[]
-    for led,boot in [('NONE',0x1c00),('ACTIVE_HIGH',0x1bc0),('ACTIVE_LOW',0x1bc0)]:
+    for led,boot in [(mode,BOOT_AT) for mode in ('NONE','ACTIVE_HIGH','ACTIVE_LOW')]:
         a=build('source/micronucleus_t88_compact.S',mode=led,boot=boot)
         # Model starts at packet handler entry, relative to ACK SOP.
         ok=[];bad=[]
