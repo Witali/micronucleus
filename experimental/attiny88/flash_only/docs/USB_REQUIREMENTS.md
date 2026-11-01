@@ -28,6 +28,8 @@ earlier 54-group pass as complete qualification.
 | A plausible centered 150 ns single-ended crossover preserves reception, not only silence before the real EOP | Sections 7.1.2.1 and 7.1.4.1, Table 7-10 | `test_rx_crossover_legal` |
 | Monotonic matched 300 ns edges may produce asymmetric 210 ns single-ended crossover intervals without shifting differential jitter | Sections 7.1.2.1, 7.1.4.1 and 7.1.13.1.1 | `test_rx_crossover_asymmetric`, `test_rx_crossover_payloads` |
 | Legal differential crossings can also produce transient both-high single-ended observations at a permitted lower threshold | Sections 7.1.2.1 and 7.1.4.1 | `test_rx_crossover_se1` |
+| ACK PID and ownership survive legal single/repeated SE0/SE1 crossing observations | Sections 7.1.4.1, 8.3.1 and 8.4.5 | `test_ack_crossover_legal` |
+| One or two actual zero bits after ACK cannot be mistaken for all-one dribble, including when crossover observations hide the opposite interval | Sections 7.1.9.1 and 8.4.5 | `test_ack_tail_crossover` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |

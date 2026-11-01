@@ -50,6 +50,8 @@ CHECKS = (
     ('test_token_framing_wire', 'test'),
     ('test_rx_context_restore', 'test'),
     ('test_ack_followup', 'test'),
+    ('test_ack_crossover_legal', 'test'),
+    ('test_ack_tail_crossover', 'test'),
     ('test_data_framing', 'test'),
     ('test_rx_overflow', 'test'),
     ('test_rx_terminal_crc', 'test'),

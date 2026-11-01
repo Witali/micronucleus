@@ -34,22 +34,48 @@ usb_rx_found_k:
     rjmp usb_rx_wait_for_k
 usb_rx_sync_confirmed:
 usb_rx_delay_complete:
+#ifdef USB_RX_ACK_TERMINAL
+    /* The lower seed becomes the six-bit ACK loop sentinel. It leaves the
+     * legacy odd-PID history tests and completed first byte unchanged. */
+    ldi r18, 0x20
+#else
     ldi r18, 0x00
+#endif
     ldi r20, USB_RX_INITIAL_STUFF_MASK
     /* Authorization cannot change while PHY owns the receive. Use the
      * existing eight-cycle delay to preload it before timing-critical RX. */
     ldd r24, Z+CTX_CURRENT_TOKEN
+#ifdef USB_RX_ACK_TERMINAL
+    /* Both loads replace existing delay work; the normal decoder retains
+     * its cached length without adding parser/response clocks. */
+    ldd r19, Z+CTX_TX_LENGTH
+#else
     rjmp .+0
+#endif
     rjmp .+0
     nop
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
+#ifdef USB_RX_ACK_TERMINAL
+    /* At this certified sample a new transition cannot belong to PIDbit1.
+     * A value different from final SYNC K therefore proves PIDbit0=0,
+     * including a legal both-low/both-high crossover observation. */
+    cpi r16, (1 << USB_PLUS_BIT)
+    bst r1, 0
+    ldi r21, 0x00
+    ldi r23, USB_RX_BUFFER_BYTES
+    breq usb_rx_normal_pid_entry
+    rjmp usb_rx_ack_entry
+usb_rx_normal_pid_entry:
+    rjmp usb_rx_sample_odd_bit
+#else
     bst r16, USB_MINUS_BIT
     bld r18, 7
     ldd r19, Z+CTX_TX_LENGTH
     ldi r21, 0x00
     ldi r23, USB_RX_BUFFER_BYTES
     rjmp usb_rx_sample_odd_bit
+#endif
 /* Mandatory stuffed symbols must be NRZI transitions. These short tails
  * skip history tests that are known false after clearing the six-one run. */
 usb_rx_unstuff_bit6:
@@ -374,11 +400,17 @@ usb_rx_dribble_one:
     brmi usb_rx_framing_valid
     rjmp usb_rx_ignore_packet
 usb_rx_ack_candidate:
+    /* The separate ACK route proves its fixed count/PID before publication;
+     * its normal odd-PID route keeps T clear through this legacy classifier. */
+#ifndef USB_RX_ACK_TERMINAL
     cpi r16, USB_PID_ACK
     brne usb_rx_ignore_packet
+#endif
 usb_rx_check_ack:
+#ifndef USB_RX_ACK_TERMINAL
     cpi r23, 1
     brne usb_rx_ignore_packet
+#endif
     tst r2
     breq usb_rx_ignore_packet
     andi r21, USB_LINE_MASK
@@ -898,3 +930,7 @@ usb_rx_terminal_odd5_sample7:
     ror r18
     andi r18, 0xc0
     rjmp usb_rx_terminal_enter
+
+#ifdef USB_RX_ACK_TERMINAL
+#include "../ack_terminal/ack_receive.inc"
+#endif

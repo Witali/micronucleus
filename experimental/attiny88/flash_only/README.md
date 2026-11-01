@@ -32,6 +32,12 @@ still exposes an ordinary receive failure; its strict regression is mandatory.
 Both targets omit permanent EEPROM commands. This control
 image remains 508 bytes above the 1280-byte target.
 
+The separate [shared ACK experiment](variants/ack_terminal/README.md) measures
+1986 bytes at 0x1800. It uses compact middle-bit loops and a shared dense EOP
+qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
+and SYNC still retain the inherited findings. Its identity is FFFF, and it is
+an opt-in implementation checkpoint; the default selection remains unchanged.
+
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
 profile requires both a fitting image and passing USB admission checks;

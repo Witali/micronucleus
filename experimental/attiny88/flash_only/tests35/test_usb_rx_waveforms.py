@@ -36,7 +36,11 @@ def rejects_framing(art, wave, entry):
 
 def test_receive(art):
     rng=random.Random(0x35E0)
-    packets={bytes([0xD2]),bytes([0x5A]),bytes([0x1E])}
+    # USB 8.4.5 permits host ACK; hosts cannot issue NAK or STALL. A function
+    # may discard those unsupported handshakes before complete-frame
+    # publication. All 256 PID values still face the independent effect/owner
+    # checks in test_pid_admission; do not require unused decoded buffers here.
+    packets={bytes([0xD2])}
     for address in range(128):
         for pid in (0x69,0x2D,0xE1):packets.add(token(pid,address=address))
     for pid in (0xC3,0x4B):

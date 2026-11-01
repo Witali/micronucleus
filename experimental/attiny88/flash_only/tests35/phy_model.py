@@ -15,11 +15,12 @@ def cached_decode(pc):return image_decode(dec.START,dec.raw,pc)
 def complete_frame_entries(art):
     """Observe complete framing before authorization, including private DATA.
 
-    Some samplers dispatch DATA separately to keep its ACK turnaround short.
+    Some samplers dispatch DATA or qualified ACK separately to keep transaction
+    retirement within the next packet's minimum gap.
     Neither entry by itself proves live recovery J or accepted control state.
     """
     return {art['symbols'][name] for name in
-            ('usb_rx_framing_valid', 'usb_rx_data_live_j')
+            ('usb_rx_framing_valid', 'usb_rx_data_live_j', 'usb_rx_ack_framing_valid')
             if name in art['symbols']}
 
 

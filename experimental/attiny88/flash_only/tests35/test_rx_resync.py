@@ -104,8 +104,14 @@ def run(art, kind, rate, width, phase):
                 assert any('reject_stuff' in name for _, name in rejection), (
                     'stuff check was not exercised', case)
             else:
-                assert eops and eops[0] <= rejection[0][0], (
-                    'ACK tail did not reach EOF classification', case)
+                # A decoder may discard the actual zero as soon as it sees
+                # the malformed tail. Visiting the old residual-EOF label is
+                # not a wire requirement. Keep cancellation, no reply/SPM,
+                # complete following SETUP and stack checks above unchanged.
+                tail_start = bad.boundaries[len(Bits(b'\xd2').bits)]
+                assert rejection and any(tail_start <= sample[0] <= rejection[0][0]
+                                         for sample in cpu.io.samples), (
+                    'malformed ACK tail was not observed before discard', case)
             return dict(kind=kind, rate=rate, eop_width=width, phase=phase,
                         malformed_eop=bad.boundaries[-3],
                         malformed_recovery_j=bad.boundaries[-2],
