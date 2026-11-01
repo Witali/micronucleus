@@ -49,6 +49,7 @@ CHECKS = (
     ('test_rx_context_restore', 'test'),
     ('test_ack_followup', 'test'),
     ('test_data_framing', 'test'),
+    ('test_rx_overflow', 'test'),
     ('test_token_crossover_admission', 'test'),
     ('test_rx_jitter_spec', 'test'),
     ('test_rx_aperiodic', 'test'),

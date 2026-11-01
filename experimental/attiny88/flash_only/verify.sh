@@ -35,6 +35,7 @@ python3 -m tests35.test_rx_context_restore
 python3 -m tests35.test_usb_rx_waveforms
 python3 -m tests35.test_ack_followup
 python3 -m tests35.test_data_framing
+python3 -m tests35.test_rx_overflow
 python3 -m tests35.test_token_crossover_admission
 python3 -m tests35.test_rx_jitter_spec
 python3 -m tests35.test_rx_aperiodic

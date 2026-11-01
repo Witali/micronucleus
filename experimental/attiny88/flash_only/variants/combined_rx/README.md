@@ -129,12 +129,17 @@ The 1534-byte parent also completed an exhaustive selected-image run: 35 of 37
 groups passed, with only aperiodic reception and the EOP matrix failing. The
 new OUT response and STALL-followup gates initially raised the selection to 39;
 do not interpret the older report as a complete current-image verification.
-The current selector has 42 groups after adding 975 transmitted-EOP cases,
+The October selector had 42 groups after adding 975 transmitted-EOP cases,
 512 explicit-artifact unselected-page guards and the 396-case centered-crossover
 receive regression. Standalone NVM checks retain independent LED-mode builds.
 The exact 1518-byte body completed all 42 groups as an exhaustive 39-group run
 plus those three separately executed additions: 39 pass and three remain red.
 See the [full audit](../../docs/USB_AUDIT_2026_10_30.md) for scope and repairs.
+
+The [November integration](../../docs/PASS40_IMPORT.md) adds independent legal
+ACK/SETUP dribble, SWAP, pending-command and overflow regressions. The selector
+now has 46 groups. Shared non-PHY and PHY-tail reductions bring this receiver
+to 1498 no-LED bytes at 0x1A00; inherited receive findings remain open.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:

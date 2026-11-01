@@ -55,6 +55,10 @@ archive/source hashes are in ARCHIVE_PROVENANCE.json.
 
 ## Scope and open findings
 
+The [Pass40 integration record](docs/PASS40_IMPORT.md) tracks the 2026-11-01
+handoff, independent dribble regression and newer measured size reductions.
+The October audit below remains a historical result for its exact image.
+
 The [full no-LED firmware audit](docs/USB_AUDIT_2026_10_30.md) records the complete
 42-group selected-image result, host/Flash checks, remaining failures and measured
 loop tradeoffs. Larger independent repair controls are preserved for review;

@@ -20,6 +20,7 @@ usb_rx_wait_for_k:
     rjmp usb_rx_found_k
     sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
     rjmp usb_rx_found_k
+usb_rx_overflow:
     sbi _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp usb_rx_ignore_packet
 usb_rx_found_k:
@@ -279,8 +280,18 @@ usb_rx_unstuff_odd_next_even:
     ldi r20, 0x08
     subi r21, LOW8(-1)
     rjmp usb_rx_sample_odd_bit
-usb_rx_overflow:
-    sbi _SFR_IO_ADDR(PCIFR), PCIF2
+usb_rx_secondary_j:
+    /* An eligible ACK without captured J uses bounded live observations
+     * before it may release the pending packet or commit any state. */
+    ldi r21, 3
+usb_rx_secondary_wait_j:
+    in r20, _SFR_IO_ADDR(PIND)
+    andi r20, USB_LINE_MASK
+    cpi r20, (1 << USB_MINUS_BIT)
+    breq usb_rx_accept_ack
+usb_rx_secondary_not_j:
+    dec r21
+    brne usb_rx_secondary_wait_j
 usb_rx_ignore_packet:
     mov r2, r1
     eor r16, r16
@@ -307,29 +318,15 @@ usb_rx_dribble_one:
     rjmp usb_rx_ignore_packet
 usb_rx_ack_candidate:
     cpi r16, USB_PID_ACK
-    brne usb_rx_reject_ack
+    brne usb_rx_ignore_packet
 usb_rx_check_ack:
     cpi r23, 1
-    brne usb_rx_reject_ack
+    brne usb_rx_ignore_packet
     tst r2
-    breq usb_rx_reject_ack
+    breq usb_rx_ignore_packet
     andi r21, USB_LINE_MASK
     cpi r21, (1 << USB_MINUS_BIT)
-    breq usb_rx_accept_ack
-usb_rx_secondary_j:
-    /* An eligible ACK without captured J uses bounded live observations
-     * before it may release the pending packet or commit any state. */
-    ldi r21, 3
-usb_rx_secondary_wait_j:
-    in r20, _SFR_IO_ADDR(PIND)
-    andi r20, USB_LINE_MASK
-    cpi r20, (1 << USB_MINUS_BIT)
-    breq usb_rx_accept_ack
-usb_rx_secondary_not_j:
-    dec r21
-    brne usb_rx_secondary_wait_j
-usb_rx_reject_ack:
-    rjmp usb_rx_ignore_packet
+    brne usb_rx_secondary_j
 usb_rx_accept_ack:
     mov r2, r1
     ldi r19, USB_PID_NAK
@@ -458,11 +455,9 @@ usb_tx_send_count_handshake:
     mov r20, r19
     rjmp usb_tx_prepare_handshake
 usb_rx_setup_reject:
-    /* Authorized SETUP/OUT already closed R2 at its valid token. An
-     * unpaired or rejected DATA must also close an earlier IN window. */
-    mov r2, r1
-    std Z+CTX_CURRENT_TOKEN, r1
-    rjmp usb_handler_packet_done
+    /* The common reject tail closes both old ACK eligibility and token
+     * authorization before returning to any foreground owner. */
+    rjmp usb_rx_ignore_packet
 usb_rx_setup_data:
     cpi r16, USB_PID_DATA0
     brne usb_rx_setup_reject

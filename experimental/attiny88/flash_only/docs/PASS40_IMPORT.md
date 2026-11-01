@@ -65,3 +65,26 @@ states, 1536 write-dispatch cases and 672 durable ACK-gate cases. READ routing
 is checked separately by wire tests. SWAP preserves modeled flags; implementing
 the previously missing opcode in that executor does not alter the timed backend.
 These reductions do not repair the three inherited composed-RX findings.
+
+## Shared PHY rejection tails
+
+Two independently checked layout changes save another eight bytes in the
+composed PHY. Rejected SETUP/OUT DATA shares the common token/ACK retirement;
+the ACK recovery-J loop is adjacent to that ignore tail. Moving the overflow
+entry onto the identical failed-SYNC tail prevents overflow from falling into
+ACK recovery. No receiver sample, stuffing rule or framing allowance changes.
+
+The isolated PHY patch passes 2048 reject-state and 960 ACK-state equivalence
+checks, with the documented dead-register differences. Rejected DATA returns
+three clocks later; captured-J ACK is one clock earlier, uncaptured-J recovery
+one clock later. Expanded ACK followups, SETUP ownership, token deadlines and
+STALL timing remain within their existing limits. The maintained overflow
+regression covers 540 overlong packets with idle, WRITE4 and RUN pending state;
+it catches an unsafe intermediate layout that committed a phantom ACK.
+
+Composing these PHY reductions with the adopted Pass40 source produces 1498
+bytes at 0x1A00, SHA256
+`2e9df9e2a60d821adc224fdb1c261ca9592ec3d1d7b867dda7d561457a65a207`.
+The root integration rerun passes SWAP1024, command1536/ACK-gate672, overflow540,
+SETUP83 plus864 responses, ACK-to-SETUP1485 and OUT response6048. It retains
+the original three receive findings; these size reductions are not their fix.
