@@ -138,6 +138,10 @@ It does not excuse stuffing, framing, missing CRC bytes, token CRC5 or timing.
 The current [requirements matrix](USB_REQUIREMENTS.md) remains the admission
 gate; neither historical version is a complete compliance reference.
 
+The later [all-branch reuse review](USB_HISTORY_REUSE_2026_11_01.md) identifies
+existing shared paths, the older rolling-byte/cooldown prototype and the
+current 1788-byte control's linked-region growth.
+
 Reproduce the compact observations from this directory's parent with
 `python tools/historical_usb/audit.py --full-tail-matrix`. The maintained
 [historical audit tools](../tools/historical_usb/README.md) also prepare and
