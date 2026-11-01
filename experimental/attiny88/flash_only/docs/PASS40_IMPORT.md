@@ -137,3 +137,16 @@ excursions, with a piecewise monotonic voltage witness meeting the 300 ns
 rise/fall limit. Its arithmetic is checked in the test. Ordinary no-jitter
 reception fails 28 of 396 cases on the exact 1494-byte baseline. This is a
 required receiver finding, not an unproven endpoint-placed stress allowance.
+
+## Corrected integration
+
+The [2026-11-01 audit](USB_AUDIT_2026_11_01.md) supersedes these size-only
+checkpoints with a corrected receiver at 0x1900. The integrated 1792-byte body
+passes its complete 52-group exhaustive run. Exact five-clock publication-tail
+sharing reduces it to 1788 bytes; the new seven-final-one regression preserves
+the counterexample that rejected a smaller constant-period terminal loop.
+Current README/build instructions select that corrected receiver explicitly;
+the smaller strict-source fixture and archive PHY are separate historical inputs.
+The 54-group 1788-byte checkpoint subsequently exposes a mandatory asymmetric
+crossover failure under a new monotonic voltage witness. The added strict
+55th group remains red; the dated audit records its 2484-case baseline and repair.

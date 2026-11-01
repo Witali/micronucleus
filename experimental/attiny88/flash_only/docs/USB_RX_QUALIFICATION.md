@@ -1,8 +1,10 @@
 # Receiver admission and minimum-gap transactions
 
-The active strict receiver still rejects an ACK with one legal extra final
-one bit. The raw dribble regression remains mandatory. A smaller image or a
-passing complete-byte packet corpus does not close that finding.
+The legacy `source/` strict receiver rejects an ACK with one legal extra final
+one bit. The corrected `variants/combined_rx` selection repairs this path;
+its exact qualification is in the [November audit](USB_AUDIT_2026_11_01.md).
+The raw dribble regression remains mandatory. A smaller image or a passing
+complete-byte packet corpus does not close that finding.
 
 The additional `tests35.test_ack_followup` regression checks a full exchange:
 SELECT, WRITE4, its IN-status ACK, and the following SETUP. Its host schedules
@@ -15,9 +17,11 @@ requires the following raw SETUP, its shadow fields and its ACK to be correct.
 Completing the previous write while losing the next request is a failure.
 
 ```sh
-python3 -m tests35.test_ack_followup
-USB_PHY_EXHAUSTIVE=1 python3 -m tests35.test_ack_followup
+python3 verify_receiver.py --exhaustive
 ```
+
+That command selects the corrected receiver for this and the other maintained
+groups. Standalone `python3 -m tests35.test_ack_followup` uses the legacy fixture.
 
 The default matrix has 225 exchanges; the expanded matrix has 1485. Both vary
 all 0..4 legal final-one ACK extensions, three host rates and three observed

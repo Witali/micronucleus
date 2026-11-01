@@ -6,7 +6,7 @@ No image in this directory has been installed or physically USB-tested.
 
 Vendor protocol v4.2 uses sequential WRITE4/READ8 after SELECT, with automatic
 64-byte page programming and no separate COMMIT_PAGE command.
-It is incompatible with the v3.0 client. The corrected no-LED audit profile is
+It is incompatible with the v3.0 client. The legacy strict-source audit profile is
 0x0470 at 0x1A40, with 6716 application bytes. The active client rejects the
 archive and older audit profiles, including 0x0460, and unknown identities before any
 memory commands. Applications
@@ -22,12 +22,15 @@ before treating an optimized image as usable.
 The current 1352-byte strict-source image has SHA-256
 `e6d8341acab472bebbbc950b5090a70721f02f5fe33c62671f642c969dadb6b0`.
 
-That count belongs to the strict-source audit checkpoint. The separately
-selected [composed receiver](variants/combined_rx/README.md) currently measures
-1494 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
-the legal-dribble/receive work; its remaining receive
-findings are mandatory. Both targets omit permanent EEPROM commands. The
-composed image remains 214 bytes above the 1280-byte target.
+That count belongs to the legacy strict-source audit fixture, which retains
+known receive defects. The separately selected
+[corrected receiver](variants/combined_rx/README.md) measures **1788 bytes**
+without LED at **0x1900**, with four spare bytes in its 28-page region. It shares
+the control/Flash code and fixes the directed legal-dribble, short-EOP and
+centered-crossover findings. A newly witnessed asymmetric 210 ns crossover
+still exposes an ordinary receive failure; its strict regression is mandatory.
+Both targets omit permanent EEPROM commands. This control
+image remains 508 bytes above the 1280-byte target.
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
@@ -37,13 +40,15 @@ the current audit profile below has not moved to that target placement.
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
 advertise 0xFFFF unless an explicit new profile is supplied; the active client
-does not recognize them. Current measured bytes are pinned in host/profiles.py
-and checked against the linked image when generating an audit artifact.
+does not recognize them. The recognized strict-source fixture's measured bytes
+are pinned in host/profiles.py and checked against its linked image when
+generating an audit artifact. That fixture is separate from the corrected
+experimental receiver.
 
 ## Build and software verification
 
 ```sh
-python3 build.py --require-fit
+python3 build.py --where variants/combined_rx --boot 0x1900 --require-fit
 sh verify.sh
 python3 host/flash_only_programmer35.py --help
 ```
@@ -53,36 +58,29 @@ output stays in ignored build/ and firmware35/. References 33/34/35 are frozen
 audit inputs; unsafe ISP images and nested ZIPs were not imported. Original
 archive/source hashes are in ARCHIVE_PROVENANCE.json.
 
-## Scope and open findings
+## Software qualification and scope
 
-The [Pass40 integration record](docs/PASS40_IMPORT.md) tracks the 2026-11-01
-handoff, independent dribble regression and newer measured size reductions.
-The October audit below remains a historical result for its exact image.
-
-The [full no-LED firmware audit](docs/USB_AUDIT_2026_10_30.md) records the complete
-42-group selected-image result, host/Flash checks, remaining failures and measured
-loop tradeoffs. Larger independent repair controls are preserved for review;
-the active receiver remains experimental.
+The [current software audit](docs/USB_AUDIT_2026_11_01.md) records the exact
+corrected receiver, size, test provenance and limits. The
+[Pass40 integration record](docs/PASS40_IMPORT.md) tracks the imported handoff
+and size reductions. The [October audit](docs/USB_AUDIT_2026_10_30.md) remains a
+historical result for its exact image; its open findings are not the current
+corrected receiver's result.
 
 The sole accepted USB exception is omitted received DATA CRC 16 validation,
 both before ACK and afterward.
 Outgoing CRC 16, token CRC5/endpoint/length admission, retry/ACK ownership,
 SET_ADDRESS, reset cancellation and Flash guards require independent checks.
-The archive does not close those protocol findings; its tests are a baseline.
+The smaller archive PHY did not pass the independent receive gates.
 Digital models at exactly 16 MHz do not establish electrical USB compliance.
 
-Receiver qualification remains in progress, including legal final dribble and
-single-ended observations during differential crossovers. Generated images are
-software audit checkpoints while these findings are open. The existing board
-has not been changed. The no-LED receiver, control-state and token tests use
+Generated images are software audit checkpoints. The existing board has not
+been changed. The selected no-LED receiver, control-state and token tests use
 the same linked AVR words that are exported, with independent waveform inputs.
-
-For this checkpoint, the software checks passed 2213 standard-request cases,
-214272 token cases, 4032 foreground IN injections, 1889 complete-packet waveform
-cases, 57 control-read completion sequences and 12 vendor-status guard cases.
-The complete verification run fails when an ACK has one legal extra final one
-bit (dribble). This failure remains mandatory and visible. Passing the other
-checks does not qualify this image for hardware use.
+`verify.sh` selects this corrected receiver once, then checks independent legacy
+fixtures, host behavior, offline EEPROM and strict-source packaging separately.
+Default builds of `source/` retain the historical strict receiver; they do not
+substitute for the corrected selection.
 
 The [receiver admission notes](docs/USB_RX_QUALIFICATION.md) describe an
 additional mandatory ACK-to-next-SETUP regression. It verifies both old-word
@@ -111,10 +109,12 @@ comparison or a claim of identical features.
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
 | Current Flash-only strict-source audit checkpoint | 1352 |
+| Corrected Flash-only selected receiver, 2026-11-01 | 1788 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference
-here. The current checkpoint is 36 bytes larger, with unresolved receiver work.
+here. The corrected selected receiver is 456 bytes larger than that upstream
+no-LED build. The legacy strict-source fixture is 20 bytes larger.
 The 1088-byte v3.0 milestone and 1034-byte archive baseline predate this audit's
 added checks; their smaller sizes do not establish equivalent USB behavior.
 The physically installed v3.0 image is an earlier 1148-byte build.
@@ -142,9 +142,9 @@ explicitly list unchecked token/data CRC, stuffing errors, misplaced SE0 and
 DATA toggle handling. Its [common RX/TX code](https://github.com/micronucleus/micronucleus/blob/4dd1b49f39cd9d6fc736a720777ed62f4564e0e2/firmware/usbdrv/asmcommon.inc)
 documents the successful-ACK assumption. Therefore the official implementation
 is a compact practical bootloader, not evidence that all USB error recovery is
-implemented. Our added checks cover specific gaps, but our current strict
-framing gate still rejects legal dribble; the full verify suite deliberately
-exposes that failure. Neither image is declared USB-IF certified here.
+implemented. Our added checks cover specific gaps; the legacy strict fixture
+still rejects legal dribble, while the corrected selected receiver repairs
+that path. Neither image is declared USB-IF certified here.
 
 Standard control requests also differ. Upstream has handlers for enumeration,
 status, configuration and interface queries, but limited request-shape checking

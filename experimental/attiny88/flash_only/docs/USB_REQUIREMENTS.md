@@ -5,16 +5,26 @@ Revision 2.0, full-/low-speed clauses. Tests execute linked AVR instructions;
 their wire encoders and CRC oracles are independent of the firmware.
 Firmware identity or a smaller binary alone is never an admission criterion.
 
+Current selection and exact results are recorded in the
+[2026-11-01 audit](USB_AUDIT_2026_11_01.md). The corrected receiver is 1788 bytes
+at 0x1900. Named older checkpoints below retain their historical findings;
+default standalone `source/` tests still target the legacy strict fixture.
+`sh verify.sh` checks the corrected selection and separate legacy fixtures.
+The newly witnessed asymmetric 210 ns regression remains mandatory and red on
+the 1788-byte checkpoint; see the current audit rather than interpreting its
+earlier 54-group pass as complete qualification.
+
 | Required behavior | Specification basis | Executable checks |
 | --- | --- | --- |
 | NRZI and eight-symbol low-speed SYNC | Sections 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_tx_digital` |
-| Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital` |
-| Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix` |
+| Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital`, `test_rx_terminal_bounds` |
+| Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_rx_terminal_crc` |
 | SETUP still contains eight payload bytes and both CRC bytes; truncated fields cannot manufacture a byte | Chapter 8 packet/control formats | `test_data_framing`, `test_setup_pending_marker`, `test_rx_context_restore` |
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, `test_pid_admission`, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
 | A plausible centered 150 ns single-ended crossover preserves reception, not only silence before the real EOP | Sections 7.1.2.1 and 7.1.4.1, Table 7-10 | `test_rx_crossover_legal` |
+| Monotonic matched 300 ns edges may produce asymmetric 210 ns single-ended crossover intervals without shifting differential jitter | Sections 7.1.2.1, 7.1.4.1 and 7.1.13.1.1 | `test_rx_crossover_asymmetric` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |
@@ -132,7 +142,7 @@ the preceding 1542-byte image: some never observe SE0, others reject framing
 after observing it. Two small proposed SYNC corrections add failures and were
 rejected. These are mandatory regressions, not expected-failure waivers.
 
-## Known failures remain mandatory
+## Historical findings remain mandatory regressions
 
 `test_out_response_timing` adds 6048 OUT packet corners: both DATA toggles,
 empty/eight-byte payloads, all legal final-one tails, slow/fast host, short/long
