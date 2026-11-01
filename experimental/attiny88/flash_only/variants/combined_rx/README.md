@@ -31,12 +31,17 @@ fixtures against the selected linked image. It does not relax expectations
 for this variant, and returns failure if any group fails. JSON results are
 written under build/variants/combined_rx/receiver-verification.json.
 
-The current composed checkpoint is **1518 bytes**, SHA256
+The current November size checkpoint is **1494 bytes**, SHA256
+`dc37b4847d9a0ce0f7b4412886c9eadcc742a55b7bb552de36f5a4b2b733c0ad`.
+The [integration record](../../docs/PASS40_IMPORT.md) distinguishes validated
+size changes from the ongoing receiver repairs and their separate artifacts.
+
+The 2026-10-30 checkpoint was **1518 bytes**, SHA256
 `bc4faea264abcd7382f3dca31824fd44536838e71337471db91fbe3d57a9f818`.
 It fits in the 24 Flash pages from 0x1A00 to 0x1FFF, with eighteen bytes spare.
 The source is 132 bytes smaller than the preceding 1650-byte receiver. It still
 exceeds the 1280-byte objective.
-At the target placement 0x1B00 it remains 1518 bytes, 238 bytes over capacity;
+That checkpoint measured 1518 bytes at 0x1B00, 238 bytes over capacity;
 the builder reports the overflow instead of admitting that geometry.
 
 The PHY saves 104 bytes by sharing corrected-byte storage, dribble classification
@@ -138,8 +143,9 @@ See the [full audit](../../docs/USB_AUDIT_2026_10_30.md) for scope and repairs.
 
 The [November integration](../../docs/PASS40_IMPORT.md) adds independent legal
 ACK/SETUP dribble, SWAP, pending-command and overflow regressions. The selector
-now has 46 groups. Shared non-PHY and PHY-tail reductions bring this receiver
-to 1498 no-LED bytes at 0x1A00; inherited receive findings remain open.
+now also covers exhaustive length/interface liveness and combined crossover
+jitter. Shared non-PHY and PHY-tail reductions bring this receiver to 1494
+no-LED bytes at 0x1A00; inherited receive findings remain open.
 
 Qualification remains open. In the unchanged 9072 legal DATA-tail cases plus
 16128 certified-jitter cases, the PHY still misses one legal short EOP:

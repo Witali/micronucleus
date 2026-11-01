@@ -19,6 +19,8 @@ CHECKS = (
     ('test_avr_cycles', 'test'),
     ('test_legacy_swap', 'test'),
     ('test_pending_commands', 'test'),
+    ('test_setup_length_liveness', 'test'),
+    ('test_interface_index_liveness', 'test'),
     ('test_ep0_standard', 'test'),
     ('test_ep0_status', 'test'),
     ('test_out_response_timing', 'test'),

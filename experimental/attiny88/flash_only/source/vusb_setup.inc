@@ -1,6 +1,6 @@
 usb_validate_setup:
     /* Only accepted SETUP (11) owns bit3. Deferred command values
-     * 0,2,3,4,5,64 all leave it clear. Reset clears R3 as well. */
+     * 0,2,3,5,48,64 all leave it clear. Reset clears R3 as well. */
     sbrs r3, USB_SETUP_PENDING_BIT
     ret
     pop r18
@@ -18,8 +18,10 @@ usb_setup_capture_fields:
 /* With wLength zero USB ignores the direction bit: status is IN. Otherwise
  * preserve the accepted direction so an OUT cannot unlock a write's status. */
     mov r11, r24
-    mov r18, r6
-    or r18, r7
+    /* When wLength.high is nonzero, every supported source (<=18 bytes)
+     * is shorter regardless of wLength.low. Its low byte is dead in that
+     * case; in-place OR keeps it exact for the high-zero limiter path. */
+    or r6, r7
     brne .Lsetup_has_data_stage
     /* USB9.3.1 ignores D7 with no Data stage. Canonicalize the dispatch:
      * supported standard GET codes are even, supported writes are odd.

@@ -14,8 +14,8 @@ usb_standard_dispatch:
     /* Bound USB polling through interface and configuration checks. */
     rcall usb_service_pending
 /* Interface zero exists only after SET_CONFIGURATION(1). */
-    mov r18, r14
-    or r18, r15
+    /* A valid interface index is zero; on STALL its shadow is dead. */
+    or r14, r15
     brne usb_standard_stall
     ldd r18, Y+CTX_CONFIGURATION
     cpi r18, 1

@@ -5,6 +5,8 @@ python3 -m tests35.test_avr_model
 python3 -m tests35.test_avr_cycles
 python3 -m tests35.test_legacy_swap
 python3 -m tests35.test_pending_commands
+python3 -m tests35.test_setup_length_liveness
+python3 -m tests35.test_interface_index_liveness
 python3 tests34/test_opcode.py
 python3 tests34/test_standard.py
 python3 -m tests35.test_ep0_status

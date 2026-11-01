@@ -19,15 +19,15 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1368-byte image has SHA-256
-`eaee7dd4f6daf04c65b7eed344c6fefd695f0bd4fd842edf503104dbcf82675b`.
+The current 1352-byte strict-source image has SHA-256
+`e6d8341acab472bebbbc950b5090a70721f02f5fe33c62671f642c969dadb6b0`.
 
 That count belongs to the strict-source audit checkpoint. The separately
 selected [composed receiver](variants/combined_rx/README.md) currently measures
-1518 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
+1494 bytes without LED at 0x1A00. It shares the same control/Flash code and adds
 the legal-dribble/receive work; its remaining receive
 findings are mandatory. Both targets omit permanent EEPROM commands. The
-composed image remains 238 bytes above the 1280-byte target.
+composed image remains 214 bytes above the 1280-byte target.
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
@@ -110,7 +110,7 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only audit checkpoint | 1368 |
+| Current Flash-only strict-source audit checkpoint | 1352 |
 
 The official README's published t88_default figure is 1432 bytes; the original
 configuration enables LED. The measured no-LED image is the fair size reference

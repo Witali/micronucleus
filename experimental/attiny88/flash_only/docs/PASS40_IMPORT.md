@@ -94,3 +94,25 @@ with legal J/K edge offsets. Its independently recomputed next/paired jitter
 certificates include frequency error. The 1498-byte image discards 82 cases.
 This preserves the previously observed combined-crossover weakness as a strict
 test; the separate 396-case zero-jitter result is not sufficient qualification.
+
+## Additional dead-shadow reductions
+
+The SETUP zero-length check ORs the two length bytes in place. If the high byte
+is zero, the low byte remains exact; if nonzero, every supported reply source
+(at most 18 bytes) is shorter than the request regardless of its low byte.
+Interface-index validation similarly ORs its shadow bytes in place: a valid
+index stays zero, while a rejected index is dead until the next SETUP.
+These two instructions save four bytes without removing a poll or field check.
+
+All 65536 length classifications, 327680 emitted reply-limit cases and 65536
+interface-index branches pass. Eleven protocol/ownership qualification groups,
+including 4368 foreground entries and 1485 expanded ACK followups, pass in the
+isolated candidate. Maximum foreground entry remains 40.677328 clocks.
+A separate two-byte poll-coalescing experiment increases this to 47.677328;
+it is not admitted without qualification of that larger receiver-entry range.
+
+With the shared PHY savings, the no-LED body is 1494 bytes at 0x1A00, SHA256
+`dc37b4847d9a0ce0f7b4412886c9eadcc742a55b7bb552de36f5a4b2b733c0ad`.
+The separate strict source is 1352 bytes at 0x1A40, SHA256
+`e6d8341acab472bebbbc950b5090a70721f02f5fe33c62671f642c969dadb6b0`.
+The latter's host size pin changes; its addresses and public protocol do not.
