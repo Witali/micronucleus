@@ -116,3 +116,18 @@ With the shared PHY savings, the no-LED body is 1494 bytes at 0x1A00, SHA256
 The separate strict source is 1352 bytes at 0x1A40, SHA256
 `e6d8341acab472bebbbc950b5090a70721f02f5fe33c62671f642c969dadb6b0`.
 The latter's host size pin changes; its addresses and public protocol do not.
+
+## Broader crossover qualification
+
+The maintained corner gate covers 11088 single 150 ns excursions and 504 cases
+where all 22 post-SYNC data transitions have excursions. Its differential
+waveforms are certified against 75/45 ns next/paired edge budgets, including
+frequency error. The targeted 2016-case discovery subset belongs to the 11088
+and is not counted again.
+
+The frozen 1752-byte `terminal_odd13` prototype at 0x1800, SHA256
+`f7180f28dcb965471efd4078edb6275bbe0b7d598b65d1a9ae67e6656cff2cd6`,
+passes these 11592 cases with ACK response 49.0797..52.2530 clocks. It is still
+rejected: its universal early-store change introduces valid IN-token jitter
+failures elsewhere. These results qualify only this data-reception subset;
+size/correctness work continues from the conservative private-store control.

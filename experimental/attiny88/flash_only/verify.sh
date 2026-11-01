@@ -43,6 +43,7 @@ python3 -m tests35.test_rx_jitter_spec
 python3 -m tests35.test_rx_aperiodic
 python3 -m tests35.test_rx_crossover_legal
 python3 -m tests35.test_rx_crossover_jitter
+python3 -m tests35.test_rx_crossover_corners
 python3 -m tests35.test_rx_legal_dribble
 python3 -m tests35.test_rx_eop_matrix
 python3 -m tests35.test_rx_late_entry

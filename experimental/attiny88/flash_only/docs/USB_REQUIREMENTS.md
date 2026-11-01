@@ -176,6 +176,13 @@ reception gates, unlike an uncertified endpoint-placed stress report. The
 1498-byte integration baseline discards 82 of them; zero-jitter reception alone
 does not close the combined-tolerance finding.
 
+`test_rx_crossover_corners` extends this to all 28 certified edge templates,
+three host rates, 22 data transitions and six entries: 11088 single-excursion
+cases plus 504 cases with all 22 data crossings affected together. Repeated
+excursions check whether a resumed stuffer accumulates phase error. Its strict
+oracle checks complete reception, publication, response timing and caller state;
+an independent test-subset success does not admit an otherwise failing image.
+
 `test_rx_eop_matrix` combines 9,072 legal DATA-tail cases with 16,128
 certified-jitter cases. It checks actual PID/payload bytes, complete byte count,
 caller restoration and recovery-J-to-response timing. Complete-frame observation
