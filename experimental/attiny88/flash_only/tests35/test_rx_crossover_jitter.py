@@ -9,12 +9,14 @@ the single-ended threshold excursion is inserted.
 from tests35 import ep0_model as h
 from tests35.ep0_cases import bind
 from tests35.rx_jitter_patterns import interval_errors
-from tests35.test_rx_crossover_legal import CROSSOVER_CLOCKS, ENTRIES, RATES, receive
+from tests35.test_rx_crossover_legal import ENTRIES, RATES, receive
 from tests35.test_usb_crossover import single_crossover
 
 
-def check(art):
+def check(art, width_ns=150):
     bind(art)
+    assert width_ns in (150, 210)
+    width = width_ns * 16_000_000 / 1_000_000_000
     packet = h.data_packet(bytes([255]) * 8)
     failures = []
     responses = []
@@ -33,7 +35,7 @@ def check(art):
             assert len(indexes) == 22
             for index in indexes:
                 incoming = single_crossover(pristine(), index,
-                                            width=CROSSOVER_CLOCKS, fraction=0.5)
+                                            width=width, fraction=0.5)
                 for entry in ENTRIES:
                     errors, response = receive(art, packet, incoming, entry)
                     if errors:
@@ -44,7 +46,7 @@ def check(art):
                     cases += 1
     assert cases == 792
     return dict(bytes=art['size'], sha256=art['sha256'], cases=cases,
-                crossover_ns=150, certificates=certificates, failures=failures,
+                crossover_ns=width_ns, certificates=certificates, failures=failures,
                 response_range=[min(responses), max(responses)] if responses else None)
 
 

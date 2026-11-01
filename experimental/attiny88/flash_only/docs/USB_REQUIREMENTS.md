@@ -183,6 +183,14 @@ excursions check whether a resumed stuffer accumulates phase error. Its strict
 oracle checks complete reception, publication, response timing and caller state;
 an independent test-subset success does not admit an otherwise failing image.
 
+`test_rx_crossover_wide` repeats all four positive crossover families at 210 ns
+for 12780 cases. Its explicit piecewise monotonic voltage witness has matched
+300 ns 10..90% rise/fall times, a 1.3 V differential crossing and VIH=2 V.
+Consequently a centered 210 ns excursion is not dismissed merely because the
+earlier constant-slope witness would exceed the rise-time limit. Endpoint-placed
+stress remains separate without its own witness. The 1494-byte baseline fails
+28 of the 396 ordinary, zero-jitter wide cases; a pass at 150 ns is insufficient.
+
 `test_rx_eop_matrix` combines 9,072 legal DATA-tail cases with 16,128
 certified-jitter cases. It checks actual PID/payload bytes, complete byte count,
 caller restoration and recovery-J-to-response timing. Complete-frame observation

@@ -58,6 +58,7 @@ CHECKS = (
     ('test_rx_crossover_legal', 'test'),
     ('test_rx_crossover_jitter', 'test'),
     ('test_rx_crossover_corners', 'test'),
+    ('test_rx_crossover_wide', 'test'),
     ('test_rx_legal_dribble', 'test'),
     ('test_rx_eop_matrix', 'test'),
 )

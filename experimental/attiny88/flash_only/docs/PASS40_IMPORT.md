@@ -131,3 +131,9 @@ passes these 11592 cases with ACK response 49.0797..52.2530 clocks. It is still
 rejected: its universal early-store change introduces valid IN-token jitter
 failures elsewhere. These results qualify only this data-reception subset;
 size/correctness work continues from the conservative private-store control.
+
+The wide-crossover gate extends the same positive families to centered 210 ns
+excursions, with a piecewise monotonic voltage witness meeting the 300 ns
+rise/fall limit. Its arithmetic is checked in the test. Ordinary no-jitter
+reception fails 28 of 396 cases on the exact 1494-byte baseline. This is a
+required receiver finding, not an unproven endpoint-placed stress allowance.

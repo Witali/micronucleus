@@ -90,8 +90,10 @@ def receive(art, packet, incoming, entry):
     return errors, response
 
 
-def check(art):
+def check(art, width_ns=150):
     bind(art)
+    assert width_ns in (150, 210)
+    width = width_ns * 16_000_000 / 1_000_000_000
     packet = h.data_packet(bytes([255]) * 8)
     cases = 0
     failures = []
@@ -103,7 +105,7 @@ def check(art):
         assert len(indexes) == 22
         for index in indexes:
             incoming = single_crossover(h.Wave(packet, rate=rate), index,
-                                        width=CROSSOVER_CLOCKS, fraction=0.5)
+                                        width=width, fraction=0.5)
             for entry in ENTRIES:
                 errors, response = receive(art, packet, incoming, entry)
                 if errors:
@@ -113,7 +115,7 @@ def check(art):
                 cases += 1
     assert cases == 396, cases
     return dict(bytes=art['size'], sha256=art['sha256'], cases=cases,
-                crossover_ns=150, injected_jitter=False, failures=failures,
+                crossover_ns=width_ns, injected_jitter=False, failures=failures,
                 response_range=[min(responses), max(responses)] if responses else None)
 
 

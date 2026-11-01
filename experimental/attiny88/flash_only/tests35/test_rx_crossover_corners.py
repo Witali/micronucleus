@@ -9,12 +9,14 @@ from copy import deepcopy
 from tests35 import ep0_model as h
 from tests35.ep0_cases import bind
 from tests35.rx_jitter_patterns import corners, interval_errors
-from tests35.test_rx_crossover_legal import CROSSOVER_CLOCKS, ENTRIES, RATES, receive
+from tests35.test_rx_crossover_legal import ENTRIES, RATES, receive
 from tests35.test_usb_crossover import single_crossover
 
 
-def check(art, target_indices=None, stop_after=None):
+def check(art, target_indices=None, stop_after=None, width_ns=150):
     bind(art)
+    assert width_ns in (150, 210)
+    width = width_ns * 16_000_000 / 1_000_000_000
     packet = h.data_packet(bytes([255]) * 8)
     failures, responses, certificates = [], [], []
     cases = 0
@@ -31,7 +33,7 @@ def check(art, target_indices=None, stop_after=None):
                 assert len(indices) == len(target_indices)
             for index in indices:
                 incoming = single_crossover(deepcopy(pristine), index,
-                                            width=CROSSOVER_CLOCKS, fraction=0.5)
+                                            width=width, fraction=0.5)
                 for entry in ENTRIES:
                     errors, response = receive(art, packet, incoming, entry)
                     cases += 1
@@ -46,22 +48,24 @@ def check(art, target_indices=None, stop_after=None):
                         if len(failures) == 1:
                             print('FIRST certified crossover corner failure:', row, flush=True)
                         if stop_after is not None and len(failures) >= stop_after:
-                            return report(art, cases, failures, responses, certificates, False)
+                            return report(art, cases, failures, responses, certificates, False, width_ns)
     expected = 28 * len(RATES) * (len(target_indices) if target_indices is not None else 22) * len(ENTRIES)
     assert cases == expected
-    return report(art, cases, failures, responses, certificates, True)
+    return report(art, cases, failures, responses, certificates, True, width_ns)
 
 
-def report(art, cases, failures, responses, certificates, completed):
+def report(art, cases, failures, responses, certificates, completed, width_ns=150):
     return dict(bytes=art['size'], sha256=art['sha256'], boot=hex(art['boot']),
-                cases=cases, completed=completed, crossover_ns=150,
+                cases=cases, completed=completed, crossover_ns=width_ns,
                 certificates=certificates, failures=failures,
                 response_range=[min(responses), max(responses)] if responses else None)
 
 
-def check_repeated(art):
+def check_repeated(art, width_ns=150):
     """Exercise all 22 data crossings together, keeping SYNC untouched."""
     bind(art)
+    assert width_ns in (150, 210)
+    width = width_ns * 16_000_000 / 1_000_000_000
     packet = h.data_packet(bytes([255]) * 8)
     failures, responses, certificates = [], [], []
     cases = 0
@@ -76,7 +80,7 @@ def check_repeated(art):
             incoming = deepcopy(pristine)
             # Descending insertion retains every original physical bit index.
             for index in reversed(indices):
-                single_crossover(incoming, index, width=CROSSOVER_CLOCKS, fraction=0.5)
+                single_crossover(incoming, index, width=width, fraction=0.5)
             for entry in ENTRIES:
                 errors, response = receive(art, packet, incoming, entry)
                 if errors:
@@ -86,7 +90,7 @@ def check_repeated(art):
                     responses.append(response)
                 cases += 1
     assert cases == 504
-    return report(art, cases, failures, responses, certificates, True)
+    return report(art, cases, failures, responses, certificates, True, width_ns)
 
 
 def test():
