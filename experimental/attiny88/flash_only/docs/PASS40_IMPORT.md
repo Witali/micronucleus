@@ -88,3 +88,9 @@ bytes at 0x1A00, SHA256
 The root integration rerun passes SWAP1024, command1536/ACK-gate672, overflow540,
 SETUP83 plus864 responses, ACK-to-SETUP1485 and OUT response6048. It retains
 the original three receive findings; these size reductions are not their fix.
+
+The combined-tolerance receiver gate adds 792 centered 150 ns crossover cases
+with legal J/K edge offsets. Its independently recomputed next/paired jitter
+certificates include frequency error. The 1498-byte image discards 82 cases.
+This preserves the previously observed combined-crossover weakness as a strict
+test; the separate 396-case zero-jitter result is not sufficient qualification.

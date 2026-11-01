@@ -36,7 +36,7 @@ Names without a directory are modules under `tests35/`. The full gate is
 Timing is measured from emitted GPIO events and physical input-wave boundaries,
 not from a handler-return timestamp or equality with an earlier implementation.
 
-`verify_receiver.py --exhaustive` selects one linked no-LED image for 42 groups,
+`verify_receiver.py --exhaustive` selects one linked no-LED image for all maintained groups,
 including transmitted-EOP measurement and 512 explicit-artifact poisoned-page
 guards. The standalone NVM test still builds three independent LED modes for
 1536 cases; selecting one image must not substitute it for those other modes.
@@ -167,6 +167,14 @@ seven-one rejection, exact publication/ACK ownership, GPIO release and physical
 turnaround. Its encoder is independent of the older waveform builders. The
 [import record](PASS40_IMPORT.md) distinguishes failures in the small archived
 receiver from the composed receiver's results.
+
+`test_rx_crossover_jitter` combines the existing centered 150 ns monotonic
+transition witness with 792 legal jitter/rate/entry cases. The next- and paired-
+transition budgets, including source frequency error, are independently checked
+before inserting the GPIO threshold excursion. These cases are required positive
+reception gates, unlike an uncertified endpoint-placed stress report. The
+1498-byte integration baseline discards 82 of them; zero-jitter reception alone
+does not close the combined-tolerance finding.
 
 `test_rx_eop_matrix` combines 9,072 legal DATA-tail cases with 16,128
 certified-jitter cases. It checks actual PID/payload bytes, complete byte count,
