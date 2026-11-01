@@ -398,6 +398,11 @@ usb_rx_eop_not_j:
     dec r21
     brne usb_rx_wait_eop_j
     rjmp usb_rx_ignore_packet
+/* Both qualified terminal EOP paths share publication before the parser.
+ * RJMP/ST/LDI has the same five clocks as ST/LDI/RJMP. */
+usb_rx_terminal_publish:
+    st Y+, r18
+    ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
 usb_rx_end_packet:
     mov r23, r28
     subi r23, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
@@ -753,9 +758,7 @@ usb_rx_terminal_early_confirm:
     brne usb_rx_terminal_early_recovered
     cpi r18, USB_STUFF_HISTORY_THRESHOLD
     brsh usb_rx_terminal_early_reject
-    st Y+, r18
-    ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
-    rjmp usb_rx_end_packet
+    rjmp usb_rx_terminal_publish
 usb_rx_terminal_early_recovered:
     cpi r18, USB_STUFF_HISTORY_THRESHOLD
     brlo usb_rx_terminal_early_reject
@@ -839,9 +842,7 @@ usb_rx_terminal_confirm:
     brne usb_rx_terminal_reject
     cp r18, r20
     brsh usb_rx_terminal_reject
-    st Y+, r18
-    ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
-    rjmp usb_rx_end_packet
+    rjmp usb_rx_terminal_publish
 usb_rx_terminal_reject:
     rjmp usb_rx_ignore_packet
 usb_rx_terminal_stuff6:
