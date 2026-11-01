@@ -49,7 +49,7 @@ def test_flash():
                 assert len(actual)==(command==2 and page<boot),(led,page,command,actual)
                 checks+=1
             for offset in range(0,64,4):
-                x=AVRExec(a);x.r[29]=1;x.r[3]=64
+                x=AVRExec(a);x.r[29]=1;x.r[3]=48
                 address=page+offset
                 x.r[4:6]=[address&255,address>>8]
                 x.r[12:16]=[0x37,0x91,0x25,0xa6];x.r[30:32]=[0,1]

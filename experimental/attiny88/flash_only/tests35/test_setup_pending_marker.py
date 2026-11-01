@@ -13,7 +13,7 @@ from tests35.test_ep0_token_timeout import wave
 
 SETUP=bytes((0x80,6,0,1,0,0,18,0))
 REPLACEMENT=bytes((0,9,1,0,0,0,0,0))
-STATES=(0,2,3,4,5,64,11)
+STATES=(0,2,3,5,48,64,11)
 
 
 def wave_for(payload=SETUP,pid=0xc3,token=0x2d,address=0):
@@ -93,7 +93,7 @@ def test():
         assert bytes(cpu.m[0x101:0x10c])==old_packet
         assert not cpu.nvm,'Replacement SETUP performed stale Flash work'
         # An IN before dispatch must receive NAK, never old DATA. A stray
-        # ACK cannot mistake pending SETUP for WRITE4's distinct bit64.
+        # ACK cannot mistake pending SETUP for WRITE4's distinct bit4.
         assert receive(cpu,Bits(h.token(0x69)))==[(2,0x5a)]
         assert cpu.r[3]==11 and cpu.r[2]==0
         assert receive(cpu,Bits(b'\xd2'))==[]
@@ -142,7 +142,7 @@ def test():
     assert len(receivers)==2,receivers
     assert {pc+2 for pc in receivers}=={cpu.labels['bootloader_process_pending_command'],cpu.labels['usb_validate_setup']},receivers
     for pc in services:
-        cpu=seeded(art,64);cpu.m[0x115]=0
+        cpu=seeded(art,48);cpu.m[0x115]=0
         cpu.pc=pc;cpu.t=8
         replace_wire(cpu,wave_for(REPLACEMENT))
         for _ in range(18000):

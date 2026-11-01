@@ -113,7 +113,7 @@ def test():
         assert request(art,0x40,req,index=0x80,length=0)['kind']=='spm',req
         cases+=1
     row=request(art,0x40,3,value=0x2211,index=0x4433,length=0)
-    assert row['kind']=='reply' and row['command']==64,row
+    assert row['kind']=='reply' and row['command']==48,row
     assert request(art,0x40,5,length=0)['kind']=='stall'
     cases+=2
     report=dict(bytes=art['size'],sha256=art['sha256'],cases=cases,

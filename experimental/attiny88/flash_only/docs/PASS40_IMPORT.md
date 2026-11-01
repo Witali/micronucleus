@@ -42,3 +42,26 @@ Source reductions and receiver repairs are evaluated separately so smaller
 request handlers cannot replace the more complete PHY by accident. The public
 SELECT/ERASE/WRITE4/READ8/RUN contract and fail-closed profile admission remain
 required throughout integration.
+
+## Adopted non-PHY reductions
+
+The shared source adopts the command-marker SWAP packing, adjacent common
+standard STALL, endpoint-validation fallthrough, and in-place endpoint/descriptor
+zero predicates. Five source files change; the composed receiver's PHY is
+unchanged. Public command bytes and geometry are unchanged. WRITE4's internal
+pending state is now 0x30 and deferred RUN is 0x40; frozen references keep their
+original state encodings.
+
+The no-LED composed body shrinks 1518 to 1506 bytes at 0x1A00, SHA256
+`f68801a08c4edcb27b4164833f223a438fc8025727dbb4f10a7e4930221095dc`.
+The separate strict source shrinks 1368 to 1356 bytes at 0x1A40, SHA256
+`874c13da5b53a11ffe0ca7059838d246c6c79cc0003744d84cf4b926b1c4395a`;
+its size pin changes with no change to boot/application addresses.
+
+Eighteen private qualification groups, 512 NVM guard cases and all 1485 expanded
+ACK-to-SETUP followups pass. Foreground entry remains at most 40.677328 clocks
+in its 4368-case corpus. Maintained regressions cover 1024 legacy-executor SWAP
+states, 1536 write-dispatch cases and 672 durable ACK-gate cases. READ routing
+is checked separately by wire tests. SWAP preserves modeled flags; implementing
+the previously missing opcode in that executor does not alter the timed backend.
+These reductions do not repair the three inherited composed-RX findings.

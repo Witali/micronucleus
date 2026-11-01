@@ -88,10 +88,23 @@
 #define CMD_SET_MEMORY_ADDRESS 1
 #define CMD_SELECT_AND_ERASE 2
 #define CMD_WRITE4 3
-#define USB_CURSOR_WRITE_PENDING_BIT 6
+#define USB_CURSOR_WRITE_PENDING_BIT 4
+#define CMD_PENDING_WRITE4 0x30
+#define CMD_PENDING_RUN 0x40
 #define USB_SETUP_PENDING_BIT 3
 #define USB_SETUP_PENDING_VALUE (USB_SETUP_BYTES + USB_RX_PACKET_OVERHEAD)
 #define CMD_EXIT 4
+/* SWAP of the public request number is the only encoding operation.
+ * Every live marker must remain disjoint from the accepted SETUP bit and
+ * from the other command class in the dispatcher and ACK state machine. */
+#if ((CMD_WRITE4 << 4) != CMD_PENDING_WRITE4) || ((CMD_EXIT << 4) != CMD_PENDING_RUN)
+#error SWAP public-request to pending-marker mapping changed
+#endif
+#if ((CMD_PENDING_WRITE4 & (1 << USB_CURSOR_WRITE_PENDING_BIT)) == 0) || \
+    ((CMD_PENDING_RUN & (1 << USB_CURSOR_WRITE_PENDING_BIT)) != 0) || \
+    ((CMD_PENDING_RUN & (1 << 6)) == 0) || ((CMD_PENDING_WRITE4 & (1 << 6)) != 0)
+#error Deferred WRITE4/RUN ownership bits overlap
+#endif
 #define CMD_DEFERRED_MASK 0x3f
 #define REQ_UNIFIED_READ 0xb0
 #define STATUS_READY 0
@@ -137,7 +150,7 @@
 #if (USB_SETUP_PENDING_VALUE & (1 << USB_SETUP_PENDING_BIT)) == 0
 #error Accepted SETUP must own the pending-state bit
 #endif
-#if (((CMD_SET_MEMORY_ADDRESS + 1) | (CMD_SELECT_AND_ERASE + 1) | CMD_EXIT | SPM_PAGE_WRITE | (1 << USB_CURSOR_WRITE_PENDING_BIT)) & (1 << USB_SETUP_PENDING_BIT)) != 0
+#if (((CMD_SET_MEMORY_ADDRESS + 1) | (CMD_SELECT_AND_ERASE + 1) | CMD_EXIT | SPM_PAGE_WRITE | CMD_PENDING_WRITE4 | CMD_PENDING_RUN) & (1 << USB_SETUP_PENDING_BIT)) != 0
 #error A deferred command collides with the accepted-SETUP state bit
 #endif
 #if PCINT18 != PCIE2

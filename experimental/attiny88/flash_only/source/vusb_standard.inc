@@ -22,8 +22,17 @@ usb_standard_dispatch:
     brne usb_standard_stall
     cpi r25, USB_REQ_GET_INTERFACE
     breq usb_standard_get_status
-/* All validated recipients share GET_STATUS's request-zero check. The
- * interface path falls through; GET_INTERFACE skips that single check. */
+/* Endpoint zero (either direction), also redundant but safe for
+ * interface GET_STATUS, whose wIndex was validated as zero above. */
+usb_standard_endpoint_in:
+    /* R14 is dead on this path after endpoint validation: a successful
+     * GET_STATUS replaces it with the reply pointer, and a rejected request
+     * must not execute any vendor command. Mutate it in place. */
+    /* LSL discards endpoint direction bit7, retaining the zero test
+     * over endpoint bits0..6. Unlike ANDI, it supports low register r14. */
+    lsl r14
+    or r14, r15
+    brne usb_standard_stall
 usb_standard_check_status:
     tst r25
     brne usb_standard_stall
@@ -37,13 +46,6 @@ ee_return_one:
  * specify wLength=1, so the common limiter returns exactly one byte for
  * their specified requests. USB9.4.2/9.4.4 leave other lengths undefined. */
 #include "vusb_replies.inc"
-usb_standard_endpoint_in:
-/* Only endpoint zero exists; either direction of its address is valid. */
-    mov r18, r14
-    andi r18, 0x7f
-    or r18, r15
-    brne usb_standard_stall
-    rjmp usb_standard_check_status
 usb_standard_device_in:
     cpi r25, USB_REQ_GET_DESCRIPTOR
     breq usb_standard_check_get_descriptor
@@ -54,13 +56,18 @@ usb_standard_get_configuration:
     subi r18, LOW8(-(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET + 16))
     rjmp usb_reply_two_byte_flash
 usb_standard_stall:
-    rjmp usb_reply_stall
+usb_reply_stall:
+    ldi r18, USB_PID_STALL
+    std Y+CTX_TX_LENGTH, r18
+    ldi r24, USB_NO_MESSAGE
+    rjmp usb_reply_store_length
 usb_standard_check_get_descriptor:
     rcall usb_service_pending
 /* Device/configuration descriptor number is zero; strings are not provided. */
-    mov r18, r12
-    or r18, r14
-    or r18, r15
+    /* Descriptor's low wValue and wIndex are consumed only by this
+     * validation. A valid request has them all zero. Reuse r12. */
+    or r12, r14
+    or r12, r15
     brne usb_standard_stall
     mov r24, r13
     ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)

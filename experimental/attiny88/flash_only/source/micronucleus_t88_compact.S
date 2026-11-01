@@ -106,7 +106,7 @@ bootloader_dispatch_command:
     rjmp usb_tx_prepare_pending_reply
     sbrc r3, 0
     rjmp flash_erase_selected_page
-    sbrs r3, 2
+    sbrs r3, 6
     rjmp bootloader_clear_command
     or r26, r27
     brne usb_tx_prepare_pending_reply
@@ -191,8 +191,6 @@ bootloader_reset_control_state:
 /* SELECT must establish a new Flash page after reset. */
     mov r5, r17
     ret
-#include "compact_memory.inc"
-#include "vusb_requests.inc"
 usb_service_pending:
     /* Quiet calls share the validator RET. A pending packet reaches RX
      * one clock earlier; its accepted SETUP still aborts the caller. */
@@ -200,3 +198,6 @@ usb_service_pending:
     rcall USB_handler
 #include "vusb_setup.inc"
 #include "vusb_standard.inc"
+/* Cold vendor fragments follow; no execution can fall through from standard. */
+#include "vusb_requests.inc"
+#include "compact_memory.inc"

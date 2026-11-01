@@ -29,8 +29,8 @@ usb_reply_empty:
 bootloader_check_write4:
     cpi r25, 5
     brsh usb_reply_stall
-    cpi r25, CMD_EXIT
-    brsh bootloader_queue_command
-    /* Load each Flash-buffer word exactly once, after status ACK. */
-    ldi r25, (1 << USB_CURSOR_WRITE_PENDING_BIT)
+    /* Only requests 3 and 4 reach here. SWAP encodes WRITE4 as 0x30
+     * (bit4 pending-ACK) and RUN as 0x40 (bit6 deferred exit). This one
+     * word replaces the conditional LDI without losing opcode validation. */
+    swap r25
     rjmp bootloader_queue_command

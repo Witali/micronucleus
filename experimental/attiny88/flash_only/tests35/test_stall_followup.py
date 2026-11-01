@@ -102,7 +102,7 @@ def exchange(art, next_packet, command, direction, pid, rate, entry):
 def check(art):
     bind(art)
     groups = {'IN': 0, 'SETUP': 0}
-    for values in product(('IN', 'SETUP'), (3, 4, 5, 64), (0, 0x40),
+    for values in product(('IN', 'SETUP'), (3, 5, 48, 64), (0, 0x40),
                           (0xc3, 0x4b), (1_499_250, 1_500_000, 1_500_750),
                           (5, 8.25, 16.5, 24.75, 32, 38.25)):
         try:

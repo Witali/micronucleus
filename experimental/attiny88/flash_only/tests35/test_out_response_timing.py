@@ -19,7 +19,7 @@ def receive(art, incoming, entry, tx_length, direction):
     cpu.m[0x10f] = tx_length
     cpu.m[0x114] = 0xe1
     cpu.r[11] = direction
-    cpu.r[3] = 64  # Pending WRITE4 must not be released by an OUT error.
+    cpu.r[3] = 48  # Pending WRITE4 must not be released by an OUT error.
     cpu.r[24:26] = [0xa5, 0xb6]
     cpu.r[4:6] = [0x80, 0]
     handshakes = []
@@ -41,7 +41,7 @@ def receive(art, incoming, entry, tx_length, direction):
         problems.append('expected exactly one STALL')
     if cpu.m[0x10f] != 0x1e or cpu.m[0x114] != 0:
         problems.append('STALL/token state mismatch')
-    expected_command = 64 if tx_length == 0x1e else 0
+    expected_command = 48 if tx_length == 0x1e else 0
     expected_message = 7 if tx_length == 0x1e else 0xe1
     if cpu.r[3] != expected_command or cpu.m[0x100] != expected_message:
         problems.append('pending command/completion state mismatch')

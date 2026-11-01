@@ -9,8 +9,5 @@ memory_read_advance:
     rjmp usb_reply_limit_length
 /* Unsupported control requests fail at Data/Status rather than report a
  * successful zero-length reply. A fresh SETUP resets TX_LENGTH to NAK. */
-usb_reply_stall:
-    ldi r18, USB_PID_STALL
-    std Y+CTX_TX_LENGTH, r18
-    ldi r24, USB_NO_MESSAGE
-    rjmp usb_reply_store_length
+/* Shared STALL handler moved beside the standard-request dispatcher.
+ * Both vendor and standard paths branch to that single entry. */

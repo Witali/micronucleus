@@ -18,7 +18,7 @@ def test():
                 cpu.step()
             else:raise AssertionError('vendor request did not finish')
             assert cpu.r[11]==0,(bm,command,cpu.r[11])
-            expected={2:3,3:64,4:4}[command]
+            expected={2:3,3:48,4:64}[command]
             assert cpu.r[3]==expected,(bm,command,cpu.r[3])
             row=out(art,direction=cpu.r[11],command=cpu.r[3],tx=4)
             assert row['command']==0 and row['tx']==0x1e,row

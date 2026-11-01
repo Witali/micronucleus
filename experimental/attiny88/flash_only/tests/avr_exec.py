@@ -121,6 +121,10 @@ class AVRExec:
             if op=='nop':pass
             elif op=='ldi':self.r[regnum(args[0])]=int(args[1],0)&255
             elif op=='mov':self.r[regnum(args[0])]=self.reg(args[1])
+            elif op=='swap':
+                # SWAP exchanges nibbles without changing any SREG flag.
+                d=regnum(args[0]);value=self.r[d]
+                self.r[d]=((value<<4)|(value>>4))&255
             elif op=='movw':
                 d,s=regnum(args[0]),regnum(args[1]);self.r[d:d+2]=self.r[s:s+2]
             elif op=='ldd':

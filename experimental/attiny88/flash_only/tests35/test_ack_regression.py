@@ -51,13 +51,13 @@ def test():
         for marker in (0, 4, 8, 12):
             for tx_length in (0, 2, 4, 8, 12, 0x5a):
                 outstanding = not bool(tx_length & 0x10)
-                for command in (0, 2, 3, 4, 5, 64):
+                for command in (0, 2, 3, 5, 48, 64):
                     result = dispatch('source', led, boot, marker, tx_length, command)
                     if outstanding:
                         expected = 'usb_tx_prepare_pending_reply'
                     elif command in (3, 5):
                         expected = 'flash_erase_selected_page'
-                    elif command == 4:
+                    elif command == 64:
                         expected = 'bootloader_start_application'
                     else:
                         expected = 'bootloader_clear_command'

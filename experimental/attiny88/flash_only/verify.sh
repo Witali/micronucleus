@@ -3,6 +3,8 @@ set -eu
 cd "$(dirname "$0")"
 python3 -m tests35.test_avr_model
 python3 -m tests35.test_avr_cycles
+python3 -m tests35.test_legacy_swap
+python3 -m tests35.test_pending_commands
 python3 tests34/test_opcode.py
 python3 tests34/test_standard.py
 python3 -m tests35.test_ep0_status
