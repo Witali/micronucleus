@@ -70,16 +70,19 @@ usb_rx_unstuff_bit6:
     rjmp usb_rx_finish_byte_commit
 usb_rx_unstuff_bit7:
 /* The correction mask has bit7 clear. XOR before clearing history gives
- * the same decoded final one, saving the old ORI correction instruction. */
+ * the same decoded final one, saving the old ORI correction instruction.
+ * Do the correction and fractional accounting before reading the mandatory
+ * zero: useful work moves that sample three clocks beyond a legal crossover,
+ * while the following bit0 observation keeps its established clock. */
     mov r16, r17
+    eor r20, r18
+    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+    subi r21, USB_RX_UNSTUFF7_LEAP_ADJUST
     in r17, _SFR_IO_ADDR(PIND)
     andi r17, USB_LINE_MASK
     cp r16, r17
     breq usb_rx_reject_stuff
-    eor r20, r18
-    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
-    subi r21, USB_RX_UNSTUFF7_LEAP_ADJUST
-    rjmp usb_rx_store_decoded_byte
+    rjmp usb_rx_store_bit7_byte
 usb_rx_reject_stuff:
     rjmp usb_rx_ignore_packet
 usb_rx_confirm_raw_byte_eop:
@@ -89,10 +92,33 @@ usb_rx_confirm_raw_byte_eop:
     breq usb_rx_eop_jump
     /* A recovered crossover supplies a zero bit; the previous byte is
      * already stored and no history check can match after this zero. */
-    eor r20, r20
     lsr r18
+usb_rx_recovered_zero_no_shift:
+    eor r20, r20
     rjmp usb_rx_sample_odd_bit
 usb_rx_eop_jump:
+    rjmp usb_rx_end_packet
+/* Bit7's mandatory zero is already observed. Commit its completed byte
+ * before sampling next bit0: only that sample moves two clocks later.
+ * The next odd observation and every later fractional clock are unchanged. */
+usb_rx_store_bit7_byte:
+    st Y+, r20
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_confirm_bit7_byte_eop
+    eor r17, r16
+    eor r20, r20
+    subi r17, 1
+    ror r18
+    /* History cannot need stuffing; R20=0. Reuse one existing one-clock
+     * mask shift before the odd sample instead of a private delay NOP. */
+    rjmp usb_rx_shift_stuff_mask_once
+usb_rx_confirm_bit7_byte_eop:
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    /* Bit7 history already has a zero MSB. It represents the new zero
+     * without another shift; future data/stuff tests overwrite dead bits. */
+    brne usb_rx_recovered_zero_no_shift
     rjmp usb_rx_end_packet
 usb_rx_decode_bit6:
     andi r16, USB_LINE_MASK
@@ -171,6 +197,7 @@ usb_rx_sample_even_bit:
     brbc SREG_C, usb_rx_unstuff_even_bit
 usb_rx_shift_stuff_mask:
     lsr r20
+usb_rx_shift_stuff_mask_once:
     lsr r20
 usb_rx_sample_odd_bit:
     in r17, _SFR_IO_ADDR(PIND)
@@ -186,8 +213,8 @@ usb_rx_advance_bit_pair:
     brbs SREG_C, usb_rx_sample_even_bit
     subi r23, 0x01
     in r16, _SFR_IO_ADDR(PIND)
-    brbc SREG_C, usb_rx_decode_bit6
-    rjmp usb_rx_overflow
+    brne usb_rx_decode_bit6
+    rjmp usb_rx_terminal_bit6
 /* Initial safety probe: two normal partial-EOP observations must span
  * at least four clocks. Recovery/short-EOP timing is measured separately. */
 usb_rx_normal_even_eop:
@@ -217,7 +244,7 @@ usb_rx_reject_stuff_late:
 usb_rx_dribble_odd_end:
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
-    brne usb_rx_reject_stuff_late
+    brne usb_rx_recover_odd5_crossover
     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
     rjmp usb_rx_end_packet
 usb_rx_unstuff_odd_bit:
@@ -241,7 +268,7 @@ usb_rx_unstuff_odd_bit:
      * Preserve an initial-PID seed in R20 rather than assuming it is zero. */
     subi r23, 1
     in r16, _SFR_IO_ADDR(PIND)
-    brbs SREG_C, usb_rx_odd_overflow_local
+    breq usb_rx_odd_overflow_local
     andi r16, USB_LINE_MASK
     eor r17, r16
     /* The old +1 stuffer fraction and -1 bit6 adjustment cancel. */
@@ -252,7 +279,31 @@ usb_rx_unstuff_odd_bit:
 usb_rx_odd5_shift_bit6:
     subi r17, 1
     ror r18
-    rjmp .+0
+    rjmp usb_rx_odd5_observe_bit7
+/* A recovered crossover is not EOF. Position5 has only bits6/7 left,
+ * so the normal path's two-clock delay can repay confirmation latency.
+ * Validate the mandatory transition before installing either counter. */
+usb_rx_recover_odd5_crossover:
+    cp r17, r16
+    breq usb_rx_reject_stuff_late
+    mov r17, r16
+    subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
+    /* Odd1/3 resume their next-even sampler. Odd5 instead repays the
+     * confirmation latency in its remaining bit6/7 schedule. */
+    brbs SREG_C, usb_rx_unstuff_odd_next_even
+    subi r23, 1
+    in r16, _SFR_IO_ADDR(PIND)
+    breq usb_rx_odd_terminal_recovered_local
+    andi r16, USB_LINE_MASK
+    eor r17, r16
+    tst r21
+    brbc SREG_N, usb_rx_recovered_odd5_shift_bit6
+    subi r21, LOW8(-USB_RX_LEAP_PERIOD)
+    nop
+usb_rx_recovered_odd5_shift_bit6:
+    subi r17, 1
+    ror r18
+usb_rx_odd5_observe_bit7:
     nop
     in r17, _SFR_IO_ADDR(PIND)
     andi r17, USB_LINE_MASK
@@ -265,7 +316,11 @@ usb_rx_odd5_shift_bit6:
     andi r18, 0xc0
     rjmp usb_rx_store_decoded_byte
 usb_rx_odd_overflow_local:
-    rjmp usb_rx_overflow
+    rjmp usb_rx_terminal_odd5_normal
+usb_rx_odd_terminal_recovered_local:
+    rjmp usb_rx_terminal_odd5_recovered
+usb_rx_odd_eop_local:
+    rjmp usb_rx_end_packet
 usb_rx_unstuff_odd_next_even:
     /* This is the first stuff in this byte at position1 or3: R20=0.
      * Retire the correction after the next-even sample, preserving its
@@ -273,7 +328,7 @@ usb_rx_unstuff_odd_next_even:
     andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
-    brbs SREG_Z, usb_rx_eop_jump_late
+    brbs SREG_Z, usb_rx_odd_eop_local
     eor r17, r16
     subi r17, 1
     ror r18
@@ -684,3 +739,158 @@ flash_buffer_ack_write4:
 .Lack_write4_restore:
     movw r30, r22
     rjmp usb_handler_packet_done
+
+/* Maximum-packet CRC numeric storage is waived. Keep its raw history in
+ * R18 until EOP; each trailing one shifts the seven-one forbidden threshold.
+ * The normal samples keep bit ownership; extra probes qualify short EOP.
+ * R23 reached zero while decoding the eleventh and final allowed packet byte.
+ * Earlier bytes retain the ordinary sampler, including full CRC positions. */
+/* This initial observation does not count a dribble bit. A recovered
+ * transition is valid only when the completed CRC requires stuffed zero. */
+usb_rx_terminal_early_confirm:
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    brne usb_rx_terminal_early_recovered
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    brsh usb_rx_terminal_early_reject
+    st Y+, r18
+    ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
+    rjmp usb_rx_end_packet
+usb_rx_terminal_early_recovered:
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    brlo usb_rx_terminal_early_reject
+    eor r17, r16
+    cpi r17, USB_LINE_MASK
+    brne usb_rx_terminal_early_reject
+    mov r17, r16
+    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+    ldi r20, 0xfe
+    rjmp usb_rx_terminal_loop
+usb_rx_terminal_early_reject:
+    rjmp usb_rx_ignore_packet
+usb_rx_terminal_bit6:
+    andi r16, USB_LINE_MASK
+    eor r17, r16
+    subi r21, 1
+    brbc SREG_N, usb_rx_terminal_shift6
+    subi r21, LOW8(-USB_RX_LEAP_PERIOD)
+    nop
+usb_rx_terminal_shift6:
+    subi r17, 1
+    ror r18
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    in r17, _SFR_IO_ADDR(PIND)
+    brbc SREG_C, usb_rx_terminal_stuff6
+    andi r17, USB_LINE_MASK
+    eor r16, r17
+    subi r16, 1
+    ror r18
+usb_rx_terminal_finish7:
+    /* Probe EOF before the first timed tail sample; keep the final CRC
+     * symbol observations at their original fractional phases. */
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_early_confirm
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    brbc SREG_C, usb_rx_terminal_stuff7
+usb_rx_terminal_enter:
+    ldi r20, 0xfe
+usb_rx_terminal_loop:
+    /* FE,FC,F8,... is the first forbidden history after each tail one.
+     * A final history at/above that mask would contain seven unstuffed ones.
+     * Keep the 10/10/12 cadence: a constant11 loop undercounts a legal-rate
+     * malformed seven-one tail, while constant10 rejects valid six-one tails. */
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    cp r16, r17
+    brne usb_rx_terminal_reject
+    lsl r20
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    brcc usb_rx_terminal_reject
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    cp r16, r17
+    brne usb_rx_terminal_reject
+    lsl r20
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    brcc usb_rx_terminal_reject
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    cp r16, r17
+    brne usb_rx_terminal_reject
+    lsl r20
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    breq usb_rx_terminal_confirm
+    brcc usb_rx_terminal_reject
+    rjmp usb_rx_terminal_loop
+usb_rx_terminal_confirm:
+    /* Four clocks between full SE0 observations exceed the permitted 210 ns
+     * crossover. Only qualified EOP publishes the final byte and full count. */
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    brne usb_rx_terminal_reject
+    cp r18, r20
+    brsh usb_rx_terminal_reject
+    st Y+, r18
+    ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
+    rjmp usb_rx_end_packet
+usb_rx_terminal_reject:
+    rjmp usb_rx_ignore_packet
+usb_rx_terminal_stuff6:
+    andi r17, USB_LINE_MASK
+    nop
+    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+    cp r16, r17
+    breq usb_rx_terminal_reject
+    mov r16, r17
+    rjmp .+0
+    in r17, _SFR_IO_ADDR(PIND)
+    nop
+    andi r17, USB_LINE_MASK
+    eor r16, r17
+    subi r16, 1
+    ror r18
+    rjmp usb_rx_terminal_finish7
+usb_rx_terminal_stuff7:
+    mov r16, r17
+    in r17, _SFR_IO_ADDR(PIND)
+    andi r17, USB_LINE_MASK
+    cp r16, r17
+    breq usb_rx_terminal_reject
+    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+    rjmp usb_rx_terminal_enter
+/* The normal producer repays the three-clock terminal branch by omitting
+ * its old RJMP/NOP delay. Recovered odd5 has no RJMP credit; its private
+ * continuation keeps the last sample at its old phase or one clock later. */
+usb_rx_terminal_odd5_recovered:
+    andi r16, USB_LINE_MASK
+    eor r17, r16
+    /* Share the normal path's two shifts. Moving the flag-neutral
+     * two-clock jump before them preserves the following PIN sample. */
+    rjmp usb_rx_terminal_odd5_shift6
+usb_rx_terminal_odd5_normal:
+    andi r16, USB_LINE_MASK
+    eor r17, r16
+    tst r21
+    brbc SREG_N, usb_rx_terminal_odd5_shift6
+    subi r21, LOW8(-USB_RX_LEAP_PERIOD)
+    nop
+usb_rx_terminal_odd5_shift6:
+    subi r17, 1
+    ror r18
+usb_rx_terminal_odd5_sample7:
+    in r17, _SFR_IO_ADDR(PIND)
+    andi r17, USB_LINE_MASK
+    eor r16, r17
+    subi r16, 1
+    ror r18
+    andi r18, 0xc0
+    rjmp usb_rx_terminal_enter

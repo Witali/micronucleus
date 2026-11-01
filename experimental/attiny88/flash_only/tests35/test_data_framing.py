@@ -17,8 +17,8 @@ def final_ones(bits):
     return count
 
 
-def ending_packets(setup,length):
-    targets={0,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe}
+def ending_packets(setup,length,targets=None):
+    targets=set(targets) if targets is not None else {0,0x80,0xc0,0xe0,0xf0,0xf8,0xfc,0xfe}
     found={}
     for word in range(65536):
         payload=bytearray([0x40,3,0,0,0x80,0,0,0] if setup else range(length))

@@ -52,6 +52,7 @@ CHECKS = (
     ('test_ack_followup', 'test'),
     ('test_data_framing', 'test'),
     ('test_rx_overflow', 'test'),
+    ('test_rx_terminal_crc', 'test'),
     ('test_token_crossover_admission', 'test'),
     ('test_rx_jitter_spec', 'test'),
     ('test_rx_aperiodic', 'test'),
@@ -68,7 +69,7 @@ RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', default='variants/combined_rx')
-    parser.add_argument('--boot', type=lambda value: int(value, 0), default=0x1a00)
+    parser.add_argument('--boot', type=lambda value: int(value, 0), default=0x1900)
     parser.add_argument('--exhaustive', action='store_true')
     args = parser.parse_args()
     if args.exhaustive:
@@ -80,6 +81,8 @@ def main():
     source = source_dir.relative_to(h.ROOT).as_posix()
     linked = h.build
     art = linked(source=source, mode='NONE', boot=args.boot)
+    if art['boot'] < 0 or art['boot'] + art['size'] > 8192:
+        parser.error('Receiver execution requires code inside physical 8 KiB Flash; use a lower --boot')
 
     def selected(source='source', mode='NONE', boot=None):
         """Keep explicit reference builds independent of the selected candidate."""
