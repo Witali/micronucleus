@@ -8,20 +8,22 @@ import json
 from tests35.phy_model import build, CPU, Wave, data_packet, J, K
 
 
-def single_crossover(wave, index, width=3.36, fraction=0.5):
+def single_crossover(wave, index, width=3.36, fraction=0.5, observed=0):
     """Insert possible single-ended zero reads around one real J/K crossover.
 
     USB2 7.1.4.1 permits both lines below VIH for up to210ns at low speed.
     Below VIH does not guarantee a logical zero, so this is a conservative
     digital observation model. The caller selects one transition; SOP and all
     other crossings remain untouched. Later SYNC transitions are supported.
+    A certified low-threshold witness can instead select both-high observation6.
     """
     time=wave.boundaries[index]
     level=wave.levels[index]
     assert index>=1 and level in (J,K) and level!=wave.levels[index-1]
+    assert observed in (0, J | K)
     label=wave.labels[index]
     wave.boundaries[index:index+1]=[time-width*fraction,time+width*(1-fraction)]
-    wave.levels[index:index+1]=[0,level]
+    wave.levels[index:index+1]=[observed,level]
     wave.labels[index:index+1]=[('crossover',label),label]
     wave.pin_edges=[]
     last=J
