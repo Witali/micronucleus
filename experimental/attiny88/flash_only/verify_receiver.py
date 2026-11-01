@@ -63,6 +63,7 @@ CHECKS = (
     ('test_rx_crossover_wide', 'test'),
     ('test_rx_crossover_asymmetric', 'test'),
     ('test_rx_crossover_payloads', 'test'),
+    ('test_rx_sync_crossover', 'test'),
     ('test_rx_legal_dribble', 'test'),
     ('test_rx_fractional_dribble', 'test'),
     ('test_rx_eop_matrix', 'test'),

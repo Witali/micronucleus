@@ -13,11 +13,12 @@ def single_crossover(wave, index, width=3.36, fraction=0.5):
 
     USB2 7.1.4.1 permits both lines below VIH for up to210ns at low speed.
     Below VIH does not guarantee a logical zero, so this is a conservative
-    digital observation model. SYNC and all other crossovers remain untouched.
+    digital observation model. The caller selects one transition; SOP and all
+    other crossings remain untouched. Later SYNC transitions are supported.
     """
     time=wave.boundaries[index]
     level=wave.levels[index]
-    assert index>=8 and level in (J,K) and level!=wave.levels[index-1]
+    assert index>=1 and level in (J,K) and level!=wave.levels[index-1]
     label=wave.labels[index]
     wave.boundaries[index:index+1]=[time-width*fraction,time+width*(1-fraction)]
     wave.levels[index:index+1]=[0,level]

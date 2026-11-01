@@ -16,7 +16,7 @@ earlier 54-group pass as complete qualification.
 
 | Required behavior | Specification basis | Executable checks |
 | --- | --- | --- |
-| NRZI and eight-symbol low-speed SYNC | Sections 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_tx_digital` |
+| NRZI and eight-symbol low-speed SYNC, including legal single-ended crossover observations during acquisition | Sections 7.1.4.1, 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_rx_sync_crossover`, `test_tx_digital` |
 | Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital`, `test_rx_terminal_bounds` |
 | Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_rx_terminal_crc` |
 | Accept noninteger final-bit stretching with the minimum 670 ns received EOP | Sections 7.1.9.1 and 7.1.13.2 | `test_rx_fractional_dribble` |
