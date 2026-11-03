@@ -19,21 +19,21 @@ At 0x1C00 the baseline without LED is 1030 bytes, six over 1 KiB. The rejected
 its smaller size is not an admission criterion. Active work fixes USB defects
 before treating an optimized image as usable.
 
-The current 1352-byte strict-source image has SHA-256
-`e6d8341acab472bebbbc950b5090a70721f02f5fe33c62671f642c969dadb6b0`.
+The current 1350-byte strict-source image has SHA-256
+`7cbefc1e3edcefbb1e29e0abf7c7d4b4c68652a3b9680f07f15979dda75d9b0b`.
 
 That count belongs to the legacy strict-source audit fixture, which retains
 known receive defects. The separately selected
-[composed receiver](variants/combined_rx/README.md) measures **1784 bytes**
-without LED at **0x1900**, with eight spare bytes in its 28-page region. It shares
+[composed receiver](variants/combined_rx/README.md) measures **1780 bytes**
+without LED at **0x1900**, with twelve spare bytes in its 28-page region. It shares
 the control/Flash code and fixes the directed legal-dribble, short-EOP and
 centered-crossover findings. A newly witnessed asymmetric 210 ns crossover
 still exposes an ordinary receive failure; its strict regression is mandatory.
 Both targets omit permanent EEPROM commands. This control
-image remains 504 bytes above the 1280-byte target.
+image remains 500 bytes above the 1280-byte target.
 
 The separate [shared ACK experiment](variants/ack_terminal/README.md) measures
-1952 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
+1948 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
 qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
 and SYNC still retain the inherited findings. Its identity is FFFF, and it is
 an opt-in implementation checkpoint; the default selection remains unchanged.
@@ -121,7 +121,7 @@ comparison or a claim of identical features.
 | Official v2.6 t88_default, no LED | 1332 |
 | Previous compact v3.0 size milestone, no LED | 1088 |
 | Imported Pass35 Flash-only baseline | 1034 |
-| Current Flash-only strict-source audit checkpoint | 1352 |
+| Current Flash-only strict-source audit checkpoint | 1350 |
 | Corrected Flash-only selected receiver, 2026-11-01 | 1788 |
 
 The official README's published t88_default figure is 1432 bytes; the original
