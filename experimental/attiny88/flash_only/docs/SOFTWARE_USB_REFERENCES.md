@@ -3,7 +3,7 @@
 Reviewed on 2026-11-03 for the ATtiny88, 16 MHz, no-LED, 1280-byte objective.
 The review uses original source and author documentation. Reported upstream
 sizes are not measurements of our complete loader. Current firmware remains
-1784 bytes for the default control and 1952 bytes for the improved ACK variant;
+1780 bytes for the default control and 1948 bytes for the improved ACK variant;
 both retain mandatory receive findings.
 
 The [source index](../tools/external_usb/SOURCES.tsv) pins fourteen inspected
@@ -100,3 +100,27 @@ compact byte publication, and early recovery from partial packets. Every
 candidate must retain exact PID/payload/count, mandatory stuffing, short EOP,
 next-packet acquisition, token CRC5, ACK ownership and Flash guards. A smaller
 component or an upstream enumeration demo does not close those gates.
+
+## Follow-up phase evidence and register remap
+
+The [portable V-USB core tools](../tools/vusb165_core/README.md) retain a
+stronger 286-byte component. A phase delta contributes only when the same
+observation changes both USB bits; selected raw captures and guarded votes
+are retimed within their actual opcode budget. The raw scratch is now R23,
+preserving foreground CRC R0, cached token R24 and CRC-high R25 after every
+executed instruction. The two-clock optional jump remains two clocks.
+
+This exact body, SHA256
+`db2d8a08e86b493754890072b864e77039a93f7993269cbccf66430303b32d55`,
+passes all 585 retained cases and 45 additional pristine controls. Expanding
+the pristine matrix to every byte value finds nine BF-stream failures among
+2304 new cases. The old R0 control fails the same nine cases with identical
+publications and periods. First witness: 1,499,250 bit/s, negative periodic
+jitter, output `bfbfbfbfbf9f5f7f7f7f7f` instead of eleven BF bytes.
+
+The verifier returns failure for that 2934-case run. No expected-failure
+exception is added. Its first observation is supplied centered by the test;
+real SYNC, qualified EOP, malformed packets and protocol integration remain
+unimplemented. The generator checks the original upstream SHA256/Git blob;
+only tools are retained in Git, with generated derivatives in ignored build/.
+Full firmware sizes after the separate local reductions are 1780/1948 bytes.
