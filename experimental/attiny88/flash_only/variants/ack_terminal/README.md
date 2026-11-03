@@ -3,13 +3,18 @@
 This opt-in no-LED variant adds an ACK reader to the existing combined PHY.
 Normal DATA and SYNC retain their known receive findings. The host identity
 is FFFF and no recognized programming profile or hardware image is added.
-The default combined receiver still reproduces its 1788-byte body unchanged.
+The shared default combined receiver currently measures 1784 bytes.
 
-The measured body is **1986 bytes at 0x1800**, SHA256
-`243dc20ad94de7b9fb911aeb79b85f209480cf0be94822ee0db0c54e29d2b549`.
+The measured body is **1952 bytes at 0x1800**, SHA256
+`6d87ba55829718016ba463d3cf4ce8ca11dc135e925674c325f68e6b150a5ced`.
 That placement reserves 2048 bytes, leaves the application postscript at
 0x17FC..0x17FF and permits 6140 application bytes linked at zero. This remains
 an experimental software checkpoint, not a qualified replacement loader.
+
+An additional placement measurement at 0x1840 is 1956 bytes, fitting a
+1984-byte region (31 pages). It leaves the postscript at 0x183C..0x183F and
+6204 application bytes. This is a separate unknown-profile measurement with
+its own limited checks, recorded in the November 3 report below.
 
 ## Implementation
 
@@ -19,9 +24,11 @@ normal receive, TX, protocol, Flash and ACK-ownership code.
 
 - PIDbit0 is classified against final SYNC K at the measured acquisition
   phase. A legal SE0/SE1 observation during its zero cannot become an odd PID.
-- Six middle bits use a sentinel and three rotating raw-register roles.
+- Six middle bits use a sentinel and one loop with a copied raw SECOND.
   Previous-second versus current-first observations decode permitted erasures
-  without a general GPIO-state selector or an expected-line register. This
+  without a general GPIO-state selector or an expected-line register. A cold
+  FIRST-SE0 continuation preserves early EOP rejection and exactly funds the
+  copy while retaining the normal sample clocks. This
   bounded eleven-clock loop is specific to the short ACK PID.
 - Twenty-three two-clock polls cover the legal final stretch. An opposite
   interval can shrink below four clocks between legal SE1 observations;
@@ -37,7 +44,9 @@ normal receive, TX, protocol, Flash and ACK-ownership code.
 
 The earlier strict ACK reference was 2002 bytes at the same placement.
 Delay-slot work, removal of redundant checks and direct jumps reduce that
-body by 16 bytes. The initial larger source's stack-return trick is unnecessary
+body to 1986 bytes. A single middle loop and shared cold rejection jump save
+30 more bytes; the shared TX/context changes save another four. The initial
+larger source's stack-return trick is unnecessary
 for this ACK-specific fixed tail bound.
 
 ## Validation scope
@@ -50,6 +59,12 @@ witnesses include both permitted single-ended observation states.
 The inherited normal DATA/SYNC failures remain mandatory. A full selector run
 must keep reporting them; ACK-only results do not qualify the entire loader.
 The 1280-byte target is still unachieved.
+
+Three additional gates check 41148 premature raw PID prefixes, 162 empty PIDs
+and 252 truncated ACK-to-next-SETUP exchanges. Omitting the early EOP check
+saved more bytes but failed 12 of those recovery cases; that shortcut was
+rejected. Exact current results and the component-versus-composed distinction
+are in the [November 3 record](../../docs/USB_SIZE_2026_11_03.md).
 
 Build or run the complete, strict selection from the Flash-only directory:
 

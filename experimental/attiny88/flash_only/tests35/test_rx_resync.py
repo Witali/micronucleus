@@ -13,7 +13,7 @@ from tests35.test_token_framing_wire import crc5
 SETUP = bytes([0x80, 6, 0, 1, 0, 0, 18, 0])
 
 
-def run(art, kind, rate, width, phase):
+def run(art, kind, rate, width, phase, ack_prefix_bits=None):
     period = 16_000_000 / rate
     if kind == 'stuff':
         packet = h.data_packet(bytes([255]) * 8, 0xc3)
@@ -25,7 +25,13 @@ def run(art, kind, rate, width, phase):
     else:
         assert kind == 'ack_tail'
         # Same illegal zero ACK tail as test_usb_rx_waveforms.test_partial.
-        bad = from_bits(Bits(b'\xd2').bits + [0], rate, width)
+        if ack_prefix_bits is None:
+            bad = from_bits(Bits(b'\xd2').bits + [0], rate, width)
+        else:
+            # A PID must contain eight bits. This ends a genuine ACK prefix
+            # early, then requires recovery into a separate minimum-gap SETUP.
+            assert 1 <= ack_prefix_bits <= 7
+            bad = from_bits(Bits(b'\xd2').bits[:8 + ack_prefix_bits], rate, width)
         host_gap = 2 * period  # An ACK expects no further response.
     token = Bits(h.token(0x2d), start=bad.boundaries[-2] + host_gap, rate=rate)
     data = Bits(h.data_packet(SETUP), start=token.boundaries[-2] + 2 * period,
@@ -108,7 +114,8 @@ def run(art, kind, rate, width, phase):
                 # the malformed tail. Visiting the old residual-EOF label is
                 # not a wire requirement. Keep cancellation, no reply/SPM,
                 # complete following SETUP and stack checks above unchanged.
-                tail_start = bad.boundaries[len(Bits(b'\xd2').bits)]
+                tail_start = (bad.boundaries[len(Bits(b'\xd2').bits)]
+                              if ack_prefix_bits is None else bad.boundaries[-3])
                 assert rejection and any(tail_start <= sample[0] <= rejection[0][0]
                                          for sample in cpu.io.samples), (
                     'malformed ACK tail was not observed before discard', case)

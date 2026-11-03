@@ -24,16 +24,16 @@ The current 1352-byte strict-source image has SHA-256
 
 That count belongs to the legacy strict-source audit fixture, which retains
 known receive defects. The separately selected
-[corrected receiver](variants/combined_rx/README.md) measures **1788 bytes**
-without LED at **0x1900**, with four spare bytes in its 28-page region. It shares
+[composed receiver](variants/combined_rx/README.md) measures **1784 bytes**
+without LED at **0x1900**, with eight spare bytes in its 28-page region. It shares
 the control/Flash code and fixes the directed legal-dribble, short-EOP and
 centered-crossover findings. A newly witnessed asymmetric 210 ns crossover
 still exposes an ordinary receive failure; its strict regression is mandatory.
 Both targets omit permanent EEPROM commands. This control
-image remains 508 bytes above the 1280-byte target.
+image remains 504 bytes above the 1280-byte target.
 
 The separate [shared ACK experiment](variants/ack_terminal/README.md) measures
-1986 bytes at 0x1800. It uses compact middle-bit loops and a shared dense EOP
+1952 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
 qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
 and SYNC still retain the inherited findings. Its identity is FFFF, and it is
 an opt-in implementation checkpoint; the default selection remains unchanged.
@@ -67,7 +67,9 @@ archive/source hashes are in ARCHIVE_PROVENANCE.json.
 ## Software qualification and scope
 
 The [current software audit](docs/USB_AUDIT_2026_11_01.md) records the exact
-corrected receiver, size, test provenance and limits. The
+earlier receiver, test provenance and limits. The
+[November 3 size record](docs/USB_SIZE_2026_11_03.md) records the newer byte
+counts and selected-image checks without closing the known receive findings. The
 [Pass40 integration record](docs/PASS40_IMPORT.md) tracks the imported handoff
 and size reductions. The [October audit](docs/USB_AUDIT_2026_10_30.md) remains a
 historical result for its exact image; its open findings are not the current

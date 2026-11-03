@@ -5,50 +5,43 @@
  *
  * Each middle cell reads at offsets 0 and 2 and compares the preceding cell's
  * SECOND observation with this cell's FIRST. A permitted 210 ns erasure cannot
- * span their 8/9-clock separation. Three register roles rotate, so outside-pin
- * noise is masked from the XOR without a MOV or an expected-line register.
+ * span their 8/9-clock separation. Mask FIRST before decoding and copy SECOND
+ * into the previous-line register. A cold FIRST-SE0 path funds that MOV while
+ * retaining the early pair-zero EOP rejection and arbitrary outside-pin noise.
  * The six-cell loop is ACK-specific: eleven clocks per taken cell, ten for
  * its final fallthrough. It is not a general DATA sampling schedule.
  */
 #if PCIF2 != USB_PLUS_BIT
 #error ACK delay-slot mask requires PCIF2 to match the USB D+ bit
 #endif
+usb_rx_ack_zero_first:
+    /* A permitted FIRST-only SE0 excursion marks a transition, hence zero.
+     * Its stable SECOND must be nonzero; two zero observations still reject.
+     * This branch decodes/joins at the same clocks as the normal path. */
+    andi r19, USB_LINE_MASK
+    breq usb_rx_ack_loop_bad
+    lsr r18
+    mov r16, r19
+    brcc usb_rx_ack_loop_0
+usb_rx_ack_loop_bad:
+    /* The last middle ACK bit is one, so a terminal cold zero is already an
+     * invalid numeric PID. Share this existing rejection jump with both EOP
+     * guards instead of adding a second out-of-line error trampoline. */
+    rjmp usb_rx_ignore_packet
 usb_rx_ack_entry:
     ldi r16, (1 << USB_MINUS_BIT)
 usb_rx_ack_loop_0:
+    /* Normal: samples0/2, BREQ not taken, decode at4..7, MOV at8, loop at9.
+     * FIRST-SE0: BREQ taken, SECOND check5/6, LSR7, MOV8, loop9. */
     in r17, _SFR_IO_ADDR(PIND)
-    eor r16, r17
-    in r19, _SFR_IO_ADDR(PIND)
-    or r17, r19
     andi r17, USB_LINE_MASK
-    breq usb_rx_ack_loop_bad
+    in r19, _SFR_IO_ADDR(PIND)
+    breq usb_rx_ack_zero_first
+    eor r16, r17
     andi r16, USB_LINE_MASK
     subi r16, 1
     ror r18
-    rjmp usb_rx_ack_loop_1
-usb_rx_ack_loop_bad:
-    rjmp usb_rx_ignore_packet
-usb_rx_ack_loop_1:
-    in r16, _SFR_IO_ADDR(PIND)
-    eor r19, r16
-    in r17, _SFR_IO_ADDR(PIND)
-    or r16, r17
-    andi r16, USB_LINE_MASK
-    breq usb_rx_ack_loop_bad
-    andi r19, USB_LINE_MASK
-    subi r19, 1
-    ror r18
-    rjmp usb_rx_ack_loop_2
-usb_rx_ack_loop_2:
-    in r19, _SFR_IO_ADDR(PIND)
-    eor r17, r19
-    in r16, _SFR_IO_ADDR(PIND)
-    or r19, r16
-    andi r19, USB_LINE_MASK
-    breq usb_rx_ack_loop_bad
-    andi r17, USB_LINE_MASK
-    subi r17, 1
-    ror r18
+    mov r16, r19
     brcc usb_rx_ack_loop_0
 /* Bit7 of a numeric ACK is one. Keep its sampled line and defer its final
  * ROR until EOP, funding the first tail poll six clocks after this read. */
