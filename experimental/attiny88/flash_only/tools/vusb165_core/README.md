@@ -101,3 +101,54 @@ Mixed erasure polarities, aperiodic jitter, arbitrary packet shapes, malformed
 stuffed symbols, minimum-width EOP, protocol effects and physical hardware
 remain outside this bounded component matrix. A per-delta guard is not a proof
 that all retained phase inputs are unambiguous under every such waveform.
+
+
+## Exact-clock bounded publication option
+
+The R23 `--stuff4-delay --pointer-bound` option replaces the byte decrement
+and underflow branch at bit2 with an SRAM-pointer compare and upper-bound
+branch at the same instruction clocks. It remains 288 bytes, SHA256
+`2cc5de3cbf7a1c0072ea92fc63a72e4dca7e5cd6987bcfce520d5d98903a9959`.
+The default historical and 288-byte unbounded options remain unchanged.
+
+The caller starts Y at `0x115` only to write back the existing configuration
+byte through the initial dummy publication; it must preload correction XOR
+shift so that this store preserves that byte. Actual RX storage is
+`0x116..0x120`, with exclusive end `0x121`. An overlength source reaches
+`overflow` before any store to `0x121`. R22 is no longer modified, so it is
+available to a future framer. R0, R1, R2..R15, R22, R24, R25 and context Z
+are checked after each executed opcode.
+
+```sh
+python3 tools/vusb165_core/generate.py \
+  --input /path/to/usbdrvasm165.inc \
+  --stuff4-delay --pointer-bound \
+  --output build/vusb165-core/pointer/receiver.S
+python3 tools/vusb165_core/verify_bound.py \
+  --source build/vusb165-core/pointer/receiver.S \
+  --output build/vusb165-core/pointer/bound-check \
+  --all-byte-values \
+  --expected-sha256 2cc5de3cbf7a1c0072ea92fc63a72e4dca7e5cd6987bcfce520d5d98903a9959
+```
+
+The expanded check executes 2934 overlength-stream cases: 630 retained
+rate/jitter/SE0/SE1 controls and 2304 pristine byte-value cases. Every case
+must publish eleven exact bytes, preserve configuration `0x115`, keep Y at
+`0x121`, preserve the protected registers/context and return through overflow
+with all following canaries unchanged. Without `--all-byte-values`, it runs
+the 630 retained controls. Generated objects, binaries and reports belong
+under ignored `build/` output.
+
+The overflow assertion requires the named bit2 upper-bound branch as its
+actual predecessor. An early SE0 branch to the same component RET cannot
+substitute for the buffer-ceiling proof.
+
+The measured private audit also compared 270 baseline/bounded observation
+prefixes: each PIN read had the same clock, PC and raw level, and publication
+bytes matched. A future qualified framer can inline `mov r23,r28` followed by
+`subi r23,0x16` to derive length in two clocks/four bytes while preserving Y,
+Z and a raw recovery-J sample in R21. This is conditional interface evidence:
+the missing caller must establish nonempty, exact framing, legal final stuff
+and dribble, a valid EOP and live recovery J before entering protocol logic.
+This option does not make the inherited bit1-only SE0 probe a qualified
+receiver and must not be used as a hardware programming image.

@@ -37,7 +37,7 @@ def phase_update(block, replacement):
     return block
 
 
-def generate(data, raw_register=23, stuff4_delay=False):
+def generate(data, raw_register=23, stuff4_delay=False, pointer_bound=False):
     """Keep source identity and exact cold-path transformations reviewable."""
     if hashlib.sha256(data).hexdigest() != SOURCE_SHA256:
         raise ValueError('The supplied source differs from the pinned upstream SHA256')
@@ -100,6 +100,15 @@ def generate(data, raw_register=23, stuff4_delay=False):
                     '    ori     shift, 0x10\n    nop\n    rjmp    didUnstuff4\n')
     if raw_register == 23:
         text = re.sub(r'\br0\b', 'r23', text)
+    if pointer_bound:
+        if raw_register != 23 or not stuff4_delay:
+            raise ValueError('Pointer-bound mode requires R23 and --stuff4-delay')
+        # Y starts at 0x115 only for the preserved dummy configuration store.
+        # Actual RX bytes occupy 0x116..0x120. Reject before a twelfth store.
+        # CPI/BRSH retain the SUBI/BRCS instruction widths and capture clocks.
+        text = once(text,
+                    '    subi    cnt, 1\n    in      r23, USBIN\n    brcs    overflow\n',
+                    '    cpi     r28, 0x21\n    in      r23, USBIN\nrx_bound_overflow_branch:\n    brsh    overflow\n')
     if re.search(r'^\s*lpm\b', text, flags=re.M):
         raise ValueError('Unexpected implicit R0-clobbering LPM remains')
     header = f'''/* Experimental, centered-entry receive-core component.
@@ -144,15 +153,18 @@ def main():
     parser.add_argument('--raw-register', type=int, choices=(0, 23), default=23)
     parser.add_argument('--stuff4-delay', action='store_true',
                         help='Add the measured after-read stuffed4 delay (288-byte component)')
+    parser.add_argument('--pointer-bound', action='store_true',
+                        help='Bound RX at 11 actual SRAM bytes; requires R23 and --stuff4-delay')
     args = parser.parse_args()
     data = urlopen(URL, timeout=30).read() if args.download else args.input.read_bytes()
-    source = generate(data, args.raw_register, args.stuff4_delay)
+    source = generate(data, args.raw_register, args.stuff4_delay, args.pointer_bound)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(source, encoding='utf-8', newline='\n')
     args.output.with_suffix('.provenance.json').write_text(json.dumps(dict(
         upstream_commit=COMMIT, upstream_path=UPSTREAM_PATH, upstream_sha256=SOURCE_SHA256,
         upstream_git_blob=SOURCE_GIT_BLOB, generated_sha256=hashlib.sha256(source.encode()).hexdigest(),
-        raw_register=args.raw_register, stuff4_delay=args.stuff4_delay), indent=2) + '\n')
+        raw_register=args.raw_register, stuff4_delay=args.stuff4_delay,
+        pointer_bound=args.pointer_bound), indent=2) + '\n')
     print(str(args.output))
 
 
