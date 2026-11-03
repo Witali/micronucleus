@@ -69,11 +69,12 @@ usb_standard_check_get_descriptor:
     or r12, r14
     or r12, r15
     brne usb_standard_stall
-    mov r24, r13
+    /* wValue.high is consumed only by this descriptor selection. In-place
+     * decrements admit exactly types 1 and 2 without a separate scratch copy. */
     ldi r18, LOW8(BOOT_AT + USB_DEVICE_DESCRIPTOR_OFFSET)
-    cpi r24, USB_DESCRIPTOR_DEVICE
+    dec r13
     breq desc_ptr
-    cpi r24, USB_DESCRIPTOR_CONFIGURATION
+    dec r13
     brne usb_standard_stall
     ldi r18, LOW8(BOOT_AT + USB_CONFIGURATION_OFFSET)
 desc_ptr:
