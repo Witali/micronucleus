@@ -6,6 +6,7 @@ fixture legality alone never proves that the AVR received it correctly.
 """
 import os
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.phy_model import eop_wave
 from tests35.rx_jitter_patterns import corners,interval_errors
@@ -33,8 +34,7 @@ def test():
                     interval_errors(wire)
                     for entry in entries:
                         cpu=h.CPU(art,wire,entry)
-                        cpu.m[0x10c]=address
-                        cpu.r[8]=packet[2] if kind=='IN' else 0x10
+                        seed_active(cpu,address,packet[2] if kind=='IN' else 0x10)
                         cpu.m[0x10f]=0x5a if kind!='OUT' else 4
                         cpu.r[4:6]=[0x80,0];cpu.r[14:16]=[0x88,0]
                         cpu.r[11]=0x80 if kind=='OUT' else 0

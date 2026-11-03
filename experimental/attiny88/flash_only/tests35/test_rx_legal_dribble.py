@@ -8,6 +8,7 @@ not use the firmware's classifier or the existing packet encoder.
 import os
 
 from tests35 import ep0_model as h
+from tests35.address_state import active,seed_active
 from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 from tests35.phy_model import complete_frame_entries
@@ -68,7 +69,8 @@ def receive(art, kind, packet, wave, entry, legal):
     cpu.r[24:26] = [0xa5, 0xb6]
     cpu.r[4:6] = [0x80, 0]
     cpu.m[0x10f] = 12 if kind == 'ACK' else 0x5a
-    cpu.m[0x10c], cpu.m[0x113] = 6, 0x24
+    seed_active(cpu,6)
+    cpu.m[0x113] = 0x24
     cpu.r[2] = 12 if kind == 'ACK' else 0
     if kind == 'ACK':
         seed_pending(cpu, 0x24)
@@ -98,12 +100,12 @@ def receive(art, kind, packet, wave, entry, legal):
         if not complete:
             errors.append('complete PID/payload/CRC positions')
         if kind == 'ACK':
-            if not accepted or cpu.r[2] or cpu.m[0x10f] != 0x5a or cpu.m[0x10c] != 0x24:
+            if not accepted or cpu.r[2] or cpu.m[0x10f] != 0x5a or active(cpu) != 0x24:
                 errors.append('eligible ACK did not retire DATA/apply address')
         elif (cpu.r[3] != 11 or cpu.r[2] or cpu.m[0x114] or
               cpu.r[12:16] + cpu.r[6:8] != list(packet[3:-2])):
             errors.append('SETUP fields/token ownership')
-    elif accepted or cpu.r[3] == 11 or cpu.m[0x10c] != 6:
+    elif accepted or cpu.r[3] == 11 or active(cpu) != 6:
         errors.append('seven unstuffed ones authorized a packet')
     expected_replies = [(2, 0xd2)] if legal and kind == 'SETUP' else []
     if replies != expected_replies:

@@ -34,7 +34,7 @@ usb_setup_capture_fields:
     /* Only SET_ADDRESS owns a pending address; its accepted R12 survives
      * the empty status packet. Other transfers need no address/CRC copy. */
     ldi r18, USB_PID_DATA0
-    mov r9, r18
+    mov r10, r18
     rcall usb_service_pending
 /* Preserve full R24 for standard dispatch. The computer validates vendor
  * request fields; only standard/class/vendor sorting belongs here. */

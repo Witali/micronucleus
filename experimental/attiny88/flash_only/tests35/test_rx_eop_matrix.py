@@ -5,6 +5,7 @@ must not authorize a packet, and a legal 670 ns EOP must not be discarded.
 The separate malformed-token crossover gate remains mandatory.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.phy_model import from_bits, complete_frame_entries
 from tests35.rx_jitter_patterns import corners
@@ -38,7 +39,7 @@ def receive(art,packet,incoming,entry):
     cpu=h.CPU(art,incoming,entry);cpu.r[24:26]=[0xa5,0xb6]
     cpu.m[0x10f]=0x5a
     if packet[0] in (0x69,0x2d,0xe1):
-        cpu.m[0x10c]=packet[1];cpu.r[8]=packet[2]
+        seed_active(cpu,packet[1],packet[2])
     if packet[0] in (0xc3,0x4b):
         cpu.m[0x114]=0x2d if packet[0]==0xc3 else 0xe1
         cpu.r[11]=0xc0

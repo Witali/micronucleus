@@ -4,6 +4,7 @@ Execute the linked reset path. Only repeated disconnect-delay iterations are
 fast-forwarded; their counter, clocks and final SBIW/BRNE still execute exactly.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import active,active_crc,reset_offsets
 from tests35.address_state import register_pending
 from tests35.ep0_cases import bind, Bits
 from tests35.test_ep0_standard import Quiet
@@ -38,9 +39,10 @@ def cold(art, seed):
         raise AssertionError('cold startup did not reach USB polling')
     assert slices == 44 and 0.29 * 16000000 < cpu.t < 0.31 * 16000000
     assert not cpu.raw_stack and cpu.r[1:4] == [0, 0, 0]
-    assert cpu.r[5] == 255 and cpu.r[6:9] == [0, 0, 0x10] and cpu.r[11] == 0
+    assert cpu.r[5] == 255 and cpu.r[6:8] == [0,0] and active(cpu) == 0 and active_crc(cpu) == 0x10 and cpu.r[11] == 0
     assert cpu.word(28) == 0x100
-    expected = {0:255, 12:0, 15:0x5a, 20:0, 21:0}
+    expected = {0:255, 15:0x5a, 20:0, 21:0}
+    expected.update({offset:0 for offset in reset_offsets(cpu)})
     if not register_pending(cpu):
         expected[19] = 0
     assert all(cpu.m[0x100+n] == value for n,value in expected.items())
@@ -78,13 +80,13 @@ def test():
             assert replies == ([(2, 0x5a)] if packet == h.token(0x69) else []), (seed, packet.hex(), replies)
             assert bool(events) == (packet == h.token(0x69))
             assert cpu.r[2:4] == [0, 0] and cpu.r[5] == 255
-            assert cpu.m[0x10c] == cpu.m[0x114] == 0
+            assert active(cpu) == cpu.m[0x114] == 0
             cases += 1
         cpu = cold(art, seed)
         replies, _ = exchange(cpu, wave_for())
         assert replies == [(2, 0xd2)] and cpu.r[3] == 11
         assert cpu.r[12:16] + cpu.r[6:8] == list(SETUP[2:])
-        assert cpu.m[0x10f] == 0x5a and cpu.m[0x10c] == 0
+        assert cpu.m[0x10f] == 0x5a and active(cpu) == 0
         cpu.pc = cpu.labels['bootloader_process_pending_command']
         replace_wire(cpu, Quiet())
         for _ in range(3000):

@@ -7,6 +7,7 @@
 #define CTX_TX_PAYLOAD 2
 #define CTX_REPLY_SCRATCH 16
 #define CTX_REPLY_SCRATCH_HIGH 17
+/* Historical active-address SRAM; current address/CRC lives in R8:R9. */
 #define CTX_DEVICE_ADDRESS 12
 #define CTX_INPUT_BUFFER_OFFSET 14
 #define CTX_TX_LENGTH 15

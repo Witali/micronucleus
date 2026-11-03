@@ -5,6 +5,7 @@ metastability and oscillator drift. Passing this is not USB certification.
 """
 import json, os, random
 from tests35.phy_model import *
+from tests35.address_state import seed_active
 
 
 def receive(art, packet, wave, entry):
@@ -111,7 +112,7 @@ def test_stuff_errors(art):
         wire=from_bits(bits_wave(packet,at)[0].bits,rate)
         cpu=CPU(art,wire,entry);cpu.m[0x114]=0xE1;cpu.m[0x10f]=0x5A
         if packet[0] in (0x69,0x2D,0xE1):
-            cpu.m[0x10c]=packet[1]&127;cpu.r[8]=packet[2]
+            seed_active(cpu,packet[1]&127,packet[2])
         detected=False;admitted=False
         names={value:name for name,value in art['symbols'].items() if name.startswith('usb_rx_unstuff_')}
         for _ in range(10000):

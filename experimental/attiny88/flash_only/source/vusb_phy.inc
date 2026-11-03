@@ -249,13 +249,12 @@ usb_rx_recovered_j:
     /* Treat length, address/endpoint and CRC5 as one virtual compare.
      * CPC preserves a cleared Z, so no later field can cancel a mismatch. */
     cpi r23, 3
-    ldd r18, Z+CTX_DEVICE_ADDRESS
     ldd r17, Z+(CTX_RX_BUFFER + USB_PACKET_ADDRESS_OFFSET)
-    cpc r17, r18
+    cpc r17, r8
     /* Cache endpoint-zero CRC5 per address, without a lookup table.
      * The full-byte comparison also rejects endpoint bits 1..3. */
     ldd r17, Z+(CTX_RX_BUFFER + (USB_PACKET_ADDRESS_OFFSET + 1))
-    cpc r17, r8
+    cpc r17, r9
     brne usb_rx_ignore_packet
     cpi r16, USB_PID_IN
     brne .Lrx_not_in
@@ -311,13 +310,14 @@ usb_rx_accept_ack:
     sbrc r3, USB_CURSOR_WRITE_PENDING_BIT
     rjmp flash_buffer_ack_write4
 usb_pending_address_r12:
-    /* Zero-byte ABI marker: only SET_ADDRESS owns R12/R10 and R11 bit5.
-     * Ordinary ACKs retain their active address/cache without copying them. */
+    /* Zero-byte ABI marker: only SET_ADDRESS owns R12:R13 and R11 bit5.
+     * Ordinary ACKs retain their active R8:R9 pair without copying it. */
     sbrs r11, USB_SET_ADDRESS_PENDING_BIT
     rjmp usb_handler_packet_done
 usb_rx_commit_pending_address:
-    std Z+CTX_DEVICE_ADDRESS, r12
-    mov r8, r10
+usb_active_address_r8r9:
+    /* Pair accepted address/CRC atomically after full status ACK. */
+    movw r8, r12
     rjmp usb_handler_packet_done
 usb_rx_reject_ack:
     rjmp usb_rx_ignore_packet

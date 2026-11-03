@@ -1,6 +1,7 @@
 """Raw-wire fixtures using the shared linked AVR/GPIO execution adapter."""
 from functools import lru_cache
 from tests35.ep0_model import CPU,build,Wave,token,data_packet,J,K,dec,raw_decode
+from tests35.address_state import seed_active
 
 
 @lru_cache(maxsize=65536)
@@ -29,7 +30,7 @@ def probe(art,packet,entry=8,address=0,cache=0x10,period=None,wave=None):
     wave=wave or Wave(packet,start=0,**({'rate':16_000_000/period} if period is not None else {}))
     cpu=CPU(art,wave,entry)
     cpu.m[0x10f]=0x5A
-    cpu.m[0x10c]=address;cpu.r[8]=cache
+    seed_active(cpu,address,cache)
     checkpoints={name:[] for name in ['usb_rx_end_packet','usb_rx_handle_in','usb_rx_handle_setup_or_out','usb_rx_ignore_packet','usb_return_context']}
     at={cpu.labels[name]:name for name in checkpoints}
     for _ in range(10000):

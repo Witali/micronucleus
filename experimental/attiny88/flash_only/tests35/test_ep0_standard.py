@@ -6,6 +6,7 @@ This is a semantic oracle; Pass33/Pass35 opcode identity is not correctness.
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import active
 from tests35.address_state import pending
 from tests35.ep0_cases import bind
 
@@ -31,13 +32,13 @@ def request(art,bm,req,value=0,index=0,length=8,config=1):
             count=cpu.m[0x100];ptr=cpu.word(14)
             if cpu.m[0x10f]==0x1e:
                 assert count==0xff and cpu.r[3]==0 and cpu.r[6:8]==[0,0]
-                return dict(kind='stall',config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=cpu.m[0x10c])
+                return dict(kind='stall',config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=active(cpu))
             payload=bytes(cpu.flash[ptr+i] for i in range(count)) if count else b''
-            return dict(kind='reply',count=count,payload=payload.hex(),config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=cpu.m[0x10c])
+            return dict(kind='reply',count=count,payload=payload.hex(),config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=active(cpu))
         if cpu.pc==cpu.labels['bootloader_check_idle_timeout']:
             assert cpu.m[0x10f]==0x1e and cpu.m[0x100]==0xff
             assert cpu.r[3]==0 and cpu.r[6:8]==[0,0]
-            return dict(kind='stall',config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=cpu.m[0x10c])
+            return dict(kind='stall',config=cpu.m[0x115],pending=pending(cpu),command=cpu.r[3],address=active(cpu))
         at=cpu.pc-art['boot']
         if art['body'][at:at+2]==b'\xe8\x95':
             return dict(kind='spm',command=cpu.r[3],address=cpu.word(30))

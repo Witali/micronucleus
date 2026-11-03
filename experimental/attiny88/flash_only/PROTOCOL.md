@@ -44,11 +44,14 @@ or bus reset cancels the obsolete unacknowledged request and its queued work.
 SET_ADDRESS becomes active only after its status ACK.
 
 The internal pending-address ABI is identified by the zero-byte ELF symbol
-`usb_pending_address_r12`. The accepted address stays in protected R12 and its
-endpoint-zero CRC5 byte in R10. R11 bit5 marks SET_ADDRESS ownership; ordinary
+`usb_pending_address_r12`. The accepted address stays in protected R12. With
+the additional `usb_active_address_r8r9` symbol, its pending endpoint-zero CRC5
+byte is in R13, and the active address/cache is R8:R9. R10 holds the TX DATA PID.
+The earlier register-pending layout used R10 for pending CRC and SRAM12/R8 for
+the active address/cache. R11 bit5 marks SET_ADDRESS ownership; ordinary
 successful requests have that bit clear because class/reserved request routing
 rejects it. ACK still requires the independent live R2 eligibility marker and
-complete framing before it can copy R12/R10 to the active address/R8 cache.
+complete framing before an atomic MOVW can publish R12:R13 to active R8:R9.
 Replacing SETUP overwrites the owner, and reset clears R11 and active state.
 Historical images without this symbol use context offset 19 instead; that offset
 is now dead and need not be reset. This storage change is not a wire command or

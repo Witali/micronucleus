@@ -9,6 +9,7 @@ The finite cases exercise four ending routes without assuming their encoding.
 import math
 
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.test_ep0_token_timeout import Joined
 
@@ -69,8 +70,7 @@ def packet_wave(packet, tail, width, rate, jitter=None, start=0):
 def cpu_for(art, wire, pid, address, entry):
     bind(art)
     cpu = h.CPU(art, wire, entry)
-    cpu.m[0x10c] = address
-    cpu.r[8] = cpu.r[10] = h.token(pid, address=address)[2]
+    seed_active(cpu,address,h.token(pid,address=address)[2])
     cpu.m[0x10f], cpu.m[0x100] = 12, 0xff
     cpu.r[11], cpu.r[4:6] = 0xc0, [0x80, 0]
     cpu.r[12:16] = [0xa5, 0xb6, 0x88, 0]

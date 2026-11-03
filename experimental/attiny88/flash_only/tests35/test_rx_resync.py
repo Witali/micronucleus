@@ -5,6 +5,7 @@ EOP and a legal host gap. This checks digital-model recovery through the actual
 foreground loop; it does not prove quarantine of arbitrary malformed streams.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import active,active_crc,seed_active
 from tests35.address_state import seed_pending
 from tests35.ep0_cases import Bits, bind
 from tests35.phy_model import bits_wave, from_bits
@@ -45,8 +46,7 @@ def run(art, kind, rate, width, phase, ack_prefix_bits=None):
     cpu.m[0x10f] = 12 if kind == 'ack_tail' else 0x5a
     cpu.m[0x114] = 0 if kind == 'ack_tail' else 0x2d
     cpu.m[0x113] = 5 if kind == 'ack_tail' else 0
-    cpu.r[8] = 0x10
-    cpu.r[10] = crc5(5) << 3 if kind == 'ack_tail' else 0x10
+    seed_active(cpu,0,0x10)
     cpu.r[2] = 12 if kind == 'ack_tail' else 0
     cpu.r[3] = 0
     cpu.r[4:6] = [0x80, 0]
@@ -78,7 +78,7 @@ def run(art, kind, rate, width, phase, ack_prefix_bits=None):
                 'authorization survived error', case, cpu.r[2], cpu.m[0x114])
             assert cpu.r[3] == 0 and cpu.word(4) == 0x80, (
                 'bad frame changed command/cursor', case)
-            assert cpu.m[0x10c] == 0 and cpu.r[8] == 0x10, (
+            assert active(cpu) == 0 and active_crc(cpu) == 0x10, (
                 'bad ACK committed address/cache', case)
             assert cpu.m[0x10f] == (12 if kind == 'ack_tail' else 0x5a), (
                 'bad frame retired reply', case)

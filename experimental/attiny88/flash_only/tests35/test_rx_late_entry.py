@@ -5,6 +5,7 @@ foreground entry. It is not a USB entry-latency requirement or universal
 jitter proof: exact bytes/state and complete response waves remain required.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.phy_model import eop_wave
 from tests35.rx_jitter_patterns import corners,interval_errors
@@ -24,8 +25,7 @@ def check(art,entries=(39,40,40.75,41)):
                         saved[0]=min(saved[0],extrema[0]);saved[1]=max(saved[1],extrema[1])
                     for entry in entries:
                         cpu=h.CPU(art,wire,entry)
-                        cpu.m[0x10c]=address
-                        cpu.r[8]=packet[2] if kind=='IN' else 0x10
+                        seed_active(cpu,address,packet[2] if kind=='IN' else 0x10)
                         cpu.m[0x10f]=0x5a if kind!='OUT' else 4
                         cpu.r[4:6]=[0x80,0];cpu.r[14:16]=[0x88,0]
                         cpu.r[11]=0x80 if kind=='OUT' else 0

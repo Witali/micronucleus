@@ -5,6 +5,7 @@ transition; it is not EOP. This conservative digital fixture never claims
 that the exact AVR board produces every modeled PIN observation.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.test_usb_crossover import single_crossover
 from tests35.rx_jitter_patterns import interval_errors
@@ -13,7 +14,7 @@ from tests35.test_rx_crossover_asymmetric import signal_witnesses
 
 def receive(art, wire, entry, token):
     """Run the physical handler with a real cached endpoint-zero CRC5."""
-    cpu=h.CPU(art,wire,entry);cpu.m[0x10f]=0x5a;cpu.r[8]=token[2]
+    cpu=h.CPU(art,wire,entry);cpu.m[0x10f]=0x5a;seed_active(cpu,0,token[2])
     for _ in range(16000):
         if cpu.pc==0xfffe:
             return cpu

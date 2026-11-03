@@ -5,6 +5,7 @@ handler return, and check CRC5/endpoint/address authorization and exact bytes.
 The incoming DATA CRC16 waiver is irrelevant to these token CRC5 checks.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind
 from tests35.phy_model import from_bits
 
@@ -47,7 +48,7 @@ def representatives():
 def receive(art,raw,active,entry=8):
     wave=from_bits(raw,rate=1500000,width=64/3)
     cpu=h.CPU(art,wave,entry)
-    cpu.m[0x10c]=active;cpu.r[8]=crc5(active)<<3
+    seed_active(cpu,active,crc5(active)<<3)
     cpu.m[0x10f]=0x5a;cpu.r[24:26]=[0xa5,0xb6]
     admitted=[];last_eof=None;tx=[]
     labels={art['symbols'][name]:name for name in

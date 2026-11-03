@@ -8,6 +8,7 @@ from tests.avr_exec import AVRExec
 import tests.avr_exec as _avr_exec
 from functools import lru_cache
 from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
+from tests35.address_state import active,active_crc,seed_active,seed_ordinary
 from tests35.address_state import seed_pending,register_pending
 _avr_exec.decode=lru_cache(maxsize=48)(_avr_exec.decode)
 
@@ -94,18 +95,31 @@ def test_ack():
                     m=CPU(a);m.r[23]=plen;m.r[2]=marker
                     # This direct entry follows framing's recovery-J capture.
                     m.r[21]=2
-                    m.mem.update({0x100+15:12,0x100+12:0x08});seed_pending(m,new)
+                    m.mem[0x100+15]=12;seed_active(m,8);seed_pending(m,new)
                     end=m.run('usb_rx_check_ack',('usb_handler_packet_done','usb_rx_ignore_packet'))
                     good=bool(marker) and plen==1
                     assert end==('usb_handler_packet_done' if good else 'usb_rx_ignore_packet')
                     assert m.r[2]==(0 if good else marker)
                     assert m.mem[0x100+15]==(0x5a if good else 12)
-                    assert m.mem[0x100+12]==(new if good else 0x08)
+                    assert active(m)==(new if good else 0x08)
                     cases+=1
+        # An ordinary status ACK must take the owner-clear SBRS route. Stale
+        # protected request fields cannot publish an unrelated pending address.
+        for address in (0,6,127):
+            for marker in (1,4,12):
+                m=CPU(a);seed_ordinary(m,address)
+                cache=active_crc(m)
+                m.r[12:16]=[0xa5,0x5a,0x37,0xc8]
+                m.r[23],m.r[2],m.r[21]=1,marker,2
+                m.mem[0x10f]=4
+                assert m.run('usb_rx_check_ack',('usb_handler_packet_done',))=='usb_handler_packet_done'
+                assert active(m)==address and active_crc(m)==cache
+                assert m.r[2]==0 and m.mem[0x10f]==0x5a
+                cases+=1
         for n in (4,8,12):
             m=CPU(a);m.r[19]=n
             m.mem[0x100+15]=n
-            m.mem[0x100+12]=8
+            seed_active(m,8)
             seed_pending(m,0x14)
             for i in range(1,14):
                 if i!=12:m.mem[0x100+i]=(i*13)&255
@@ -121,10 +135,10 @@ def test_ack():
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a
         for old in (0,1,3,19,62):
             m=CPU(a);m.r[24]=1;m.r[2]=12
-            m.mem.update({0x100+15:12,0x100+0:9,0x100+12:old,0x100+19:99,0x100+21:1})
+            m.mem.update({0x100+15:12,0x100+0:9,0x100+19:99,0x100+21:1});seed_active(m,old)
             assert m.run('usb_poll_check_reset_duration',('usb_poll_check_packet_pending',))=='usb_poll_check_packet_pending'
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a and m.mem[0x100+0]==0xff
-            assert m.mem[0x100+12]==0 and m.mem[0x100+21]==0
+            assert active(m)==0 and m.mem[0x100+21]==0
             assert m.r[11]==0
             if not register_pending(m):assert m.mem[0x100+19]==0
             assert m.mem[0x100+20]==0

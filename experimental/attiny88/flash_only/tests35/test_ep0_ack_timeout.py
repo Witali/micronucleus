@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import active,seed_active
 from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind,Bits
 from tests35.test_ep0_standard import Quiet
@@ -13,7 +14,7 @@ def transmitter(art,wire):
     c.pc=c.labels['usb_tx_acquire_bus'];c.r[28:32]=[1,1,0,1]
     c.r[2]=12;c.r[3]=5;c.r[19]=12
     c.m[0x101:0x10c]=h.data_packet(bytes(range(8)))
-    c.m[0x100]=0xff;c.m[0x10f]=12;c.m[0x10c]=6;seed_pending(c,0x24)
+    c.m[0x100]=0xff;c.m[0x10f]=12;seed_active(c,6);seed_pending(c,0x24)
     return c
 
 def transmit(art,delay=None,rate=1_500_000):
@@ -30,7 +31,7 @@ def transmit(art,delay=None,rate=1_500_000):
                 old=dict(c.io);c.io=h.SynchronizedPinIO(c,wave);c.io.update(old);c.io.cleared_at=c.t-1
     else:raise AssertionError('TX did not return')
     assert j is not None
-    return dict(j=j,expiry=None if cleared is None else cleared-j,accepted=accepted,tx=c.m[0x10f],address=c.m[0x10c],marker=c.r[2],command=c.r[3],end=c.t),c
+    return dict(j=j,expiry=None if cleared is None else cleared-j,accepted=accepted,tx=c.m[0x10f],address=active(c),marker=c.r[2],command=c.r[3],end=c.t),c
 
 def test():
     art=h.build()
@@ -54,7 +55,7 @@ def test():
                 assert c.pc!=c.labels['usb_rx_accept_ack']
                 c.step()
             else:raise AssertionError('late ACK did not return')
-            assert c.m[0x10f]==12 and c.m[0x10c]==6
+            assert c.m[0x10f]==12 and active(c)==6
             cases+=1
     report=dict(bytes=art['size'],sha256=art['sha256'],fixed_quiet=quiet,cases=cases)
     print(json.dumps(report,indent=2),flush=True)

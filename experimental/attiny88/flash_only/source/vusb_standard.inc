@@ -87,11 +87,11 @@ usb_standard_device_out:
     /* Cache the pending address CRC before exposing its status DATA. Each
      * bit services USB; a replacement SETUP aborts this calculation. */
     /* Seed 30 folds the CRC5 final complement into the fixed 11-bit transform;
-     * after three shifts R10 is the full endpoint-zero wire byte. */
+     * after three shifts R13 is the full endpoint-zero wire byte. */
     ldi r18, 30
-    mov r10, r18
+    mov r13, r18
     /* Unconsumed address bits shift into the CRC state as the loop runs. */
-    eor r10, r24
+    eor r13, r24
     /* INC reaches signed overflow after exactly eleven steps. Its starting
      * value also marks R11 pending-address ownership without another LDI.
      * R11 bit6 is harmless here: bit7=0 still requires an IN status ACK. */
@@ -99,17 +99,17 @@ usb_standard_device_out:
     mov r11, r25
 .Laddress_crc5_bit:
     rcall usb_service_pending
-    lsr r10
+    lsr r13
     brcc .Laddress_crc5_advance
     ldi r18, 0x14
-    eor r10, r18
+    eor r13, r18
 .Laddress_crc5_advance:
     inc r25
     brvc .Laddress_crc5_bit
     /* The final feedback carry equals CRC bit4. SWAP preserves it, so
      * ROR after SWAP emits the same endpoint-zero wire byte as three LSLs. */
-    swap r10
-    ror r10
+    swap r13
+    ror r13
     rjmp usb_reply_empty
 usb_standard_check_configuration:
     cpi r25, USB_REQ_SET_CONFIGURATION

@@ -5,6 +5,7 @@ Reusing a nearby reject tail must not fall into recovery-J ACK acceptance.
 The incoming numeric DATA CRC16 waiver does not allow an oversized packet.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import active
 from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 import re
@@ -56,7 +57,7 @@ def check(artifact):
                         assert bytes(cpu.m[0x121:0x12c]) == guard, ('RX buffer overrun', key)
                         assert not spm, ('Overlong DATA executed SPM', key)
                         assert cpu.r[2] == 0 and cpu.m[0x114] == 0, ('Authorization survived', key)
-                        assert cpu.m[0x10c] == 0 and cpu.m[0x10f] == 12, ('False ACK committed state', key)
+                        assert active(cpu) == 0 and cpu.m[0x10f] == 12, ('False ACK committed state', key)
                         assert cpu.r[3] == pending and cpu.word(4) == 0x80, ('Pending command changed', key)
                         assert (cpu.r[24:26] == [0xa5, 0xb6] and not cpu.raw_stack and
                                 cpu.r[1] == 0 and cpu.word(28) == cpu.word(30) == 0x100), ('Caller ABI', key)

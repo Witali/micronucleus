@@ -4,6 +4,7 @@ from bisect import bisect_right
 from functools import lru_cache
 import json, sys
 from tests35 import ep0_model as h
+from tests35.address_state import active,seed_active
 from tests35.address_state import seed_pending,pending
 
 HERE=Path(__file__).resolve().parent
@@ -45,7 +46,7 @@ def ack(art,extra=(),truncate=None,entry=8,rate=1_500_000,marker=12):
     wave=Bits(extra=extra,truncate=truncate,rate=rate)
     cpu=h.CPU(art,wave);cpu.t=entry
     cpu.r[2]=marker
-    cpu.m[0x10F]=12;cpu.m[0x10C]=6;seed_pending(cpu,0x24)
+    cpu.m[0x10F]=12;seed_active(cpu,6);seed_pending(cpu,0x24)
     before=bytes(cpu.m[0x100:0x116]);at_ack=None;framing=None
     for _ in range(10000):
         if cpu.pc==0xFFFE:break
@@ -54,7 +55,7 @@ def ack(art,extra=(),truncate=None,entry=8,rate=1_500_000,marker=12):
         if cpu.pc==cpu.labels['usb_rx_accept_ack']:at_ack=cpu.t
         cpu.step()
     else:raise AssertionError('ACK PHY failed to return')
-    return dict(accepted=at_ack is not None,tx=cpu.m[0x10F],address=cpu.m[0x10C],
+    return dict(accepted=at_ack is not None,tx=cpu.m[0x10F],address=active(cpu),
                 pending=pending(cpu),marker=cpu.r[2],frame=framing,time=cpu.t,peak=cpu.peak)
 
 
@@ -70,7 +71,7 @@ def reset(art,command,rx_length=0):
     cpu.pc=cpu.labels['usb_poll_sample_bus'];cpu.t=0
     cpu.r[2],cpu.r[3],cpu.r[4],cpu.r[5]=12,command,0x80,0
     cpu.r[24],cpu.r[26],cpu.r[27]=100,100,0
-    cpu.m[0x100],cpu.m[0x10F],cpu.m[0x10C],cpu.m[0x113]=0xFF,12,6,0x24
+    cpu.m[0x100],cpu.m[0x10F]=0xFF,12;seed_active(cpu,6);seed_pending(cpu,0x24)
     cpu.m[0x114],cpu.m[0x10D],cpu.m[0x112],cpu.m[0x115]=0x2D,0x2D,rx_length,1
     sample=0;reset_state=None
     for _ in range(5000):

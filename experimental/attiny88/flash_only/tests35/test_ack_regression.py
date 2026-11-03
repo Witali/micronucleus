@@ -13,6 +13,7 @@ from check_build import build
 from tests.avr_exec import AVRExec
 from tests34.test_pass33_ack import CPU
 from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
+from tests35.address_state import active,seed_active
 from tests35.address_state import seed_pending
 
 @lru_cache(maxsize=32)
@@ -78,9 +79,9 @@ def test():
             cpu = CPU(art)
             cpu.r[23], cpu.r[2] = 1, marker
             cpu.r[21] = 2  # Captured recovery J at this post-framing entry.
-            cpu.mem.update({0x100+15:12, 0x100+12:0x06});seed_pending(cpu,0x2e)
+            cpu.mem[0x100+15]=12;seed_active(cpu,6);seed_pending(cpu,0x2e)
             assert cpu.run('usb_rx_check_ack', ('usb_handler_packet_done',), limit=75) == 'usb_handler_packet_done'
-            assert cpu.r[2] == 0 and cpu.mem[0x100+15] == 0x5a and cpu.mem[0x100+12] == 0x2e
+            assert cpu.r[2] == 0 and cpu.mem[0x100+15] == 0x5a and active(cpu) == 0x2e
             assert dispatch('source', led, boot, cpu.r[2], 0x5a, 3) == 'flash_erase_selected_page'
             cases += 1
             cpu = CPU(art)

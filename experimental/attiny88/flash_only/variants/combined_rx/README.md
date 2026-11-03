@@ -4,11 +4,11 @@ This no-LED experiment combines the compact NRZI/SYNC sampler, strict packet
 and token validation, repaired final-byte/EOP reception, and the shared active
 EP0/Flash/reset implementation. It adds no decode or CRC lookup tables.
 
-The body is **1774 bytes at 0x1900**, SHA256
-`f47aa2cfb21eab3bb8d3d1b7439ce82f8bdfaf80aadba588ae882e811c432c60`.
-The 1792-byte region contains 28 Flash pages and eighteen spare bytes. The existing
+The body is **1768 bytes at 0x1900**, SHA256
+`82856722a8dc7bfbf19248281dfe3871ac9583a58b807e5691911671adb342b6`.
+The 1792-byte region contains 28 Flash pages and twenty-four spare bytes. The existing
 four-byte application postscript lies at 0x18FC..0x18FF, leaving 6396 application
-bytes linked at zero. The 1280-byte objective remains 494 bytes away.
+bytes linked at zero. The 1280-byte objective remains 488 bytes away.
 
 This is an unqualified control checkpoint. A historical 54-group run belongs
 to the preceding image; newer mandatory gates expose ordinary receive errors.

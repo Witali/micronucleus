@@ -5,6 +5,7 @@ created by ignored/malformed DATA, a token, an ACK or a custom opcode.
 Command execution and temporary-buffer loading remain behind status ACK.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import Bits,bind
 from tests35.test_ep0_token_timeout import Joined
 from tests35.test_ep0_zero_direction import replace_wire
@@ -55,7 +56,7 @@ def in_response(art,address,length,rate,width,entry):
     cpu=seeded(art,11 if length==0x5a else 0)
     cpu.raw_stack.clear();cpu.calls.append(0xfffe)
     cpu.pc=cpu.labels['USB_handler'];cpu.t=entry
-    cpu.m[0x10c]=address;cpu.r[8]=h.token(0x69,address=address)[2]
+    seed_active(cpu,address,h.token(0x69,address=address)[2])
     cpu.m[0x10f]=length
     if length in (4,12):
         packet=h.data_packet(bytes(range(length-4)),0xc3)

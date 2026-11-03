@@ -10,6 +10,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from check_build import build
 from host.profiles import BOOT_AT
+from tests35.address_state import initialize_registers,seed_active
 from tests35.address_state import seed_pending
 from tests.avr_exec import AVRExec
 
@@ -39,8 +40,8 @@ class Sim:
     def __init__(self,art,sop=0,period=PERIOD,phase=0):
         self.a=art;self.d=AVRExec(art);self.r=[0]*32;self.m=bytearray(512)
         self.r[29]=1;self.r[31]=1;self.r[2]=12
-        self.r[21]=0xA0
-        self.m[0x100+15]=12;self.m[0x100+12]=0;seed_pending(self,0x18)
+        self.r[21]=0xA0;initialize_registers(art,self.r)
+        self.m[0x100+15]=12;seed_active(self,0);seed_pending(self,0x18)
         self.io={0x1b:0,0x09:2}
         self.t=phase;self.sop=sop;self.phase=phase
         self.times,self.levels=encoded_wave([0xD2],sop,period)

@@ -177,9 +177,9 @@ app_jump:
  * ACK eligibility, stale deferred commands and page selection all fail closed. */
 bootloader_reset_control_state:
     std Y+CTX_CONFIGURATION, r1
-    std Y+CTX_DEVICE_ADDRESS, r1
+    mov r8, r1
     ldi r17, 0x10
-    mov r8, r17
+    mov r9, r17
     std Y+CTX_CURRENT_TOKEN, r1
     movw r2, r24
     mov r11, r1

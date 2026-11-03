@@ -9,6 +9,7 @@ from functools import lru_cache
 from types import SimpleNamespace
 import hashlib,os,sys
 from tests35.avr_cycles import cycles as instruction_cycles, SKIPS
+from tests35.address_state import initialize_registers
 ROOT=Path(__file__).resolve().parents[1]
 BACKEND=Path(os.environ.get('MICRONUCLEUS_TEST_MODEL_ROOT',ROOT.parent/'compact'))
 saved_argv=sys.argv[:]
@@ -52,7 +53,7 @@ class Pushes:
 class CPU(Timed):
     def __init__(self,art,wave,entry=8):
         registers=[0]*32;registers[28:32]=[0,1,0,1];registers[21]=0xA0
-        registers[8]=registers[10]=0x10  # cold address-zero token CRC byte
+        initialize_registers(art,registers)  # layout-specific cold fixture state
         meta=dict(name='EP0 semantic wire regression',start=art['boot'],o=art['obj'],bin=art['bin'],symbols=art['symbols'],step_limit=100000)
         super().__init__(meta,dict(memory=bytearray(0x300),registers=registers))
         self.flash=FlashView(self.flash,self.base)

@@ -5,6 +5,7 @@ lost/duplicate ACK, replacement SETUP, wrong-direction status and bus reset.
 The oracle observes the active address and independent CRC5, not its storage.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import active,active_crc,seed_active
 from tests35.ep0_cases import Bits, bind, Reset
 from tests35.test_ep0_standard import Quiet
 from tests35.test_ep0_zero_direction import replace_wire
@@ -15,11 +16,11 @@ from tests35.test_token_crc5 import crc5
 
 
 def setup(cpu, address, bm=0, request=5):
-    old = cpu.m[0x10c]
+    old = active(cpu)
     payload = bytes((bm, request, address, 0, 0, 0, 0, 0))
     assert receive(cpu, wave_for(payload, address=old)) == [(2, 0xd2)]
     assert cpu.r[3] == 11 and cpu.m[0x10f] == 0x5a
-    assert cpu.m[0x10c] == old and cpu.r[8] == crc5(old) << 3
+    assert active(cpu) == old and active_crc(cpu) == crc5(old) << 3
     cpu.pc = cpu.labels['bootloader_process_pending_command']
     cpu.raw_stack.clear()
     replace_wire(cpu, Quiet())
@@ -27,14 +28,14 @@ def setup(cpu, address, bm=0, request=5):
         assert not cpu.nvm
         if cpu.m[0x10f] == 4 and cpu.pc == cpu.labels['bootloader_check_idle_timeout']:
             assert bytes(cpu.m[0x101:0x104]) == b'K\0\0'
-            assert cpu.m[0x10c] == old and cpu.r[8] == crc5(old) << 3
+            assert active(cpu) == old and active_crc(cpu) == crc5(old) << 3
             return
         cpu.step()
     raise AssertionError('SETUP did not publish DATA1 status')
 
 
 def status(cpu, expected, retry=False):
-    old = cpu.m[0x10c]
+    old = active(cpu)
     cursor = cpu.word(4)
     cpu.pc = cpu.labels['bootloader_poll_begin']
     replace_wire(cpu, Bits(h.token(0x69, address=old), start=cpu.t+64))
@@ -44,7 +45,7 @@ def status(cpu, expected, retry=False):
     for _ in range(60000):
         assert not cpu.nvm and cpu.word(4) == cursor
         if not accepted:
-            assert cpu.m[0x10c] == old and cpu.r[8] == crc5(old) << 3
+            assert active(cpu) == old and active_crc(cpu) == crc5(old) << 3
         if cpu.pc == cpu.labels['usb_tx_acquire_bus']:
             packet = ('handshake', cpu.r[20]) if cpu.r[19] == 2 else ('data', bytes(cpu.m[0x101:0x104]))
             if packet[0] == 'data':
@@ -65,12 +66,12 @@ def status(cpu, expected, retry=False):
                 raise AssertionError(('unexpected status response',packet))
             replace_wire(cpu,wire)
         if accepted and cpu.pc == cpu.labels['bootloader_poll_begin']:
-            assert cpu.m[0x10c] == expected and cpu.r[8] == crc5(expected) << 3
+            assert active(cpu) == expected and active_crc(cpu) == crc5(expected) << 3
             assert cpu.m[0x10f] == 0x5a and cpu.r[2:4] == [0,0]
             assert len(packets) == (2 if retry else 1)
             # No new IN was transmitted: this ACK cannot own another update.
             assert receive(cpu,Bits(b'\xd2')) == []
-            assert cpu.m[0x10c] == expected and cpu.r[8] == crc5(expected) << 3
+            assert active(cpu) == expected and active_crc(cpu) == crc5(expected) << 3
             assert not cpu.nvm and cpu.word(4) == cursor
             return
     raise AssertionError('Status ACK did not finish')
@@ -78,8 +79,7 @@ def status(cpu, expected, retry=False):
 
 def fresh(art):
     cpu = PageCPU(art)
-    cpu.m[0x10c] = 6
-    cpu.r[8] = crc5(6) << 3
+    seed_active(cpu,6)
     cpu.r[4:6] = [0x80,0]
     return cpu
 
@@ -112,7 +112,7 @@ def test():
     out = Bits(h.token(0xe1,address=6))
     data = Bits(h.data_packet(b'',0x4b),start=out.boundaries[-2]+64/3)
     assert receive(cpu,Joined(out,data)) == [(2,0x1e)]
-    assert cpu.m[0x10c] == 6 and cpu.r[8] == crc5(6) << 3
+    assert active(cpu) == 6 and active_crc(cpu) == crc5(6) << 3
     assert not cpu.nvm and cpu.word(4) == 0x80
     setup(cpu,37)
     cpu.pc = cpu.labels['usb_poll_sample_bus']
@@ -125,10 +125,10 @@ def test():
     else:
         raise AssertionError('Reset did not finish')
     assert cpu.r[2:4] == [0,0] and cpu.r[11] == 0
-    assert cpu.m[0x10c] == 0 and cpu.r[8] == crc5(0) << 3
+    assert active(cpu) == 0 and active_crc(cpu) == crc5(0) << 3
     assert cpu.m[0x10f] == 0x5a and not cpu.nvm
     assert receive(cpu,Bits(b'\xd2')) == []
-    assert cpu.m[0x10c] == 0 and cpu.r[8] == crc5(0) << 3
+    assert active(cpu) == 0 and active_crc(cpu) == crc5(0) << 3
     # A later ordinary status must not revive the old CRC/address either.
     setup(cpu,1,request=9)
     status(cpu,0)

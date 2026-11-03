@@ -8,6 +8,7 @@ validation, token CRC5, framing, register preservation or a balanced stack.
 import json
 
 from tests35 import ep0_model as h
+from tests35.address_state import active
 from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 from tests35.test_rx_eop_matrix import wire
@@ -70,7 +71,7 @@ def probe(art, pid, shape, rate=1_500_000, width=64/3, entry=8):
     expected_cursor = 0x88 if shape == 'out' and pid == 0x4b else 0x80
     expected_ack = shape == 'ack' and pid == 0xd2
     expected_tokens = [pid] if shape == 'token' and pid in (0x2d, 0xe1) else []
-    actual = (responding, cpu.r[3] == 11, cpu.word(4), cpu.m[0x10c] == 0x24,
+    actual = (responding, cpu.r[3] == 11, cpu.word(4), active(cpu) == 0x24,
               waited_tokens, cpu.r[0], len(cpu.raw_stack))
     expected = (expected_response, expected_setup, expected_cursor, expected_ack,
                 expected_tokens, 0xa5, 0)

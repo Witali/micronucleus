@@ -3,6 +3,36 @@
 Historical strict-source measurements use no LED at BOOT_AT 0x1A40 unless a
 section gives another placement. Receiver qualification remains open.
 
+## Pair the active address and CRC5 cache
+
+The next layout keeps the active address/cache in R8:R9, the pending
+SET_ADDRESS pair in R12:R13 and TX DATA PID in R10. Token validation loses a
+two-clock SRAM load; accepted status ACK publishes the pair with one MOVW.
+SET_ADDRESS's ACK path falls from 13 to 11 clocks, while ordinary ACK remains 9.
+Both pairs are protected from RX/TX scratch use. SRAM12 becomes dead active
+address storage; reset initializes the live pair instead. The zero-byte
+`usb_active_address_r8r9` symbol selects storage access in the test fixtures;
+instruction semantics and external address/cache expectations are unchanged.
+
+The combined parser's four reachable phase residues are 00/55/AA/FF. The FF
+route replaces its NOP with MOV R22,R1. ANDI3 then replaces INC/ANDI2 with
+the same zero classification and SREG, one clock earlier. No accepted-path
+GPIO read or write is added. Raising the existing five-clock wait count 27→28
+balances the shorter token path. Count 28 alone was rejected: 36 directed
+dribble deadline/admission failures included decisions up to 192.795 clocks.
+The complete change passes 108 quiet and 540 paired directed cases on both
+combined variants, with physical PIN decisions 172.995915..191.794576 clocks
+inside their unchanged rate-specific 16..18-bit windows. Strict keeps count 29;
+its different framing path cannot use the combined retiming.
+
+Measurements against 96cb7b0: composed 1774→1768 bytes at 0x1900, improved ACK
+1942→1936 at 0x1800, strict 1344→1340 at 0x1A40. The source does not change DATA
+or SYNC sample cells. Selected final-image checks retain all 213248 token-field
+cases plus 128 atomic commits, 140 address-ownership scenarios, 2231 standard
+requests, 1536 poisoned cold starts, 2304 outgoing CRC payloads, 57 complete reads
+and 324 plain token/DATA deadlines. These checks do not close the known
+receiver findings or qualify a complete 1280-byte loader.
+
 ## Retain only SET_ADDRESS's accepted pending state
 
 Keep the accepted pending address in protected R12, beside its CRC5 byte R10,

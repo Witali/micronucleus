@@ -1,5 +1,6 @@
 """A negative OUT-completion marker must never become a new DATA reply."""
 from tests35 import ep0_model as h
+from tests35.address_state import active,active_crc
 from tests35.ep0_cases import Bits,bind
 from tests35.test_ep0_token_timeout import Joined
 from tests35.test_ep0_standard import Quiet
@@ -81,7 +82,7 @@ def test():
         cpu.step()
     else:raise AssertionError('Bus reset did not retire completed control state')
     assert cpu.m[0x100]==0xff and cpu.m[0x10f]==0x5a and cpu.r[2:4]==[0,0]
-    assert cpu.r[11]==0 and cpu.r[8]==0x10 and len(cpu.nvm)==nvm
+    assert cpu.r[11]==0 and active_crc(cpu)==0x10 and active(cpu)==0 and len(cpu.nvm)==nvm
     print('PASS: 128 negative markers, 100 delayed builder passes, IN retries, duplicate status, new SETUP and bus reset')
 
 

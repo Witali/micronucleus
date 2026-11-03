@@ -1,5 +1,6 @@
 """Startup and bus-reset initialization must invalidate every selected-page poison."""
 from tests35 import ep0_model as h
+from tests35.address_state import active,active_crc,seed_active
 from tests35.address_state import reset_offsets
 from tests35.ep0_cases import bind
 from tests35.test_ep0_standard import Quiet
@@ -15,7 +16,7 @@ def initialized(art,low):
     cpu.pc=cpu.labels['usb_disconnect_next_slice']
     cpu.r[1]=0;cpu.r[24:26]=[0,0];cpu.r[28:32]=[1,1,0x60,0]
     cpu.r[2:6]=[12,5,low,0xa5];cpu.r[6:8]=[0xa5,0x5a];cpu.r[11]=0xe0
-    cpu.r[8]=0xa5
+    seed_active(cpu,0xa5,0xa5)
     cpu.m[0x100:0x12c]=bytes((i*37+low)&255 for i in range(44))
     visited=set()
     for _ in range(100):
@@ -26,7 +27,7 @@ def initialized(art,low):
     assert cpu.labels['bootloader_reset_control_state'] in visited
     assert not cpu.raw_stack
     assert cpu.r[2:4]==[0,0] and cpu.r[5]==255
-    assert cpu.r[6:8]==[0,0] and cpu.r[8]==0x10 and cpu.r[11]==0
+    assert cpu.r[6:8]==[0,0] and active_crc(cpu)==0x10 and active(cpu)==0 and cpu.r[11]==0
     # Historical receive fields remain poisoned: only R3 owns new SETUP.
     # The Flash guard sweep below must still reject every page-low poison.
     assert [cpu.m[0x100+i] for i in reset_offsets(cpu)]==[0]*len(reset_offsets(cpu))

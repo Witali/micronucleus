@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import paired
 from tests35.address_state import reset_offsets
 from tests35.ep0_cases import bind,reset
 from tests35.test_setup_pending_marker import seeded,receive,wave_for
@@ -44,6 +45,7 @@ def test():
             # R3 is the live accepted-SETUP owner; offset18 is dead SRAM.
             assert [ctx[offset] for offset in reset_offsets(art)]==[0]*len(reset_offsets(art))
             assert regs[11]==0
+            assert (regs[8],regs[9])==(0,0x10) if paired(art) else ctx[12]==0
             assert ctx[15]==0x5A and ctx[0]==255 and new['reset']['samples']==100
             cases+=1
         assert replacement(art,command)['command']==0

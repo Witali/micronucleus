@@ -25,8 +25,8 @@ usb_tx_prepare_data_packet:
 .Ltx_store_remainder:
     std Y+CTX_MSG_LENGTH, r23
     ldi r18, USB_DATA_PID_TOGGLE
-    eor r9, r18
-    std Y+CTX_TX_PID, r9
+    eor r10, r18
+    std Y+CTX_TX_PID, r10
 usb_tx_initialize_payload_crc:
     ldi r26, LOW8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)
     ldi r27, HIGH8(USB_CONTEXT_BASE + CTX_TX_PAYLOAD)

@@ -1,5 +1,6 @@
 """Every RX outcome restores the cooperative caller's context pointer."""
 from tests35 import ep0_model as h
+from tests35.address_state import seed_active
 from tests35.ep0_cases import bind, Bits
 
 
@@ -21,13 +22,13 @@ def test():
     for packet in packets:
         bind(artifact)
         cpu=h.CPU(artifact,Bits(packet))
-        cpu.r[8]=0x10
+        seed_active(cpu,0,0x10)
         cpu.m[0x10f]=0x5a
         finish(cpu)
         assert cpu.r[3]==0
     bind(artifact)
     cpu=h.CPU(artifact,Bits(h.data_packet(bytes(range(8)))))
-    cpu.r[8]=0x10
+    seed_active(cpu,0,0x10)
     cpu.m[0x10f]=0x5a
     cpu.m[0x114]=0x2d
     finish(cpu)

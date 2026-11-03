@@ -5,9 +5,9 @@ Revision 2.0, full-/low-speed clauses. Tests execute linked AVR instructions;
 their wire encoders and CRC oracles are independent of the firmware.
 Firmware identity or a smaller binary alone is never an admission criterion.
 
-Current selection and exact results are recorded in the
-[2026-11-01 audit](USB_AUDIT_2026_11_01.md). The corrected receiver is 1788 bytes
-at 0x1900. Named older checkpoints below retain their historical findings;
+The [2026-11-01 audit](USB_AUDIT_2026_11_01.md) records the 1788-byte checkpoint.
+The [November 3 record](USB_SIZE_2026_11_03.md) tracks the current 1768-byte
+composed body at 0x1900 and its selected checks. Named older checkpoints below retain their historical findings;
 default standalone `source/` tests still target the legacy strict fixture.
 `sh verify.sh` checks the corrected selection and separate legacy fixtures.
 The newly witnessed asymmetric 210 ns regressions remain mandatory and red on
@@ -44,7 +44,7 @@ earlier 54-group pass as complete qualification.
 | ACK/token response eligibility expires no earlier than 16 and before 18 bit periods | Section 7.1.19.1 | `test_ep0_ack_timeout`, `test_ep0_token_timeout`, `test_dribble_deadlines` |
 | DATA/PID remain immutable until eligible ACK or control-status completion; repeats do not duplicate a write | Chapter 8 transaction/retry rules | `test_ack_regression`, `test_ep0_read_completion`, `test_sequential_wire` |
 | New SETUP and reset cancel old transfer ownership; no stale erase/program/RUN is released | Chapter 8 control transfers, Chapter 9 reset states | `test_setup_pending_marker`, `test_ep0_shadow`, `test_ep0_reset`, `test_nvm_state` |
-| Standard requests, recipients, zero-length direction, SET_ADDRESS status sequencing and protocol STALL are correct | Chapter 9, Sections 9.3.1 and 9.4 | `tests34/test_standard.py`, `test_ep0_standard`, `test_ep0_zero_direction`, `test_ep0_status` |
+| Standard requests, recipients, zero-length direction, SET_ADDRESS status sequencing and protocol STALL are correct | Chapter 9, Sections 9.3.1 and 9.4 | `tests34/test_standard.py`, `test_ep0_standard`, `test_ep0_zero_direction`, `test_ep0_status`, `test_set_address_ownership` |
 | Control reads finish correctly at exact/short/zero lengths and required terminating ZLPs | Chapter 8 control transfers | `test_ep0_reply_fragments`, `test_ep0_read_completion` |
 | Outgoing DATA CRC16 is correct | Chapter 8 CRC fields | `test_tx_crc_payloads` |
 

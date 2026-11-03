@@ -6,6 +6,7 @@ its ACK was lost. Starting from the validated length limiter, this test runs
 all emitted packet construction, IN/ACK and OUT/DATA1 reception instructions.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_tx_pid
 from tests35.ep0_cases import bind,Bits
 from tests35.test_ep0_standard import Quiet
 from tests35.test_ep0_token_timeout import Joined
@@ -18,7 +19,7 @@ def incoming_wire(cpu,wire):
 def control_read(art,requested=8,available=18,status_gap=64,kind='descriptor'):
     bind(art);c=CPU(art,Quiet());c.t=0;c.pc=c.labels['usb_reply_limit_length']
     c.r[6:8]=[requested&255,requested>>8];c.r[24]=available
-    c.r[9]=0xc3;c.r[11]=0x80 if kind=='descriptor' else 0xc0
+    seed_tx_pid(c,0xc3);c.r[11]=0x80 if kind=='descriptor' else 0xc0
     pointer=art['boot']+20 if kind=='descriptor' else 0x80
     c.r[14:16]=[pointer&255,pointer>>8]
     c.m[0x100]=0xff;c.m[0x10f]=0x5a

@@ -1,5 +1,6 @@
 """USB9.3.1: wLength0 ignores D7 and always has an IN status stage."""
 from tests35 import ep0_model as h
+from tests35.address_state import active
 from tests35.ep0_cases import Bits,bind
 
 def replace_wire(cpu,wire):
@@ -17,7 +18,7 @@ def exchange(art,bm,req,value=0,index=0,retry=False):
         if cpu.pc==cpu.labels['usb_tx_acquire_bus']:
             packet=('handshake',cpu.r[20],0) if cpu.r[19]==2 else ('data',cpu.m[0x101],cpu.r[19]-4)
             if packet[0]=='data':
-                statuses.append(packet);before_ack.append(cpu.m[0x10c])
+                statuses.append(packet);before_ack.append(active(cpu))
                 assert packet==('data',0x4b,0),packet
         if cpu.pc==cpu.labels['usb_rx_accept_ack'] and phase=='status':acked=True
         pc=cpu.pc;ins=cpu.step()
@@ -37,7 +38,7 @@ def exchange(art,bm,req,value=0,index=0,retry=False):
             assert cpu.m[0x10f]==0x5a and cpu.m[0x100]&0x80
             assert before_ack==[0]*len(before_ack)
             assert len(statuses)==(2 if retry else 1)
-            if req==5:assert cpu.m[0x10c]==value
+            if req==5:assert active(cpu)==value
             if req==9:assert cpu.m[0x115]==(value&255)
             return
     raise AssertionError(('zero-length status did not finish',bm,req,phase,statuses,hex(cpu.pc)))
