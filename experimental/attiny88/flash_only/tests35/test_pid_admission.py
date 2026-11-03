@@ -8,6 +8,7 @@ validation, token CRC5, framing, register preservation or a balanced stack.
 import json
 
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 from tests35.test_rx_eop_matrix import wire
 
@@ -38,6 +39,8 @@ def probe(art, pid, shape, rate=1_500_000, width=64/3, entry=8):
     cpu.m[0x113] = 0x24
     cpu.m[0x114] = 0x2d if shape == 'setup' else 0xe1 if shape == 'out' else 0
     cpu.r[2] = 4 if shape == 'ack' else 0
+    if shape == 'ack':
+        seed_pending(cpu, 0x24)
 
     waited_tokens = []
     wait_pc = art['symbols']['usb_rx_wait_for_data']

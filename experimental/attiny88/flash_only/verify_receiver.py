@@ -46,6 +46,7 @@ CHECKS = (
     ('test_ep0_failed_sync', 'test'),
     ('test_rx_resync', 'test'),
     ('test_token_crc5', 'test'),
+    ('test_set_address_ownership', 'test'),
     ('test_pid_admission', 'test'),
     ('test_token_framing_wire', 'test'),
     ('test_rx_context_restore', 'test'),

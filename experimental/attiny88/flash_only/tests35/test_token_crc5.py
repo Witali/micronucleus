@@ -4,6 +4,7 @@ Raw-wave tests separately verify that the decoder's count/phase observations
 really correspond to complete bytes. This suite does not assume that proof.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import pending
 from tests35.ep0_cases import bind
 from tests35.test_nvm_state import initialized
 
@@ -110,7 +111,7 @@ def test():
         else:raise AssertionError('Pending SET_ADDRESS did not complete')
         assert cpu.r[8]==before and cpu.m[0x10C]==42
         assert cpu.r[10]==(crc5(canonical)<<3)
-        assert cpu.m[0x113]==canonical
+        assert pending(cpu)==canonical
         cpu.r[2],cpu.r[23]=12,1
         cpu.pc=artifact['symbols']['usb_rx_check_ack']
         for _ in range(120):

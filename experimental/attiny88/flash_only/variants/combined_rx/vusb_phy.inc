@@ -427,8 +427,13 @@ usb_rx_accept_ack:
      * framing, eligibility and observed recovery J have all passed. */
     sbrc r3, USB_CURSOR_WRITE_PENDING_BIT
     rjmp flash_buffer_ack_write4
-    ldd r17, Z+CTX_NEW_DEVICE_ADDRESS
-    std Z+CTX_DEVICE_ADDRESS, r17
+usb_pending_address_r12:
+    /* Zero-byte ABI marker: only SET_ADDRESS owns R12/R10 and R11 bit5.
+     * Ordinary ACKs retain their active address/cache without copying them. */
+    sbrs r11, USB_SET_ADDRESS_PENDING_BIT
+    rjmp usb_handler_packet_done
+usb_rx_commit_pending_address:
+    std Z+CTX_DEVICE_ADDRESS, r12
     mov r8, r10
     rjmp usb_handler_packet_done
 usb_rx_eop_not_j:

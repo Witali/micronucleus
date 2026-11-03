@@ -1,5 +1,6 @@
 """Startup and bus-reset initialization must invalidate every selected-page poison."""
 from tests35 import ep0_model as h
+from tests35.address_state import reset_offsets
 from tests35.ep0_cases import bind
 from tests35.test_ep0_standard import Quiet
 
@@ -28,7 +29,7 @@ def initialized(art,low):
     assert cpu.r[6:8]==[0,0] and cpu.r[8]==0x10 and cpu.r[11]==0
     # Historical receive fields remain poisoned: only R3 owns new SETUP.
     # The Flash guard sweep below must still reject every page-low poison.
-    assert [cpu.m[0x100+i] for i in (12,19,20,21)]==[0]*4
+    assert [cpu.m[0x100+i] for i in reset_offsets(cpu)]==[0]*len(reset_offsets(cpu))
     assert cpu.m[0x10f]==0x5a and cpu.m[0x100]==255
     assert cpu.word(28)==0x100 and cpu.word(30)==0x60
     return cpu

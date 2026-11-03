@@ -8,6 +8,7 @@ not use the firmware's classifier or the existing packet encoder.
 import os
 
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 from tests35.phy_model import complete_frame_entries
 
@@ -69,6 +70,8 @@ def receive(art, kind, packet, wave, entry, legal):
     cpu.m[0x10f] = 12 if kind == 'ACK' else 0x5a
     cpu.m[0x10c], cpu.m[0x113] = 6, 0x24
     cpu.r[2] = 12 if kind == 'ACK' else 0
+    if kind == 'ACK':
+        seed_pending(cpu, 0x24)
     cpu.m[0x114] = 0x2d if kind == 'SETUP' else 0
     accepted = complete = spm = False
     frames = complete_frame_entries(art)

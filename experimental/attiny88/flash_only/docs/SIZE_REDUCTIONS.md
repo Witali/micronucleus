@@ -1,6 +1,38 @@
 # Measured size reductions
 
-All measurements use no LED at BOOT_AT0x1A40. Receiver qualification remains open.
+Historical strict-source measurements use no LED at BOOT_AT 0x1A40 unless a
+section gives another placement. Receiver qualification remains open.
+
+## Retain only SET_ADDRESS's accepted pending state
+
+Keep the accepted pending address in protected R12, beside its CRC5 byte R10,
+instead of copying every request's active address/cache into pending storage.
+R11 bit5 marks SET_ADDRESS: successful ordinary standard/vendor routing already
+excludes class/reserved bit5. Seed its eleven-step CRC loop with 0x75 and count
+up to signed overflow, so one MOV installs the owner without a separate LDI.
+The CRC transform still runs exactly eleven steps. R25's final 0x80 is dead:
+empty-reply preparation resets it before outgoing CRC use. R11 bit7 remains
+zero, and the OUT direction guard runs before bit6 can influence read completion.
+
+The accepted SET_ADDRESS ACK tail remains seven clocks; ordinary ACKs skip the
+address/cache copy in three clocks rather than seven. SETUP capture loses five
+clocks of copying, SET_ADDRESS CRC setup loses one more, and shared reset loses
+the two-clock store to dead SRAM offset 19. Sampling, TX bit cells, USB field
+guards, ACK eligibility, WRITE4 staging and application layout remain unchanged.
+The zero-byte `usb_pending_address_r12` symbol selects the internal test ABI;
+historical artifacts retain their original SRAM fixture storage.
+
+Exact measurements against f6e356e: composed 1780→1774 bytes at 0x1900;
+ACK 1948→1942 at 0x1800; strict 1350→1344 at 0x1A40. New wire regressions pass all 128
+addresses plus lost/duplicate ACK, both zero-length D7 values, replacement
+SET_ADDRESS/SET_CONFIGURATION, wrong OUT and reset. The same oracle passes the
+unaltered baseline. Selected emitted-image checks also pass 2231 standard
+requests, 213248 token fields/counts plus 128 cache commits, 4368 foreground IN
+exchanges, 83 pending-SETUP cases and 864 response timings, 3040 PID effects,
+24 ACK deadlines, 57 read completions, 225 minimum-gap ACK/SETUP exchanges,
+540 overflow guards, 72 recovery sequences and 512 startup/NVM poison cases per
+variant. No additional USB exception is adopted; unresolved receiver findings
+remain open.
 
 ## Reuse EP0 SETUP validation in foreground
 

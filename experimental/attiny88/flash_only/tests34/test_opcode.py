@@ -8,6 +8,7 @@ from tests.avr_exec import AVRExec
 import tests.avr_exec as _avr_exec
 from functools import lru_cache
 from host.profiles import BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES
+from tests35.address_state import seed_pending,register_pending
 _avr_exec.decode=lru_cache(maxsize=48)(_avr_exec.decode)
 
 MODES=[('NONE',BOOT_AT,BCD_DEVICE,NO_LED_CODE_BYTES),
@@ -93,7 +94,7 @@ def test_ack():
                     m=CPU(a);m.r[23]=plen;m.r[2]=marker
                     # This direct entry follows framing's recovery-J capture.
                     m.r[21]=2
-                    m.mem.update({0x100+15:12,0x100+12:0x08,0x100+19:new})
+                    m.mem.update({0x100+15:12,0x100+12:0x08});seed_pending(m,new)
                     end=m.run('usb_rx_check_ack',('usb_handler_packet_done','usb_rx_ignore_packet'))
                     good=bool(marker) and plen==1
                     assert end==('usb_handler_packet_done' if good else 'usb_rx_ignore_packet')
@@ -105,7 +106,7 @@ def test_ack():
             m=CPU(a);m.r[19]=n
             m.mem[0x100+15]=n
             m.mem[0x100+12]=8
-            m.mem[0x100+19]=0x14
+            seed_pending(m,0x14)
             for i in range(1,14):
                 if i!=12:m.mem[0x100+i]=(i*13)&255
             original=dict(m.mem)
@@ -124,7 +125,8 @@ def test_ack():
             assert m.run('usb_poll_check_reset_duration',('usb_poll_check_packet_pending',))=='usb_poll_check_packet_pending'
             assert m.r[2]==0 and m.mem[0x100+15]==0x5a and m.mem[0x100+0]==0xff
             assert m.mem[0x100+12]==0 and m.mem[0x100+21]==0
-            assert m.mem[0x100+19]==0
+            assert m.r[11]==0
+            if not register_pending(m):assert m.mem[0x100+19]==0
             assert m.mem[0x100+20]==0
             assert m.r[3]==0 and m.r[5]==0xff
             cases+=1

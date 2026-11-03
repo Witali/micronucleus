@@ -4,6 +4,7 @@ from bisect import bisect_right
 from functools import lru_cache
 import json, sys
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending,pending
 
 HERE=Path(__file__).resolve().parent
 CURRENT=None
@@ -44,7 +45,7 @@ def ack(art,extra=(),truncate=None,entry=8,rate=1_500_000,marker=12):
     wave=Bits(extra=extra,truncate=truncate,rate=rate)
     cpu=h.CPU(art,wave);cpu.t=entry
     cpu.r[2]=marker
-    cpu.m[0x10F]=12;cpu.m[0x113]=0x24;cpu.m[0x10C]=6
+    cpu.m[0x10F]=12;cpu.m[0x10C]=6;seed_pending(cpu,0x24)
     before=bytes(cpu.m[0x100:0x116]);at_ack=None;framing=None
     for _ in range(10000):
         if cpu.pc==0xFFFE:break
@@ -54,7 +55,7 @@ def ack(art,extra=(),truncate=None,entry=8,rate=1_500_000,marker=12):
         cpu.step()
     else:raise AssertionError('ACK PHY failed to return')
     return dict(accepted=at_ack is not None,tx=cpu.m[0x10F],address=cpu.m[0x10C],
-                pending=cpu.m[0x113],marker=cpu.r[2],frame=framing,time=cpu.t,peak=cpu.peak)
+                pending=pending(cpu),marker=cpu.r[2],frame=framing,time=cpu.t,peak=cpu.peak)
 
 
 class Reset:

@@ -5,6 +5,7 @@ EOP and a legal host gap. This checks digital-model recovery through the actual
 foreground loop; it does not prove quarantine of arbitrary malformed streams.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import Bits, bind
 from tests35.phy_model import bits_wave, from_bits
 from tests35.test_ep0_token_timeout import Joined
@@ -51,6 +52,8 @@ def run(art, kind, rate, width, phase, ack_prefix_bits=None):
     cpu.r[4:6] = [0x80, 0]
     cpu.r[11] = 0x80 if kind == 'ack_tail' else 0
     cpu.r[12:16] = [0x11, 0x22, 0x33, 0x44]
+    if kind == 'ack_tail':
+        seed_pending(cpu, 5)
     reject_names = {value: name for name, value in cpu.labels.items()
                     if 'reject_stuff' in name}
     rejection, eops, tx, accepted_token = [], [], [], []

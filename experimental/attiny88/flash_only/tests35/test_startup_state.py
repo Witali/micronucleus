@@ -4,6 +4,7 @@ Execute the linked reset path. Only repeated disconnect-delay iterations are
 fast-forwarded; their counter, clocks and final SBIW/BRNE still execute exactly.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import register_pending
 from tests35.ep0_cases import bind, Bits
 from tests35.test_ep0_standard import Quiet
 from tests35.test_ep0_zero_direction import replace_wire
@@ -39,7 +40,10 @@ def cold(art, seed):
     assert not cpu.raw_stack and cpu.r[1:4] == [0, 0, 0]
     assert cpu.r[5] == 255 and cpu.r[6:9] == [0, 0, 0x10] and cpu.r[11] == 0
     assert cpu.word(28) == 0x100
-    assert [cpu.m[0x100 + n] for n in (0, 12, 15, 19, 20, 21)] == [255, 0, 0x5a, 0, 0, 0]
+    expected = {0:255, 12:0, 15:0x5a, 20:0, 21:0}
+    if not register_pending(cpu):
+        expected[19] = 0
+    assert all(cpu.m[0x100+n] == value for n,value in expected.items())
     assert cpu.io.get(0x0a, 0) & 6 == 0, 'USB pins not released after disconnect'
     return cpu
 

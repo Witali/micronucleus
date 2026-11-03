@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind,Bits
 from tests35.test_ep0_standard import Quiet
 
@@ -12,7 +13,7 @@ def transmitter(art,wire):
     c.pc=c.labels['usb_tx_acquire_bus'];c.r[28:32]=[1,1,0,1]
     c.r[2]=12;c.r[3]=5;c.r[19]=12
     c.m[0x101:0x10c]=h.data_packet(bytes(range(8)))
-    c.m[0x100]=0xff;c.m[0x10f]=12;c.m[0x10c]=6;c.m[0x113]=0x24
+    c.m[0x100]=0xff;c.m[0x10f]=12;c.m[0x10c]=6;seed_pending(c,0x24)
     return c
 
 def transmit(art,delay=None,rate=1_500_000):

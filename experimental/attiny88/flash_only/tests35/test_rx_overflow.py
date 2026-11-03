@@ -5,6 +5,7 @@ Reusing a nearby reject tail must not fall into recovery-J ACK acceptance.
 The incoming numeric DATA CRC16 waiver does not allow an oversized packet.
 """
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind
 import re
 
@@ -37,7 +38,7 @@ def check(artifact):
                         cpu.r[4:6] = [0x80, 0]
                         cpu.r[24:26] = [0xa5, 0xb6]
                         cpu.m[0x10f] = 12
-                        cpu.m[0x113] = 0x24
+                        seed_pending(cpu, 0x24)
                         cpu.m[0x121:0x12c] = guard
                         spm = False
                         key = payload, length, rate, entry, pending

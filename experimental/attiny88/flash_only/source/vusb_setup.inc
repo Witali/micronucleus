@@ -31,9 +31,8 @@ usb_setup_capture_fields:
     andi r24, 0x7f
     mov r11, r1
 .Lsetup_has_data_stage:
-    ldd r18, Y+CTX_DEVICE_ADDRESS
-    std Y+CTX_NEW_DEVICE_ADDRESS, r18
-    mov r10, r8
+    /* Only SET_ADDRESS owns a pending address; its accepted R12 survives
+     * the empty status packet. Other transfers need no address/CRC copy. */
     ldi r18, USB_PID_DATA0
     mov r9, r18
     rcall usb_service_pending

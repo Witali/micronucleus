@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import reset_offsets
 from tests35.ep0_cases import bind,reset
 from tests35.test_setup_pending_marker import seeded,receive,wave_for
 
@@ -41,7 +42,8 @@ def test():
             regs=new['reset']['registers'];ctx=bytes.fromhex(new['reset']['context'])
             assert regs[2:4]==[0,0] and regs[24:26]==[0,0] and regs[5]==255
             # R3 is the live accepted-SETUP owner; offset18 is dead SRAM.
-            assert [ctx[offset] for offset in (12,19,20,21)]==[0]*4
+            assert [ctx[offset] for offset in reset_offsets(art)]==[0]*len(reset_offsets(art))
+            assert regs[11]==0
             assert ctx[15]==0x5A and ctx[0]==255 and new['reset']['samples']==100
             cases+=1
         assert replacement(art,command)['command']==0

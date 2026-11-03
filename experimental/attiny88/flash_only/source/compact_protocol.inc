@@ -10,6 +10,8 @@
 #define CTX_DEVICE_ADDRESS 12
 #define CTX_INPUT_BUFFER_OFFSET 14
 #define CTX_TX_LENGTH 15
+/* Offset19 was pending SET_ADDRESS SRAM in historical layouts. It is now
+ * dead: the accepted value stays protected in R12 until its status ACK. */
 #define CTX_NEW_DEVICE_ADDRESS 19
 #define CTX_CURRENT_TOKEN 20
 #define CTX_CONFIGURATION 21
@@ -34,6 +36,16 @@
 #define USB_PID_STALL 0x1e
 #define USB_DATA_PID_TOGGLE (USB_PID_DATA0 ^ USB_PID_DATA1)
 #define USB_REQUEST_TYPE_MASK 0x60
+/* Bit5 is rejected by class/reserved routing for ordinary successful replies.
+ * SET_ADDRESS reuses it in R11; bit7 stays clear so OUT cannot finish a write. */
+#define USB_SET_ADDRESS_PENDING_BIT 5
+#define USB_ADDRESS_CRC_COUNT_SEED 0x75
+#if USB_ADDRESS_CRC_COUNT_SEED + 11 != 0x80
+#error SET_ADDRESS INC/BRVC must execute eleven CRC5 bits
+#endif
+#if ((USB_ADDRESS_CRC_COUNT_SEED & 0x80) != 0) || ((USB_ADDRESS_CRC_COUNT_SEED & (1 << USB_SET_ADDRESS_PENDING_BIT)) == 0)
+#error Pending-address marker must retain IN status and its private ownership bit
+#endif
 #define USB_REQUEST_VENDOR_IN 0xc0
 #define USB_REQ_GET_STATUS 0
 #define USB_REQ_SET_ADDRESS 5

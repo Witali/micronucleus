@@ -43,6 +43,18 @@ the same pointer. Standard reads leave the cursor intact. A replacement SETUP
 or bus reset cancels the obsolete unacknowledged request and its queued work.
 SET_ADDRESS becomes active only after its status ACK.
 
+The internal pending-address ABI is identified by the zero-byte ELF symbol
+`usb_pending_address_r12`. The accepted address stays in protected R12 and its
+endpoint-zero CRC5 byte in R10. R11 bit5 marks SET_ADDRESS ownership; ordinary
+successful requests have that bit clear because class/reserved request routing
+rejects it. ACK still requires the independent live R2 eligibility marker and
+complete framing before it can copy R12/R10 to the active address/R8 cache.
+Replacing SETUP overwrites the owner, and reset clears R11 and active state.
+Historical images without this symbol use context offset 19 instead; that offset
+is now dead and need not be reset. This storage change is not a wire command or
+application-layout change. R11's SET_ADDRESS value 0x75 leaves direction bit7
+clear, so its incidental bit6 cannot authorize OUT status or a cursor update.
+
 ACK eligibility and SETUP/OUT token authorization expire if no next SOP appears
 within the USB 16..18-bit-time transaction timeout. Cached IN DATA remains
 available for retry. Failed SYNC cancels authorization. Accepted SETUP fields

@@ -180,7 +180,6 @@ bootloader_reset_control_state:
     std Y+CTX_DEVICE_ADDRESS, r1
     ldi r17, 0x10
     mov r8, r17
-    std Y+CTX_NEW_DEVICE_ADDRESS, r1
     std Y+CTX_CURRENT_TOKEN, r1
     movw r2, r24
     mov r11, r1

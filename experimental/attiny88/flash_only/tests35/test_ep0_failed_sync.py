@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 from tests35 import ep0_model as h
+from tests35.address_state import seed_pending
 from tests35.ep0_cases import bind,Bits
 
 HERE=Path(__file__).resolve().parent
@@ -13,7 +14,7 @@ class Glitch(h.Wave):
 
 def late_ack_after_glitch(art):
     bind(art);c=h.CPU(art,Glitch())
-    c.r[2]=12;c.m[0x10f]=12;c.m[0x10c]=6;c.m[0x113]=0x24;c.m[0x114]=0x2d
+    c.r[2]=12;c.m[0x10f]=12;c.m[0x10c]=6;c.m[0x114]=0x2d;seed_pending(c,0x24)
     for _ in range(3000):
         if c.pc==0xfffe:break
         c.step()
