@@ -185,6 +185,12 @@ without entering this stuff6 guard; it is not a second new guard regression.
 This shortcut is rejected. Its use of R22 as transient raw scratch is
 an explicit private-mode ABI; the accepted pointer-bound option's R22
 preservation contract is unchanged.
+The rejected body's SHA256 is
+`427d0c6f87140018ea3a8a719dec26557e62d0c3305bf17800762266b7f76c76`.
+Nine malformed counterparts reject. Four matched controls cover both mappings
+and SE0/SE1, attaching excursions only to genuine subsequent physical edges,
+without inventing an edge at the missing-stuff position. Their success does
+not cancel the valid-packet regression or qualify the other stuffing routes.
 
 The private link-budget scaffold is 1310 bytes at 0x1900, SHA256
 `317bddec7118f9d2ee9db81052c66d69130c8dc82ddf0ae42cb0d9cee1828298`.
@@ -196,5 +202,7 @@ over 1280 before real acquisition/EOP, and is not a working receiver.
 Exact sources, immutable bodies and traces remain under the local validation
 directories `vusb-loader-integration-nov03`, `vusb-sync-integration-nov03`
 and `vusb-eop-integration-nov03`, including the SYNC `followup/` report.
+The guarded-stuff witness is in `vusb-stuff-validation-nov03/RESULT.md`,
+with `valid-counterexample.json`, `counterpart-report.json` and `finite-report.json`.
 The maintained portable generator and strict oracles stay in the repository.
 No failed front/guard was selected for a loader or installed on hardware.
