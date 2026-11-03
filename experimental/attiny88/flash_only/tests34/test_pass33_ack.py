@@ -76,8 +76,11 @@ class CPU:
             elif op=='ret':
                 assert self.calls,'Return without a matching call'
                 q=self.calls.pop()
-            elif op=='sbrc':
-                if not self.r[rn(a[0])]&1<<int(a[1],0):q+=self.x.size_at(q)
+            elif op in ('sbrc','sbrs'):
+                # Both skips preserve flags and skip one complete instruction,
+                # including its second word when the following opcode has one.
+                is_set=bool(self.r[rn(a[0])]&(1<<int(a[1],0)))
+                if is_set==(op=='sbrs'):q+=self.x.size_at(q)
             else:raise AssertionError((hex(pc),op,arg))
             pc=q
         raise AssertionError(('no stop',start,hex(pc),self.trace[-12:]))
