@@ -60,7 +60,7 @@ def capture(art, pid, payload=None, ddr=0, port=0, flags=0, phase=0):
         assert cpu.io.get(10, 0) & ~6 == ddr & ~6
         assert cpu.io.get(11, 0) & ~6 == port & ~6
         if before != after: ownership.append((cpu.t, before, after))
-        if instruction.op == 'out' and instruction.operands.startswith('0xb,') and after == 6:
+        if instruction.op in ('out', 'sbi', 'cbi') and instruction.operands.startswith('0xb,') and after == 6:
             outputs.append((cpu.t, cpu.io.get(11, 0) & 6))
     else: raise AssertionError('TX instruction bound')
     levels, stuff = encoded(b'\x80' + packet)
@@ -94,7 +94,7 @@ def byte_certificate(art):
             for _ in range(2000):
                 if started and cpu.pc == cpu.labels['usb_tx_begin_byte']: break
                 started = True; instruction = cpu.step()
-                if instruction.op == 'out' and instruction.operands.startswith('0xb,'):
+                if instruction.op in ('out', 'sbi', 'cbi') and instruction.operands.startswith('0xb,'):
                     outputs.append((cpu.t, cpu.io.get(11, 0) & 6))
             else: raise AssertionError('Byte instruction bound')
             levels, stuff = encoded(bytes([value]), run)

@@ -37,7 +37,7 @@ def check(art,entries=(39,40,40.75,41)):
                                 sent.append((cpu.r[19],cpu.r[20]))
                                 accepted=cpu.r[23],bytes(cpu.m[0x116:0x116+len(packet)])
                             instruction=cpu.step()
-                            if instruction.op=='out' and instruction.operands.startswith('0xb,') and cpu.io.get(10,0)&6==6:
+                            if instruction.op in ('out','sbi','cbi') and instruction.operands.startswith('0xb,') and cpu.io.get(10,0)&6==6:
                                 outputs.append((cpu.t,cpu.io.get(11,0)&6))
                         else:raise AssertionError('Jittered receiver did not return')
                         context=(kind,address,rate,width,entry,wire.jitter_certificate)

@@ -64,7 +64,7 @@ def in_response(art,address,length,rate,width,entry):
     for _ in range(18000):
         if cpu.pc==0xfffe:return first-incoming.boundaries[-2]
         ins=cpu.step()
-        if first is None and ins.op=='out' and ins.operands.startswith('0xb,') and cpu.io.get(0x0b,0)&6==h.K:
+        if first is None and ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and cpu.io.get(0x0b,0)&6==h.K:
             first=cpu.t
     raise AssertionError('IN response did not return')
 

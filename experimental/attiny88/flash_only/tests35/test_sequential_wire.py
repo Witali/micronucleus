@@ -101,7 +101,7 @@ def write_request(cpu,opcode,value=0,index=0,retry=False,followup=False,rate=150
             assert phase=='status';cpu.status_acked=True;acks+=1
             assert acks==1,'old status ACK accepted more than once'
         pc=cpu.pc;ins=cpu.step()
-        if ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:
+        if ins.op in ('out','sbi','cbi') and pc==cpu.labels['usb_tx_eop_delay']+4:
             if followup_ack:
                 followup_eop=True;replace_wire(cpu,Quiet())
             elif tx==('handshake',0xd2) and phase=='setup':
@@ -144,9 +144,9 @@ def read_request(cpu,length=8,retry=False,standard=False):
                 packets.append((cpu.m[0x101],bytes(cpu.m[0x102:0x102+n])))
                 assert cpu.r[4]|cpu.r[5]<<8==cursor,'IN preparation/retry moved cursor'
         pc=cpu.pc;ins=cpu.step()
-        if ins.op=='out' and ins.operands.startswith('0xb,') and cpu.io.get(11,0)&6==h.K and first_k is None:
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and cpu.io.get(11,0)&6==h.K and first_k is None:
             first_k=cpu.t
-        if ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:
+        if ins.op in ('out','sbi','cbi') and pc==cpu.labels['usb_tx_eop_delay']+4:
             if tx==('handshake',0xd2) and phase=='setup':
                 phase='read';replace_wire(cpu,Bits(h.token(0x69),start=cpu.t+64/3))
             elif tx==('handshake',0x5a):

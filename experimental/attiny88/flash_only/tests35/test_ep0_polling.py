@@ -28,9 +28,9 @@ def incoming(art,setup,delay,rate=1_500_000,config=1,responses=None):
                 packet=bytes(c.m[0x101:0x100+c.r[19]])
                 assert packet[0] in (0xc3,0x4b) and packet[-2:]==crc16(packet[1:-2]),('invalid cached DATA',packet.hex())
         pc=c.pc;ins=c.step()
-        if packet is not None and ins.op=='out' and ins.operands.startswith('0xb,') and c.io.get(10,0)&6==6:
+        if packet is not None and ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and c.io.get(10,0)&6==6:
             outputs.append((c.t,c.io.get(11,0)&6))
-        if j is None and ins.op=='out' and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.J and pc==c.labels['usb_tx_eop_delay']+4:
+        if j is None and ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.J and pc==c.labels['usb_tx_eop_delay']+4:
             j=c.t
             wire=Bits(h.token(0x69),start=j+delay,rate=rate)
             old=dict(c.io);cleared=c.io.cleared_at

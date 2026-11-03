@@ -65,7 +65,7 @@ def exchange(art, next_packet, command, direction, pid, rate, entry):
             assert cpu.word(28) == cpu.word(30) == 0x100
             assert cpu.r[1] == 0 and cpu.r[21] == 0xa0
             returning_context = False
-        if instruction.op == 'out' and pc == cpu.labels['usb_tx_eop_delay'] + 4:
+        if instruction.op in ('out', 'sbi', 'cbi') and pc == cpu.labels['usb_tx_eop_delay'] + 4:
             eops += 1
             incoming = Quiet()
             if eops == 1:

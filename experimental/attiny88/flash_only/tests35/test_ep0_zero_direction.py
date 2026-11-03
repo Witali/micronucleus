@@ -21,7 +21,7 @@ def exchange(art,bm,req,value=0,index=0,retry=False):
                 assert packet==('data',0x4b,0),packet
         if cpu.pc==cpu.labels['usb_rx_accept_ack'] and phase=='status':acked=True
         pc=cpu.pc;ins=cpu.step()
-        if ins.op=='out' and ins.operands.startswith('0xb,') and pc==cpu.labels['usb_tx_eop_delay']+4:
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and pc==cpu.labels['usb_tx_eop_delay']+4:
             if packet==('handshake',0xd2,0) and phase=='setup':
                 phase='status';wire=Bits(h.token(0x69),start=cpu.t+64/3);replace_wire(cpu,wire)
             elif packet==('handshake',0x5a,0):

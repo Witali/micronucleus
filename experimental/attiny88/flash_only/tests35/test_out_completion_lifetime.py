@@ -22,7 +22,7 @@ def exchange(cpu,incoming):
         if cpu.pc==cpu.labels['usb_tx_acquire_bus']:
             packets.append((cpu.r[19],cpu.r[20]))
         pc=cpu.pc;ins=cpu.step()
-        if ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:replace_wire(cpu,Quiet())
+        if ins.op in ('out','sbi','cbi') and pc==cpu.labels['usb_tx_eop_delay']+4:replace_wire(cpu,Quiet())
         if cpu.pc==cpu.labels['bootloader_poll_begin']:return packets
     raise AssertionError('Post-completion packet did not finish')
 

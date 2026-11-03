@@ -22,7 +22,7 @@ def transmit(art,delay=None,rate=1_500_000):
         if c.pc==c.labels['usb_rx_accept_ack']:accepted=True
         before=c.r[2];ins=c.step()
         if before and c.r[2]==0:cleared=c.t
-        if ins.op=='out' and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.J and c.executing_pc==c.labels['usb_tx_eop_delay']+4:
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.J and c.executing_pc==c.labels['usb_tx_eop_delay']+4:
             j=c.t
             if delay is not None:
                 wave=Bits(start=j+delay,rate=rate)

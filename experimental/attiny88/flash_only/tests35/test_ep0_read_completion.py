@@ -36,9 +36,9 @@ def control_read(art,requested=8,available=18,status_gap=64,kind='descriptor'):
                 data.append((c.m[0x101],bytes(c.m[0x102:0x102+n]).hex()))
             first_k=None
         pc=c.pc;ins=c.step()
-        if ins.op=='out' and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.K and first_k is None:
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and c.io.get(11,0)&6==h.K and first_k is None:
             first_k=c.t
-        if ins.op=='out' and ins.operands.startswith('0xb,') and pc==c.labels['usb_tx_eop_delay']+4:
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,') and pc==c.labels['usb_tx_eop_delay']+4:
             assert tx_kind is not None
             if tx_kind[0]=='data':
                 ack=Bits(b'\xd2',start=c.t+2*period)

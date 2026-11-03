@@ -675,16 +675,16 @@ usb_tx_stuff_bit7:
 usb_tx_begin_se0:
     out _SFR_IO_ADDR(PORTD), r16
     /* SE0 remains in USB Low-Speed timing window for DATA and handshake. */
-    rjmp .+0
 usb_tx_finish_eop:
-    ori r16, (1 << USB_MINUS_BIT)
-    /* TX kept R21 at the line mask, already equal to the six-count delay.
-     * Reusing it removes LDI and makes SE0 21 clocks (1.3125us at 16 MHz),
-     * closer to two nominal low-speed bits and within USB Table 7-10. */
+    rjmp .+0
+    /* R21 still contains the six-count line mask. The two-clock jump plus
+     * the seventeen-clock countdown and two-clock SBI below retain the exact
+     * twenty-one-clock SE0. SBI sets J where ORI plus OUT formerly did;
+     * R16 is dead after EOP, and the other PORTD bits remain untouched. */
 usb_tx_eop_delay:
     dec r21
     brbc SREG_Z, usb_tx_eop_delay
-    out _SFR_IO_ADDR(PORTD), r16
+    sbi _SFR_IO_ADDR(PORTD), USB_MINUS_BIT
     /* Bit PCIF2 equals the USB D+ DDRD bit. At this point the
        transmitter has set DDRD bits 1 and 2, so OUT writes 1 to
        PCIF2 (W1C) while IN obtains the DDR mask already needed below.

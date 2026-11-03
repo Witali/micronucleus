@@ -34,7 +34,7 @@ def intercepted_write(art):
         if cpu.pc==cpu.labels['usb_tx_acquire_bus']:
             packet=('handshake',cpu.r[20]) if cpu.r[19]==2 else ('data',cpu.m[0x101])
         pc=cpu.pc;ins=cpu.step()
-        if injected and ins.op=='out' and pc==cpu.labels['usb_tx_eop_delay']+4:
+        if injected and ins.op in ('out','sbi','cbi') and pc==cpu.labels['usb_tx_eop_delay']+4:
             if packet==('handshake',0x5a):
                 next_wire=Bits(h.token(0x69),start=cpu.t+500)
             elif packet and packet[0]=='data':

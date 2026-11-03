@@ -14,7 +14,7 @@ def data_reply(art,payload=bytes([0x40,3,0x11,0x22,0x80,0,0,0]),pid=0xC3,
         if cpu.pc==cpu.labels['usb_rx_end_packet']:
             capture=dict(pair=cpu.r[22],even=cpu.r[16])
         ins=cpu.step()
-        if ins.op=='out' and ins.operands.startswith('0xb,'):
+        if ins.op in ('out','sbi','cbi') and ins.operands.startswith('0xb,'):
             edges.append((cpu.t,cpu.io.get(11,0)&6))
     else:raise AssertionError('DATA handler did not return')
     start=next((time for time,value in edges if value==h.K),None)
