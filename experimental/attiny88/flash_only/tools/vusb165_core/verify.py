@@ -1,6 +1,6 @@
 """Execute the emitted experimental RX core against bounded independent GPIO.
 
-This is a centered-entry component test. It does not qualify SYNC, malformed
+This is a conditional-entry component test. It does not qualify SYNC, malformed
 stuffing/EOP, USB protocol effects, analogue behavior or a hardware loader.
 """
 from pathlib import Path
@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import importlib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -47,9 +48,12 @@ def build(source, output):
 
 class GPIO(dict):
     """Independent NRZI/stuffed-symbol encoder with synchronized GPIO aperture."""
-    def __init__(self, cpu, value, rate, sign, *, pulse=None, repeat=False):
+    def __init__(self, cpu, value, rate, sign, *, pulse=None, repeat=False,
+                 phase_offset=0, line_polarity=0):
         super().__init__()
         self.cpu = cpu
+        self.line_polarity = line_polarity
+        assert line_polarity in (0, 6) and math.isfinite(phase_offset)
         period = 16_000_000 / rate
         start = .5 - period / 2
         bits = []
@@ -77,27 +81,33 @@ class GPIO(dict):
                 t, level = self.times[i], self.levels[i]
                 self.times[i:i + 1] = [t - 3.36 * fraction, t + 3.36 * (1 - fraction)]
                 self.levels[i:i + 1] = [observed, level]
+        # Shift physical boundaries, not CPU time or the instruction model.
+        # Swapping the lines later keeps SE0/SE1 excursions unchanged.
+        self.times = [when + phase_offset for when in self.times]
 
     def get(self, address, default=0):
         if address == 9:
             when = self.cpu.t - .5 + 1e-7
             index = bisect_right(self.times, when) - 1
-            return self.levels[index] if index >= 0 else 2
+            level = self.levels[index] if index >= 0 else 2
+            return level ^ self.line_polarity if level in (2, 4) else level
         return super().get(address, default)
 
 
-def execute(h, art, value, rate, sign, raw_register, pulse=None, repeat=False):
+def execute(h, art, value, rate, sign, raw_register, pulse=None, repeat=False,
+            phase_offset=0, line_polarity=0):
     """Check payload and live foreground registers after every actual opcode."""
     cpu = h.CPU(art, h.Wave(b''), 0)
     cpu.pc = art['symbols']['rxLoop']
-    cpu.io = GPIO(cpu, value, rate, sign, pulse=pulse, repeat=repeat)
+    cpu.io = GPIO(cpu, value, rate, sign, pulse=pulse, repeat=repeat,
+                  phase_offset=phase_offset, line_polarity=line_polarity)
     cpu.r[16] = 0xff
     cpu.r[17] = 3
-    cpu.r[19] = 2
+    cpu.r[19] = 2 ^ line_polarity
     cpu.r[20] = 0xff
     cpu.r[21] = 0
     cpu.r[22] = 255
-    cpu.r[raw_register] = 2
+    cpu.r[raw_register] = 2 ^ line_polarity
     cpu.r[28:32] = [0, 1, 0, 1]
     protected = {24: 0xb6, 25: 0xc7}
     if raw_register == 23:
@@ -133,8 +143,16 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--raw-register', type=int, choices=(0, 23), default=23)
     parser.add_argument('--all-byte-values', action='store_true')
+    parser.add_argument('--phase-offset', type=float, action='append',
+                        help='Physical-wave shift in CPU clocks; repeat for multiple offsets (default 0)')
+    parser.add_argument('--both-line-polarities', action='store_true',
+                        help='Also swap J/K line levels and the initial previous-line state')
     parser.add_argument('--expected-sha256')
     args = parser.parse_args()
+    offsets = args.phase_offset if args.phase_offset is not None else [0]
+    if not all(math.isfinite(offset) for offset in offsets):
+        parser.error('--phase-offset requires finite clock values')
+    polarities = (0, 6) if args.both_line_polarities else (0,)
     root = args.root.resolve()
     if not (root / 'tests35/ep0_model.py').is_file():
         parser.error('--root must contain the maintained tests35 executor')
@@ -149,12 +167,17 @@ def main():
     report = dict(bytes=art['size'], sha256=art['sha256'], raw_register=args.raw_register,
                   source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
                   protected_registers=[0, 24, 25] if args.raw_register == 23 else [24, 25],
-                  scope='Centered-entry RX component only; no SYNC/EOP/protocol qualification',
+                  phase_offsets=offsets, line_polarities=list(polarities),
+                  scope='Conditional-entry RX component only; no real SYNC/EOP/protocol qualification',
                   model_sha256={p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in
                                 ('tests35/ep0_model.py', 'tests35/avr_cycles.py')}, results=[])
     def check(group, **context):
-        result = execute(h, art, raw_register=args.raw_register, **context)
-        report['results'].append(dict(group=group, **context, **result))
+        for offset in offsets:
+            for polarity in polarities:
+                result = execute(h, art, raw_register=args.raw_register,
+                                 phase_offset=offset, line_polarity=polarity, **context)
+                report['results'].append(dict(group=group, phase_offset=offset,
+                                             line_polarity=polarity, **context, **result))
     for value in (0x00, 0x15, 0x9f, 0xef, 0xff):
         for rate in (1499250, 1500000, 1500750):
             for sign in (-1, 0, 1):
@@ -178,6 +201,7 @@ def main():
     summary = dict(bytes=art['size'], sha256=art['sha256'], cases=len(report['results']),
                    groups=dict(Counter(r['group'] for r in report['results'])),
                    failures=len(failures), failure_groups=dict(Counter(r['group'] for r in failures)),
+                   phase_offsets=offsets, line_polarities=list(polarities),
                    first_failure=failures[0] if failures else None)
     report['summary'] = summary
     (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')

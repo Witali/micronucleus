@@ -152,3 +152,30 @@ the missing caller must establish nonempty, exact framing, legal final stuff
 and dribble, a valid EOP and live recovery J before entering protocol logic.
 This option does not make the inherited bit1-only SE0 probe a qualified
 receiver and must not be used as a hardware programming image.
+
+## Conditional entry-phase and line-polarity checks
+
+`verify.py` accepts repeated `--phase-offset` values in CPU clocks and
+`--both-line-polarities`. An offset shifts every physical input boundary;
+it does not adjust CPU instruction time. A negative offset starts the core
+later relative to the symbols. Swapping J/K changes the initial previous-line
+state too, while transient SE0/SE1 levels remain unchanged. With no options,
+the original centered, single-polarity command is preserved.
+
+The following screen uses the unbounded 288-byte control, not pointer mode:
+
+```sh
+python3 tools/vusb165_core/verify.py \
+  --source build/vusb165-core/current/receiver.S \
+  --output build/vusb165-core/phase-screen \
+  --phase-offset=-2 --phase-offset=-1 --phase-offset=-0.5 \
+  --phase-offset=0 --phase-offset=0.25 --both-line-polarities \
+  --expected-sha256 30e1e209ef78726a22eb00f4ce95b2a9c62eaf2848ceb5e765c541fc4345a6b3
+```
+
+It executes 6300 cases and currently exits with failure: 202 single/repeated
+erasure cases fail at the three negative offsets. The tested 0 and +0.25
+points pass all 1260 cases each. Clean periodic streams alone give a much
+wider apparent window; that does not establish erasure tolerance. These are
+finite phase points, not a proof of the entire interval or of real SYNC
+acquisition. The tool records every failure without expected-failure waivers.
