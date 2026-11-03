@@ -53,7 +53,9 @@ usb_rx_delay_complete:
     rjmp .+0
 #endif
     rjmp .+0
-    nop
+    /* Initialize fractional state in the existing delay slot. Length comes
+     * from Y at EOF, so no separate byte countdown needs initialization. */
+    ldi r21, 0x00
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
 #ifdef USB_RX_ACK_TERMINAL
@@ -62,8 +64,7 @@ usb_rx_delay_complete:
      * including a legal both-low/both-high crossover observation. */
     cpi r16, (1 << USB_PLUS_BIT)
     bst r1, 0
-    ldi r21, 0x00
-    ldi r23, USB_RX_BUFFER_BYTES
+    rjmp .+0
     breq usb_rx_normal_pid_entry
     rjmp usb_rx_ack_entry
 usb_rx_normal_pid_entry:
@@ -72,8 +73,7 @@ usb_rx_normal_pid_entry:
     bst r16, USB_MINUS_BIT
     bld r18, 7
     ldd r19, Z+CTX_TX_LENGTH
-    ldi r21, 0x00
-    ldi r23, USB_RX_BUFFER_BYTES
+    rjmp .+0
     rjmp usb_rx_sample_odd_bit
 #endif
 /* Mandatory stuffed symbols must be NRZI transitions. These short tails
@@ -237,7 +237,10 @@ usb_rx_sample_odd_bit:
 usb_rx_advance_bit_pair:
     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
     brbs SREG_C, usb_rx_sample_even_bit
-    subi r23, 0x01
+    /* Y points past the committed bytes. Before the last byte's bit6,
+     * exactly ten bytes are committed; use that same terminal proof on
+     * ordinary and odd5-stuffed paths without a redundant countdown. */
+    cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
     in r16, _SFR_IO_ADDR(PIND)
     brne usb_rx_decode_bit6
     rjmp usb_rx_terminal_bit6
@@ -294,7 +297,7 @@ usb_rx_unstuff_odd_bit:
     /* Carry clear selects odd position5. No history mutation or correction
      * is needed: only bits6/7 remain, and both stuffing tests are bypassed.
      * Preserve an initial-PID seed in R20 rather than assuming it is zero. */
-    subi r23, 1
+    cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
     in r16, _SFR_IO_ADDR(PIND)
     breq usb_rx_odd_overflow_local
     andi r16, USB_LINE_MASK
@@ -319,7 +322,7 @@ usb_rx_recover_odd5_crossover:
     /* Odd1/3 resume their next-even sampler. Odd5 instead repays the
      * confirmation latency in its remaining bit6/7 schedule. */
     brbs SREG_C, usb_rx_unstuff_odd_next_even
-    subi r23, 1
+    cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
     in r16, _SFR_IO_ADDR(PIND)
     breq usb_rx_odd_terminal_recovered_local
     andi r16, USB_LINE_MASK
