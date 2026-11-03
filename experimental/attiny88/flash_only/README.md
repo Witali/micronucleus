@@ -43,6 +43,11 @@ That region would start at 0x1B00 on this 8 KiB device. A recognized final
 profile requires both a fitting image and passing USB admission checks;
 the current audit profile below has not moved to that target placement.
 
+The [external software USB review](docs/SOFTWARE_USB_REFERENCES.md) compares
+USBtiny, other V-USB clock/phase engines, RV003USB, vmeiosis and STM8 examples.
+It records reusable scheduling ideas, pinned sources and actual counterexamples
+before treating any smaller external receiver as a replacement.
+
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
 advertise 0xFFFF unless an explicit new profile is supplied; the active client
