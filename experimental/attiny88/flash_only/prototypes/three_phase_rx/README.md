@@ -76,6 +76,12 @@ remain unimplemented here. The ordinary 16384-case sweep is separate.
 
 ## Remaining integration work
 
+The separate [PC-typed lookahead entry](typed_entry/README.md) moves phase0's
+mandatory-zero observation from 11 to 10. Its 154-byte component passes
+1998 caller-supplied entry controls and the preserved truncated-packet guard,
+with an explicit T marker for the remaining cooldown class. Its standalone
+verifier does not link an ordinary runtime caller or a complete receive loop.
+
 - Stuff entry is at 11/20/31 clocks, whereas the next normal FIRST would be
   at 10/21/32. Each cold continuation needs an explicit physical schedule.
 - Consuming a stuffed zero must preserve the logical rolling byte. Its
