@@ -3,7 +3,7 @@
 Reviewed on 2026-11-03 for the ATtiny88, 16 MHz, no-LED, 1280-byte objective.
 The review uses original source and author documentation. Reported upstream
 sizes are not measurements of our complete loader. Current firmware remains
-1780 bytes for the default control and 1948 bytes for the improved ACK variant;
+1768 bytes for the default control and 1936 bytes for the improved ACK variant;
 both retain mandatory receive findings.
 
 The [source index](../tools/external_usb/SOURCES.tsv) pins fourteen inspected
@@ -123,7 +123,8 @@ exception is added. Its first observation is supplied centered by the test;
 real SYNC, qualified EOP, malformed packets and protocol integration remain
 unimplemented. The generator checks the original upstream SHA256/Git blob;
 only tools are retained in Git, with generated derivatives in ignored build/.
-Full firmware sizes after the separate local reductions are 1780/1948 bytes.
+At that stage, full firmware sizes after the separate local reductions were
+1780/1948 bytes. Later control-state reductions are recorded separately.
 
 The subsequent `--stuff4-delay` option corrects that BF path with one NOP
 after its already-timed stuffed-bit observation. This stronger component is
@@ -133,3 +134,64 @@ It passes all 630 retained controls and all 2304 pristine byte-value cases,
 including the nine BF witnesses, with unchanged register guards and oracles.
 The historical 286-byte option remains reproducible with its strict failures.
 These results still supply no real SYNC or EOP/protocol integration proof.
+
+## Follow-up qualification limits
+
+The same-clock pointer-bound option remains 288 bytes, SHA256
+`2cc5de3cbf7a1c0072ea92fc63a72e4dca7e5cd6987bcfce520d5d98903a9959`.
+Its independent 2934-case overlength check permits exactly eleven stores in
+0x116..0x120, preserves configuration 0x115 and rejects before a twelfth store.
+R22 becomes available to a future framer. This does not repair its inherited
+bit1-only EOP probe or validate every mandatory stuffed transition.
+
+The portable entry-phase screen executes 6300 cases at five finite offsets
+and both coordinated line mappings. It finds 202 single/repeated-erasure
+failures at negative offsets, including -0.5 clocks. The tested zero and
++0.25 points pass 1260 cases each. A clean-input phase margin cannot be reused
+as an erasure-tolerance interval or a SYNC guarantee.
+
+Two linked acquisition experiments were rejected:
+
+| Acquisition and retained core | Bytes | Cases | Complete-byte failures | Mandatory PID/payload/count failures |
+| --- | ---: | ---: | ---: | ---: |
+| Cooperative full-K persistence | 344 | 3042 | 219 | 183 |
+| Paired per-symbol SYNC phase feedback | 446 | 6316 | 1962 | 1950 |
+
+The first front can mistake actual ACK PID0 J for a broken eighth-SYNC
+persistence check, restart, and decode physical cell 15 as the first PID bit.
+Fourteen delay-only images, zero through six added clocks and both mappings,
+execute 112 witness cases; no delay fixes that earlier restart decision.
+
+The second front fixes both original integer-entry witnesses but fails a
+pristine fractional entry. At DATA entry 24.75, FIRST/SECOND at 30.25/32.25
+both see SYNC cell 2. The next pair at 40.25/42.25 straddles cells 3/4.
+The following FIRST equals the already advanced SECOND, falsely declaring
+the final SYNC one; the supposed PID sample at 62.25 belongs to cell 5.
+Actual 10/11-clock cadence therefore does not establish sample ownership.
+All 3158 paired mapping results are symmetric; a pin assignment correction
+cannot repair this failure. Numerical DATA CRC16's waiver does not permit
+the wrong PID, payload or count.
+
+A private 320-byte stuff-after-bit6 guard also passes all 2934 retained
+positive controls but fails two independent legal-crossover cases out of 270.
+Its full two-pin XOR comparison uses a prior raw operand that can itself be
+erased. For valid DATA0 `C3 01 FE FE FE FE FE FE FE`, 1500750 bit/s,
+periodic sign -1 and crossover fraction 1 at stuffed edge 31, that prior
+operand sees legal SE0 or SE1 while the stuffed observation sees full J.
+The unguarded core publishes all eleven correct bytes; the guard rejects
+them. This shortcut is rejected. Its use of R22 as transient raw scratch is
+an explicit private-mode ABI; the accepted pointer-bound option's R22
+preservation contract is unchanged.
+
+The private link-budget scaffold is 1310 bytes at 0x1900, SHA256
+`317bddec7118f9d2ee9db81052c66d69130c8dc82ddf0ae42cb0d9cee1828298`.
+It combines the earlier shared owner with the 288-byte core, but acquisition
+and unqualified SE0/overflow fail closed. Its 1288 direct admitted-frame
+comparisons test only the protocol seam. The scaffold is already 30 bytes
+over 1280 before real acquisition/EOP, and is not a working receiver.
+
+Exact sources, immutable bodies and traces remain under the local validation
+directories `vusb-loader-integration-nov03`, `vusb-sync-integration-nov03`
+and `vusb-eop-integration-nov03`, including the SYNC `followup/` report.
+The maintained portable generator and strict oracles stay in the repository.
+No failed front/guard was selected for a loader or installed on hardware.
