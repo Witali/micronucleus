@@ -17,8 +17,42 @@ def begin(cpu,pc,flags):
     cpu.pc=pc;cpu.flags=flags;cpu.t=100;cpu.steps=0
 
 
+def check_inc_loop(artifact=None):
+    """Audit INC flags and the eleven-step CRC5 loop against the AVRe rules."""
+    art=artifact if artifact is not None else h.build()
+    cpu=h.CPU(art,Quiet());pc=cpu.base+128
+    pattern=[(index*37+11)&255 for index in range(32)]
+    # INC affects Z/N/V/S and preserves C/H/T/I. Signed overflow occurs
+    # only at 127 -> -128; unsigned modulo arithmetic supplies the result.
+    install(cpu,pc,0x9593)  # INC R25
+    cases=0
+    for value in range(256):
+        result=(value+1)%256;negative=int(result>=128);overflow=int(value==127)
+        affected=(int(result==0)<<1)|(negative<<2)|(overflow<<3)|((negative^overflow)<<4)
+        for flags in range(256):
+            begin(cpu,pc,flags);cpu.r=pattern.copy();cpu.r[25]=value
+            ins=cpu.step()
+            assert ins.op=='inc' and cpu.r[25]==result
+            assert cpu.flags==(flags&0xe1)|affected,(value,flags,cpu.flags)
+            assert cpu.r[:25]+cpu.r[26:]==pattern[:25]+pattern[26:]
+            assert cpu.pc==pc+2 and cpu.t==101 and cpu.steps==1
+            cases+=1
+    install(cpu,pc+2,0xf7f3)  # BRVC -2 words, back to INC R25
+    for flags in range(256):
+        begin(cpu,pc,flags);cpu.r[25]=0x75
+        for _ in range(22):
+            cpu.step()
+        assert cpu.pc==pc+4 and cpu.r[25]==0x80
+        assert cpu.t==132 and cpu.steps==22
+        assert cpu.flags==(flags&0xe1)|0x0c
+    assert not cpu.bus_events
+    print('PASS INC operands/flags and eleven-step BRVC CRC counter:',cases,
+          'flag cases; 256 loops, 32 clocks each',flush=True)
+
+
 def test():
     art=h.build();cpu=h.CPU(art,Quiet());pc=cpu.base+128
+    check_inc_loop(art)
     pattern=[(index*37+11)&255 for index in range(32)]
     asr_cases=0
     for register in range(32):

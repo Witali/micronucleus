@@ -103,3 +103,12 @@ executed by a model as though the target had additional Flash.
 Independent legacy, host, EEPROM, LED initialization and strict-source packaging
 checks keep their own recognized geometry. Their passing results qualify those
 fixtures separately from the selected experimental receiver.
+
+## INC/BRVC CRC5 loop dependency
+
+The SET_ADDRESS counter has a targeted check: 65536 operand/initial-SREG
+cases preserve C/H/T/I and verify Z/N/V/S, followed by 256 emitted loops
+from 0x75 to 0x80. Every loop executes eleven INCs and eleven BRVCs in
+exactly 32 clocks, retaining the CRC feedback carry. Expected flags use
+unsigned/signed arithmetic and the AVRe INC definition, not the interpreter's
+flag helper. The targeted entry is `test_avr_model.check_inc_loop`.
