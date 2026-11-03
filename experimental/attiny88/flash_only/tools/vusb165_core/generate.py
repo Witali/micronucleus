@@ -37,7 +37,7 @@ def phase_update(block, replacement):
     return block
 
 
-def generate(data, raw_register=23):
+def generate(data, raw_register=23, stuff4_delay=False):
     """Keep source identity and exact cold-path transformations reviewable."""
     if hashlib.sha256(data).hexdigest() != SOURCE_SHA256:
         raise ValueError('The supplied source differs from the pinned upstream SHA256')
@@ -48,7 +48,7 @@ def generate(data, raw_register=23):
     text = data.decode('utf-8')
     text = text[text.index('continueWithBit5:'):text.index('macro POP_STANDARD')]
     text = re.sub(r'~(0x[0-9a-fA-F]+)', r'(255 ^ \1)', text)
-    # Baseline16MHz retime: earlier bit4, and remove the shared delay before7.
+    # Baseline 16 MHz retime: earlier bit4 and no shared delay before bit7.
     text = once(text, 'didUnstuff5:                ;[   ]\n    nop2                    ;[074]\n',
                 'didUnstuff5:                ;[   ]\n')
     text = once(text, 'didUnstuff3:                ;[   ]\n    breq    unstuff3        ;[042] *** unstuff escape\n    nop                     ;[043]\n',
@@ -93,6 +93,11 @@ def generate(data, raw_register=23):
                 'pll_decision:\n    sbrc    phase, USBMINUS')
     # Upstream bracketed times no longer describe the retimed instructions.
     text = '\n'.join(line.split(';', 1)[0].rstrip() for line in text.splitlines()) + '\n'
+    if stuff4_delay:
+        # BF's steady-state stuffed symbol follows bit4. Keep the timed read
+        # unchanged; one later clock corrects the short 95-clock byte path.
+        text = once(text, '    ori     shift, 0x10\n    rjmp    didUnstuff4\n',
+                    '    ori     shift, 0x10\n    nop\n    rjmp    didUnstuff4\n')
     if raw_register == 23:
         text = re.sub(r'\br0\b', 'r23', text)
     if re.search(r'^\s*lpm\b', text, flags=re.M):
@@ -137,15 +142,17 @@ def main():
     group.add_argument('--download', action='store_true', help='Fetch only the pinned public source')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--raw-register', type=int, choices=(0, 23), default=23)
+    parser.add_argument('--stuff4-delay', action='store_true',
+                        help='Add the measured after-read stuffed4 delay (288-byte component)')
     args = parser.parse_args()
     data = urlopen(URL, timeout=30).read() if args.download else args.input.read_bytes()
-    source = generate(data, args.raw_register)
+    source = generate(data, args.raw_register, args.stuff4_delay)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(source, encoding='utf-8', newline='\n')
     args.output.with_suffix('.provenance.json').write_text(json.dumps(dict(
         upstream_commit=COMMIT, upstream_path=UPSTREAM_PATH, upstream_sha256=SOURCE_SHA256,
         upstream_git_blob=SOURCE_GIT_BLOB, generated_sha256=hashlib.sha256(source.encode()).hexdigest(),
-        raw_register=args.raw_register), indent=2) + '\n')
+        raw_register=args.raw_register, stuff4_delay=args.stuff4_delay), indent=2) + '\n')
     print(str(args.output))
 
 

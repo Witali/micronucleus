@@ -1,6 +1,8 @@
 # Pinned V-USB receive-core experiment
 
-These host tools generate and execute an experimental **286-byte RX component**.
+These host tools generate and execute an experimental RX component. The current
+stronger option is **288 bytes** with `--stuff4-delay`; omitting that option
+retains the historical **286-byte control** unchanged.
 This is not a bootloader or a programming image. SYNC acquisition, qualified
 EOP/malformed-tail handling, token/CRC5/ACK ownership, protocol, TX and Flash
 operations are absent. No hardware is accessed.
@@ -22,11 +24,12 @@ existing AVR Clang, AVR binutils and LLVM tools available on PATH:
 ```sh
 python3 tools/vusb165_core/generate.py \
   --input /path/to/usbdrvasm165.inc \
-  --output build/vusb165-core/receiver.S
+  --stuff4-delay \
+  --output build/vusb165-core/current/receiver.S
 python3 tools/vusb165_core/verify.py \
-  --source build/vusb165-core/receiver.S \
-  --output build/vusb165-core/basic \
-  --expected-sha256 db2d8a08e86b493754890072b864e77039a93f7993269cbccf66430303b32d55
+  --source build/vusb165-core/current/receiver.S \
+  --output build/vusb165-core/current/basic \
+  --expected-sha256 30e1e209ef78726a22eb00f4ce95b2a9c62eaf2848ceb5e765c541fc4345a6b3
 ```
 
 An explicit `--download` can replace `--input`; it downloads only the pinned
@@ -48,15 +51,30 @@ periodic jitter signs, use a separate output directory:
 
 ```sh
 python3 tools/vusb165_core/verify.py \
-  --source build/vusb165-core/receiver.S \
-  --output build/vusb165-core/all-values \
+  --source build/vusb165-core/current/receiver.S \
+  --output build/vusb165-core/current/all-values \
   --all-byte-values \
-  --expected-sha256 db2d8a08e86b493754890072b864e77039a93f7993269cbccf66430303b32d55
+  --expected-sha256 30e1e209ef78726a22eb00f4ce95b2a9c62eaf2848ceb5e765c541fc4345a6b3
 ```
 
-## Current evidence and open failure
+## Current evidence and historical control
 
-The R23 body is 286 bytes at component placement `0x1B00`, SHA256
+The current R23 option is **288 bytes**, SHA256
+`30e1e209ef78726a22eb00f4ce95b2a9c62eaf2848ceb5e765c541fc4345a6b3`.
+It adds exactly one NOP after `unstuff4`'s already-timed GPIO read and history
+correction, before the continuation jump. The earlier read is unchanged.
+This fixes the short 95-clock BF byte path while preserving live registers.
+
+The recorded stages pass all nine original BF witnesses, all 630 retained
+controls and all 2304 pristine byte-value cases. The expanded command above
+reproduces the 630 + 2304 checks; the nine dedicated witnesses are also covered
+by the all-value matrix. These are centered-entry component results only.
+
+For the historical control, omit `--stuff4-delay` at generation and use the
+R23 control hash below with the same verifier. The generator's default remains
+the historical variant, so existing source generation is reproducible.
+
+The historical R23 body is 286 bytes at component placement `0x1B00`, SHA256
 `db2d8a08e86b493754890072b864e77039a93f7993269cbccf66430303b32d55`.
 The R0 control remains 286 bytes, SHA256
 `096a39e67f9de6f9d2c67c9d9df8e294faf4071d49565b9aec3aa754c74978a2`.
@@ -72,9 +90,10 @@ The R0 control remains 286 bytes, SHA256
 The first pristine BF witness uses 1,499,250 bit/s and jitter sign -1. It
 publishes `bfbfbfbfbf9f5f7f7f7f7f` instead of eleven BF bytes.
 
-The basic 630-case command exits successfully. The 2934-case expanded command
-currently exits with failure and records all nine cases. Do not add expected
-failure exceptions or call this a qualified receiver. The JSON keeps exact body,
+For the historical 286-byte control, the basic 630-case check passes and the
+2934-case expansion records the nine BF failures. The 288-byte option fixes
+those witnesses and preserves all retained controls. Do not add expected-failure
+exceptions or call either variant a qualified receiver. The JSON keeps exact body,
 source and model hashes and the test scope. It is written beside the linked
 object and body binary under the selected output directory.
 

@@ -124,3 +124,12 @@ real SYNC, qualified EOP, malformed packets and protocol integration remain
 unimplemented. The generator checks the original upstream SHA256/Git blob;
 only tools are retained in Git, with generated derivatives in ignored build/.
 Full firmware sizes after the separate local reductions are 1780/1948 bytes.
+
+The subsequent `--stuff4-delay` option corrects that BF path with one NOP
+after its already-timed stuffed-bit observation. This stronger component is
+288 bytes, SHA256
+`30e1e209ef78726a22eb00f4ce95b2a9c62eaf2848ceb5e765c541fc4345a6b3`.
+It passes all 630 retained controls and all 2304 pristine byte-value cases,
+including the nine BF witnesses, with unchanged register guards and oracles.
+The historical 286-byte option remains reproducible with its strict failures.
+These results still supply no real SYNC or EOP/protocol integration proof.
