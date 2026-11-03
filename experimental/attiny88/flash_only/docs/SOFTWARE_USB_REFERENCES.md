@@ -174,12 +174,15 @@ the wrong PID, payload or count.
 
 A private 320-byte stuff-after-bit6 guard also passes all 2934 retained
 positive controls but fails two independent legal-crossover cases out of 270.
-Its full two-pin XOR comparison uses a prior raw operand that can itself be
-erased. For valid DATA0 `C3 01 FE FE FE FE FE FE FE`, 1500750 bit/s,
+One is a new guard regression; the other is an inherited decode failure.
+The guard's full two-pin XOR comparison uses a prior raw operand that can
+itself be erased. For valid DATA0 `C3 01 FE FE FE FE FE FE FE`, 1500750 bit/s,
 periodic sign -1 and crossover fraction 1 at stuffed edge 31, that prior
-operand sees legal SE0 or SE1 while the stuffed observation sees full J.
-The unguarded core publishes all eleven correct bytes; the guard rejects
-them. This shortcut is rejected. Its use of R22 as transient raw scratch is
+operand sees legal SE0 while the stuffed observation sees full J. The
+unguarded core publishes all eleven correct bytes; the guard rejects them.
+The matched SE1 case already misdecodes payload in both baseline and candidate
+without entering this stuff6 guard; it is not a second new guard regression.
+This shortcut is rejected. Its use of R22 as transient raw scratch is
 an explicit private-mode ABI; the accepted pointer-bound option's R22
 preservation contract is unchanged.
 
