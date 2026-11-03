@@ -711,14 +711,8 @@ usb_tx_wait_ack_sop:
     dec r28
     brne usb_tx_wait_ack_sop
     mov r2, r1
-usb_return_context:
-    in r24, _SFR_IO_ADDR(GPIOR2)
-    movw r28, r30
-usb_return_polynomial:
-    ldi r21, HIGH8(CRC16_POLYNOMIAL)
-usb_handler_return:
-    ret
-
+    /* DATA cannot retain an uncaptured SETUP marker. A quiet ACK timeout
+     * can share the handshake discriminator before restoring the caller. */
 usb_tx_finish_handshake:
     tst r3
     brmi usb_tx_commit_read_status
@@ -734,7 +728,15 @@ usb_tx_finish_handshake:
     ldd r15, Z+CTX_SETUP_INDEX_HIGH
     ldd r6, Z+CTX_SETUP_LENGTH_LOW
     ldd r7, Z+CTX_SETUP_LENGTH_HIGH
-    rjmp usb_return_context
+    /* Publish the complete shadow before restoring the shared context. */
+usb_return_context:
+    in r24, _SFR_IO_ADDR(GPIOR2)
+    movw r28, r30
+usb_return_polynomial:
+    ldi r21, HIGH8(CRC16_POLYNOMIAL)
+usb_handler_return:
+    ret
+
 
 usb_tx_commit_read_status:
     /* No receive or foreground work can precede this retirement. Both
