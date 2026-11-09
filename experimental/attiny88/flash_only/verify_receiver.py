@@ -73,6 +73,7 @@ CHECKS = (
     ('test_rx_sync_crossover', 'test'),
     ('test_rx_legal_dribble', 'test'),
     ('test_rx_fractional_dribble', 'test'),
+    ('test_rx_fractional_data', 'test'),
     ('test_rx_eop_matrix', 'test'),
 )
 RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_and_eop')
