@@ -48,6 +48,11 @@ USBtiny, other V-USB clock/phase engines, RV003USB, vmeiosis and STM8 examples.
 It records reusable scheduling ideas, pinned sources and actual counterexamples
 before treating any smaller external receiver as a replacement.
 
+The [native V-USB comparison](docs/VUSB_COMPARISON_2026_11_09.md) gives linked
+sizes by responsibility, fresh 16 MHz RX/TX results and USB clause checks.
+The [fork survey](docs/VUSB_FORKS_2026_11_09.md) records which third-party
+changes improve integrity and which retain the same error assumptions.
+
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds
 advertise 0xFFFF unless an explicit new profile is supplied; the active client
@@ -149,6 +154,11 @@ reference for the stricter receiver.
 | IN retry state | Assumes successful ACK and frees TX on send | Cached DATA/PID retained until ACK/status completion |
 | SET_ADDRESS activation | During status DATA EOP | After eligible status ACK |
 | Host delay after programming | 7 ms normally; 5 ms in fast mode | Configurable, 7 ms default |
+
+The address-activation row describes different policies. USB 2.0 section
+9.2.6.3 permits completion on status transmission or ACK; our post-ACK policy
+is not the only permitted point. Retry ownership and cancellation of a
+superseded SETUP remain separate requirements.
 
 The upstream [driver limitations](https://github.com/micronucleus/micronucleus/blob/4dd1b49f39cd9d6fc736a720777ed62f4564e0e2/firmware/usbdrv/usbdrv.h)
 explicitly list unchecked token/data CRC, stuffing errors, misplaced SE0 and

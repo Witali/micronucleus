@@ -6,6 +6,12 @@ sizes are not measurements of our complete loader. Current firmware remains
 1768 bytes for the default control and 1936 bytes for the improved ACK variant;
 both retain mandatory receive findings.
 
+The [November 9 native comparison](VUSB_COMPARISON_2026_11_09.md) freshly
+downloads current upstream, measures the actual 16 MHz implementation and
+partitions its linked functions against our 1768-byte body. The separate
+[fork review](VUSB_FORKS_2026_11_09.md) distinguishes real integrity fixes,
+sharing/portability work and remaining protocol omissions.
+
 The [source index](../tools/external_usb/SOURCES.tsv) pins fourteen inspected
 files by commit, Git blob and SHA256. Original source stays in local/ignored
 reference caches. This review does not replace protocol tests or change the

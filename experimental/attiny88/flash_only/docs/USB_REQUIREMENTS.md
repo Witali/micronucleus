@@ -91,7 +91,7 @@ keep bounded execution and memory/command safety for those inputs.
 | Section 9.4.10 permits STALL for SET_INTERFACE when only the default setting exists. | No alternate-setting state or SET_INTERFACE success handler. GET_INTERFACE still reports setting zero. |
 | Section 9.4.5 says the Halt feature is neither required nor recommended for the Default Control Pipe; section 8.5.3.4 distinguishes functional from protocol stall. | No persistent EP0 Halt feature or set/clear-Halt machinery. Required protocol STALL lasts until the next SETUP. |
 | Section 8.5.3.1 allows any received packet length as a control-read status inquiry. | Accept a completely framed status packet without a zero-payload-length check. Both CRC-byte positions and DATA-toggle ownership remain required. |
-| Section 9.4.6 leaves SET_ADDRESS values above127 and nonzero wIndex/wLength unspecified. Section 9.4.7 similarly leaves nonzero wIndex/wLength/upper wValue unspecified. | Do not add request-shape checks for those undefined cases. Keep valid address activation after its status ACK and configuration-value validation. |
+| Section 9.4.6 leaves SET_ADDRESS values above127 and nonzero wIndex/wLength unspecified. Section 9.4.7 similarly leaves nonzero wIndex/wLength/upper wValue unspecified. | Do not add request-shape checks for those undefined cases. Retain configuration-value validation. Our post-ACK address activation is a chosen policy; section 9.2.6.3 also permits completion on status transmission. |
 | Section 7.1.15.1 allows trading source-driver jitter against clock accuracy within total upstream limits. | Keep the compact fractional TX schedule when its independently measured total error meets the applicable limits; do not impose the tighter downstream-driver limits on this device. |
 
 Except for the four-byte shared-reply reduction, these are existing omissions
@@ -99,6 +99,12 @@ or choices, not additional measured savings. Permanent EEPROM commands, strings,
 alternate configurations and nonzero endpoints are also absent from this target.
 The explicit incoming DATA CRC16 waiver below is a separate project deviation,
 not a claim that this check is optional for a USB control endpoint.
+
+`test_set_address_ownership` additionally enforces the project's post-ACK
+publication policy. USB section 9.2.6.3 permits status transmission or ACK as
+SET_ADDRESS completion, so that stricter oracle must not be used to declare
+every send-time implementation invalid. Stale requests, early activation
+before status and failed control-transfer retry are separate questions.
 
 ## Signal oracle scope
 

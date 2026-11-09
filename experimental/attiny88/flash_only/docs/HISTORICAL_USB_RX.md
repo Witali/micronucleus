@@ -92,6 +92,11 @@ until an eligible ACK, defer SET_ADDRESS activation and protect pending SETUP
 fields from a later packet. Their smaller predecessors are not equivalent
 protocol implementations. Numeric incoming DATA CRC16 checking remains omitted.
 
+Deferred SET_ADDRESS activation is our chosen post-ACK policy. USB 2.0
+section 9.2.6.3 also permits successful status transmission as completion;
+the earlier send-time point alone is not a protocol violation. Cancellation
+of superseded requests and preservation of retry data remain distinct issues.
+
 The 1534-byte image is an experimental checkpoint with unresolved short-EOP and
 aperiodic-jitter receive failures, not a qualified replacement for the board.
 See the [composed receiver](../variants/combined_rx/README.md) for newer measured
