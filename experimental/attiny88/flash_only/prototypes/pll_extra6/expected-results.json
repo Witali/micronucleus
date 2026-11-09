@@ -1,0 +1,538 @@
+{
+  "controls": {
+    "bytes": 5634,
+    "sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+    "suite": "controls",
+    "cases": 24,
+    "failures": 0,
+    "groups": {
+      "clean": 24
+    },
+    "failure_groups": {},
+    "error_kinds": {},
+    "first": [],
+    "scope": "Offline component: actual acquisition/PID, each DATA bit, 0..6 tail ones and EOF tag. No packet admission, SRAM publication or ACK claim.",
+    "entry_sreg_t": 0
+  },
+  "full": {
+    "bytes": 5634,
+    "sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+    "suite": "full",
+    "cases": 9984,
+    "failures": 261,
+    "groups": {
+      "sync_adjacent5_6": 3168,
+      "sync_edge_jitter": 1848,
+      "data_single": 4752,
+      "data_all_edges": 216
+    },
+    "failure_groups": {
+      "data_single": 261
+    },
+    "error_kinds": {
+      "reject": 261,
+      "count": 261
+    },
+    "first": [
+      {
+        "group": "data_single",
+        "packet": "c3fffffffffffffffffe70",
+        "entry": 5,
+        "context": {
+          "rate": 1499250,
+          "sign": -1,
+          "observed": 0,
+          "index": 27,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p1_J_r6_inline_60_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 18,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p1_J_r6_inline_60_unfunded"
+        },
+        "bits": 18,
+        "time": 306,
+        "origin": 175,
+        "handoff": {
+          "time": 175,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          91.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "data_single",
+        "packet": "c3fffffffffffffffffe70",
+        "entry": 32,
+        "context": {
+          "rate": 1499250,
+          "sign": -1,
+          "observed": 0,
+          "index": 27,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p1_J_r6_inline_60_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 18,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p1_J_r6_inline_60_unfunded"
+        },
+        "bits": 18,
+        "time": 306,
+        "origin": 175,
+        "handoff": {
+          "time": 175,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          91.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "data_single",
+        "packet": "c3fffffffffffffffffe70",
+        "entry": 38,
+        "context": {
+          "rate": 1499250,
+          "sign": -1,
+          "observed": 0,
+          "index": 27,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p1_J_r6_inline_60_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 18,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p1_J_r6_inline_60_unfunded"
+        },
+        "bits": 18,
+        "time": 306,
+        "origin": 175,
+        "handoff": {
+          "time": 175,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          91.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "data_single",
+        "packet": "c3fffffffffffffffffe70",
+        "entry": 5,
+        "context": {
+          "rate": 1499250,
+          "sign": -1,
+          "observed": 0,
+          "index": 55,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p2_J_r6_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 42,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p2_J_r6_unfunded"
+        },
+        "bits": 42,
+        "time": 605,
+        "origin": 175,
+        "handoff": {
+          "time": 175,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          91.4999999,
+          2436,
+          4,
+          8
+        ]
+      }
+    ],
+    "scope": "Offline component: actual acquisition/PID, each DATA bit, 0..6 tail ones and EOF tag. No packet admission, SRAM publication or ACK claim.",
+    "entry_sreg_t": 0
+  },
+  "payloads": {
+    "bytes": 5634,
+    "sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+    "suite": "payloads",
+    "cases": 2627,
+    "failures": 165,
+    "groups": {
+      "all_one_byte_values": 512,
+      "payload_token_rates": 1134,
+      "payload981": 978,
+      "next_stuffed_transition": 1,
+      "current_transition": 1,
+      "adjacent_different": 1
+    },
+    "failure_groups": {
+      "payload981": 164,
+      "current_transition": 1
+    },
+    "error_kinds": {
+      "reject": 165,
+      "count": 165
+    },
+    "first": [
+      {
+        "group": "payload981",
+        "packet": "c30000000000000000bff4",
+        "entry": 8,
+        "context": {
+          "value": 0,
+          "index": 16,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p2_K_r2_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 8,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p2_K_r2_unfunded"
+        },
+        "bits": 8,
+        "time": 188,
+        "origin": 174,
+        "handoff": {
+          "time": 174,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          90.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "payload981",
+        "packet": "c30000000000000000bff4",
+        "entry": 16,
+        "context": {
+          "value": 0,
+          "index": 16,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p2_K_r2_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 8,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p2_K_r2_unfunded"
+        },
+        "bits": 8,
+        "time": 188,
+        "origin": 174,
+        "handoff": {
+          "time": 174,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          90.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "payload981",
+        "packet": "c30000000000000000bff4",
+        "entry": 8,
+        "context": {
+          "value": 0,
+          "index": 17,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p0_J_r0_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 9,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p0_J_r0_unfunded"
+        },
+        "bits": 9,
+        "time": 197,
+        "origin": 174,
+        "handoff": {
+          "time": 174,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          90.4999999,
+          2436,
+          4,
+          8
+        ]
+      },
+      {
+        "group": "payload981",
+        "packet": "c30000000000000000bff4",
+        "entry": 16,
+        "context": {
+          "value": 0,
+          "index": 17,
+          "fraction": 0.047619047619047616
+        },
+        "errors": [
+          {
+            "kind": "reject",
+            "name": "rx_p0_J_r0_unfunded"
+          },
+          {
+            "kind": "count",
+            "got": 9,
+            "wanted": 88
+          }
+        ],
+        "stop": {
+          "kind": "reject",
+          "name": "rx_p0_J_r0_unfunded"
+        },
+        "bits": 9,
+        "time": 197,
+        "origin": 174,
+        "handoff": {
+          "time": 174,
+          "state": {
+            "phase": 2,
+            "line": "K",
+            "run": 2,
+            "name": "rx_p2_K_r2"
+          },
+          "registers": [
+            60,
+            0,
+            195,
+            4,
+            2,
+            4,
+            10,
+            4
+          ],
+          "flags": 20
+        },
+        "first_sample": [
+          90.4999999,
+          2436,
+          4,
+          8
+        ]
+      }
+    ],
+    "scope": "Offline component: actual acquisition/PID, each DATA bit, 0..6 tail ones and EOF tag. No packet admission, SRAM publication or ACK claim.",
+    "entry_sreg_t": 0
+  },
+  "fractional": {
+    "bytes": 5634,
+    "sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+    "suite": "fractional",
+    "cases": 6048,
+    "failures": 0,
+    "groups": {
+      "fractional": 6048
+    },
+    "failure_groups": {},
+    "error_kinds": {},
+    "first": [],
+    "scope": "Offline component: actual acquisition/PID, each DATA bit, 0..6 tail ones and EOF tag. No packet admission, SRAM publication or ACK claim.",
+    "entry_sreg_t": 0
+  },
+  "fractional_min": {
+    "bytes": 5634,
+    "sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+    "suite": "fractional_min",
+    "cases": 6048,
+    "failures": 0,
+    "entry_sreg_t": 0,
+    "groups": {
+      "fractional_min": 6048
+    },
+    "failure_groups": {},
+    "error_kinds": {},
+    "first": [],
+    "scope": "Separate actual-entry 670 ns SE0 / one-period recovery J EOF-tag test; no full qualifier or admission claim."
+  }
+}

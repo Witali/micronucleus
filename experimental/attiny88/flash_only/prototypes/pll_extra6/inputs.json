@@ -1,0 +1,25 @@
+{
+  "files": {
+    "inputs/extra6-manifest.json": "39af4137c31d4a5af6a104a8ac1616025730148a50f70a203b8aa54d7ad89b6e",
+    "inputs/extra6.S": "7699baf9afca87dfd7c2197754d0ef1ef3e15af48c7db42e23e442880adf1d78",
+    "inputs/pll128-balanced.inc": "fa7dad160078b167d720ff40b7615910bd82cbd915e53a35cabded07058628fd",
+    "inputs/source/compact_protocol.inc": "35c216bd6f9cf8f6820e2b39b1cac1d451b1a32d04c94f2d2c4480e7fa5342b8",
+    "inputs/source/device_attiny88.inc": "0797cc3bd90a384a09e6e7dd8aaaf5542543ccfcd9e1f4fe405b66e80a966b78",
+    "inputs/vendor/avr/io.h": "a0e42418c07c3bc730604d621dd23d8bbf88d2fa082b14c10283731e5defa5d1",
+    "inputs/variants/strict_usb_verified/led_config.h": "858cb95215c04354d495bc7aebd7c5c8a271d07de48a6e20308631b7c0d1cb35",
+    "inputs/variants/strict_usb_verified/led_macros.inc": "7028639e907b2ed930fd66696705f2b5e2adb5666970131bdfa53026b12dc4dd"
+  },
+  "expected_body_sha256": "d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b",
+  "expected_bytes": 5634,
+  "boot": 2048,
+  "provenance": {
+    "firmware_commit": "6875f32",
+    "decoder_body_sha256": "c54abbad1ab0e178eb0e2193b7bc7ee94be2b43db41efb2ae4815a1102b12a27",
+    "vusb_repository": "https://github.com/obdev/v-usb",
+    "vusb_commit": "801242072fa035e1839e3571df0d9a18e9cec95c",
+    "vusb_file": "usbdrv/usbdrvasm128.inc",
+    "vusb_blob": "75e119d860697c1cca64d710431eb690973c53ad",
+    "vusb_source_sha256": "7e324e61ac42d9767b2203682dd50330bee0f528ee4debdb721e68996a32ba53",
+    "balanced_full_phy_sha256": "dd14edcdbe6228a25476cef594c800c260d94323f6f4cf23d033fbe1e0776885"
+  }
+}

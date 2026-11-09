@@ -54,6 +54,9 @@ The [native V-USB comparison](docs/VUSB_COMPARISON_2026_11_09.md) gives linked
 sizes by responsibility, fresh 16 MHz RX/TX results and USB clause checks.
 The [fork survey](docs/VUSB_FORKS_2026_11_09.md) records which third-party
 changes improve integrity and which retain the same error assumptions.
+The [offline PLL transfer](prototypes/pll_extra6/README.md) preserves the
+16 MHz port, pinned inputs and reproducible component checks, including its
+remaining rejected valid inputs. It does not select a replacement firmware.
 The [receive/EOP work record](docs/USB_RX_EOP_2026_11_09.md) tracks subsequent
 sharing changes and distinguishes full-image checks from decoder components.
 

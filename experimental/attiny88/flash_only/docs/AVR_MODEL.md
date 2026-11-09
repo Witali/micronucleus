@@ -98,6 +98,16 @@ comparisons use that same valid placement. `build.build()` remains available
 for overflow size measurements. A measured overflowing image must not be
 executed by a model as though the target had additional Flash.
 
+The ATtiny88 has a 12-bit word PC. A relative jump or call can legitimately
+wrap across its 4096-word program space; Microchip explicitly states that
+[RJMP can reach the entire program memory on devices with up to 4K words](https://onlinedocs.microchip.com/oxy/GUID-0B644D8F-67E7-49E6-82C9-1B2B9ABE6A0D-en-US-23/GUID-C49D585D-A83C-42CB-93C8-D6F56C663390.html).
+The current inherited executor uses linear byte addresses and does not qualify
+these wrapped edges. Offline experiments therefore check their emitted
+relative destinations against the linked source and avoid wrapping. This is
+a model coverage constraint, not evidence that an otherwise valid wrapped
+AVR instruction is a hardware or linker error. Their USB fixtures also enter
+the handler directly, so they do not qualify the application's RESET jump.
+
 `sh verify.sh` invokes the selected no-LED receiver verifier once with
 `--exhaustive` and forwards its arguments, including `--source` and `--boot`.
 Independent legacy, host, EEPROM, LED initialization and strict-source packaging

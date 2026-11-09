@@ -1,0 +1,2150 @@
+{
+  "entries": {
+    "rx_p0_J_r1": {
+      "phase": 0,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p1_J_r1": {
+      "phase": 1,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p2_J_r1": {
+      "phase": 2,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p0_K_r1": {
+      "phase": 0,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p1_K_r1": {
+      "phase": 1,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p2_K_r1": {
+      "phase": 2,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p0_J_r2": {
+      "phase": 0,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p1_J_r2": {
+      "phase": 1,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p2_J_r2": {
+      "phase": 2,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p0_K_r2": {
+      "phase": 0,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p1_K_r2": {
+      "phase": 1,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p2_K_r2": {
+      "phase": 2,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p0_J_r3": {
+      "phase": 0,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p1_J_r3": {
+      "phase": 1,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p2_J_r3": {
+      "phase": 2,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p0_K_r3": {
+      "phase": 0,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p1_K_r3": {
+      "phase": 1,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p2_K_r3": {
+      "phase": 2,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p0_J_r0": {
+      "phase": 0,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p1_J_r0": {
+      "phase": 1,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p2_J_r0": {
+      "phase": 2,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p0_K_r0": {
+      "phase": 0,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p1_K_r0": {
+      "phase": 1,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p2_K_r0": {
+      "phase": 2,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p0_J_r4": {
+      "phase": 0,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p1_J_r4": {
+      "phase": 1,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p2_J_r4": {
+      "phase": 2,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p0_K_r4": {
+      "phase": 0,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p1_K_r4": {
+      "phase": 1,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p2_K_r4": {
+      "phase": 2,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p0_J_r5": {
+      "phase": 0,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p1_J_r5": {
+      "phase": 1,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p2_J_r5": {
+      "phase": 2,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p0_K_r5": {
+      "phase": 0,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p1_K_r5": {
+      "phase": 1,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p2_K_r5": {
+      "phase": 2,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p0_J_r6": {
+      "phase": 0,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p1_J_r6": {
+      "phase": 1,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p2_J_r6": {
+      "phase": 2,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p0_K_r6": {
+      "phase": 0,
+      "line": "K",
+      "run": 6
+    },
+    "rx_p1_K_r6": {
+      "phase": 1,
+      "line": "K",
+      "run": 6
+    },
+    "rx_p2_K_r6": {
+      "phase": 2,
+      "line": "K",
+      "run": 6
+    }
+  },
+  "firsts": {
+    "rx_p0_J_r1": {
+      "phase": 0,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p1_J_r2_inline_0": {
+      "phase": 1,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p1_J_r1": {
+      "phase": 1,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p2_J_r1": {
+      "phase": 2,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p0_K_r1": {
+      "phase": 0,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p1_K_r2_inline_4": {
+      "phase": 1,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p1_K_r1": {
+      "phase": 1,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p2_K_r1": {
+      "phase": 2,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p0_J_r2": {
+      "phase": 0,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p1_J_r3_inline_8": {
+      "phase": 1,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p1_J_r2": {
+      "phase": 1,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p2_J_r2": {
+      "phase": 2,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p0_K_r2": {
+      "phase": 0,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p1_K_r3_inline_12": {
+      "phase": 1,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p1_K_r2": {
+      "phase": 1,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p2_K_r2": {
+      "phase": 2,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p0_J_r3": {
+      "phase": 0,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p1_J_r4_inline_16": {
+      "phase": 1,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p1_J_r3": {
+      "phase": 1,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p2_J_r3": {
+      "phase": 2,
+      "line": "J",
+      "run": 3
+    },
+    "rx_p0_K_r3": {
+      "phase": 0,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p1_K_r4_inline_20": {
+      "phase": 1,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p1_K_r3": {
+      "phase": 1,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p2_K_r3": {
+      "phase": 2,
+      "line": "K",
+      "run": 3
+    },
+    "rx_p0_J_r0": {
+      "phase": 0,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p1_J_r1_inline_24": {
+      "phase": 1,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p1_J_r0": {
+      "phase": 1,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p2_J_r1_inline_26": {
+      "phase": 2,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p2_K_r0_after_recovered_26": {
+      "phase": 2,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p0_K_r1_inline_28": {
+      "phase": 0,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p1_K_r2_inline_29": {
+      "phase": 1,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p0_J_r0_after_recovered_28": {
+      "phase": 0,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p1_J_r1_inline_31": {
+      "phase": 1,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p2_J_r0": {
+      "phase": 2,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p0_J_r1_inline_33": {
+      "phase": 0,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p1_J_r2_inline_34": {
+      "phase": 1,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p0_K_r0_after_recovered_33": {
+      "phase": 0,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_36": {
+      "phase": 1,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p0_K_r0": {
+      "phase": 0,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_38": {
+      "phase": 1,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p1_K_r0": {
+      "phase": 1,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p2_K_r1_inline_40": {
+      "phase": 2,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p2_J_r0_after_recovered_40": {
+      "phase": 2,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p0_J_r1_inline_42": {
+      "phase": 0,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p1_J_r2_inline_43": {
+      "phase": 1,
+      "line": "J",
+      "run": 2
+    },
+    "rx_p0_K_r0_after_recovered_42": {
+      "phase": 0,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_45": {
+      "phase": 1,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p2_K_r0": {
+      "phase": 2,
+      "line": "K",
+      "run": 0
+    },
+    "rx_p0_K_r1_inline_47": {
+      "phase": 0,
+      "line": "K",
+      "run": 1
+    },
+    "rx_p1_K_r2_inline_48": {
+      "phase": 1,
+      "line": "K",
+      "run": 2
+    },
+    "rx_p0_J_r0_after_recovered_47": {
+      "phase": 0,
+      "line": "J",
+      "run": 0
+    },
+    "rx_p1_J_r1_inline_50": {
+      "phase": 1,
+      "line": "J",
+      "run": 1
+    },
+    "rx_p0_J_r4": {
+      "phase": 0,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p1_J_r5_inline_52": {
+      "phase": 1,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p1_J_r4": {
+      "phase": 1,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p2_J_r4": {
+      "phase": 2,
+      "line": "J",
+      "run": 4
+    },
+    "rx_p0_K_r4": {
+      "phase": 0,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p1_K_r5_inline_56": {
+      "phase": 1,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p1_K_r4": {
+      "phase": 1,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p2_K_r4": {
+      "phase": 2,
+      "line": "K",
+      "run": 4
+    },
+    "rx_p0_J_r5": {
+      "phase": 0,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p1_J_r6_inline_60": {
+      "phase": 1,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p1_J_r5": {
+      "phase": 1,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p2_J_r5": {
+      "phase": 2,
+      "line": "J",
+      "run": 5
+    },
+    "rx_p0_K_r5": {
+      "phase": 0,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p1_K_r6_inline_64": {
+      "phase": 1,
+      "line": "K",
+      "run": 6
+    },
+    "rx_p1_K_r5": {
+      "phase": 1,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p2_K_r5": {
+      "phase": 2,
+      "line": "K",
+      "run": 5
+    },
+    "rx_p0_J_r6": {
+      "phase": 0,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p1_J_r6": {
+      "phase": 1,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p2_J_r6": {
+      "phase": 2,
+      "line": "J",
+      "run": 6
+    },
+    "rx_p0_K_r6": {
+      "phase": 0,
+      "line": "K",
+      "run": 6
+    },
+    "rx_p1_K_r6": {
+      "phase": 1,
+      "line": "K",
+      "run": 6
+    },
+    "rx_p2_K_r6": {
+      "phase": 2,
+      "line": "K",
+      "run": 6
+    }
+  },
+  "shifts": {
+    "rx_p0_J_r1_shift_one": 1,
+    "rx_p1_J_r2_inline_0_shift_one": 1,
+    "rx_p1_J_r2_inline_0_shift_recovered_one": 1,
+    "rx_p1_J_r2_inline_0_shift_future_zero": 0,
+    "rx_p1_J_r2_inline_0_shift_zero": 0,
+    "rx_p0_J_r1_shift_recovered_one": 1,
+    "rx_p0_J_r1_shift_future_zero": 0,
+    "rx_p0_J_r1_shift_zero": 0,
+    "rx_p1_J_r1_shift_one": 1,
+    "rx_p1_J_r1_shift_recovered_one": 1,
+    "rx_p1_J_r1_shift_future_zero": 0,
+    "rx_p1_J_r1_shift_zero": 0,
+    "rx_p2_J_r1_shift_one": 1,
+    "rx_p2_J_r1_shift_recovered_one": 1,
+    "rx_p2_J_r1_shift_future_zero": 0,
+    "rx_p2_J_r1_shift_zero": 0,
+    "rx_p0_K_r1_shift_one": 1,
+    "rx_p1_K_r2_inline_4_shift_one": 1,
+    "rx_p1_K_r2_inline_4_shift_recovered_one": 1,
+    "rx_p1_K_r2_inline_4_shift_future_zero": 0,
+    "rx_p1_K_r2_inline_4_shift_zero": 0,
+    "rx_p0_K_r1_shift_recovered_one": 1,
+    "rx_p0_K_r1_shift_future_zero": 0,
+    "rx_p0_K_r1_shift_zero": 0,
+    "rx_p1_K_r1_shift_one": 1,
+    "rx_p1_K_r1_shift_recovered_one": 1,
+    "rx_p1_K_r1_shift_future_zero": 0,
+    "rx_p1_K_r1_shift_zero": 0,
+    "rx_p2_K_r1_shift_one": 1,
+    "rx_p2_K_r1_shift_recovered_one": 1,
+    "rx_p2_K_r1_shift_future_zero": 0,
+    "rx_p2_K_r1_shift_zero": 0,
+    "rx_p0_J_r2_shift_one": 1,
+    "rx_p1_J_r3_inline_8_shift_one": 1,
+    "rx_p1_J_r3_inline_8_shift_recovered_one": 1,
+    "rx_p1_J_r3_inline_8_shift_future_zero": 0,
+    "rx_p1_J_r3_inline_8_shift_zero": 0,
+    "rx_p0_J_r2_shift_recovered_one": 1,
+    "rx_p0_J_r2_shift_future_zero": 0,
+    "rx_p0_J_r2_shift_zero": 0,
+    "rx_p1_J_r2_shift_one": 1,
+    "rx_p1_J_r2_shift_recovered_one": 1,
+    "rx_p1_J_r2_shift_future_zero": 0,
+    "rx_p1_J_r2_shift_zero": 0,
+    "rx_p2_J_r2_shift_one": 1,
+    "rx_p2_J_r2_shift_recovered_one": 1,
+    "rx_p2_J_r2_shift_future_zero": 0,
+    "rx_p2_J_r2_shift_zero": 0,
+    "rx_p0_K_r2_shift_one": 1,
+    "rx_p1_K_r3_inline_12_shift_one": 1,
+    "rx_p1_K_r3_inline_12_shift_recovered_one": 1,
+    "rx_p1_K_r3_inline_12_shift_future_zero": 0,
+    "rx_p1_K_r3_inline_12_shift_zero": 0,
+    "rx_p0_K_r2_shift_recovered_one": 1,
+    "rx_p0_K_r2_shift_future_zero": 0,
+    "rx_p0_K_r2_shift_zero": 0,
+    "rx_p1_K_r2_shift_one": 1,
+    "rx_p1_K_r2_shift_recovered_one": 1,
+    "rx_p1_K_r2_shift_future_zero": 0,
+    "rx_p1_K_r2_shift_zero": 0,
+    "rx_p2_K_r2_shift_one": 1,
+    "rx_p2_K_r2_shift_recovered_one": 1,
+    "rx_p2_K_r2_shift_future_zero": 0,
+    "rx_p2_K_r2_shift_zero": 0,
+    "rx_p0_J_r3_shift_one": 1,
+    "rx_p1_J_r4_inline_16_shift_one": 1,
+    "rx_p1_J_r4_inline_16_shift_recovered_one": 1,
+    "rx_p1_J_r4_inline_16_shift_future_zero": 0,
+    "rx_p1_J_r4_inline_16_shift_zero": 0,
+    "rx_p0_J_r3_shift_recovered_one": 1,
+    "rx_p0_J_r3_shift_future_zero": 0,
+    "rx_p0_J_r3_shift_zero": 0,
+    "rx_p1_J_r3_shift_one": 1,
+    "rx_p1_J_r3_shift_recovered_one": 1,
+    "rx_p1_J_r3_shift_future_zero": 0,
+    "rx_p1_J_r3_shift_zero": 0,
+    "rx_p2_J_r3_shift_one": 1,
+    "rx_p2_J_r3_shift_recovered_one": 1,
+    "rx_p2_J_r3_shift_future_zero": 0,
+    "rx_p2_J_r3_shift_zero": 0,
+    "rx_p0_K_r3_shift_one": 1,
+    "rx_p1_K_r4_inline_20_shift_one": 1,
+    "rx_p1_K_r4_inline_20_shift_recovered_one": 1,
+    "rx_p1_K_r4_inline_20_shift_future_zero": 0,
+    "rx_p1_K_r4_inline_20_shift_zero": 0,
+    "rx_p0_K_r3_shift_recovered_one": 1,
+    "rx_p0_K_r3_shift_future_zero": 0,
+    "rx_p0_K_r3_shift_zero": 0,
+    "rx_p1_K_r3_shift_one": 1,
+    "rx_p1_K_r3_shift_recovered_one": 1,
+    "rx_p1_K_r3_shift_future_zero": 0,
+    "rx_p1_K_r3_shift_zero": 0,
+    "rx_p2_K_r3_shift_one": 1,
+    "rx_p2_K_r3_shift_recovered_one": 1,
+    "rx_p2_K_r3_shift_future_zero": 0,
+    "rx_p2_K_r3_shift_zero": 0,
+    "rx_p0_J_r0_shift_one": 1,
+    "rx_p1_J_r1_inline_24_shift_one": 1,
+    "rx_p1_J_r1_inline_24_shift_recovered_one": 1,
+    "rx_p1_J_r1_inline_24_shift_future_zero": 0,
+    "rx_p1_J_r1_inline_24_shift_zero": 0,
+    "rx_p0_J_r0_shift_recovered_one": 1,
+    "rx_p0_J_r0_shift_future_zero": 0,
+    "rx_p0_J_r0_shift_zero": 0,
+    "rx_p1_J_r0_shift_one": 1,
+    "rx_p2_J_r1_inline_26_shift_one": 1,
+    "rx_p2_J_r1_inline_26_shift_recovered_one": 1,
+    "rx_p2_J_r1_inline_26_shift_future_zero": 0,
+    "rx_p2_J_r1_inline_26_shift_zero": 0,
+    "rx_p1_J_r0_shift_recovered_one": 1,
+    "rx_p1_J_r0_shift_future_zero": 0,
+    "rx_p1_J_r0_shift_zero": 0,
+    "rx_p1_J_r0_shift_recovered_zero": 0,
+    "rx_p2_K_r0_after_recovered_26_shift_one": 1,
+    "rx_p0_K_r1_inline_28_shift_one": 1,
+    "rx_p1_K_r2_inline_29_shift_one": 1,
+    "rx_p1_K_r2_inline_29_shift_recovered_one": 1,
+    "rx_p1_K_r2_inline_29_shift_future_zero": 0,
+    "rx_p1_K_r2_inline_29_shift_zero": 0,
+    "rx_p0_K_r1_inline_28_shift_recovered_one": 1,
+    "rx_p0_K_r1_inline_28_shift_future_zero": 0,
+    "rx_p0_K_r1_inline_28_shift_zero": 0,
+    "rx_p2_K_r0_after_recovered_26_shift_recovered_one": 1,
+    "rx_p2_K_r0_after_recovered_26_shift_future_zero": 0,
+    "rx_p2_K_r0_after_recovered_26_shift_zero": 0,
+    "rx_p2_K_r0_after_recovered_26_shift_recovered_zero": 0,
+    "rx_p0_J_r0_after_recovered_28_shift_one": 1,
+    "rx_p1_J_r1_inline_31_shift_one": 1,
+    "rx_p1_J_r1_inline_31_shift_recovered_one": 1,
+    "rx_p1_J_r1_inline_31_shift_future_zero": 0,
+    "rx_p1_J_r1_inline_31_shift_zero": 0,
+    "rx_p0_J_r0_after_recovered_28_shift_recovered_one": 1,
+    "rx_p0_J_r0_after_recovered_28_shift_future_zero": 0,
+    "rx_p0_J_r0_after_recovered_28_shift_zero": 0,
+    "rx_p2_J_r0_shift_one": 1,
+    "rx_p0_J_r1_inline_33_shift_one": 1,
+    "rx_p1_J_r2_inline_34_shift_one": 1,
+    "rx_p1_J_r2_inline_34_shift_recovered_one": 1,
+    "rx_p1_J_r2_inline_34_shift_future_zero": 0,
+    "rx_p1_J_r2_inline_34_shift_zero": 0,
+    "rx_p0_J_r1_inline_33_shift_recovered_one": 1,
+    "rx_p0_J_r1_inline_33_shift_future_zero": 0,
+    "rx_p0_J_r1_inline_33_shift_zero": 0,
+    "rx_p2_J_r0_shift_recovered_one": 1,
+    "rx_p2_J_r0_shift_future_zero": 0,
+    "rx_p2_J_r0_shift_zero": 0,
+    "rx_p2_J_r0_shift_recovered_zero": 0,
+    "rx_p0_K_r0_after_recovered_33_shift_one": 1,
+    "rx_p1_K_r1_inline_36_shift_one": 1,
+    "rx_p1_K_r1_inline_36_shift_recovered_one": 1,
+    "rx_p1_K_r1_inline_36_shift_future_zero": 0,
+    "rx_p1_K_r1_inline_36_shift_zero": 0,
+    "rx_p0_K_r0_after_recovered_33_shift_recovered_one": 1,
+    "rx_p0_K_r0_after_recovered_33_shift_future_zero": 0,
+    "rx_p0_K_r0_after_recovered_33_shift_zero": 0,
+    "rx_p0_K_r0_shift_one": 1,
+    "rx_p1_K_r1_inline_38_shift_one": 1,
+    "rx_p1_K_r1_inline_38_shift_recovered_one": 1,
+    "rx_p1_K_r1_inline_38_shift_future_zero": 0,
+    "rx_p1_K_r1_inline_38_shift_zero": 0,
+    "rx_p0_K_r0_shift_recovered_one": 1,
+    "rx_p0_K_r0_shift_future_zero": 0,
+    "rx_p0_K_r0_shift_zero": 0,
+    "rx_p1_K_r0_shift_one": 1,
+    "rx_p2_K_r1_inline_40_shift_one": 1,
+    "rx_p2_K_r1_inline_40_shift_recovered_one": 1,
+    "rx_p2_K_r1_inline_40_shift_future_zero": 0,
+    "rx_p2_K_r1_inline_40_shift_zero": 0,
+    "rx_p1_K_r0_shift_recovered_one": 1,
+    "rx_p1_K_r0_shift_future_zero": 0,
+    "rx_p1_K_r0_shift_zero": 0,
+    "rx_p1_K_r0_shift_recovered_zero": 0,
+    "rx_p2_J_r0_after_recovered_40_shift_one": 1,
+    "rx_p0_J_r1_inline_42_shift_one": 1,
+    "rx_p1_J_r2_inline_43_shift_one": 1,
+    "rx_p1_J_r2_inline_43_shift_recovered_one": 1,
+    "rx_p1_J_r2_inline_43_shift_future_zero": 0,
+    "rx_p1_J_r2_inline_43_shift_zero": 0,
+    "rx_p0_J_r1_inline_42_shift_recovered_one": 1,
+    "rx_p0_J_r1_inline_42_shift_future_zero": 0,
+    "rx_p0_J_r1_inline_42_shift_zero": 0,
+    "rx_p2_J_r0_after_recovered_40_shift_recovered_one": 1,
+    "rx_p2_J_r0_after_recovered_40_shift_future_zero": 0,
+    "rx_p2_J_r0_after_recovered_40_shift_zero": 0,
+    "rx_p2_J_r0_after_recovered_40_shift_recovered_zero": 0,
+    "rx_p0_K_r0_after_recovered_42_shift_one": 1,
+    "rx_p1_K_r1_inline_45_shift_one": 1,
+    "rx_p1_K_r1_inline_45_shift_recovered_one": 1,
+    "rx_p1_K_r1_inline_45_shift_future_zero": 0,
+    "rx_p1_K_r1_inline_45_shift_zero": 0,
+    "rx_p0_K_r0_after_recovered_42_shift_recovered_one": 1,
+    "rx_p0_K_r0_after_recovered_42_shift_future_zero": 0,
+    "rx_p0_K_r0_after_recovered_42_shift_zero": 0,
+    "rx_p2_K_r0_shift_one": 1,
+    "rx_p0_K_r1_inline_47_shift_one": 1,
+    "rx_p1_K_r2_inline_48_shift_one": 1,
+    "rx_p1_K_r2_inline_48_shift_recovered_one": 1,
+    "rx_p1_K_r2_inline_48_shift_future_zero": 0,
+    "rx_p1_K_r2_inline_48_shift_zero": 0,
+    "rx_p0_K_r1_inline_47_shift_recovered_one": 1,
+    "rx_p0_K_r1_inline_47_shift_future_zero": 0,
+    "rx_p0_K_r1_inline_47_shift_zero": 0,
+    "rx_p2_K_r0_shift_recovered_one": 1,
+    "rx_p2_K_r0_shift_future_zero": 0,
+    "rx_p2_K_r0_shift_zero": 0,
+    "rx_p2_K_r0_shift_recovered_zero": 0,
+    "rx_p0_J_r0_after_recovered_47_shift_one": 1,
+    "rx_p1_J_r1_inline_50_shift_one": 1,
+    "rx_p1_J_r1_inline_50_shift_recovered_one": 1,
+    "rx_p1_J_r1_inline_50_shift_future_zero": 0,
+    "rx_p1_J_r1_inline_50_shift_zero": 0,
+    "rx_p0_J_r0_after_recovered_47_shift_recovered_one": 1,
+    "rx_p0_J_r0_after_recovered_47_shift_future_zero": 0,
+    "rx_p0_J_r0_after_recovered_47_shift_zero": 0,
+    "rx_p0_J_r4_shift_one": 1,
+    "rx_p1_J_r5_inline_52_shift_one": 1,
+    "rx_p1_J_r5_inline_52_shift_recovered_one": 1,
+    "rx_p1_J_r5_inline_52_shift_zero": 0,
+    "rx_p0_J_r4_shift_recovered_one": 1,
+    "rx_p0_J_r4_shift_future_zero": 0,
+    "rx_p0_J_r4_shift_zero": 0,
+    "rx_p1_J_r4_shift_one": 1,
+    "rx_p1_J_r4_shift_recovered_one": 1,
+    "rx_p1_J_r4_shift_future_zero": 0,
+    "rx_p1_J_r4_shift_zero": 0,
+    "rx_p2_J_r4_shift_one": 1,
+    "rx_p2_J_r4_shift_recovered_one": 1,
+    "rx_p2_J_r4_shift_future_zero": 0,
+    "rx_p2_J_r4_shift_zero": 0,
+    "rx_p0_K_r4_shift_one": 1,
+    "rx_p1_K_r5_inline_56_shift_one": 1,
+    "rx_p1_K_r5_inline_56_shift_recovered_one": 1,
+    "rx_p1_K_r5_inline_56_shift_zero": 0,
+    "rx_p0_K_r4_shift_recovered_one": 1,
+    "rx_p0_K_r4_shift_future_zero": 0,
+    "rx_p0_K_r4_shift_zero": 0,
+    "rx_p1_K_r4_shift_one": 1,
+    "rx_p1_K_r4_shift_recovered_one": 1,
+    "rx_p1_K_r4_shift_future_zero": 0,
+    "rx_p1_K_r4_shift_zero": 0,
+    "rx_p2_K_r4_shift_one": 1,
+    "rx_p2_K_r4_shift_recovered_one": 1,
+    "rx_p2_K_r4_shift_future_zero": 0,
+    "rx_p2_K_r4_shift_zero": 0,
+    "rx_p0_J_r5_shift_one": 1,
+    "rx_p0_J_r5_shift_recovered_one": 1,
+    "rx_p0_J_r5_shift_zero": 0,
+    "rx_p1_J_r5_shift_one": 1,
+    "rx_p1_J_r5_shift_recovered_one": 1,
+    "rx_p1_J_r5_shift_zero": 0,
+    "rx_p2_J_r5_shift_one": 1,
+    "rx_p2_J_r5_shift_recovered_one": 1,
+    "rx_p2_J_r5_shift_zero": 0,
+    "rx_p0_K_r5_shift_one": 1,
+    "rx_p0_K_r5_shift_recovered_one": 1,
+    "rx_p0_K_r5_shift_zero": 0,
+    "rx_p1_K_r5_shift_one": 1,
+    "rx_p1_K_r5_shift_recovered_one": 1,
+    "rx_p1_K_r5_shift_zero": 0,
+    "rx_p2_K_r5_shift_one": 1,
+    "rx_p2_K_r5_shift_recovered_one": 1,
+    "rx_p2_K_r5_shift_zero": 0
+  },
+  "eops": {
+    "rx_p1_J_r2_inline_0_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_J_r2_inline_0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_J_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_J_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p1_J_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_J_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p2_J_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p2_J_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p1_K_r2_inline_4_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_K_r2_inline_4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_K_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_K_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p1_K_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_K_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p2_K_r1_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p2_K_r1_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p1_J_r3_inline_8_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p1_J_r3_inline_8_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p0_J_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 2
+    },
+    "rx_p0_J_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 2
+    },
+    "rx_p1_J_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_J_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p2_J_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 2
+    },
+    "rx_p2_J_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 2
+    },
+    "rx_p1_K_r3_inline_12_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p1_K_r3_inline_12_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p0_K_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 2
+    },
+    "rx_p0_K_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 2
+    },
+    "rx_p1_K_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_K_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p2_K_r2_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 2
+    },
+    "rx_p2_K_r2_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 2
+    },
+    "rx_p1_J_r4_inline_16_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p1_J_r4_inline_16_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p0_J_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 3
+    },
+    "rx_p0_J_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 3
+    },
+    "rx_p1_J_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p1_J_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p2_J_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 3
+    },
+    "rx_p2_J_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 3
+    },
+    "rx_p1_K_r4_inline_20_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p1_K_r4_inline_20_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p0_K_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 3
+    },
+    "rx_p0_K_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 3
+    },
+    "rx_p1_K_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p1_K_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 3
+    },
+    "rx_p2_K_r3_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 3
+    },
+    "rx_p2_K_r3_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 3
+    },
+    "rx_p1_J_r1_inline_24_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_J_r1_inline_24_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_J_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_J_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_J_r1_inline_26_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p2_J_r1_inline_26_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p1_J_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 0
+    },
+    "rx_p1_K_r2_inline_29_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_K_r2_inline_29_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_K_r1_inline_28_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_K_r1_inline_28_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p2_K_r0_after_recovered_26_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_J_r1_inline_31_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_J_r1_inline_31_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_J_r0_after_recovered_28_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_J_r0_after_recovered_28_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_K_r0_after_recovered_26_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_J_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 0
+    },
+    "rx_p1_J_r2_inline_34_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_J_r2_inline_34_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_J_r1_inline_33_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_J_r1_inline_33_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p2_J_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_36_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_K_r1_inline_36_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_K_r0_after_recovered_33_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_K_r0_after_recovered_33_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_J_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_38_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_K_r1_inline_38_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_K_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_K_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_K_r1_inline_40_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p2_K_r1_inline_40_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 1
+    },
+    "rx_p1_K_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 0
+    },
+    "rx_p1_J_r2_inline_43_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_J_r2_inline_43_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_J_r1_inline_42_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_J_r1_inline_42_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p2_J_r0_after_recovered_40_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_K_r1_inline_45_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_K_r1_inline_45_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_K_r0_after_recovered_42_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_K_r0_after_recovered_42_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_J_r0_after_recovered_40_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_K_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 0
+    },
+    "rx_p1_K_r2_inline_48_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p1_K_r2_inline_48_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 2
+    },
+    "rx_p0_K_r1_inline_47_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p0_K_r1_inline_47_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 1
+    },
+    "rx_p2_K_r0_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_J_r1_inline_50_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p1_J_r1_inline_50_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 1
+    },
+    "rx_p0_J_r0_after_recovered_47_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p0_J_r0_after_recovered_47_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 0
+    },
+    "rx_p2_K_r0_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 0
+    },
+    "rx_p1_J_r5_inline_52_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p1_J_r5_inline_52_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p0_J_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 4
+    },
+    "rx_p0_J_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 4
+    },
+    "rx_p1_J_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p1_J_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p2_J_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 4
+    },
+    "rx_p2_J_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 4
+    },
+    "rx_p1_K_r5_inline_56_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p1_K_r5_inline_56_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p0_K_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 4
+    },
+    "rx_p0_K_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 4
+    },
+    "rx_p1_K_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p1_K_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 4
+    },
+    "rx_p2_K_r4_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 4
+    },
+    "rx_p2_K_r4_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 4
+    },
+    "rx_p1_J_r6_inline_60_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 6
+    },
+    "rx_p0_J_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 5
+    },
+    "rx_p0_J_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 5
+    },
+    "rx_p1_J_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p1_J_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p2_J_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 5
+    },
+    "rx_p2_J_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 5
+    },
+    "rx_p1_K_r6_inline_64_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 6
+    },
+    "rx_p0_K_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 0,
+      "run": 5
+    },
+    "rx_p0_K_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 5
+    },
+    "rx_p1_K_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p1_K_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 5
+    },
+    "rx_p2_K_r5_second_eop": {
+      "kind": "second_extra",
+      "phase": 2,
+      "run": 5
+    },
+    "rx_p2_K_r5_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 5
+    },
+    "rx_p0_J_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 6
+    },
+    "rx_p1_J_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 6
+    },
+    "rx_p2_J_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 6
+    },
+    "rx_p0_K_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 0,
+      "run": 6
+    },
+    "rx_p1_K_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 1,
+      "run": 6
+    },
+    "rx_p2_K_r6_first_eop": {
+      "kind": "first_extra_or_pair",
+      "phase": 2,
+      "run": 6
+    }
+  },
+  "rejects": {
+    "rx_p1_J_r2_inline_0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r2_inline_4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r1_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r3_inline_8_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r3_inline_12_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r2_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r4_inline_16_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r4_inline_20_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r3_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r1_inline_24_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r1_inline_26_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r2_inline_29_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r1_inline_28_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r1_inline_31_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r0_after_recovered_28_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r0_after_recovered_26_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r2_inline_34_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r1_inline_33_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r1_inline_36_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r0_after_recovered_33_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r1_inline_38_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r1_inline_40_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r2_inline_43_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r1_inline_42_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r1_inline_45_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r0_after_recovered_42_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r0_after_recovered_40_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r2_inline_48_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r1_inline_47_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r1_inline_50_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r0_after_recovered_47_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r0_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r5_inline_52_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r5_inline_56_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r4_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r6_inline_60_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p1_J_r6_inline_60_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r6_inline_64_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p1_K_r6_inline_64_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r5_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_J_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p0_J_r6_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_J_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p1_J_r6_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_J_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p2_J_r6_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p0_K_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p0_K_r6_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p1_K_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p1_K_r6_unfunded": "recovered-erasure prefetch continuation not yet funded",
+    "rx_p2_K_r6_missing_stuff": "mandatory symbol has unchanged NRZI line",
+    "rx_p2_K_r6_unfunded": "recovered-erasure prefetch continuation not yet funded"
+  },
+  "states": {
+    "rx_p0_J_r1": {
+      "phase": 0,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r2_inline_0": {
+      "phase": 1,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r1": {
+      "phase": 1,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r1": {
+      "phase": 2,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r1": {
+      "phase": 0,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r2_inline_4": {
+      "phase": 1,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r1": {
+      "phase": 1,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r1": {
+      "phase": 2,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r2": {
+      "phase": 0,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r3_inline_8": {
+      "phase": 1,
+      "line": "J",
+      "run": 3,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r2": {
+      "phase": 1,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r2": {
+      "phase": 2,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r2": {
+      "phase": 0,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r3_inline_12": {
+      "phase": 1,
+      "line": "K",
+      "run": 3,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r2": {
+      "phase": 1,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r2": {
+      "phase": 2,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r3": {
+      "phase": 0,
+      "line": "J",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r4_inline_16": {
+      "phase": 1,
+      "line": "J",
+      "run": 4,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r3": {
+      "phase": 1,
+      "line": "J",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r3": {
+      "phase": 2,
+      "line": "J",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r3": {
+      "phase": 0,
+      "line": "K",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r4_inline_20": {
+      "phase": 1,
+      "line": "K",
+      "run": 4,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r3": {
+      "phase": 1,
+      "line": "K",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r3": {
+      "phase": 2,
+      "line": "K",
+      "run": 3,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r0": {
+      "phase": 0,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r1_inline_24": {
+      "phase": 1,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r0": {
+      "phase": 1,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r1_inline_26": {
+      "phase": 2,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p2_K_r0_after_recovered_26": {
+      "phase": 2,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 1
+    },
+    "rx_p0_K_r1_inline_28": {
+      "phase": 0,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 2
+    },
+    "rx_p1_K_r2_inline_29": {
+      "phase": 1,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 3
+    },
+    "rx_p0_J_r0_after_recovered_28": {
+      "phase": 0,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 2
+    },
+    "rx_p1_J_r1_inline_31": {
+      "phase": 1,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 3
+    },
+    "rx_p2_J_r0": {
+      "phase": 2,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r1_inline_33": {
+      "phase": 0,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r2_inline_34": {
+      "phase": 1,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 2
+    },
+    "rx_p0_K_r0_after_recovered_33": {
+      "phase": 0,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r1_inline_36": {
+      "phase": 1,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 2
+    },
+    "rx_p0_K_r0": {
+      "phase": 0,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r1_inline_38": {
+      "phase": 1,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r0": {
+      "phase": 1,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r1_inline_40": {
+      "phase": 2,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p2_J_r0_after_recovered_40": {
+      "phase": 2,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 1
+    },
+    "rx_p0_J_r1_inline_42": {
+      "phase": 0,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 2
+    },
+    "rx_p1_J_r2_inline_43": {
+      "phase": 1,
+      "line": "J",
+      "run": 2,
+      "clone_depth": 3
+    },
+    "rx_p0_K_r0_after_recovered_42": {
+      "phase": 0,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 2
+    },
+    "rx_p1_K_r1_inline_45": {
+      "phase": 1,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 3
+    },
+    "rx_p2_K_r0": {
+      "phase": 2,
+      "line": "K",
+      "run": 0,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r1_inline_47": {
+      "phase": 0,
+      "line": "K",
+      "run": 1,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r2_inline_48": {
+      "phase": 1,
+      "line": "K",
+      "run": 2,
+      "clone_depth": 2
+    },
+    "rx_p0_J_r0_after_recovered_47": {
+      "phase": 0,
+      "line": "J",
+      "run": 0,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r1_inline_50": {
+      "phase": 1,
+      "line": "J",
+      "run": 1,
+      "clone_depth": 2
+    },
+    "rx_p0_J_r4": {
+      "phase": 0,
+      "line": "J",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r5_inline_52": {
+      "phase": 1,
+      "line": "J",
+      "run": 5,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r4": {
+      "phase": 1,
+      "line": "J",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r4": {
+      "phase": 2,
+      "line": "J",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r4": {
+      "phase": 0,
+      "line": "K",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r5_inline_56": {
+      "phase": 1,
+      "line": "K",
+      "run": 5,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r4": {
+      "phase": 1,
+      "line": "K",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r4": {
+      "phase": 2,
+      "line": "K",
+      "run": 4,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r5": {
+      "phase": 0,
+      "line": "J",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r6_inline_60": {
+      "phase": 1,
+      "line": "J",
+      "run": 6,
+      "clone_depth": 1
+    },
+    "rx_p1_J_r5": {
+      "phase": 1,
+      "line": "J",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r5": {
+      "phase": 2,
+      "line": "J",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r5": {
+      "phase": 0,
+      "line": "K",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r6_inline_64": {
+      "phase": 1,
+      "line": "K",
+      "run": 6,
+      "clone_depth": 1
+    },
+    "rx_p1_K_r5": {
+      "phase": 1,
+      "line": "K",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r5": {
+      "phase": 2,
+      "line": "K",
+      "run": 5,
+      "clone_depth": 0
+    },
+    "rx_p0_J_r6": {
+      "phase": 0,
+      "line": "J",
+      "run": 6,
+      "clone_depth": 0
+    },
+    "rx_p1_J_r6": {
+      "phase": 1,
+      "line": "J",
+      "run": 6,
+      "clone_depth": 0
+    },
+    "rx_p2_J_r6": {
+      "phase": 2,
+      "line": "J",
+      "run": 6,
+      "clone_depth": 0
+    },
+    "rx_p0_K_r6": {
+      "phase": 0,
+      "line": "K",
+      "run": 6,
+      "clone_depth": 0
+    },
+    "rx_p1_K_r6": {
+      "phase": 1,
+      "line": "K",
+      "run": 6,
+      "clone_depth": 0
+    },
+    "rx_p2_K_r6": {
+      "phase": 2,
+      "line": "K",
+      "run": 6,
+      "clone_depth": 0
+    }
+  },
+  "physical_skips": {
+    "rx_p1_J_r2_inline_0_consumed_future_symbol": 1,
+    "rx_p0_J_r1_consumed_future_symbol": 1,
+    "rx_p1_J_r1_consumed_future_symbol": 1,
+    "rx_p2_J_r1_consumed_future_symbol": 1,
+    "rx_p1_K_r2_inline_4_consumed_future_symbol": 1,
+    "rx_p0_K_r1_consumed_future_symbol": 1,
+    "rx_p1_K_r1_consumed_future_symbol": 1,
+    "rx_p2_K_r1_consumed_future_symbol": 1,
+    "rx_p1_J_r3_inline_8_consumed_future_symbol": 1,
+    "rx_p0_J_r2_consumed_future_symbol": 1,
+    "rx_p1_J_r2_consumed_future_symbol": 1,
+    "rx_p2_J_r2_consumed_future_symbol": 1,
+    "rx_p1_K_r3_inline_12_consumed_future_symbol": 1,
+    "rx_p0_K_r2_consumed_future_symbol": 1,
+    "rx_p1_K_r2_consumed_future_symbol": 1,
+    "rx_p2_K_r2_consumed_future_symbol": 1,
+    "rx_p1_J_r4_inline_16_consumed_future_symbol": 1,
+    "rx_p0_J_r3_consumed_future_symbol": 1,
+    "rx_p1_J_r3_consumed_future_symbol": 1,
+    "rx_p2_J_r3_consumed_future_symbol": 1,
+    "rx_p1_K_r4_inline_20_consumed_future_symbol": 1,
+    "rx_p0_K_r3_consumed_future_symbol": 1,
+    "rx_p1_K_r3_consumed_future_symbol": 1,
+    "rx_p2_K_r3_consumed_future_symbol": 1,
+    "rx_p1_J_r1_inline_24_consumed_future_symbol": 1,
+    "rx_p0_J_r0_consumed_future_symbol": 1,
+    "rx_p2_J_r1_inline_26_consumed_future_symbol": 1,
+    "rx_p1_J_r0_consumed_future_symbol": 1,
+    "rx_p1_K_r2_inline_29_consumed_future_symbol": 1,
+    "rx_p0_K_r1_inline_28_consumed_future_symbol": 1,
+    "rx_p2_K_r0_after_recovered_26_consumed_future_symbol": 1,
+    "rx_p1_J_r1_inline_31_consumed_future_symbol": 1,
+    "rx_p0_J_r0_after_recovered_28_consumed_future_symbol": 1,
+    "rx_p1_J_r2_inline_34_consumed_future_symbol": 1,
+    "rx_p0_J_r1_inline_33_consumed_future_symbol": 1,
+    "rx_p2_J_r0_consumed_future_symbol": 1,
+    "rx_p1_K_r1_inline_36_consumed_future_symbol": 1,
+    "rx_p0_K_r0_after_recovered_33_consumed_future_symbol": 1,
+    "rx_p1_K_r1_inline_38_consumed_future_symbol": 1,
+    "rx_p0_K_r0_consumed_future_symbol": 1,
+    "rx_p2_K_r1_inline_40_consumed_future_symbol": 1,
+    "rx_p1_K_r0_consumed_future_symbol": 1,
+    "rx_p1_J_r2_inline_43_consumed_future_symbol": 1,
+    "rx_p0_J_r1_inline_42_consumed_future_symbol": 1,
+    "rx_p2_J_r0_after_recovered_40_consumed_future_symbol": 1,
+    "rx_p1_K_r1_inline_45_consumed_future_symbol": 1,
+    "rx_p0_K_r0_after_recovered_42_consumed_future_symbol": 1,
+    "rx_p1_K_r2_inline_48_consumed_future_symbol": 1,
+    "rx_p0_K_r1_inline_47_consumed_future_symbol": 1,
+    "rx_p2_K_r0_consumed_future_symbol": 1,
+    "rx_p1_J_r1_inline_50_consumed_future_symbol": 1,
+    "rx_p0_J_r0_after_recovered_47_consumed_future_symbol": 1,
+    "rx_p1_J_r5_inline_52_consumed_future_symbol": 1,
+    "rx_p0_J_r4_consumed_future_symbol": 1,
+    "rx_p1_J_r4_consumed_future_symbol": 1,
+    "rx_p2_J_r4_consumed_future_symbol": 1,
+    "rx_p1_K_r5_inline_56_consumed_future_symbol": 1,
+    "rx_p0_K_r4_consumed_future_symbol": 1,
+    "rx_p1_K_r4_consumed_future_symbol": 1,
+    "rx_p2_K_r4_consumed_future_symbol": 1,
+    "rx_p0_J_r5_consumed_future_symbol": 1,
+    "rx_p1_J_r5_consumed_future_symbol": 1,
+    "rx_p2_J_r5_consumed_future_symbol": 1,
+    "rx_p0_K_r5_consumed_future_symbol": 1,
+    "rx_p1_K_r5_consumed_future_symbol": 1,
+    "rx_p2_K_r5_consumed_future_symbol": 1
+  }
+}

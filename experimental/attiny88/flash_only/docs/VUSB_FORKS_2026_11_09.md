@@ -133,3 +133,44 @@ into receive slots, but uses two 256-byte lookup tables and twelve clocks per
 bit. It does not supply a table-free 16 MHz correction for these crossover and
 acquisition defects. No borrowed fragment above qualifies the complete loader;
 all accepted compositions still need the complete exhaustive gate.
+
+## Actual 16 MHz transfer of the 12.8 MHz phase feedback
+
+The most useful mechanism is upstream's real PIN-sample phase feedback in
+`usbdrvasm128.inc`. A separate [offline PLL experiment](../prototypes/pll_extra6/README.md)
+retimes that code for the ATtiny88 at 16 MHz and connects its genuinely decoded
+PID to the frozen line/run receiver with an extra observation at FIRST+6.
+It retains upstream license/provenance and pins all source/model inputs.
+This is an experimental source transfer, not a selected firmware variant.
+
+The linked component is 5634 bytes at 0x0800, body SHA256
+`d668eb3e8b59ecd8a641d77b4a00d38b45326efe9dd607c7d1b0d298b1c1999b`.
+It fits the physical 8 KiB target but has no protocol owner or byte publication;
+its size is not comparable to a complete release bootloader. The verifier
+starts at the actual USB handler, never supplying a decoded PID, phase, run,
+handoff PC or adjusted clock.
+
+| Independent component checks | Cases | Failed valid inputs |
+| --- | ---: | ---: |
+| Mixed excursions on adjacent SYNC edges | 3168 | 0 |
+| SYNC corner jitter | 1848 | 0 |
+| Individual DATA-edge excursions | 4752 | 261 |
+| Excursions on every DATA edge | 216 | 0 |
+| Additional payload/PID/token and ownership witnesses | 2627 | 165 |
+| Fractional endings, nominal EOP | 6048 | 0 |
+| Fractional endings, 670 ns SE0 and one-bit recovery J | 6048 | 0 |
+
+All failures in these finite matrices are explicit unfinished recovery
+rejections with a short decoded count. None is accepted as a passing USB
+packet. The checks found no corrupted PID/payload/CRC bit or premature EOF
+tag. The observer compares both transmitted CRC bytes exactly; no observed
+CRC-bit mismatch is waived. The component does not implement numeric CRC
+validation. These checks still do not qualify recovery J, malformed frames,
+packet admission, SRAM bounds, status/ACK ownership or response deadlines.
+The maintained 1934-byte ACK baseline is unchanged and retains its documented
+five failing mandatory groups.
+
+The transfer therefore supplies a tested acquisition mechanism worth keeping.
+It does not supply the missing complete DATA/EOP/publication implementation.
+Later changes must use separately named exact-image reports and the complete
+USB gate before they can replace the maintained PHY.
