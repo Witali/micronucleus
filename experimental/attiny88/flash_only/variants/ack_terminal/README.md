@@ -1,9 +1,10 @@
-# Shared ACK terminal experiment
+# Shared ACK receiver baseline
 
-This opt-in no-LED variant adds an ACK reader to the existing combined PHY.
+This no-LED variant adds an ACK reader to the existing combined PHY and is
+the default selection of `verify_receiver.py` and `verify.sh`.
 Normal DATA and SYNC retain their known receive findings. The host identity
 is FFFF and no recognized programming profile or hardware image is added.
-The shared default combined receiver currently measures 1766 bytes.
+The smaller combined base receiver currently measures 1766 bytes.
 
 The measured body is **1934 bytes at 0x1800**, SHA256
 `03393220e9d0b5da9c6c554d0f301b3ac1abe017fe2f00d59a61da7cfca77e4c`.
@@ -60,6 +61,11 @@ witnesses include both permitted single-ended observation states.
 The inherited normal DATA/SYNC failures remain mandatory. A full selector run
 must keep reporting them; ACK-only results do not qualify the entire loader.
 The 1280-byte target is still unachieved.
+
+The [November 9 full inventory](../../docs/USB_RX_EOP_2026_11_09.md#ack-correctness-baseline)
+records all 65 original groups, the additional fractional-DATA gate, and the
+separately reviewed forbidden-host-handshake fixture correction. Five
+mandatory receive/admission groups still fail; this is not a release.
 
 Three additional gates check 41148 premature raw PID prefixes, 162 empty PIDs
 and 252 truncated ACK-to-next-SETUP exchanges. Omitting the early EOP check

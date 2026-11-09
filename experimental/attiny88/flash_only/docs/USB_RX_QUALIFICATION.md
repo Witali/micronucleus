@@ -6,6 +6,11 @@ its exact qualification is in the [November audit](USB_AUDIT_2026_11_01.md).
 The raw dribble regression remains mandatory. A smaller image or a passing
 complete-byte packet corpus does not close that finding.
 
+The current verification default selects `variants/ack_terminal` at 0x1800,
+retaining the shared normal receiver and repairing 48 truncated-ACK followup
+failures in the smaller combined base. The [November 9 inventory](USB_RX_EOP_2026_11_09.md#ack-correctness-baseline)
+keeps its remaining receive/admission failures explicit.
+
 The additional `tests35.test_ack_followup` regression checks a full exchange:
 SELECT, WRITE4, its IN-status ACK, and the following SETUP. Its host schedules
 the next SETUP from the ACK's physical recovery-J boundary plus exactly two

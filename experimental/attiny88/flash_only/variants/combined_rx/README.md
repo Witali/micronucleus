@@ -12,6 +12,9 @@ bytes linked at zero. The 1280-byte objective remains 486 bytes away.
 
 This is an unqualified control checkpoint. A historical 54-group run belongs
 to the preceding image; newer mandatory gates expose ordinary receive errors.
+The verification default now selects the [separate ACK reader](../ack_terminal/README.md),
+which repairs the base image's 48 truncated-ACK recovery failures. Keep this
+smaller base image explicit when comparing size or inherited behavior.
 The [November 3 record](../../docs/USB_SIZE_2026_11_03.md) gives current size
 and exact-image verification scope. A strict near-endpoint crossover witness
 still exposes ordinary receive rejection.
@@ -25,7 +28,7 @@ this directory does not create a release identity or hardware installation path.
 
 ```sh
 python3 build.py --where variants/combined_rx --boot 0x1900 --require-fit
-python3 verify_receiver.py --exhaustive
+python3 verify_receiver.py --source variants/combined_rx --boot 0x1900 --exhaustive
 ```
 
 Run these commands from the Flash-only directory. The verifier executes the

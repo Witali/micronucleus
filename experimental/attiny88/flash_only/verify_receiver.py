@@ -81,8 +81,8 @@ RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', default='variants/combined_rx')
-    parser.add_argument('--boot', type=lambda value: int(value, 0), default=0x1900)
+    parser.add_argument('--source', default='variants/ack_terminal')
+    parser.add_argument('--boot', type=lambda value: int(value, 0), default=0x1800)
     parser.add_argument('--exhaustive', action='store_true')
     args = parser.parse_args()
     if args.exhaustive:

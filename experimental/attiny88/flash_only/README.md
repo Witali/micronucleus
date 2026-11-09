@@ -32,11 +32,13 @@ still exposes an ordinary receive failure; its strict regression is mandatory.
 Both targets omit permanent EEPROM commands. This control
 image remains 486 bytes above the 1280-byte target.
 
-The separate [shared ACK experiment](variants/ack_terminal/README.md) measures
-1934 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
+The [shared ACK receiver](variants/ack_terminal/README.md) is now the default
+software-verification baseline: **1934 bytes at 0x1800**. It uses one middle-bit loop and a shared dense EOP
 qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
 and SYNC still retain the inherited findings. Its identity is FFFF, and it is
-an opt-in implementation checkpoint; the default selection remains unchanged.
+an unqualified implementation checkpoint. It repairs all 48 truncated-ACK
+followup failures retained by the 1766-byte base image. The complete inventory
+and remaining mandatory defects are in the [receive/EOP record](docs/USB_RX_EOP_2026_11_09.md).
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
@@ -66,7 +68,7 @@ experimental receiver.
 ## Build and software verification
 
 ```sh
-python3 build.py --where variants/combined_rx --boot 0x1900 --require-fit
+python3 build.py --where variants/ack_terminal --boot 0x1800 --require-fit
 sh verify.sh
 python3 host/flash_only_programmer35.py --help
 ```
