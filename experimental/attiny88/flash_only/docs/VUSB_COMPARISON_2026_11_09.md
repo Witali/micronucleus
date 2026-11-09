@@ -1,5 +1,9 @@
 # Native V-USB16 comparison, 2026-11-09
 
+This comparison freezes commit 6875f32's 1768-byte control. Subsequent source
+changes and their exact identities are tracked in the
+[receive/EOP work record](USB_RX_EOP_2026_11_09.md).
+
 The measured growth is concentrated in receive/framing and transaction
 ownership, not EEPROM, LED or a larger transmitter. At the same 0x1900
 placement the archive is 1030 bytes and the current combined loader is 1768:

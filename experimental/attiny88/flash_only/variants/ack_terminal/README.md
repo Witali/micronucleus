@@ -3,10 +3,10 @@
 This opt-in no-LED variant adds an ACK reader to the existing combined PHY.
 Normal DATA and SYNC retain their known receive findings. The host identity
 is FFFF and no recognized programming profile or hardware image is added.
-The shared default combined receiver currently measures 1768 bytes.
+The shared default combined receiver currently measures 1766 bytes.
 
-The measured body is **1936 bytes at 0x1800**, SHA256
-`ba15c3c7e2e63dab56afb7a46ea1c8f7631dd8fc87d16d0e6b7322a524ae2dce`.
+The measured body is **1934 bytes at 0x1800**, SHA256
+`03393220e9d0b5da9c6c554d0f301b3ac1abe017fe2f00d59a61da7cfca77e4c`.
 That placement reserves 2048 bytes, leaves the application postscript at
 0x17FC..0x17FF and permits 6140 application bytes linked at zero. This remains
 an experimental software checkpoint, not a qualified replacement loader.

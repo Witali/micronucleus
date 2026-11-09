@@ -4,17 +4,19 @@ This no-LED experiment combines the compact NRZI/SYNC sampler, strict packet
 and token validation, repaired final-byte/EOP reception, and the shared active
 EP0/Flash/reset implementation. It adds no decode or CRC lookup tables.
 
-The body is **1768 bytes at 0x1900**, SHA256
-`82856722a8dc7bfbf19248281dfe3871ac9583a58b807e5691911671adb342b6`.
-The 1792-byte region contains 28 Flash pages and twenty-four spare bytes. The existing
+The body is **1766 bytes at 0x1900**, SHA256
+`9459888f75d3c98fb636cabb910ae401f69f858bc68dfc4d1eb1eb02a89a2f4e`.
+The 1792-byte region contains 28 Flash pages and twenty-six spare bytes. The existing
 four-byte application postscript lies at 0x18FC..0x18FF, leaving 6396 application
-bytes linked at zero. The 1280-byte objective remains 488 bytes away.
+bytes linked at zero. The 1280-byte objective remains 486 bytes away.
 
 This is an unqualified control checkpoint. A historical 54-group run belongs
 to the preceding image; newer mandatory gates expose ordinary receive errors.
 The [November 3 record](../../docs/USB_SIZE_2026_11_03.md) gives current size
 and exact-image verification scope. A strict near-endpoint crossover witness
 still exposes ordinary receive rejection.
+The [receive/EOP work record](../../docs/USB_RX_EOP_2026_11_09.md) gives the
+new shared rejection path's emitted-graph proof and selected checks.
 The [current audit](../../docs/USB_AUDIT_2026_11_01.md) records the reproducible
 210 ns case and ongoing repair. Centered crossover tests alone are insufficient.
 

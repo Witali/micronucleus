@@ -80,12 +80,14 @@ def native_partition(sym, size):
 
 
 def loader_partition(sym, size, boot):
+    terminal_start = min(sym[name] for name in (
+        'usb_rx_terminal_early_confirm', 'usb_rx_terminal_stuff7', 'usb_rx_terminal_bit6'))
     groups = {
         'descriptors': [(boot + 2, 'USB_handler')],
         'sync_entry': [('USB_handler', 'usb_rx_unstuff_bit6')],
         'rx_stuff_early_framing': [('usb_rx_unstuff_bit6', 'usb_rx_ignore_packet')],
         'eop_final_tail': [('usb_rx_end_packet', 'usb_rx_recovered_j'),
-                           ('usb_rx_terminal_early_confirm', 'startup')],
+                           (terminal_start, 'startup')],
         'packet_and_transaction_state': [('usb_rx_ignore_packet', 'usb_rx_end_packet'),
                                          ('usb_rx_recovered_j', 'usb_tx_send_ack'),
                                          ('usb_tx_bus_released', 'flash_buffer_ack_write4')],

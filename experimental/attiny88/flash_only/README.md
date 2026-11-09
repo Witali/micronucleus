@@ -24,16 +24,16 @@ The current 1340-byte strict-source image has SHA-256
 
 That count belongs to the legacy strict-source audit fixture, which retains
 known receive defects. The separately selected
-[composed receiver](variants/combined_rx/README.md) measures **1768 bytes**
-without LED at **0x1900**, with twenty-four spare bytes in its 28-page region. It shares
+[composed receiver](variants/combined_rx/README.md) measures **1766 bytes**
+without LED at **0x1900**, with twenty-six spare bytes in its 28-page region. It shares
 the control/Flash code and fixes the directed legal-dribble, short-EOP and
 centered-crossover findings. A newly witnessed asymmetric 210 ns crossover
 still exposes an ordinary receive failure; its strict regression is mandatory.
 Both targets omit permanent EEPROM commands. This control
-image remains 488 bytes above the 1280-byte target.
+image remains 486 bytes above the 1280-byte target.
 
 The separate [shared ACK experiment](variants/ack_terminal/README.md) measures
-1936 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
+1934 bytes at 0x1800. It uses one compact middle-bit loop and a shared dense EOP
 qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
 and SYNC still retain the inherited findings. Its identity is FFFF, and it is
 an opt-in implementation checkpoint; the default selection remains unchanged.
@@ -52,6 +52,8 @@ The [native V-USB comparison](docs/VUSB_COMPARISON_2026_11_09.md) gives linked
 sizes by responsibility, fresh 16 MHz RX/TX results and USB clause checks.
 The [fork survey](docs/VUSB_FORKS_2026_11_09.md) records which third-party
 changes improve integrity and which retain the same error assumptions.
+The [receive/EOP work record](docs/USB_RX_EOP_2026_11_09.md) tracks subsequent
+sharing changes and distinguishes full-image checks from decoder components.
 
 Size optimization and release placement consider **no LED only**. LED options
 remain available for behavioral checks. Alternate placements and LED builds

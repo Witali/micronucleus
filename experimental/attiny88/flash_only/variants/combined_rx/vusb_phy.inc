@@ -794,29 +794,18 @@ flash_buffer_ack_write4:
 /* Maximum-packet CRC numeric storage is waived. Keep its raw history in
  * R18 until EOP; each trailing one shifts the seven-one forbidden threshold.
  * The normal samples keep bit ownership; extra probes qualify short EOP.
- * R23 reached zero while decoding the eleventh and final allowed packet byte.
+ * Y points to the eleventh and final allowed receive-buffer slot.
  * Earlier bytes retain the ordinary sampler, including full CRC positions. */
-/* This initial observation does not count a dribble bit. A recovered
- * transition is valid only when the completed CRC requires stuffed zero. */
-usb_rx_terminal_early_confirm:
-    in r16, _SFR_IO_ADDR(PIND)
-    andi r16, USB_LINE_MASK
-    brne usb_rx_terminal_early_recovered
-    cpi r18, USB_STUFF_HISTORY_THRESHOLD
-    brsh usb_rx_terminal_early_reject
-    rjmp usb_rx_terminal_publish
-usb_rx_terminal_early_recovered:
-    cpi r18, USB_STUFF_HISTORY_THRESHOLD
-    brlo usb_rx_terminal_early_reject
-    eor r17, r16
-    cpi r17, USB_LINE_MASK
-    brne usb_rx_terminal_early_reject
-    mov r17, r16
+/* This cold tail ends in a jump. Place it before bit6 so both stuff
+ * branches remain in range when the early qualifier moves below. */
+usb_rx_terminal_stuff7:
+    mov r16, r17
+    in r17, _SFR_IO_ADDR(PIND)
+    andi r17, USB_LINE_MASK
+    cp r16, r17
+    breq usb_rx_terminal_reject
     andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
-    ldi r20, 0xfe
-    rjmp usb_rx_terminal_loop
-usb_rx_terminal_early_reject:
-    rjmp usb_rx_ignore_packet
+    rjmp usb_rx_terminal_enter
 usb_rx_terminal_bit6:
     andi r16, USB_LINE_MASK
     eor r17, r16
@@ -890,8 +879,30 @@ usb_rx_terminal_confirm:
     cp r18, r20
     brsh usb_rx_terminal_reject
     rjmp usb_rx_terminal_publish
+/* Both PC-typed qualifiers reject without publication or state effects.
+ * Share their existing two-clock jump; all sample clocks stay fixed. */
+usb_rx_terminal_early_reject:
 usb_rx_terminal_reject:
     rjmp usb_rx_ignore_packet
+/* This initial observation does not count a dribble bit. A recovered
+ * transition is valid only when the completed CRC requires stuffed zero. */
+usb_rx_terminal_early_confirm:
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    brne usb_rx_terminal_early_recovered
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    brsh usb_rx_terminal_early_reject
+    rjmp usb_rx_terminal_publish
+usb_rx_terminal_early_recovered:
+    cpi r18, USB_STUFF_HISTORY_THRESHOLD
+    brlo usb_rx_terminal_early_reject
+    eor r17, r16
+    cpi r17, USB_LINE_MASK
+    brne usb_rx_terminal_early_reject
+    mov r17, r16
+    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
+    ldi r20, 0xfe
+    rjmp usb_rx_terminal_loop
 usb_rx_terminal_stuff6:
     andi r17, USB_LINE_MASK
     nop
@@ -907,14 +918,6 @@ usb_rx_terminal_stuff6:
     subi r16, 1
     ror r18
     rjmp usb_rx_terminal_finish7
-usb_rx_terminal_stuff7:
-    mov r16, r17
-    in r17, _SFR_IO_ADDR(PIND)
-    andi r17, USB_LINE_MASK
-    cp r16, r17
-    breq usb_rx_terminal_reject
-    andi r18, USB_RX_CLEAR_HIGH_BIT_MASK
-    rjmp usb_rx_terminal_enter
 /* The normal producer repays the three-clock terminal branch by omitting
  * its old RJMP/NOP delay. Recovered odd5 has no RJMP credit; its private
  * continuation keeps the last sample at its old phase or one clock later. */
