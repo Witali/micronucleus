@@ -1,0 +1,482 @@
+{
+  "checked_at": "2026-11-09",
+  "upstream": "801242072fa035e1839e3571df0d9a18e9cec95c",
+  "public_fork_entries": 249,
+  "selection": "Fork API entries with pushed_at >= 2022-01-01 or more than three stars; default branches only",
+  "compared": 50,
+  "items": [
+    {
+      "repository": "12oclocker/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "AVRNexus/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "BinaryAtoms/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "CCLexow/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "Danjovic/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 1,
+      "head": "4eec1a10e1831583ce2cfa5f574e16a1af07ee8c",
+      "changed_files": []
+    },
+    {
+      "repository": "EdwardBetts/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 22,
+      "head": "9a42d205eb60faca494ff4eabce8d59f0ec0fc7f",
+      "changed_files": []
+    },
+    {
+      "repository": "Fejitatete/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "ICClearly/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "LukasHammer/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "Lulubear974/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "Pejjo/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "RoombaMaster/v-usb-X",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "ahmedosama07/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "anlaneg/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "artisdom/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 1,
+      "head": "4eec1a10e1831583ce2cfa5f574e16a1af07ee8c",
+      "changed_files": []
+    },
+    {
+      "repository": "bassplayinfatty/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "brewmanz/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "corum/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "dimitris-lagos/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "dioannidis/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "dipesh0xE/v-usb",
+      "branch": "master",
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 14,
+      "head": "430dd501728a928643ff97e188f1e301c19cd01e",
+      "changed_files": []
+    },
+    {
+      "repository": "excitoon/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "ibrahim0132/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "landao314/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "lapot2/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "lujialiang/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "luvhines/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "mcu8rookie/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "meghadri/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "mfkiwl/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "msr15334/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "openhomebus/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "pbing/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "qmk/v-usb",
+      "branch": "qmk-master",
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 14,
+      "head": "819dbc1e5d5926b17e27e00ca6d3d2988adae04e",
+      "changed_files": [
+        "usbdrv/asmcommon.inc",
+        "usbdrv/usbconfig-prototype.h",
+        "usbdrv/usbdrv.c",
+        "usbdrv/usbdrv.h",
+        "usbdrv/usbdrvasm.S"
+      ]
+    },
+    {
+      "repository": "qzthrone/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "redmcg/v-usb",
+      "branch": "uno",
+      "status": "diverged",
+      "ahead": 17,
+      "behind": 14,
+      "head": "a7b422a68b2ccaf5341b8f7d2c73f70b71f2ab2a",
+      "changed_files": [
+        "Makefile",
+        "circuits/uno/usb.fzz",
+        "examples/custom-class/firmware/Makefile",
+        "examples/custom-class/firmware/main.c",
+        "examples/custom-class/firmware/upload.sh",
+        "examples/drivertest/commandline/runtest.c",
+        "examples/drivertest/firmware/Makefile",
+        "examples/drivertest/firmware/main.c",
+        "examples/drivertest/firmware/requests.h",
+        "examples/drivertest/firmware/upload.sh",
+        "examples/drivertest/firmware/usbconfig.h",
+        "examples/hid-custom-rq/Readme.txt",
+        "examples/hid-custom-rq/firmware/main.c",
+        "examples/hid-custom-rq/firmware/upload.sh",
+        "examples/hid-mouse/firmware/upload.sh",
+        "usbdrv/usbdrvasm16.inc"
+      ]
+    },
+    {
+      "repository": "rochi88/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "russdill/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "scm-repo-mirror/obdev_v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "seanclancy/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "sgriffis1549/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "stanley-fork/v-usb",
+      "branch": "master",
+      "status": "identical",
+      "ahead": 0,
+      "behind": 0,
+      "head": "801242072fa035e1839e3571df0d9a18e9cec95c",
+      "changed_files": []
+    },
+    {
+      "repository": "sudamj/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "sweetymarc/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "symeen/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "th-in-gs/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "tolihub/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "valleyco/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "waltje/v-usb",
+      "branch": "master",
+      "status": "behind",
+      "ahead": 0,
+      "behind": 14,
+      "head": "7a28fdc685952412dad2b8842429127bc1cf9fa7",
+      "changed_files": []
+    },
+    {
+      "repository": "whiteneon/v-usb",
+      "branch": "master",
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 14,
+      "head": "77f7262e33a51f1dd76fc944f7fee973cd857372",
+      "changed_files": []
+    }
+  ]
+}

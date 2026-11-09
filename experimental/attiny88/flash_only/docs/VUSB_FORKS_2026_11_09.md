@@ -1,6 +1,6 @@
 # Third-party V-USB fork review, 2026-11-09
 
-Scope: source and patch inspection for a more complete USB implementation suitable for the existing ATtiny88, 16 MHz, 1280-byte bootloader target. No fork-specific builds or hardware tests were performed; [native upstream was measured separately](VUSB_COMPARISON_2026_11_09.md). Pins below were checked on 2026-11-09; dates are commit dates. Public GitHub source was fetched through the GitHub connector. Search also covered the upstream issue/PR list, repository searches, commit searches, and author documentation. This is a bounded search, not proof that no other implementation exists.
+Scope: source and patch inspection for a more complete USB implementation suitable for the existing ATtiny88 at 16 MHz. Correctness now takes priority over the deferred 1280-byte target. The initial review did not build the forks; the follow-up below executes one ported timing hypothesis in our linked firmware. No fork hardware tests were performed; [native upstream was measured separately](VUSB_COMPARISON_2026_11_09.md). Pins below were checked on 2026-11-09; dates are commit dates. Public GitHub source was fetched through the GitHub connector. Search also covered the upstream issue/PR list, repository searches, commit searches, and author documentation. This is a bounded search, not proof that no other implementation exists.
 
 **Result: no verified more-complete 16 MHz AVR V-USB fork was found among the inspected candidates.** There are useful additions, including delayed CRC rejection, remote wake, more endpoints, and polling/bootloader sharing, but these do not collectively repair receive CRC, malformed stuffing/EOP, ACK retries, token filtering, and SET_ADDRESS completion. No inspected fork demonstrates a complete replacement within this project's size target.
 
@@ -59,3 +59,77 @@ It should not be presented as fully compliant either: [SET_ADDRESS updates the a
 Source/patch inspections above were supplemented by comparing the upstream history against `obsidiansystems`, `LogicGreen`, `pctj101`, `bitland`, `tinyusbboard`, `patthoyts`, `hannesweisbach`, `whiteneon`, `pbing`, `spacecoaster`, `tomaja`, and `dimitris-lagos` default branches. These yielded no independent packet-validation patch: most are behind upstream, and whiteneon's extra commit is a merge with no new file diff. The upstream issues and PRs also yielded architecture, descriptor, oscillator, build, and host-tool changes rather than a full 16 MHz validation/retry implementation. Custom branches outside the named inspections were not exhaustively enumerated.
 
 For this project, the useful findings are specific techniques, not a replacement stack: delayed receive CRC guards can protect flash operations; real ACK tracking must retain pending DATA until ACK; malformed-packet handling and correct address commit timing still need explicit qualification. Neither shared-driver savings nor endpoint additions demonstrate those properties. The existing 18 MHz CRC module is already upstream, not a newly discovered third-party solution.
+
+## Follow-up: concrete patch transfer and broader fork comparison
+
+The public fork API returned 249 entries. Compare all 50 default branches whose
+metadata reported a push since 2022 or more than three stars against pinned
+upstream `801242072fa035e1839e3571df0d9a18e9cec95c`: 45 are behind, one identical,
+and four diverged. The [compact comparison snapshot](VUSB_FORK_FOLLOWUP_2026_11_09.json)
+pins their heads and changed files. QMK adds its already-reviewed endpoint;
+dipesh0xE and whiteneon have no net file changes. The additional receive change
+is in `redmcg/v-usb`, default branch `uno`.
+
+The [redmcg patch `089effe8a21977cfab4aff92a985dac0c1eeb72c`](https://github.com/redmcg/v-usb/commit/089effe8a21977cfab4aff92a985dac0c1eeb72c)
+inserts one NOP immediately before the first PID-bit input sample. It shifts
+the ensuing receive calendar by one clock; it adds no transition, EOP, stuffing
+or packet-ownership validation. Its author reports improved success, without
+a specification-based qualification matrix.
+
+Port exactly that delay to our default receiver before its first R16 input
+sample. The unchanged control is 1766 bytes at 0x1900, SHA256
+`9459888f75d3c98fb636cabb910ae401f69f858bc68dfc4d1eb1eb02a89a2f4e`.
+The test image is 1768 bytes at the same placement, SHA256
+`2e24383395e676dc9cc842142c0091acdc4f05e41bb54af36f5f9e741dcb643a`.
+The original independent GPIO/model tests are unchanged.
+
+| Mandatory group | Cases | Control failures | One-clock-delay failures |
+| --- | ---: | ---: | ---: |
+| Asymmetric SE0 crossings | 2484 | 120 | 66 |
+| Transient SE1 crossings | 2486 | 63 | 20 |
+| SYNC crossings | 1080 injected + 54 clean controls | 144 | 126 |
+| Mixed payload preservation | 981 | 69 | 1 |
+| Final CRC positions, stuffing and tails | 450 legal + 1048 negative | 0 | 0 |
+
+The remaining payload witness is the EF stream's next stuffed transition at
+physical index 82, rate 1500750, periodic sign -1, entry 8 and fraction 20/21.
+The patch improves several finite matrices but fails mandatory reception and
+is not enabled in maintained firmware. A fixed delay cannot replace acquisition
+that distinguishes the actual physical phase, nor a receiver that retains the
+right preceding line through a crossover.
+
+Reproduce the controls and isolated generated sources with the normal AVR/LLVM
+toolchain on PATH. Existing output directories are refused to preserve evidence.
+
+```sh
+python3 tools/probe_rx_entry_delay.py --delay 0
+python3 tools/probe_rx_entry_delay.py --delay 1
+python3 verify_receiver.py --source build/rx-entry-delay/default-1 --boot 0x1900 --exhaustive
+```
+
+Each probe freezes an ELF, body, symbols and hashes in ignored `build/` and
+retains the original ACK implementation as its sole owner. `--ack` selects that
+reader at 0x1800: the independently rebuilt 1934-byte control and 1936-byte delayed
+bodies are separate experiments, not the table's default-body results.
+Building a probe does not declare the full gate passed. Private exact-image
+reports remain in `validation/unified-rx-eop-nov09/vusb-followup/`.
+
+Two actual upstream corrections are also relevant:
+
+- [The 2009 16 MHz bit6 unstuff correction](https://github.com/obdev/v-usb/commit/3aa5195808868206835073e3c1a638a5973e20d8)
+  repairs fractional leap accounting, including `SUBI leap,-1` for the eleven-clock
+  path and `SUBI leap,2` for the ten-clock path. Those adjustments are already
+  present in our corresponding paths. Reapplying them does not fix current
+  SE1 or SYNC failures.
+- [The 12.8 MHz EOP correction](https://github.com/obdev/v-usb/commit/b6a66c5058b8f646f9544582da8c330887ab6bd7)
+  replaces an unstable midpoint-only SE0 test with D-minus zero at both bit0
+  and bit1 plus D-plus zero between them. It is useful evidence for combining
+  phase and end-of-packet reasoning. Its instruction schedule belongs to the
+  12.8 MHz PLL; the current source itself warns about delayed EOP at old hubs.
+  It is not a proved 670 ns EOP replacement at 16 MHz.
+
+The 18 MHz CRC variant verifies mandatory stuffed transitions and folds CRC work
+into receive slots, but uses two 256-byte lookup tables and twelve clocks per
+bit. It does not supply a table-free 16 MHz correction for these crossover and
+acquisition defects. No borrowed fragment above qualifies the complete loader;
+all accepted compositions still need the complete exhaustive gate.
