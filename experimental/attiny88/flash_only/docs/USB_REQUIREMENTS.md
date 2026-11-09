@@ -99,6 +99,15 @@ unchanged protected state and the physical ACK deadline. This covers an EOP
 falling between a receiver's eleven-clock FIRST observations, which the
 separate ACK-only fractional test cannot qualify for a DATA decoder.
 
+The EOP matrix retains its 1344 NAK/STALL waveform cases as forbidden host
+handshakes. USB2.0 section 8.4.5, printed pages 206/207, prohibits the host from
+issuing either PID. The device need not publish their decoded buffers. These
+cases instead seed an eligible IN reply and pending SET_ADDRESS, then require
+silence, no SPM, unchanged cached reply/address/cursor and protected registers,
+balanced stack and released GPIO. All valid-host ACK, token and DATA cases
+still require complete decoding and their original physical timing checks.
+This corrects a fixture expectation; it adds no firmware or protocol waiver.
+
 ## Shared small standard replies
 
 USB2.0 sections 9.4.2 and 9.4.4 specify wLength=1 for GET_CONFIGURATION and
