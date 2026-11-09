@@ -26,3 +26,11 @@
   vendor memory commands. Offline placement must not override detected geometry.
 - Treat original application images and foreign already-patched images as
   different input contracts. Do not guess a foreign image's original entry.
+
+# USB correctness before size
+
+- Fix the remaining USB failures before resuming firmware-size optimization.
+- Follow the [USB change and verification workflow](experimental/attiny88/flash_only/docs/USB_REQUIREMENTS.md#change-and-verification-workflow).
+- After each substantial firmware optimization, rerun the complete exhaustive
+  receiver gate on the resulting linked image. A smaller image does not justify
+  a signal, timing, framing, recovery or ownership regression.

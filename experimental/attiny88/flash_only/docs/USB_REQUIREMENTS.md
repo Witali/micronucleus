@@ -6,8 +6,10 @@ their wire encoders and CRC oracles are independent of the firmware.
 Firmware identity or a smaller binary alone is never an admission criterion.
 
 The [2026-11-01 audit](USB_AUDIT_2026_11_01.md) records the 1788-byte checkpoint.
-The [November 3 record](USB_SIZE_2026_11_03.md) tracks the current 1768-byte
-composed body at 0x1900 and its selected checks. Named older checkpoints below retain their historical findings;
+The [November 3 record](USB_SIZE_2026_11_03.md) tracks its 1768-byte
+composed body at 0x1900 and its selected checks. The [November 9 receive/EOP
+record](USB_RX_EOP_2026_11_09.md) tracks the subsequent 1766-byte body.
+Named older checkpoints below retain their historical findings;
 default standalone `source/` tests still target the legacy strict fixture.
 `sh verify.sh` checks the corrected selection and separate legacy fixtures.
 The newly witnessed asymmetric 210 ns regressions remain mandatory and red on
@@ -61,6 +63,33 @@ Host packing, failure/readback behavior, offline EEPROM planning, historical
 opcode/reference checks and canonical release generation remain separate checks.
 The strict-source recognized release roundtrip does not qualify an unknown-profile
 composed image at another address.
+
+## Change and verification workflow
+
+Correct USB behavior takes priority over firmware size. Repair the remaining
+mandatory receive, framing, synchronization and transaction failures before
+resuming size optimization. A larger private reference implementation is useful
+when it establishes correct behavior; a passing symbol component is not a
+qualified complete receiver.
+
+For each substantial firmware change, preserve the linked ELF, unpadded body,
+symbols, source revision, toolchain and body/ELF hashes. Run the complete
+`python3 verify_receiver.py --exhaustive` gate against that resulting image, plus
+any separate affected host, geometry or release checks. Retain failure details
+and actual GPIO sample/drive times. During repair, report remaining mandatory
+failures explicitly; do not count them as passes or weaken the independent
+waveform, payload, recovery, timing or ownership oracles.
+
+Once that gate passes, retain its image and report as the correctness baseline.
+After every substantial size optimization, rerun the same complete gate on the
+new linked image before accepting the optimization. Compare size at the same
+placement and configuration; separately report any changed boot boundary or
+profile. Source-line count, fewer branches, successful assembly or equality
+with an older defective implementation do not establish correctness or savings.
+Keep the documented numeric incoming-DATA-CRC16 waiver unchanged.
+
+These instruction/GPIO checks cover their stated finite signal and transaction
+matrices. They do not replace physical-board, analog or USB certification work.
 
 ## Shared small standard replies
 
