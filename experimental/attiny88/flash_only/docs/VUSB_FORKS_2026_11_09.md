@@ -174,3 +174,45 @@ The transfer therefore supplies a tested acquisition mechanism worth keeping.
 It does not supply the missing complete DATA/EOP/publication implementation.
 Later changes must use separately named exact-image reports and the complete
 USB gate before they can replace the maintained PHY.
+
+### Negative PID audit: incomplete ACK remains ambiguous
+
+The positive matrices above do not qualify malformed PID reception. The
+separate [PID-prefix probe](../tools/probe_pll_pid_prefixes.py) exposes an
+incomplete-PID framing ambiguity in that same 5634-byte body, without changing
+its code, independent CPU model, GPIO aperture or cooperative entry.
+
+Across 1134 genuine truncated-ACK prefixes, 162 empty-PID controls and 162
+complete ACK controls, there are 270 provisional decoded-D2 handoffs. Of those,
+162 subsequently reject; a provisional handoff alone is not a USB violation.
+The remaining 108 are seven-bit ACKs that reach a decoded-D2 plus EOF-ready tag
+without a post-PID DATA shift. All 162 complete ACK controls pass.
+The broader run of all 41148 raw premature prefixes plus the same empty and
+complete controls (41472 cases) reproduces exactly those 108 ambiguous tags.
+
+One witness uses host rate 1499250, jitter sign -1, cooperative entry 5 and
+SE0 width 64/3 clocks. Its seven physical PID bits end at 160.080040020 clocks;
+recovery J begins at 181.413373353. The PID7 input at 160.4999999 reads SE0,
+yet the actual handoff at 175 holds D2 and reaches an EOF tag at 186. A complete
+framer must distinguish that missing bit instead of trusting the assembled PID.
+This component has no protocol owner: the observation does not demonstrate
+cached-TX retirement, an on-wire ACK, or a hardware failure of native V-USB.
+
+Run from the Flash-only directory after building the offline experiment:
+
+```sh
+python3 tools/probe_pll_pid_prefixes.py
+python3 tools/probe_pll_pid_prefixes.py --suite whole-prefix
+```
+
+The default exit is nonzero while the ambiguity exists. An explicit
+`--expect-known-failure` checks the pinned snapshot's exact failure counts and
+can return zero for reproduction; its JSON still says
+`qualification_passed: false`. The source/model/manifest/body/ELF inputs and the
+probe itself are checked before and after the corpus.
+
+The maintained 1934-byte ACK reader remains the control: its existing 41148
+premature-prefix cases, 162 empty PIDs and 252 truncated-ACK followups pass.
+Retain that correctly qualified ACK path until any replacement passes the
+same negative and followup gates. Phase feedback from another implementation
+is useful, but cannot replace explicit complete-PID/EOP ownership checks.
