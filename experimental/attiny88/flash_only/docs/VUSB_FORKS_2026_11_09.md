@@ -284,3 +284,65 @@ boundary qualifies a whole receiver. DATA recovery, bounded byte publication,
 EOP/recovery J, packet admission and the complete 67-group composed-image gate
 remain required. The maintained complete-image control remains 1934 bytes;
 the 1280-byte target is not achieved.
+
+### Actual acquisition joined to the recovered DATA graph
+
+The [shared-recovery reference](../prototypes/pll_shared_recovery/README.md)
+now joins the same centered PID prefix to the newer DATA recovery graph.
+It executes the real USB handler; no PID, phase, run, handoff PC or intermediate
+clock is supplied by its observer. The emitted component is 7346 bytes at
+0x0200, body SHA256
+`56e8816afe4b42e1a472992eeabe78478bc082e5a6e53d494ec1b58b343a5611`.
+The component has no SRAM publication, full framing or transaction owner;
+it is a correctness reference and cannot replace a complete bootloader.
+
+Sharing cold handlers first reduced the standalone DATA graph from 6696 to
+6192 bytes without changing execution clocks. Intact-cluster placement then
+brought all four PID-root relative jumps into range without extra instructions.
+An independent emitted-CFG audit compares all 42 graph roots and 3090 paired
+nodes: instruction operands, both branch/skip outcomes, physical observations,
+shifts and EOF/reject events agree. This establishes the graph's conditional
+entry contract; actual acquisition is checked separately with real waveforms.
+GNU and LLVM produce identical bytes, all 1084 labels and 1114 named relative
+edges agree, and no edge needs program-counter wrapping. The component ends
+at 0x1eb2 inside physical 8 KiB Flash.
+
+| Actual-handler corpus | Cases | Failures |
+| --- | ---: | ---: |
+| Clean controls | 24 | 0 |
+| Acquisition and DATA crossings | 9984 | 0 |
+| Payloads, PIDs, tokens and original DATA witnesses | 2627 | 0 |
+| Nominal EOP and fractional endings | 6048 | 0 |
+| Minimum 670 ns EOP and fractional endings | 6048 | 0 |
+| Premature PID prefixes plus empty/complete controls | 41472 | 0 |
+| Held final-symbol SE1 plus controls | 423 | 0 |
+| SE1 inside incomplete PID EOP plus controls | 621 | 0 |
+| Combined SYNC and first DATA/address crossing | 13464 | 92 |
+
+All 24731 original positive observations now pass. The earlier component's
+261 + 165 unfinished DATA rejections disappear. The combined matrix improves
+from 663 to 92 failures, all missing handoffs: a permitted first-DATA SE1
+excursion can reach the late PID7 D-minus guard after the saved full-K sample.
+For the earliest remaining case, saved phase is sampled at 164.4999999,
+the next-DATA SE1 interval is 167.002042688..170.362042688, and the current
+guard samples at 167.4999999. It rejects before the DATA graph is entered.
+This remains a required acquisition repair, not a passing USB packet.
+
+The generic component also preserves all 32 wire bits through the real EOP
+for all 3456 adjacent-crossover fourth-byte token continuations. The portable
+[token-tail probe](../tools/probe_pll_token_tails.py) adds 3456 pristine controls,
+checks every bit/count/calendar with the unchanged observer, and rejects any
+positive error. Protocol rejection of the resulting four-byte token is a
+separate owner requirement; no on-wire response is inferred from an EOF tag.
+
+```sh
+python3 tools/probe_pll_recovery.py --centered-dir build/pll-pid-guard-centered
+python3 tools/probe_pll_token_tails.py --experiment build/pll-shared-recovery
+python3 tools/probe_pll_first_edge.py --experiment build/pll-shared-recovery
+```
+
+The generated five-suite verifier requires exact corpus counts and zero
+valid-packet errors, replacing the older snapshot's expected-rejection policy.
+The complete-image control remains 1934 bytes and the 1280-byte goal remains
+open; this reference still needs publication, framing/recovery-J, ownership,
+response deadlines and the complete composed-image regression gate.
