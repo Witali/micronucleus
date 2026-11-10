@@ -346,3 +346,56 @@ valid-packet errors, replacing the older snapshot's expected-rejection policy.
 The complete-image control remains 1934 bytes and the 1280-byte goal remains
 open; this reference still needs publication, framing/recovery-J, ownership,
 response deadlines and the complete composed-image regression gate.
+
+### Late PID poll repaired without changing the sampling calendar
+
+The separately derived [PID-completion experiment](../tools/probe_pll_pid_completion.py)
+fixes all 92 missing handoffs above. At each of three final-PID-one sites,
+replace the current D-minus test and rejection jump with one two-clock RJMP.
+The centered full-pin saved-K check remains. The removed test's successful
+skip and the replacement both take two clocks, so EXTRA+6 and next FIRST+10
+keep their original observation times. Register effects and the DATA graph
+are unchanged; the three replacements save six bytes.
+
+The resulting component is **7340 bytes at 0x0200**, body SHA256
+`8d07720c576bf59f2974a9f971567f8d35b39c897adc96e2144c5e8981f437fb`,
+ELF SHA256
+`51b91da623acf6e19f3c4231eded43b3a41f9f64bb4946ed72a18f7660897853`.
+GNU and LLVM bytes agree. All 1111 encoded relative edges are checked against
+their actual source destinations, without program-counter wrapping.
+
+The unchanged strict five-suite verifier passes all 24731 positive observations.
+The combined SYNC/first-DATA/address matrix now also passes all 13464 cases,
+with zero missing handoffs. The 41472-prefix, held-SE1, incomplete-EOP SE1 and
+3456 injected + 3456 pristine token-tail gates remain strict and pass on the
+same exact body. Source/model/ELF/body pins are checked before and after.
+
+```sh
+python3 tools/probe_pll_pid_completion.py --reference-dir build/pll-shared-recovery
+python3 tools/probe_pll_first_edge.py --experiment build/pll-pid-complete --require-complete
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-complete --suite whole-prefix
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-complete --suite held-se1
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-complete --suite eop-se1
+python3 tools/probe_pll_token_tails.py --experiment build/pll-pid-complete
+```
+
+`--require-complete` fails on every candidate error, including a pre-existing
+one. The default comparison mode remains available for historical diagnosis.
+An independent root rebuild reproduces the exact body and passes the strict
+13464-case gate. A negative control on the unchanged 7346-byte reference
+returns nonzero with all 92 failures preserved, despite being regression-free
+relative to the still older 5634-byte snapshot. The JSON records reception
+success and relative regression status separately, with the first absolute
+candidate failure retained for diagnosis.
+
+A separate 3564-case diagnostic inserts K/J pulses into a nominally incomplete
+ACK tail. Both bodies produce identical outcomes: 2885 reject and 679 reach
+a decoded-D2/EOF tag. These altered raw-wave cases are preserved for further
+framing analysis; the generator's original bit labels alone do not establish
+that every altered waveform still represents an incomplete PID requiring
+rejection. They are not a waiver or a complete error-handling qualification.
+
+This fixes the measured acquisition/DATA boundary. It still supplies no SRAM
+publication, complete framing/recovery-J, protocol/ACK owner or qualified full
+loader. Those integrations and the complete-image gate remain required before
+resuming size optimization toward 1280 bytes.

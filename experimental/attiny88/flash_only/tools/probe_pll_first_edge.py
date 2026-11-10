@@ -4,6 +4,8 @@ This preserves a valid-wave regression missed by the earlier separate SYNC
 and DATA matrices. It reports relative component behavior, not full USB
 qualification. A new lost PID handoff or a newly failed formerly clean case
 returns nonzero. Neither CPU state nor handoff time is supplied by the probe.
+With --require-complete, any candidate error also fails the reception gate;
+an unchanged historical failure is never accepted in that mode.
 """
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +17,7 @@ def main():
     parser.add_argument('--firmware-root',type=Path,default=Path(__file__).resolve().parent.parent)
     parser.add_argument('--experiment',type=Path,required=True)
     parser.add_argument('--output',type=Path)
+    parser.add_argument('--require-complete',action='store_true',help='Require zero candidate reception errors, including pre-existing failures')
     args=parser.parse_args();fo=args.firmware_root.resolve();base=fo/'prototypes/pll_extra6'
     experiment=args.experiment.resolve();pins={}
     def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -47,7 +50,7 @@ def main():
     entries=(5,5.25,8,8.5,16,24,24.75,32,38,38.5,39)
     fractions=(1/21,20/21)
     syncs=[None]+list(itertools.product((0,6),(0,6),fractions,fractions))
-    count=0;failure=None;new_missing_handoff=0;old_failed=0;new_failed=0
+    count=0;failure=None;first_candidate_failure=None;new_missing_handoff=0;old_failed=0;new_failed=0
     for packet in (h.data_packet(bytes(8)),h.token(0xe1)):
         for sync in syncs:
             for rate,sign,observed,fraction,entry in itertools.product((1499250,1500000,1500750),(-1,0,1),(0,6),fractions,entries):
@@ -64,6 +67,10 @@ def main():
                 control=observer.run(old,packet,wave,entry)
                 count+=1;old_failed+=bool(control['errors']);new_failed+=bool(result['errors'])
                 new_missing_handoff+=result['handoff'] is None
+                if result['errors'] and first_candidate_failure is None:
+                    first_candidate_failure=dict(packet=packet.hex(),sync=sync,rate=rate,sign=sign,observed=observed,
+                        fraction=fraction,entry=entry,edge=edge,boundaries=wave.boundaries,
+                        candidate=observer.run(new,packet,wave,entry,True))
                 if (result['handoff'] is None and control['handoff'] is not None) or (result['errors'] and not control['errors']):
                     failure=dict(packet=packet.hex(),sync=sync,rate=rate,sign=sign,observed=observed,
                         fraction=fraction,entry=entry,edge=edge,boundaries=wave.boundaries,
@@ -75,13 +82,15 @@ def main():
     report=dict(cases=count,old_body=old.ART['sha256'],new_body=new.ART['sha256'],
         baseline_failed_cases=old_failed,candidate_failed_cases=new_failed,
         candidate_missing_handoff_cases=new_missing_handoff,new_regression=failure,
+        first_candidate_failure=first_candidate_failure,reception_passed=new_failed==0,
+        require_complete=args.require_complete,
         regression_free=failure is None,complete=count==13464,
         scope='Combined legal SYNC and first-DATA/address crossings; incomplete component failures remain reported. No full USB, publication, hardware or protocol-owner qualification.')
     output=json.dumps(report,indent=2)+'\n'
     if args.output:args.output.write_text(output)
-    print(json.dumps({k:v for k,v in report.items() if k!='new_regression'},indent=2),flush=True)
+    print(json.dumps({k:v for k,v in report.items() if k not in ('new_regression','first_candidate_failure')},indent=2),flush=True)
     if failure:print(json.dumps(dict(first_new_regression={k:failure[k] for k in ('packet','sync','rate','sign','observed','fraction','entry','edge')}),indent=2),flush=True)
-    return int(failure is not None or count!=13464)
+    return int(failure is not None or count!=13464 or (args.require_complete and new_failed))
 
 
 if __name__=='__main__':raise SystemExit(main())
