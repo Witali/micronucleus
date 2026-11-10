@@ -78,11 +78,15 @@ usb_rx_delay_complete:
      * including a legal both-low/both-high crossover observation. */
     cpi r16, (1 << USB_PLUS_BIT)
     bst r1, 0
-    rjmp .+0
+    /* R23 is the final-byte pointer until EOF replaces it with byte count.
+     * ACK has its own owner. Tokens end at byte 3; typed PID bit 1 selects
+     * byte 11 for DATA. These useful instructions replace a two-clock jump. */
+    ldi r23, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + 2)
+    nop
     breq usb_rx_normal_pid_entry
     rjmp usb_rx_ack_entry
 usb_rx_normal_pid_entry:
-    rjmp usb_rx_sample_odd_bit
+    rjmp usb_rx_pid_bit1
 #else
     bst r16, USB_MINUS_BIT
     bld r18, 7
@@ -251,13 +255,37 @@ usb_rx_sample_odd_bit:
 usb_rx_advance_bit_pair:
     subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
     brbs SREG_C, usb_rx_sample_even_bit
-    /* Y points past the committed bytes. Before the last byte's bit6,
-     * exactly ten bytes are committed; use that same terminal proof on
-     * ordinary and odd5-stuffed paths without a redundant countdown. */
+    /* Y points past the committed bytes. Test the final-byte pointer on
+     * ordinary and odd5-stuffed paths without a separate countdown:
+     * two committed bytes for tokens, ten for maximum-size DATA. */
+#ifdef USB_RX_ACK_TERMINAL
+    cp r28, r23
+#else
     cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
+#endif
     in r16, _SFR_IO_ADDR(PIND)
     brne usb_rx_decode_bit6
     rjmp usb_rx_terminal_bit6
+#ifdef USB_RX_ACK_TERMINAL
+/* Supported DATA PIDs have bit1=1; token PIDs have bit1=0. At this first
+ * PID cell no six-one history is possible, including the final SYNC one.
+ * Use the paid history-test slots to select the physical final-byte slot.
+ * This entry keeps the ordinary odd sample/decode/pair-count calendar. */
+usb_rx_pid_bit1:
+    in r17, _SFR_IO_ADDR(PIND)
+    andi r17, USB_LINE_MASK
+    brbs SREG_Z, usb_rx_pid_bit1_eop
+    eor r16, r17
+    subi r16, 1
+    ror r18
+    sbrc r18, 7
+    ldi r23, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
+    subi r22, LOW8(-USB_RX_PAIR_COUNTER_INCREMENT)
+    brbs SREG_C, usb_rx_sample_even_bit
+    rjmp usb_rx_ignore_packet
+usb_rx_pid_bit1_eop:
+    rjmp usb_rx_normal_odd_eop
+#endif
 /* Initial safety probe: observations span four clocks, exceeding one
  * 210 ns excursion. This does not exclude DIFFERENT adjacent excursions;
  * the dated USB audit and mixed-pulse regression retain that open finding. */
@@ -311,7 +339,11 @@ usb_rx_unstuff_odd_bit:
     /* Carry clear selects odd position5. No history mutation or correction
      * is needed: only bits6/7 remain, and both stuffing tests are bypassed.
      * Preserve an initial-PID seed in R20 rather than assuming it is zero. */
+#ifdef USB_RX_ACK_TERMINAL
+    cp r28, r23
+#else
     cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
+#endif
     in r16, _SFR_IO_ADDR(PIND)
     breq usb_rx_odd_overflow_local
     andi r16, USB_LINE_MASK
@@ -336,7 +368,11 @@ usb_rx_recover_odd5_crossover:
     /* Odd1/3 resume their next-even sampler. Odd5 instead repays the
      * confirmation latency in its remaining bit6/7 schedule. */
     brbs SREG_C, usb_rx_unstuff_odd_next_even
+#ifdef USB_RX_ACK_TERMINAL
+    cp r28, r23
+#else
     cpi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_BUFFER_BYTES - 1)
+#endif
     in r16, _SFR_IO_ADDR(PIND)
     breq usb_rx_odd_terminal_recovered_local
     andi r16, USB_LINE_MASK
@@ -455,12 +491,28 @@ usb_rx_eop_not_j:
     dec r21
     brne usb_rx_wait_eop_j
     rjmp usb_rx_ignore_packet
-/* Both qualified terminal EOP paths share publication before the parser.
- * RJMP/ST/LDI has the same five clocks as ST/LDI/RJMP. */
+/* Qualified terminal paths share publication before the parser. The ACK
+ * composition uses one extra count-normalization clock, paid by removing
+ * its known-not-taken T branch below. The base variant keeps its calendar. */
 usb_rx_terminal_publish:
     st Y+, r18
+#ifdef USB_RX_ACK_TERMINAL
+    /* Publish 85-N for token 3 or DATA 11. Valid EP0 token byte 3 starts with
+     * three endpoint zeros, so its five CRC5 bits cannot require stuffing:
+     * raw R18 retains the exact CRC5 byte. Endpoint/CRC checks still follow. */
+    ldi r22, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + USB_RX_PAIR_COUNTER_INCREMENT)
+    sub r22, r28
+#else
     ldi r22, (USB_RX_PAIR_COUNTER_INCREMENT - USB_RX_BUFFER_BYTES)
+#endif
 usb_rx_end_packet:
+#ifdef USB_RX_ACK_TERMINAL
+    /* ACK has its own owner. Every normal packet ends the old IN-ACK
+     * eligibility window before framing; rejects already do the same.
+     * Move this useful clock from the later token path: token deadlines
+     * stay fixed, while short DATA regains its original response clock. */
+    mov r2, r1
+#endif
     mov r23, r28
     subi r23, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
     /* Four also supplies the PCIF2 W1C mask. Framing captures early J for
@@ -468,9 +520,12 @@ usb_rx_end_packet:
     ldi r21, (1 << PCIF2)
     out _SFR_IO_ADDR(PCIFR), r21
     ldd r16, Z+(CTX_RX_BUFFER + USB_PACKET_PID_OFFSET)
-    /* Keep the established two-clock even-PID versus one-clock odd-PID
-     * entry credit. The common classifier later replaces the old DATA jump. */
+#ifndef USB_RX_ACK_TERMINAL
+    /* The base variant retains its even/odd PID entry credit. ACK-terminal
+     * normal reception has T=0, so its never-taken branch pays the extra
+     * terminal count-normalization clock without changing parser timing. */
     brbs 6, usb_rx_check_framing
+#endif
 usb_rx_check_framing:
     /* Pair phase and a non-SE0 final odd sample must finish a full byte. */
     add r22, r23
@@ -500,7 +555,9 @@ usb_rx_recovered_j:
      * its context owner before ACK, STALL, publication or cursor effects. */
     sbrc r16, 1
     rjmp usb_rx_handle_data
+#ifndef USB_RX_ACK_TERMINAL
     mov r2, r1
+#endif
     /* Tokens contain PID and sixteen address/endpoint/CRC bits. */
     /* Treat length, address/endpoint and CRC5 as one virtual compare.
      * CPC preserves a cleared Z, so no later field can cancel a mismatch. */
@@ -531,6 +588,15 @@ usb_rx_handle_in:
     brbc SREG_Z, .Lmask_ignore_late
 usb_rx_handle_setup_or_out:
     ldi r28, USB_NEXT_DATA_WAIT_COUNT
+#ifdef USB_RX_ACK_TERMINAL
+    /* Valid tokens end through the terminal owner with R22=0. Replace
+     * six phase-delay clocks by normalization and one useful five-clock
+     * PCIF poll (count 29). After that poll the old quiet grid is exact. */
+usb_rx_six_one_credit_done:
+    andi r22, 3
+usb_rx_phase_delay_one:
+usb_rx_phase_delay_two:
+#else
     /* Six-one EOP helpers reach the parser two clocks earlier than the
      * ordinary route. Only that saturated FF class needs this credit.
      * PHY owns the wait until publishing this token or clearing timeout,
@@ -549,6 +615,7 @@ usb_rx_phase_delay_one:
 usb_rx_phase_delay_two:
     breq usb_rx_wait_for_data
     dec r28
+#endif
 usb_rx_wait_for_data:
     sbic _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp usb_rx_store_token
@@ -808,7 +875,7 @@ flash_buffer_ack_write4:
 /* Maximum-packet CRC numeric storage is waived. Keep its raw history in
  * R18 until EOP; each trailing one shifts the seven-one forbidden threshold.
  * The normal samples keep bit ownership; extra probes qualify short EOP.
- * Y points to the eleventh and final allowed receive-buffer slot.
+ * Y points to the selected final slot (token byte 3 or maximum DATA byte 11).
  * Earlier bytes retain the ordinary sampler, including full CRC positions. */
 /* This cold tail ends in a jump. Place it before bit6 so both stuff
  * branches remain in range when the early qualifier moves below. */

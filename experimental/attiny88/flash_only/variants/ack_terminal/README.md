@@ -6,8 +6,8 @@ Normal DATA and SYNC retain their known receive findings. The host identity
 is FFFF and no recognized programming profile or hardware image is added.
 The smaller combined base receiver currently measures 1766 bytes.
 
-The measured body is **1934 bytes at 0x1800**, SHA256
-`4f0b3ca3c10f2e68d9b730a99f44bf4653b14e11b48870ca178d346aa5541497`.
+The measured body is **1946 bytes at 0x1800**, SHA256
+`ade87a8d622f0c52eaaabbd53caf375571fb20fd8dd137247ac6b1f87d787e3a`.
 That placement reserves 2048 bytes, leaves the application postscript at
 0x17FC..0x17FF and permits 6140 application bytes linked at zero. This remains
 an experimental software checkpoint, not a qualified replacement loader.
@@ -19,6 +19,14 @@ Before the pending-address reduction, a placement measurement at 0x1840 was
 its own limited checks, recorded in the November 3 report below.
 
 ## Implementation
+
+Normal tokens now reuse the existing final-byte/EOP receiver at byte 3;
+maximum DATA uses the same owner at byte 11. A typed first-PID cell selects
+the final slot without changing the ordinary sample calendar. Token CRC5,
+address and endpoint checks remain exact. Normalized token completion also
+replaces phase padding with one extra useful PCIF poll; quiet deadlines stay
+fixed. The complete image grows only 12 bytes from the original 1934-byte
+control. The non-ACK 1766-byte control remains byte-identical.
 
 `ack_receive.inc` contains the separate reader and terminal handler. Small
 compile-time hooks in `../combined_rx/vusb_phy.inc` share the existing startup,
@@ -56,8 +64,13 @@ for this ACK-specific fixed tail bound.
 The [November 10 compact transfer](../../docs/COMPACT_USB_TRANSFER_2026_11_10.md)
 records the size-neutral atomic full-K confirmation: 85 SYNC cases repaired,
 zero new failing contexts across the complete frozen 67-group comparison.
-The full gate still exits 1 with 62/67 passing; 59 SYNC and the four other
-mandatory finding groups remain open.
+That historical run exits 1 with 62/67 passing. The token-owner transfer and
+new 69-group gate use separately pinned images. The final image passes 64/69;
+no new failing context or changed shared failure observation was found against
+the 1934-byte control. The current gate includes
+corrected OUT/SBI PCIF timing and the new short-DATA premature-ACK oracle;
+the five remaining groups stay strict failures. See the linked transfer record
+for the full failure table and separate PCIF-priority checks.
 
 The current audit records the exact selected-image results and open findings:
 [USB audit](../../docs/USB_AUDIT_2026_11_01.md). New gates cover 2484 positive

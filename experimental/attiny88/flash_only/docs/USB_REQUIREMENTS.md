@@ -9,7 +9,7 @@ The [2026-11-01 audit](USB_AUDIT_2026_11_01.md) records the 1788-byte checkpoint
 The [November 3 record](USB_SIZE_2026_11_03.md) tracks its 1768-byte
 composed body at 0x1900 and its selected checks. The [November 9 receive/EOP
 record](USB_RX_EOP_2026_11_09.md) tracks the subsequent 1766-byte body.
-The verification default is the 1934-byte separate-ACK composition at 0x1800;
+The verification default is the 1946-byte separate-ACK composition at 0x1800;
 the smaller combined image remains an explicit size/behavior control.
 Named older checkpoints below retain their historical findings;
 default standalone `source/` tests still target the legacy strict fixture.

@@ -33,15 +33,18 @@ Both targets omit permanent EEPROM commands. This control
 image remains 486 bytes above the 1280-byte target.
 
 The [shared ACK receiver](variants/ack_terminal/README.md) is now the default
-software-verification baseline: **1934 bytes at 0x1800**. It uses one middle-bit loop and a shared dense EOP
+software-verification baseline: **1946 bytes at 0x1800**. It uses one middle-bit loop and a shared dense EOP
 qualifier, including the new legal-SE1 and extra-zero tail cases. Normal DATA
 and SYNC still retain the inherited findings. Its identity is FFFF, and it is
 an unqualified implementation checkpoint. It repairs all 48 truncated-ACK
 followup failures retained by the 1766-byte base image. The complete inventory
 and remaining mandatory defects are in the [receive/EOP record](docs/USB_RX_EOP_2026_11_09.md).
 The [November 10 compact repair transfer](docs/COMPACT_USB_TRANSFER_2026_11_10.md)
-fixes 85 SYNC crossover cases without increasing that size. Its full 67-group
-run still reports five mandatory failing groups; the remaining errors are not waived.
+adds atomic SYNC confirmation and shares the final-byte receiver with tokens.
+Useful PCIF polling replaces old phase padding. The complete body grows only
+12 bytes from the 1934-byte control; the 1280-byte target remains 666 bytes away.
+The current mandatory 69-group gate includes corrected PCIF clear timing and
+a new short-DATA premature-ACK regression. Remaining errors are not waived.
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final
