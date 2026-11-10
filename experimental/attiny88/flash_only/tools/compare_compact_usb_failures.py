@@ -44,6 +44,8 @@ def main():
     parser.add_argument('--baseline', type=Path, required=True)
     parser.add_argument('--candidate', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--allow-variant-readme-changes', action='store_true',
+                        help='Report pinned variant README changes separately; executable and fixture inputs must still match')
     args = parser.parse_args()
     pins = {Path(__file__).resolve(): sha(Path(__file__).resolve())}
 
@@ -79,7 +81,16 @@ def main():
     # fixture source snapshot; only their separately pinned linked artifact differs.
     snapshots = [{key: digest for key, digest in run['frozen'].items()
                   if key.startswith('frozen/')} for run in runs]
-    assert snapshots[0] == snapshots[1], 'Independent frozen input snapshots differ'
+    assert snapshots[0].keys() == snapshots[1].keys(), 'Frozen input inventories differ'
+    different = [key for key in snapshots[0] if snapshots[0][key] != snapshots[1][key]]
+    documentation = []
+    if different and args.allow_variant_readme_changes:
+        assert all(key.startswith('frozen/attiny88/flash_only/variants/') and
+                   key.endswith('/README.md') for key in different), 'Executable or fixture input changed'
+        documentation = [dict(path=key, baseline_sha256=snapshots[0][key],
+                              candidate_sha256=snapshots[1][key]) for key in sorted(different)]
+    else:
+        assert not different, 'Independent frozen input snapshots differ'
     groups = []
     for check, stem in GROUPS:
         if check not in names[0]:
@@ -110,7 +121,8 @@ def main():
     result = dict(baseline_body_sha256=old['report']['sha256'], candidate_body_sha256=new['report']['sha256'],
         baseline_bytes=old['report']['bytes'], candidate_bytes=new['report']['bytes'],
         exhaustive_groups=count, baseline_passed=count-len(old['failed']), candidate_passed=count-len(new['failed']),
-        identical_frozen_inputs=len(snapshots[0]),
+        identical_frozen_inputs=len(snapshots[0])-len(documentation),
+        documentation_differences=documentation,
         new_failing_groups=sorted(new['failed']-old['failed']), comparison_passed=passed,
         groups=groups, tool_sha256=pins[Path(__file__).resolve()],
         scope='Finite failure-context regression comparison only. Inherited mandatory failures are not accepted or waived; no full USB qualification.')
