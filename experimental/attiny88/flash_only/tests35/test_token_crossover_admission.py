@@ -23,40 +23,44 @@ def receive(art, wire, entry, token):
 
 
 def check_adjacent(art):
-    """Separate legal pulses cannot terminate a valid three-byte prefix."""
+    """Separate pulses cannot hide any fourth byte starting with two zeros."""
     bind(art)
     signal_witnesses()
     token=h.token(0x69)
-    packet=token+b'\x00'
     prefix=len(h.Wave(token).bits)
     failures=[]
     cases=0
-    for rate in (1499250,1500000,1500750):
-        for sign in (-1,0,1):
-            for entry in (5,8,16,24,32,38):
-                def pristine():
-                    return h.Wave(packet,rate=rate,
-                                  jitter=lambda index,line:sign*(.55 if line==h.J else -.55))
-                wire=pristine()
-                interval_errors(wire)
-                assert wire.bits[prefix:prefix+2]==[0,0]
-                # Both complete analog transitions settle to the rails;
-                # their +250/-250 ns tails do not overlap.
-                assert (wire.boundaries[prefix+1]-wire.boundaries[prefix])*62.5>500
-                control=receive(art,wire,entry,token)
-                assert not control.bus_events and control.m[0x10f]==0x5a and control.r[3]==0
-                wire=pristine()
-                single_crossover(wire,prefix+1,width=3.36,fraction=20/21)
-                single_crossover(wire,prefix,width=3.36,fraction=1/21)
-                cpu=receive(art,wire,entry,token)
-                if cpu.bus_events or cpu.m[0x10f]!=0x5a or cpu.r[3]!=0:
-                    failures.append(dict(rate=rate,sign=sign,entry=entry,
-                                         true_eop=wire.boundaries[-3],events=cpu.bus_events,
-                                         tx_length=cpu.m[0x10f],pending=cpu.r[3]))
-                cases+=1
-    assert cases==54
+    # A zero-only suffix happened to put K at the later live-J probe. Other
+    # suffixes can put J there and expose the same false EOP. Exercise every
+    # continuation of these first two zero symbols, not just that one value.
+    for tail in range(0,256,4):
+        packet=token+bytes([tail])
+        for rate in (1499250,1500000,1500750):
+            for sign in (-1,0,1):
+                for entry in (5,8,16,24,32,38):
+                    def pristine():
+                        return h.Wave(packet,rate=rate,
+                                      jitter=lambda index,line:sign*(.55 if line==h.J else -.55))
+                    wire=pristine()
+                    interval_errors(wire)
+                    assert wire.bits[prefix:prefix+2]==[0,0]
+                    # Both complete analog transitions settle to the rails;
+                    # their +250/-250 ns tails do not overlap.
+                    assert (wire.boundaries[prefix+1]-wire.boundaries[prefix])*62.5>500
+                    control=receive(art,wire,entry,token)
+                    assert not control.bus_events and control.m[0x10f]==0x5a and control.r[3]==0
+                    wire=pristine()
+                    single_crossover(wire,prefix+1,width=3.36,fraction=20/21)
+                    single_crossover(wire,prefix,width=3.36,fraction=1/21)
+                    cpu=receive(art,wire,entry,token)
+                    if cpu.bus_events or cpu.m[0x10f]!=0x5a or cpu.r[3]!=0:
+                        failures.append(dict(tail=tail,rate=rate,sign=sign,entry=entry,
+                                             true_eop=wire.boundaries[-3],events=cpu.bus_events,
+                                             tx_length=cpu.m[0x10f],pending=cpu.r[3]))
+                    cases+=1
+    assert cases==3456
     return dict(bytes=art['size'],sha256=art['sha256'],cases=cases,
-                pristine_controls=54,failures=failures)
+                tail_values=64,pristine_controls=3456,failures=failures)
 
 
 def test():

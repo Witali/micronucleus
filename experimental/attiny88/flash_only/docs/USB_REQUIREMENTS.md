@@ -28,7 +28,8 @@ earlier 54-group pass as complete qualification.
 | Supported PIDs have the correct complement; foreign address/endpoint and bad token CRC5 cannot authorize a transaction | Chapter 8 PID, address, endpoint and CRC fields | `test_token_crc5`, `test_pid_admission`, `test_usb_rx_waveforms` |
 | Source EOP SE0 lasts 1.25..1.50 us; receiver accepts 670 ns and ignores differential-crossover SE0 up to 210 ns | Table 7-10, Section 7.1.13.2 | `test_tx_eop_counter`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_usb_crossover` |
 | A crossover transient cannot authorize a four-byte IN token as a three-byte token plus dribble | Section 7.1.4.1, Table 7-10, Chapter 8 token format | `test_token_crossover_admission` |
-| Separate adjacent transients cannot impersonate one EOP and authorize transmission during the host packet | Sections 7.1.4.1, 7.1.13 and Chapter 8 token framing | `test_token_crossover_admission` adjacent-pulse cases |
+| Separate adjacent transients cannot impersonate one EOP and authorize transmission during the host packet | Sections 7.1.4.1, 7.1.13 and Chapter 8 token framing | `test_token_crossover_admission`: 3456 injected cases and 3456 pristine controls, including all 64 fourth-byte tails with two initial zero bits |
+| Source-valid differential EOP timing remains receivable when an allowed single-ended input threshold lengthens the observed PIN SE0 | Sections 7.1.2.1 and 7.1.13.2.1, Table 7-10, Figure 7-50 | `test_rx_eop_thresholds`: 24 cases with explicit monotonic line curves and response timing measured from differential recovery J |
 | A plausible centered 150 ns single-ended crossover preserves reception, not only silence before the real EOP | Sections 7.1.2.1 and 7.1.4.1, Table 7-10 | `test_rx_crossover_legal` |
 | Monotonic matched 300 ns edges may produce asymmetric 210 ns single-ended crossover intervals without shifting differential jitter | Sections 7.1.2.1, 7.1.4.1 and 7.1.13.1.1 | `test_rx_crossover_asymmetric`, `test_rx_crossover_payloads` |
 | Legal differential crossings can also produce transient both-high single-ended observations at a permitted lower threshold | Sections 7.1.2.1 and 7.1.4.1 | `test_rx_crossover_se1` |
@@ -302,6 +303,23 @@ tolerance. This required regression remains strict while firmware repair is open
 The sole approved exception is omitted incoming DATA CRC16 value validation,
 before and after ACK. It does not waive PID, stuffing, byte framing, minimum
 packet length, token CRC5, EOP recovery or any timing requirement.
+
+The November 10 adjacent-pulse expansion tests all 64 fourth-byte values
+whose first two wire bits are zero: 3456 injected packets and 3456 pristine
+controls, alongside the unchanged 5454 single-pulse cases. The maintained
+1934-byte ACK composition fails 720 injected cases; all pristine and single-pulse
+controls pass. The earlier 54-case adjacent matrix exposed only 12 cases and
+is retained solely in frozen historical reports. A cached recovery-J guard
+reduces that expanded count to 384 but remains unsafe and is not selected.
+
+The mandatory gate now has 67 groups, including `test_rx_eop_thresholds`.
+That test uses explicit monotonic matched 300 ns curves, a 1.3 V differential
+crossover and a 2.0 V single-ended threshold. The source SE0 interval is
+1.29 or 1.50 us; the corresponding PIN interval is 1.50 or 1.71 us.
+All 24 cases pass on the maintained composition. Removing the bounded
+SE0-to-J wait loses two valid responses, so clean digital observations alone
+cannot justify that size reduction. These model certificates are bounded
+evidence and do not replace electrical measurement on a board.
 
 Digital instruction tests do not measure cable propagation, analog thresholds,
 pin rise/fall times or oscillator drift. Those need physical measurements;

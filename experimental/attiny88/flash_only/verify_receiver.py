@@ -75,6 +75,7 @@ CHECKS = (
     ('test_rx_fractional_dribble', 'test'),
     ('test_rx_fractional_data', 'test'),
     ('test_rx_eop_matrix', 'test'),
+    ('test_rx_eop_thresholds', 'test'),
 )
 RAW_CHECKS = ('test_receive', 'test_partial', 'test_stuff_errors', 'test_tokens_and_eop')
 
