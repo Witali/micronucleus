@@ -26,19 +26,25 @@ class Timed(Sim):
   op=ins.op
   oldpc=self.pc
   oldio=self.io.copy()
-  if op in ('push','pop'):
-   reg=int(ins.operands.strip()[1:])
-   if op=='push': self.push_stack.append(self.r[reg])
-   else: self.r[reg]=self.push_stack.pop()
-   self.pc+=2;self.steps+=1
-  elif op in ('bst','bld'):
-   rg,bt=[x.strip() for x in ins.operands.split(',')]
-   rr=int(rg[1:]);bit=int(bt)
-   if op=='bst':self.setflag(6,(self.r[rr]>>bit)&1)
-   else:self.r[rr]=(self.r[rr]&~(1<<bit))|(self.flag(6)<<bit)
-   self.pc+=2;self.steps+=1
-  else:
-   super().step()
+  # I/O hooks run before clocks advance. Scope metadata to these writes;
+  # direct fixture writes and memory stores must not inherit an OUT cost.
+  if op in ('out','sbi','cbi'):self.io_write_cycles=1 if op=='out' else 2
+  try:
+   if op in ('push','pop'):
+    reg=int(ins.operands.strip()[1:])
+    if op=='push': self.push_stack.append(self.r[reg])
+    else: self.r[reg]=self.push_stack.pop()
+    self.pc+=2;self.steps+=1
+   elif op in ('bst','bld'):
+    rg,bt=[x.strip() for x in ins.operands.split(',')]
+    rr=int(rg[1:]);bit=int(bt)
+    if op=='bst':self.setflag(6,(self.r[rr]>>bit)&1)
+    else:self.r[rr]=(self.r[rr]&~(1<<bit))|(self.flag(6)<<bit)
+    self.pc+=2;self.steps+=1
+   else:
+    super().step()
+  finally:
+   self.__dict__.pop('io_write_cycles',None)
   if op in ('brbs','brbc'):
    cycles=2 if self.pc==ins.target else 1
   elif op in ('cpse','sbis','sbic','sbrs','sbrc'):

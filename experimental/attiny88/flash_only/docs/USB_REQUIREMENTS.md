@@ -313,8 +313,8 @@ controls pass. The earlier 54-case adjacent matrix exposed only 12 cases and
 is retained solely in frozen historical reports. A cached recovery-J guard
 reduces that expanded count to 384 but remains unsafe and is not selected.
 
-The mandatory gate now has 68 groups, including `test_rx_eop_thresholds` and
-`test_status_boundary_crossover`. The latter exposes an inherited short-DATA
+The mandatory gate now has 69 groups, including `test_pcif_clear`,
+`test_rx_eop_thresholds` and `test_status_boundary_crossover`. The last exposes an inherited short-DATA
 premature-drive failure in 12 of 108 cases; the November 10 transfer record
 distinguishes this expanded gate from the earlier frozen 67-group comparisons.
 That test uses explicit monotonic matched 300 ns curves, a 1.3 V differential

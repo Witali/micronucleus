@@ -17,6 +17,7 @@ from tests35 import phy_model as p
 CHECKS = (
     ('test_avr_model', 'test'),
     ('test_avr_cycles', 'test'),
+    ('test_pcif_clear', 'test'),
     ('test_legacy_swap', 'test'),
     ('test_pending_commands', 'test'),
     ('test_setup_length_liveness', 'test'),

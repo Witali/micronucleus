@@ -11,8 +11,8 @@ section 25, and the AVRe columns of the
 tests35/avr_cycles.py defines an explicit cycle class for every operation
 executed by this test backend. An unknown operation fails instead of falling
 through to an assumed one-cycle cost. CPU.step cross-checks the inherited
-timing layer against this independent classification. The archived compact
-backend is retained unchanged.
+timing layer against this independent classification. Historical firmware and
+reference bytes remain unchanged.
 
 | Instructions | ATtiny88 clocks |
 | --- | ---: |
@@ -79,6 +79,32 @@ instruction-start PIN value; it must not silently sample a newer PIN value.
 The PCINT pipeline and write-one-to-clear ordering require separate device
 fixtures. Neither instruction agreement between two emulators nor these
 digital fixtures establishes analog USB compliance or a measured board clock.
+
+PCIF2 write-one-to-clear now uses the executing I/O instruction's completion:
+one clock for OUT and two for SBI/CBI. The shared timing layer supplies this
+duration before invoking the I/O hook, only for OUT/SBI/CBI, and removes it in
+a finally block after execution. Direct fixture writes keep their legacy
+two-clock default, including after OUT; memory stores do not inherit OUT's
+duration. The earlier model assumed two clocks for every write, which could
+erase a flag set one clock after an OUT completed.
+Both the direct and synchronized GPIO models share the corrected clear time.
+
+Datasheet section 9.3.5 defines PCIFR write-one-to-clear. Figure 9-1's clocked
+stages describe the external pin-change SET path; they do not specify an extra
+stage for CPU writes. Figure 10-5 places OUT's I/O update at the instruction
+boundary. The PIN readback synchronizer is separate from PCIF software clear.
+These facts support instruction-completion W1C in the digital model; the
+datasheet does not establish simultaneous hardware-set/software-clear priority.
+
+`python3 -m tests35.test_pcif_clear` executes OUT, SBI and a flag bit-test taken
+from the linked firmware in 78 cases. It checks completion, retained events
+strictly before/after clear, fractional phases, a zero OUT and direct fixture
+writes after OUT/SBI. For the clocked PCIF pipeline it exercises both selectable
+simultaneous priorities separately,
+without treating either as a documented silicon guarantee. It preserves the
+existing PIN aperture, SET pipeline and event ordering policies. USB results
+obtained before this clear-time correction remain historical model results;
+the current firmware must be checked again using the corrected model.
 
 ## Legacy ACK adapters
 

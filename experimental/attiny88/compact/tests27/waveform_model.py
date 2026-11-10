@@ -91,9 +91,10 @@ class PinIO(dict):
         return super().get(addr,default)
     def __setitem__(self,addr,value):
         if addr==0x1b and value&4:
-            # SBI clears PCIF2 at its final write cycle. Only digital flag
-            # behavior is represented; no input synchronizer is added.
-            self.cleared_at=self.cpu.t+2
+            # W1C takes effect at the executing I/O write completion:
+            # OUT is one classic-AVR clock; SBI/CBI take two.
+            # Legacy fixtures without instruction metadata default to two.
+            self.cleared_at=self.cpu.t+getattr(self.cpu,'io_write_cycles',2)
         else:super().__setitem__(addr,value)
 
 class FlashView:
