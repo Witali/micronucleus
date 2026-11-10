@@ -192,8 +192,10 @@ complete controls (41472 cases) reproduces exactly those 108 ambiguous tags.
 
 One witness uses host rate 1499250, jitter sign -1, cooperative entry 5 and
 SE0 width 64/3 clocks. Its seven physical PID bits end at 160.080040020 clocks;
-recovery J begins at 181.413373353. The PID7 input at 160.4999999 reads SE0,
-yet the actual handoff at 175 holds D2 and reaches an EOF tag at 186. A complete
+recovery J begins at 181.413373353. The saved phase input at 160.4999999
+(PC 0x0c28) reads SE0; the later PID7 D-minus guard at 164.4999999
+(PC 0x0c30) still allows the path. The actual handoff at 175 holds D2 and
+reaches an EOF tag at 186. A complete
 framer must distinguish that missing bit instead of trusting the assembled PID.
 This component has no protocol owner: the observation does not demonstrate
 cached-TX retirement, an on-wire ACK, or a hardware failure of native V-USB.
@@ -216,3 +218,69 @@ premature-prefix cases, 162 empty PIDs and 252 truncated-ACK followups pass.
 Retain that correctly qualified ACK path until any replacement passes the
 same negative and followup gates. Phase feedback from another implementation
 is useful, but cannot replace explicit complete-PID/EOP ownership checks.
+
+## November 10: transfer decision and corrected acquisition seam
+
+Re-read the four linked upstream/fork patches above and rechecked the current
+upstream `master`, redmcg `uno`, QMK `qmk-master` and russdill `vmeiosis` heads.
+All four match the previous review's pins. The bounded review therefore still
+finds no ready-made complete 16 MHz receive repair among these implementations.
+The useful upstream contribution is phase feedback plus observations on both
+sides of a possible EOP, rather than a wholesale replacement of our ownership
+and malformed-packet handling.
+
+The one-clock redmcg transfer was also tested in the separate-ACK composition:
+1934-byte control versus 1936-byte delayed image. Its complete frozen 66-group
+gate passes 59 groups, compared with the control's 61. Although the original
+adjacent-token witness disappears and several crossover counts improve, it
+introduces six short-EOP OUT STALL failures, late DATA admission and EOP-matrix
+failures. Some smaller failure totals also contain new failing cases. That
+patch remains rejected; an aggregate decrease cannot justify new regressions.
+
+The upstream-derived PLL component now has a separately reproducible correction
+for the incomplete-PID ambiguity. Keep the original sealed prototype unchanged:
+
+```sh
+python3 prototypes/pll_extra6/build.py
+python3 tools/probe_pll_pid_guard.py --output-dir build/pll-pid-guard-centered
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-guard-centered --suite whole-prefix
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-guard-centered --suite held-se1
+python3 tools/probe_pll_pid_prefixes.py --experiment build/pll-pid-guard-centered --suite eop-se1
+python3 tools/probe_pll_first_edge.py --experiment build/pll-pid-guard-centered
+```
+
+The builder checks the original sealed source/model inputs, rebuilds both GNU
+and LLVM images, compares every byte and symbol, and seals its derived source.
+The corrected component remains **5634 bytes at 0x0800**, body SHA256
+`8058c9de0496cf5fcb163d6f4fb453943da61bc29042c4a419c32e2147041147`.
+This is component size, not complete bootloader size.
+
+After actual acquisition, a paid MOV saves the sampled phase into R17; R20/R21
+hold J/K constants. The final PID-one path requires both current D-minus-low
+and the full saved phase equal to K. Run selection moves before the saved
+sample, centering it one clock later in both supported run classes. Existing
+guard, EXTRA+6 and next-FIRST+10 sampling clocks remain unchanged. Equal-time
+five-clock LPM/RJMP padding pays the extra startup word. R17/R23 are declared
+receive scratch; R0, live X and context Z remain protected. Only three symbol
+addresses move: `pll128_pid0_sample` +2 bytes and `hybrid_pid7_run2` /
+`hybrid_run3_pad` -2 bytes. No numeric CRC table or CPU-model change is involved.
+
+Independent root reruns on this exact body reproduced:
+
+| Check | Result |
+| --- | --- |
+| Entire premature-PID corpus plus empty/complete controls | 41472 cases; no incomplete D2 EOF tags or failed complete controls |
+| Held SE1 at final PID symbol | 99 malformed inputs rejected; 324 controls pass |
+| SE1 within incomplete PID EOP | 297 malformed inputs rejected; 324 controls pass |
+| Nominal and minimum 670 ns EOP | 6048 cases each; zero failures |
+| Acquisition/DATA matrix | 9984 cases; same 261 unfinished DATA rejections as the original component |
+| Payload matrix | 2627 cases; same 165 unfinished DATA rejections |
+| Combined SYNC and first DATA/address crossing | 13464 cases; no newly failed or lost-handoff cases; both components still fail the same 663 cases |
+
+The combined test is necessary: an earlier current-line-only PID guard passed
+the separate positive matrices but failed when legal SYNC and first-DATA
+crossovers were combined. Neither relative equivalence nor the repaired PID
+boundary qualifies a whole receiver. DATA recovery, bounded byte publication,
+EOP/recovery J, packet admission and the complete 67-group composed-image gate
+remain required. The maintained complete-image control remains 1934 bytes;
+the 1280-byte target is not achieved.

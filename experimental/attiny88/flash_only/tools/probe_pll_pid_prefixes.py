@@ -16,7 +16,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--firmware-root',type=Path,default=Path(__file__).resolve().parent.parent)
     parser.add_argument('--experiment',type=Path)
-    parser.add_argument('--suite',choices=('truncated','whole-prefix'),default='truncated')
+    parser.add_argument('--suite',choices=('truncated','whole-prefix','held-se1','eop-se1'),default='truncated')
     parser.add_argument('--expect-known-failure',action='store_true')
     parser.add_argument('--output',type=Path)
     args=parser.parse_args();fo=args.firmware_root.resolve()
@@ -43,6 +43,17 @@ def main():
     if experiment==sealed:
         for relative,digest in json.loads((sealed/'build-report.json').read_text())['files'].items():pin(sealed/'build'/relative,digest)
     else:
+        # Derived experiments must pin their generation sources as well as
+        # the emitted ELF/body; a changed template is a different experiment.
+        derived_manifest=experiment/'bundle-manifest.json'
+        if derived_manifest.is_file():
+            pin(derived_manifest)
+            for relative,digest in json.loads(derived_manifest.read_text())['files'].items():
+                source=(experiment/relative).resolve()
+                assert source.is_relative_to(experiment),'Derived manifest path escapes experiment'
+                pin(source,digest)
+            report=json.loads((experiment/'build-report.json').read_text())
+            for relative,digest in report['files'].items():pin(ap.parent/relative,digest)
         for name in ('vusb_phy.inc','source.json'):
             if (ap.parent/name).exists():pin(ap.parent/name)
     os.environ['MICRONUCLEUS_TEST_MODEL_ROOT']=str(fo.parent/'compact');sys.path.insert(0,str(fo))
@@ -97,20 +108,73 @@ def main():
                             if d2 and row['eof_tag'] and first is None:
                                 first=dict(physical_pid_bits=length,pattern=pattern,rate=rate,width=width,sign=sign,
                                     entry=entry,eop_se0=wave.boundaries[-3],recovery_j=wave.boundaries[-2],**row)
-    # Both retain empty-PID and complete genuine ACK regression controls.
+    def held_se1():
+        nonlocal first
+        # A full ACK whose last physical PID symbol is held SE1 is malformed.
+        # Keep original raw waves and all eleven real cooperative entry times.
+        for rate in (1499250,1500000,1500750):
+            for sign in (-1,0,1):
+                for entry in (5,5.25,8,8.5,16,24,24.75,32,38,38.5,39):
+                    wave=h.Wave(bytes([0xd2]),rate=rate,
+                        jitter=lambda i,line:sign*(.55 if line==h.J else -.55))
+                    assert len(wave.bits)==16
+                    wave.levels[15]=6
+                    wave.pin_edges=[];previous=h.J
+                    for when,line in zip(wave.boundaries,wave.levels):
+                        if (previous^line)&4:wave.pin_edges.append(when)
+                        previous=line
+                    row=run(wave,entry)
+                    d2=bool(row['handoff'] and row['handoff']['assembled_pid']==0xd2)
+                    counts['held_se1_cases']+=1
+                    counts['malformed_se1_d2_eof_tags']+=int(d2 and row['eof_tag'])
+                    if d2 and row['eof_tag'] and first is None:
+                        first=dict(malformed='held_SE1_at_PID7',rate=rate,sign=sign,entry=entry,**row)
+
+    def eop_se1():
+        nonlocal first
+        # Seven real PID bits followed by observed SE1 inside an otherwise
+        # SE0 EOP must not become a complete D2. The pulses are malformed
+        # physical inputs, not waived numeric DATA-CRC errors.
+        bits=sync+[(0xd2>>i)&1 for i in range(7)]
+        for rate in (1499250,1500000,1500750):
+            for sign in (-1,0,1):
+                for entry in (5,5.25,8,8.5,16,24,24.75,32,38,38.5,39):
+                    for offset in (.125,2.125,4.125):
+                        wave=wave_for(bits,rate,64/3,sign)
+                        at=len(wave.levels)-3;start=wave.boundaries[at]
+                        wave.boundaries[at+1:at+1]=[start+offset,start+offset+3.36]
+                        wave.levels[at+1:at+1]=[6,0]
+                        wave.labels[at+1:at+1]=['bad-SE1','SE0-resume']
+                        wave.pin_edges=[];previous=h.J
+                        for when,line in zip(wave.boundaries,wave.levels):
+                            if (previous^line)&4:wave.pin_edges.append(when)
+                            previous=line
+                        row=run(wave,entry)
+                        d2=bool(row['handoff'] and row['handoff']['assembled_pid']==0xd2)
+                        counts['eop_se1_cases']+=1
+                        counts['malformed_eop_se1_d2_eof_tags']+=int(d2 and row['eof_tag'])
+                        if d2 and row['eof_tag'] and first is None:
+                            first=dict(malformed='observed_SE1_in_incomplete_PID_EOP',rate=rate,sign=sign,
+                                entry=entry,eop_start=start,se1_start=start+offset,**row)
+
+    # All suites retain empty-PID and complete genuine ACK controls.
     cases(0,0,'empty');cases(8,0xd2,'valid')
-    for length in range(1,8):
-        patterns=range(1<<length) if args.suite=='whole-prefix' else (0xd2&((1<<length)-1),)
-        for pattern in patterns:cases(length,pattern,'prefix')
+    if args.suite=='held-se1':held_se1()
+    elif args.suite=='eop-se1':eop_se1()
+    else:
+        for length in range(1,8):
+            patterns=range(1<<length) if args.suite=='whole-prefix' else (0xd2&((1<<length)-1),)
+            for pattern in patterns:cases(length,pattern,'prefix')
     for path,digest in pins.items():assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,('Input changed during suite',str(path))
-    failed=bool(counts['incomplete_d2_eof_tags'] or counts['valid_control_failures'])
+    failed=bool(counts['incomplete_d2_eof_tags'] or counts['valid_control_failures'] or
+                counts['malformed_se1_d2_eof_tags'] or counts['malformed_eop_se1_d2_eof_tags'])
     result=dict(suite=args.suite,bytes=artifact['size'],sha256=artifact['sha256'],
-        total_cases=sum(counts[k] for k in ('empty_cases','valid_cases','prefix_cases')),
+        total_cases=sum(counts[k] for k in ('empty_cases','valid_cases','prefix_cases','held_se1_cases','eop_se1_cases')),
         tool_sha256=pins[Path(__file__).resolve()],
         elf_sha256=hashlib.sha256(artifact['obj'].read_bytes()).hexdigest(),counts=dict(counts),by_physical_pid_length=by_length,
         qualification_passed=not failed,snapshot_reproduction=args.expect_known_failure,
         input_integrity='Source/model/manifest/body/ELF checked before and after suite',first_incomplete_d2_eof=first,
-        scope='Incomplete-PID framing ambiguity at decoded-D2 plus component EOF-ready tag. Provisional handoffs that later reject are counted separately. No protocol owner, ACK release, bus response or full USB qualification is demonstrated.')
+        scope='Incomplete-PID or malformed held-SE1 framing ambiguity at decoded-D2 plus component EOF-ready tag. Provisional handoffs that later reject are counted separately. No protocol owner, ACK release, bus response or full USB qualification is demonstrated.')
     status=int(failed)
     if args.expect_known_failure:
         expected_prefix=41148 if args.suite=='whole-prefix' else 1134
