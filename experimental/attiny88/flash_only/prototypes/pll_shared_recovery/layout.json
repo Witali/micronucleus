@@ -1,7 +1,7 @@
 {
   "original_core_body": "f110d7707a4286149b93fdedc2b570973026cebd2383d16ac24c0ae6d9b65005",
   "original_source_sha256": "7a6d25e28b64262ecd836907e4a602e986004a9d855848f6fe39db4226198185",
-  "original_generator_sha256": "8a9616f6195955ecb25d8d433e818633c98a7784d1d5ed420703d3431794720d",
+  "original_generator_sha256": "1478fbaafd3af354aad636be7f3d17f3ebefe922978b36107c836fcb04f869b9",
   "prefix_references": [
     [
       1280,
@@ -150,5 +150,6 @@
   "centered_body_sha256": "8058c9de0496cf5fcb163d6f4fb453943da61bc29042c4a419c32e2147041147",
   "composed_body_sha256": "56e8816afe4b42e1a472992eeabe78478bc082e5a6e53d494ec1b58b343a5611",
   "composed_bytes": 7346,
-  "boot": 512
+  "boot": 512,
+  "imported_crlf_generator_sha256": "8a9616f6195955ecb25d8d433e818633c98a7784d1d5ed420703d3431794720d"
 }

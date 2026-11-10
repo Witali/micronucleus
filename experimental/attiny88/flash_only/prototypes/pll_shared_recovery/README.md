@@ -25,8 +25,8 @@ Expected body: **7346 bytes at 0x0200**, ending at 0x1eb2, SHA-256
 GNU and LLVM bytes, physical 8 KiB fit and all named relative edges must agree.
 The DATA graph is 6192 bytes, preserving the frozen graph's 42 semantic roots;
 the actual centered acquisition/PID prefix adds 1154 bytes. The fixed cluster
-order changes placement only. Original generator SHA-256 is
-`8a9616f6195955ecb25d8d433e818633c98a7784d1d5ed420703d3431794720d`.
+order changes placement only. The LF-normalized generator SHA-256 is
+`1478fbaafd3af354aad636be7f3d17f3ebefe922978b36107c836fcb04f869b9`.
 
 The generated strict verifier accepts no expected rejection of a valid packet:
 
@@ -55,3 +55,7 @@ the guard separately. This package does not relax or waive those failures.
 The builder copies the existing GPL-2.0 license and V-USB provenance alongside
 the generated derivative. The original PLL package and its historical expected
 failures are preserved; their snapshot policy is not reused by this reference.
+
+The imported generator used CRLF. `layout.json` records that original digest
+separately; the package manifest pins the LF bytes required by `.gitattributes`.
+Line-ending normalization leaves the emitted instructions unchanged.
