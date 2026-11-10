@@ -1,4 +1,4 @@
-"""Compare mandatory failure contexts from two immutable full 67-group runs.
+"""Compare mandatory failure contexts from two immutable complete gate runs.
 
 This is a regression comparison, not a USB qualification gate. Inherited
 mandatory failures remain failures even when the comparison exits zero.
@@ -15,8 +15,9 @@ GROUPS = (
     ('test_rx_crossover_se1', 'se1-crossover'),
     ('test_rx_crossover_payloads', 'asymmetric-payloads'),
     ('test_rx_sync_crossover', 'sync-crossover'),
+    ('test_status_boundary_crossover', 'short-status-crossover'),
 )
-OBSERVATIONS = {'errors', 'response', 'events', 'tx_length', 'pending', 'true_eop'}
+OBSERVATIONS = {'errors', 'response', 'events', 'tx_length', 'pending', 'true_eop', 'early_drive'}
 
 
 def sha(path):
@@ -61,14 +62,19 @@ def main():
         completion = read(directory / 'completion.json')
         integrity = read(directory / 'completed-integrity.json')
         report = read(directory / 'results.json')
-        assert completion['all_inputs_unchanged'] and completion['groups'] == 67
-        assert len(integrity['completed']) == len(report['results']) == 67
+        count = completion['groups']
+        assert completion['all_inputs_unchanged'] and count > 0
+        assert len(integrity['completed']) == len(report['results']) == count
         assert report['exhaustive'] is True
         assert completion['sha256'] == integrity['sha256'] == report['sha256']
         failed = {row['check'] for row in report['results'] if not row['passed']}
         assert completion['exit_code'] == int(bool(failed))
         runs.append(dict(directory=directory, frozen=frozen, report=report, failed=failed))
     old, new = runs
+    names = [[row['check'] for row in run['report']['results']] for run in runs]
+    assert names[0] == names[1], 'Gate groups or their order differ'
+    assert len(names[0]) == len(set(names[0])), 'Duplicate gate group'
+    count = len(names[0])
     # These runs use the same independently frozen Python models/oracles and
     # fixture source snapshot; only their separately pinned linked artifact differs.
     snapshots = [{key: digest for key, digest in run['frozen'].items()
@@ -76,6 +82,8 @@ def main():
     assert snapshots[0] == snapshots[1], 'Independent frozen input snapshots differ'
     groups = []
     for check, stem in GROUPS:
+        if check not in names[0]:
+            continue  # A historical frozen gate may predate this regression.
         reports = []
         for run in runs:
             path = run['directory'] / 'frozen/attiny88/flash_only/build' / f"{stem}-{run['report']['sha256'][:16]}.json"
@@ -101,7 +109,7 @@ def main():
         not group['new_failures'] and not group['changed_shared_observations'] for group in groups)
     result = dict(baseline_body_sha256=old['report']['sha256'], candidate_body_sha256=new['report']['sha256'],
         baseline_bytes=old['report']['bytes'], candidate_bytes=new['report']['bytes'],
-        exhaustive_groups=67, baseline_passed=67-len(old['failed']), candidate_passed=67-len(new['failed']),
+        exhaustive_groups=count, baseline_passed=count-len(old['failed']), candidate_passed=count-len(new['failed']),
         identical_frozen_inputs=len(snapshots[0]),
         new_failing_groups=sorted(new['failed']-old['failed']), comparison_passed=passed,
         groups=groups, tool_sha256=pins[Path(__file__).resolve()],

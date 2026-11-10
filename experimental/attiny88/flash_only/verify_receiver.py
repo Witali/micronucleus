@@ -57,6 +57,7 @@ CHECKS = (
     ('test_ack_empty_pid', 'test'),
     ('test_ack_prefix_followup', 'test'),
     ('test_data_framing', 'test'),
+    ('test_status_boundary_crossover', 'test'),
     ('test_rx_overflow', 'test'),
     ('test_rx_terminal_crc', 'test'),
     ('test_rx_terminal_bounds', 'test'),

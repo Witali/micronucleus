@@ -38,6 +38,7 @@ earlier 54-group pass as complete qualification.
 | A PID shorter than eight bits, including SYNC followed directly by EOP, cannot retire an eligible ACK transaction | Sections 8.3.1 and 8.4.5 | `test_ack_pid_prefix`, `test_ack_empty_pid` |
 | A prematurely terminated ACK PID must be discarded soon enough to receive the next minimum-gap SETUP intact | Sections 7.1.18.1 and 8.4.5, Chapter 8 error handling | `test_ack_prefix_followup` |
 | Token tails obey the wire dribble rule independently of internal decoder phase tags | Section 7.1.9.1, Chapter 8 token fields | `test_token_framing_wire` |
+| A permitted nonempty read-status DATA packet cannot produce ACK at an interior byte boundary when two adjacent crossovers resemble SE0 | Sections 7.1.4.1, 7.1.13.2 and 8.5.3.1 | `test_status_boundary_crossover`: valid CRC16, 54 injected cases and 54 pristine controls, real EOP-to-response timing |
 | Device data rate is 1.4775..1.5225 Mbit/s; high-speed-capable host low-speed rate is 1.49925..1.50075 Mbit/s | Section 7.1.11, Table 7-10 | Host-rate/phase matrices, `test_tx_digital`, `test_rx_jitter_spec` |
 | Driver jitter, clock accuracy and permitted total jitter are assessed with the correct upstream/downstream direction | Section 7.1.15.1, Table 7-5, Table 7-10 | `test_tx_digital`, `test_rx_jitter_spec`, `test_rx_aperiodic`; opcode identity alone is insufficient |
 | Response begins after at least two response bit periods and before the applicable 6.5-bit connector bound | Section 7.1.18.1 | Physical recovery-J to first-K timing in token and DATA response matrices |
@@ -312,7 +313,10 @@ controls pass. The earlier 54-case adjacent matrix exposed only 12 cases and
 is retained solely in frozen historical reports. A cached recovery-J guard
 reduces that expanded count to 384 but remains unsafe and is not selected.
 
-The mandatory gate now has 67 groups, including `test_rx_eop_thresholds`.
+The mandatory gate now has 68 groups, including `test_rx_eop_thresholds` and
+`test_status_boundary_crossover`. The latter exposes an inherited short-DATA
+premature-drive failure in 12 of 108 cases; the November 10 transfer record
+distinguishes this expanded gate from the earlier frozen 67-group comparisons.
 That test uses explicit monotonic matched 300 ns curves, a 1.3 V differential
 crossover and a 2.0 V single-ended threshold. The source SE0 interval is
 1.29 or 1.50 us; the corresponding PIN interval is 1.50 or 1.71 us.
