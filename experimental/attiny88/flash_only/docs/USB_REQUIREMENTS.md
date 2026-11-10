@@ -20,7 +20,7 @@ earlier 54-group pass as complete qualification.
 
 | Required behavior | Specification basis | Executable checks |
 | --- | --- | --- |
-| NRZI and eight-symbol low-speed SYNC, including legal single-ended crossover observations during acquisition | Sections 7.1.4.1, 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_rx_sync_crossover`, `test_tx_digital` |
+| NRZI and eight-symbol low-speed SYNC, including legal SE0 and SE1 crossover observations during acquisition | Sections 7.1.4.1, 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_rx_sync_crossover`, `test_rx_sync_crossover_se1`, `test_tx_digital` |
 | Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital`, `test_rx_terminal_bounds` |
 | Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_rx_terminal_crc` |
 | Accept noninteger final-symbol stretching on ACK and DATA with the minimum 670 ns received EOP | Sections 7.1.9.1 and 7.1.13.2 | `test_rx_fractional_dribble`, `test_rx_fractional_data` |
@@ -313,7 +313,7 @@ controls pass. The earlier 54-case adjacent matrix exposed only 12 cases and
 is retained solely in frozen historical reports. A cached recovery-J guard
 reduces that expanded count to 384 but remains unsafe and is not selected.
 
-The mandatory gate now has 69 groups, including `test_pcif_clear`,
+The completed corrected-model checkpoints use 69 groups, including `test_pcif_clear`,
 `test_rx_eop_thresholds` and `test_status_boundary_crossover`. The last exposes an inherited short-DATA
 premature-drive failure in 12 of 108 cases; the November 10 transfer record
 distinguishes this expanded gate from the earlier frozen 67-group comparisons.
@@ -328,6 +328,17 @@ evidence and do not replace electrical measurement on a board.
 Digital instruction tests do not measure cable propagation, analog thresholds,
 pin rise/fall times or oscillator drift. Those need physical measurements;
 software tests must not be described as complete electrical USB certification.
+
+The mandatory `test_rx_sync_crossover_se1` expands the current verifier to
+70 groups. It preserves the existing 1080-injection/54-pristine SYNC corpus
+and receive oracle, and adds independently certified 210 ns both-high
+observations. Its centered placement has matched 300 ns monotonic edges,
+a 2.0 V differential crossing and a 1.3 V single-ended threshold. The exact
+1946-byte ADE87 and 1960-byte PID0-qualified bodies each fail the same 90
+injected cases; all 54 controls pass, and every recorded error/response
+observation matches. These are additional inherited mandatory failures.
+Those supplemental runs are separate from the completed 69-group gates;
+registration alone does not establish a single completed 70-group run.
 
 The [historical receive comparison](HISTORICAL_USB_RX.md) records which defects
 are inherited from official v2.6 / installed compact v3.0 and which appeared
