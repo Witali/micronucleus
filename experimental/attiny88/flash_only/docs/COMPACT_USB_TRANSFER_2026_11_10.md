@@ -8,6 +8,11 @@ the existing numeric incoming DATA CRC16 validation/storage exception.
 
 ## Atomic SYNC confirmation
 
+The subsequent [conditional SYNC qualification](COMPACT_SYNC_QUALIFICATION_2026_11_10.md)
+is the latest 1960-byte checkpoint. It repairs another 24 SYNC contexts with
+the complete 69-group comparison and separately records newly covered SE1/SYNC.
+The sections below retain the earlier 1934/1946-byte transfer evidence.
+
 The ACK composition now confirms full K from one masked PIN capture rather
 than testing D-minus alone. Success costs five clocks instead of three; remove
 the later two-clock delay to preserve the first PID sample. Non-K retry still
@@ -49,7 +54,7 @@ rejected. Aggregate failure-count improvements cannot justify those regressions.
 
 ## Reuse the terminal receiver for tokens
 
-The current complete image is **1946 bytes at 0x1800**, SHA256
+The terminal-token checkpoint is **1946 bytes at 0x1800**, SHA256
 `ade87a8d622f0c52eaaabbd53caf375571fb20fd8dd137247ac6b1f87d787e3a`.
 This is 12 bytes above the original control and 666 bytes above the target.
 The non-ACK 1766-byte control retains its original bytes.

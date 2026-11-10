@@ -1,0 +1,312 @@
+{
+  "baseline_body_sha256": "ade87a8d622f0c52eaaabbd53caf375571fb20fd8dd137247ac6b1f87d787e3a",
+  "candidate_body_sha256": "e081fcf70a0b03419f26009055eebc59b43f8f4151feb0a4a151f51232ed8ac1",
+  "baseline_bytes": 1946,
+  "candidate_bytes": 1960,
+  "exhaustive_groups": 69,
+  "baseline_passed": 64,
+  "candidate_passed": 64,
+  "identical_frozen_inputs": 145,
+  "documentation_differences": [],
+  "new_failing_groups": [],
+  "comparison_passed": true,
+  "groups": [
+    {
+      "check": "test_token_crossover_admission",
+      "cases": 3456,
+      "baseline_failures": 0,
+      "candidate_failures": 0,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 0,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "candidate_context_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "baseline_report_sha256": "06f81ee8f79ecf2479659da97ea1b15f639991c601e31947c7d8d3549490a404",
+      "candidate_report_sha256": "77c77c32b8d94b93a1c338ce400f38746be1424bfc6613ba09697752bb719d30",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_asymmetric",
+      "cases": 2484,
+      "baseline_failures": 120,
+      "candidate_failures": 120,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 120,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "48a01d853a79a66b925b3a043b59e8a55f21659edb56540e6b6146430a0bc70b",
+      "candidate_context_set_sha256": "48a01d853a79a66b925b3a043b59e8a55f21659edb56540e6b6146430a0bc70b",
+      "baseline_report_sha256": "c920e3e9df62f9d6cd1aea00a219927450ca9df896fd69a2f46c74dffb2d247d",
+      "candidate_report_sha256": "fd81280d2d9069fea4b86f88451853a562bd2002d1471dedb5ee45df7fd96cf5",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_se1",
+      "cases": 2486,
+      "baseline_failures": 63,
+      "candidate_failures": 63,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 63,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "0ab607530ac7668e43f698644a9c48d65fccc2ab1c72bc2e32c0de32cff925d3",
+      "candidate_context_set_sha256": "0ab607530ac7668e43f698644a9c48d65fccc2ab1c72bc2e32c0de32cff925d3",
+      "baseline_report_sha256": "548b3cd2c47d0fa36416f2827df31383e8661260a2fc183399820f5fa171a4fb",
+      "candidate_report_sha256": "d34b28d4ef3b8ab68f9136e0627ff4cd8080df62e5eb0a01369f0ec8c3195680",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_payloads",
+      "cases": 981,
+      "baseline_failures": 69,
+      "candidate_failures": 69,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 69,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "bc47bcd7227376c83c58917c1db4b2435b71cdb2c4a0a4cd0d0a15840dc90615",
+      "candidate_context_set_sha256": "bc47bcd7227376c83c58917c1db4b2435b71cdb2c4a0a4cd0d0a15840dc90615",
+      "baseline_report_sha256": "a98cdc1a109f72af42add9d2e4e0d60a8f4da3e632c7129ba034c80d1b3d9c89",
+      "candidate_report_sha256": "00da674f9dfe24d687ed9ca2831948f6a5b5f9a9bb2834c45a18fb9e86137b61",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_sync_crossover",
+      "cases": 1080,
+      "baseline_failures": 59,
+      "candidate_failures": 35,
+      "repaired": 24,
+      "new_failures": 0,
+      "shared": 35,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "c19890da3db4bd13a5efca549e8b16d2a2d771a5820f91e879af86e23d47ea16",
+      "candidate_context_set_sha256": "c4bd5ebe1d7f7bbc63a2fa01bd5b246a9d3e0e5db250a0cb8d51ed4a7d7bafc2",
+      "baseline_report_sha256": "a4220cea6504c056946c1dfddf261cb94784c617eb59bca1807c44859a812d2b",
+      "candidate_report_sha256": "1302e4a82bc108d6003441aa67ec4d5f44eed9bea6b0a088d46ef080725537e6",
+      "repaired_contexts": [
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.9523809523809523,
+          "index": 4,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 2,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "index": 2,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        }
+      ],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_status_boundary_crossover",
+      "cases": 108,
+      "baseline_failures": 12,
+      "candidate_failures": 12,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 12,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "7864d1b4d35e48a1b7b7ae6dcea34cb27ee589e658a0ebab3892c951a323d952",
+      "candidate_context_set_sha256": "7864d1b4d35e48a1b7b7ae6dcea34cb27ee589e658a0ebab3892c951a323d952",
+      "baseline_report_sha256": "9556ffcf11fae2623844e4713d307c06a2663d31214d366a32d1ace5b575e175",
+      "candidate_report_sha256": "63f65d0128fcd8e8ff5b336153eacfd0ec2d315429c0881a4d456ef844d519bf",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    }
+  ],
+  "tool_sha256": "7fdf5654061dee5df3cf6e2a13eefdf250f0fb8d01d65718ef1a68c36f12ab65",
+  "scope": "Finite failure-context regression comparison only. Inherited mandatory failures are not accepted or waived; no full USB qualification."
+}

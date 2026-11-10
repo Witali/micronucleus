@@ -24,18 +24,33 @@ usb_rx_overflow:
     sbi _SFR_IO_ADDR(PCIFR), PCIF2
     rjmp usb_rx_ignore_packet
 usb_rx_found_k:
+#ifdef USB_RX_ACK_TERMINAL
+    /* Same ten clocks to confirmation. Seed live RX work here so later
+     * paid slots can capture qualification and clear T without rephasing.
+     * R18=0x20 supplies the ACK reader's six-cell sentinel while preserving
+     * the normal PID history; R21=0 starts the fractional DATA calendar. */
+    ldi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
+    ldi r18, 0x20
+    ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
+    ldi r21, 0
+    rjmp .+0
+    rjmp .+0
+    rjmp .+0
+#else
     ldi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
     rcall usb_return_polynomial
     ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
+#endif
 #ifdef USB_RX_ACK_TERMINAL
-    /* Observe both pins atomically at the original confirmation time.
-     * Full-K success takes five clocks; the removed two-clock post-preload
-     * delay keeps PIDbit0 fixed. Non-K retries keep the original eight. */
+usb_rx_sync_probe:
+    /* C0 is unchanged; C0+2 is evidence only. Bad J retries remain eight
+     * clocks, while the extra success clock retires the moved R18 seed. */
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
+    in r17, _SFR_IO_ADDR(PIND)
     cpi r16, (1 << USB_PLUS_BIT)
     breq usb_rx_sync_confirmed
-    rjmp .+0
+    nop
     rjmp usb_rx_wait_for_k
 #else
     sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
@@ -46,11 +61,7 @@ usb_rx_found_k:
 #endif
 usb_rx_sync_confirmed:
 usb_rx_delay_complete:
-#ifdef USB_RX_ACK_TERMINAL
-    /* The lower seed becomes the six-bit ACK loop sentinel. It leaves the
-     * legacy odd-PID history tests and completed first byte unchanged. */
-    ldi r18, 0x20
-#else
+#ifndef USB_RX_ACK_TERMINAL
     ldi r18, 0x00
 #endif
     ldi r20, USB_RX_INITIAL_STUFF_MASK
@@ -69,24 +80,32 @@ usb_rx_delay_complete:
 #endif
     /* Initialize fractional state in the existing delay slot. Length comes
      * from Y at EOF, so no separate byte countdown needs initialization. */
+#ifdef USB_RX_ACK_TERMINAL
+    /* R21 was seeded in acquisition. Normal RX and ACK require T=0. */
+    bst r1, 0
+#else
     ldi r21, 0x00
+#endif
     in r16, _SFR_IO_ADDR(PIND)
     andi r16, USB_LINE_MASK
 #ifdef USB_RX_ACK_TERMINAL
-    /* At this certified sample a new transition cannot belong to PIDbit1.
-     * A value different from final SYNC K therefore proves PIDbit0=0,
-     * including a legal both-low/both-high crossover observation. */
+    /* Accepted normal/ACK continuations retain their original ten-clock
+     * PID0-to-PID1 calendar. ACK ignores C0+2, which can contain its edge. */
+    andi r17, USB_LINE_MASK
     cpi r16, (1 << USB_PLUS_BIT)
-    bst r1, 0
-    /* R23 is the final-byte pointer until EOF replaces it with byte count.
-     * ACK has its own owner. Tokens end at byte 3; typed PID bit 1 selects
-     * byte 11 for DATA. These useful instructions replace a two-clock jump. */
     ldi r23, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER + 2)
-    nop
-    breq usb_rx_normal_pid_entry
-    rjmp usb_rx_ack_entry
+    brne usb_rx_sync_ack_jump
+    cpi r17, (1 << USB_PLUS_BIT)
+    brne usb_rx_sync_reconsider_k
 usb_rx_normal_pid_entry:
     rjmp usb_rx_pid_bit1
+usb_rx_sync_ack_jump:
+    rjmp usb_rx_ack_entry
+usb_rx_sync_reconsider_k:
+    /* Current PID0 observation is full K and no byte has been decoded.
+     * Its nine-clock rejection plus four paid clocks samples at K+13. */
+    rjmp .+0
+    rjmp usb_rx_sync_probe
 #else
     bst r16, USB_MINUS_BIT
     bld r18, 7

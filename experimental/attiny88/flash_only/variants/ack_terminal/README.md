@@ -6,8 +6,8 @@ Normal DATA and SYNC retain their known receive findings. The host identity
 is FFFF and no recognized programming profile or hardware image is added.
 The smaller combined base receiver currently measures 1766 bytes.
 
-The measured body is **1946 bytes at 0x1800**, SHA256
-`ade87a8d622f0c52eaaabbd53caf375571fb20fd8dd137247ac6b1f87d787e3a`.
+The measured body is **1960 bytes at 0x1800**, SHA256
+`e081fcf70a0b03419f26009055eebc59b43f8f4151feb0a4a151f51232ed8ac1`.
 That placement reserves 2048 bytes, leaves the application postscript at
 0x17FC..0x17FF and permits 6140 application bytes linked at zero. This remains
 an experimental software checkpoint, not a qualified replacement loader.
@@ -26,7 +26,10 @@ the final slot without changing the ordinary sample calendar. Token CRC5,
 address and endpoint checks remain exact. Normalized token completion also
 replaces phase padding with one extra useful PCIF poll; quiet deadlines stay
 fixed. The complete image grows only 12 bytes from the original 1934-byte
-control. The non-ACK 1766-byte control remains byte-identical.
+control. Conditional full-K-run qualification adds another 14 bytes: retain
+confirmation+2 evidence only for the normal PID0 path, rejecting 24 false
+SYNC locks without moving accepted DATA/ACK samples. The non-ACK 1766-byte
+control remains byte-identical.
 
 `ack_receive.inc` contains the separate reader and terminal handler. Small
 compile-time hooks in `../combined_rx/vusb_phy.inc` share the existing startup,
@@ -71,6 +74,13 @@ the 1934-byte control. The current gate includes
 corrected OUT/SBI PCIF timing and the new short-DATA premature-ACK oracle;
 the five remaining groups stay strict failures. See the linked transfer record
 for the full failure table and separate PCIF-priority checks.
+
+The [subsequent SYNC qualification](../../docs/COMPACT_SYNC_QUALIFICATION_2026_11_10.md)
+also completes the unchanged 69-group gate at 64/69. It repairs another 24
+SYNC contexts, leaving 35, without new contexts or changed shared failure
+observations. A separately executed SE1/SYNC regression adds a 70th verifier
+group and exposes 90 identical inherited failures in both bodies. These scopes
+are explicit; registering that group does not imply a single full 70-group run.
 
 The current audit records the exact selected-image results and open findings:
 [USB audit](../../docs/USB_AUDIT_2026_11_01.md). New gates cover 2484 positive
