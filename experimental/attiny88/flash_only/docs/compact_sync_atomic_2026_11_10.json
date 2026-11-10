@@ -1,0 +1,782 @@
+{
+  "baseline_body_sha256": "03393220e9d0b5da9c6c554d0f301b3ac1abe017fe2f00d59a61da7cfca77e4c",
+  "candidate_body_sha256": "4f0b3ca3c10f2e68d9b730a99f44bf4653b14e11b48870ca178d346aa5541497",
+  "baseline_bytes": 1934,
+  "candidate_bytes": 1934,
+  "exhaustive_groups": 67,
+  "baseline_passed": 62,
+  "candidate_passed": 62,
+  "identical_frozen_inputs": 143,
+  "new_failing_groups": [],
+  "comparison_passed": true,
+  "groups": [
+    {
+      "check": "test_token_crossover_admission",
+      "cases": 3456,
+      "baseline_failures": 720,
+      "candidate_failures": 720,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 720,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "795568010eacdf5eca968d55ec254acc1834734270292a8e17af811803a1d23e",
+      "candidate_context_set_sha256": "795568010eacdf5eca968d55ec254acc1834734270292a8e17af811803a1d23e",
+      "baseline_report_sha256": "c2c51e7d1c1f622b18678ed0bee99109f3ed0eb120ffb494a11e47c86bb5e650",
+      "candidate_report_sha256": "71f5f8ac34d22e3f08c9eef2cd75d363f30a1f885879425d9780a9d2e2667534",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_asymmetric",
+      "cases": 2484,
+      "baseline_failures": 120,
+      "candidate_failures": 120,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 120,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "48a01d853a79a66b925b3a043b59e8a55f21659edb56540e6b6146430a0bc70b",
+      "candidate_context_set_sha256": "48a01d853a79a66b925b3a043b59e8a55f21659edb56540e6b6146430a0bc70b",
+      "baseline_report_sha256": "79d2e0c9f1e44e72d381e6159112ecf85fcb5fe32b460488ca8fb5f0ee1e9eaa",
+      "candidate_report_sha256": "333e497611f8f08365ea0111cbef8dbabea42eb54b188bb9a4f9254d152bc03e",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_se1",
+      "cases": 2486,
+      "baseline_failures": 63,
+      "candidate_failures": 63,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 63,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "0ab607530ac7668e43f698644a9c48d65fccc2ab1c72bc2e32c0de32cff925d3",
+      "candidate_context_set_sha256": "0ab607530ac7668e43f698644a9c48d65fccc2ab1c72bc2e32c0de32cff925d3",
+      "baseline_report_sha256": "6235f413f4ea585c34f0b9e3525d173954a42d3ad9ac83d235895e578cc996f4",
+      "candidate_report_sha256": "5dc9bea6430de412ab151b85635700ccc36513ffe46ec18f5e52533c451e743f",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_crossover_payloads",
+      "cases": 981,
+      "baseline_failures": 69,
+      "candidate_failures": 69,
+      "repaired": 0,
+      "new_failures": 0,
+      "shared": 69,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "bc47bcd7227376c83c58917c1db4b2435b71cdb2c4a0a4cd0d0a15840dc90615",
+      "candidate_context_set_sha256": "bc47bcd7227376c83c58917c1db4b2435b71cdb2c4a0a4cd0d0a15840dc90615",
+      "baseline_report_sha256": "0abd12f68351e0815fe19c4909f4a94ed4dc37b4b05243cbbf24a3f07a757ad7",
+      "candidate_report_sha256": "6ce64766da4362b2c5b25a0f635ef8e453c36d23b70c5f7d15c8d31c93154f86",
+      "repaired_contexts": [],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    },
+    {
+      "check": "test_rx_sync_crossover",
+      "cases": 1080,
+      "baseline_failures": 144,
+      "candidate_failures": 59,
+      "repaired": 85,
+      "new_failures": 0,
+      "shared": 59,
+      "changed_shared_observations": 0,
+      "baseline_context_set_sha256": "73f858f8556cde29d8cc1220f6cc3ae218ff3d458382767ea2b5c1c1447b54c4",
+      "candidate_context_set_sha256": "c19890da3db4bd13a5efca549e8b16d2a2d771a5820f91e879af86e23d47ea16",
+      "baseline_report_sha256": "6de48069d1ff6a3a43f309ca67abd52de9c72521f66fe732c317a7e0e411a425",
+      "candidate_report_sha256": "cadd4e88ac07f730cd757a4888eaf20e3bcd0aa1bef7c55292be5c223083cf43",
+      "repaired_contexts": [
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 0
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 0
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 0
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 16,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 24,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 24,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 32,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 32,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 38,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 38,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 38,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 38,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 0
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 0
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 0
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.5,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 5,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 3,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1499250,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500000,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 0
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "index": 5,
+          "kind": "single",
+          "rate": 1500750,
+          "sign": 1
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.047619047619047616,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 1,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1499250,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500000,
+          "sign": 0,
+          "transitions": 6
+        },
+        {
+          "entry": 8,
+          "fraction": 0.9523809523809523,
+          "kind": "all_sync_transitions",
+          "rate": 1500750,
+          "sign": 0,
+          "transitions": 6
+        }
+      ],
+      "new_contexts": [],
+      "changed_shared_contexts": []
+    }
+  ],
+  "tool_sha256": "981e953d6ca6776d9234fb23b149d6a9623c7d526d08e70ecd243c2f2dabf0bb",
+  "scope": "Finite failure-context regression comparison only. Inherited mandatory failures are not accepted or waived; no full USB qualification."
+}

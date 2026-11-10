@@ -39,6 +39,9 @@ and SYNC still retain the inherited findings. Its identity is FFFF, and it is
 an unqualified implementation checkpoint. It repairs all 48 truncated-ACK
 followup failures retained by the 1766-byte base image. The complete inventory
 and remaining mandatory defects are in the [receive/EOP record](docs/USB_RX_EOP_2026_11_09.md).
+The [November 10 compact repair transfer](docs/COMPACT_USB_TRANSFER_2026_11_10.md)
+fixes 85 SYNC crossover cases without increasing that size. Its full 67-group
+run still reports five mandatory failing groups; the remaining errors are not waived.
 
 The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
 That region would start at 0x1B00 on this 8 KiB device. A recognized final

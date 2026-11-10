@@ -27,11 +27,23 @@ usb_rx_found_k:
     ldi r28, LOW8(USB_CONTEXT_BASE + CTX_RX_BUFFER)
     rcall usb_return_polynomial
     ldi r22, USB_RX_PAIR_COUNTER_INCREMENT
+#ifdef USB_RX_ACK_TERMINAL
+    /* Observe both pins atomically at the original confirmation time.
+     * Full-K success takes five clocks; the removed two-clock post-preload
+     * delay keeps PIDbit0 fixed. Non-K retries keep the original eight. */
+    in r16, _SFR_IO_ADDR(PIND)
+    andi r16, USB_LINE_MASK
+    cpi r16, (1 << USB_PLUS_BIT)
+    breq usb_rx_sync_confirmed
+    rjmp .+0
+    rjmp usb_rx_wait_for_k
+#else
     sbis _SFR_IO_ADDR(PIND), USB_MINUS_BIT
     rjmp usb_rx_sync_confirmed
     push r0
     pop r0
     rjmp usb_rx_wait_for_k
+#endif
 usb_rx_sync_confirmed:
 usb_rx_delay_complete:
 #ifdef USB_RX_ACK_TERMINAL
@@ -52,7 +64,9 @@ usb_rx_delay_complete:
 #else
     rjmp .+0
 #endif
+#ifndef USB_RX_ACK_TERMINAL
     rjmp .+0
+#endif
     /* Initialize fractional state in the existing delay slot. Length comes
      * from Y at EOF, so no separate byte countdown needs initialization. */
     ldi r21, 0x00

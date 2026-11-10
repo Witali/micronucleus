@@ -7,7 +7,7 @@ is FFFF and no recognized programming profile or hardware image is added.
 The smaller combined base receiver currently measures 1766 bytes.
 
 The measured body is **1934 bytes at 0x1800**, SHA256
-`03393220e9d0b5da9c6c554d0f301b3ac1abe017fe2f00d59a61da7cfca77e4c`.
+`4f0b3ca3c10f2e68d9b730a99f44bf4653b14e11b48870ca178d346aa5541497`.
 That placement reserves 2048 bytes, leaves the application postscript at
 0x17FC..0x17FF and permits 6140 application bytes linked at zero. This remains
 an experimental software checkpoint, not a qualified replacement loader.
@@ -52,6 +52,12 @@ larger source's stack-return trick is unnecessary
 for this ACK-specific fixed tail bound.
 
 ## Validation scope
+
+The [November 10 compact transfer](../../docs/COMPACT_USB_TRANSFER_2026_11_10.md)
+records the size-neutral atomic full-K confirmation: 85 SYNC cases repaired,
+zero new failing contexts across the complete frozen 67-group comparison.
+The full gate still exits 1 with 62/67 passing; 59 SYNC and the four other
+mandatory finding groups remain open.
 
 The current audit records the exact selected-image results and open findings:
 [USB audit](../../docs/USB_AUDIT_2026_11_01.md). New gates cover 2484 positive
