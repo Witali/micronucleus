@@ -29,8 +29,8 @@ without LED at **0x1900**, with twenty-six spare bytes in its 28-page region. It
 the control/Flash code and fixes the directed legal-dribble, short-EOP and
 centered-crossover findings. A newly witnessed asymmetric 210 ns crossover
 still exposes an ordinary receive failure; its strict regression is mandatory.
-Both targets omit permanent EEPROM commands. This control
-image remains 486 bytes above the 1280-byte target.
+Both targets omit permanent EEPROM commands. This control image is 230 bytes
+above the current 1536-byte target.
 
 The [shared ACK receiver](variants/ack_terminal/README.md) is now the default
 software-verification baseline: **1960 bytes at 0x1800**. It uses one middle-bit loop and a shared dense EOP
@@ -45,16 +45,15 @@ Useful PCIF polling replaces old phase padding. The complete body grows only
 12 bytes from the 1934-byte control. The subsequent
 [conditional SYNC qualification](docs/COMPACT_SYNC_QUALIFICATION_2026_11_10.md)
 adds 14 bytes and repairs another 24 SYNC cases with unchanged accepted DATA
-sample clocks. The current complete body remains 680 bytes above the target.
-The complete 69-group gate passes 64 groups; the additional mandatory SE1/SYNC
-regression expands the verifier to 70 groups. It exposes 90 inherited failures
-in both bodies. The two verification stages remain separately pinned, and
-remaining errors are not waived.
+sample clocks. The current complete body is 424 bytes above the target.
+The full 71-group run on this body passes 64 groups and fails seven.
+The [combined crossover audit](docs/COMBINED_CROSSOVER_2026_11_13.md) records
+the expanded receive coverage and the failures that guide further repair.
 
-The optimization target is **1280 bytes** (1 KiB plus 256 bytes), without LED.
-That region would start at 0x1B00 on this 8 KiB device. A recognized final
-profile requires both a fitting image and passing USB admission checks;
-the current audit profile below has not moved to that target placement.
+The optimization target is **1536 bytes** (1.5 KiB) without LED. That region
+starts at `0x1A00` on this 8 KiB device. The four-byte application postscript
+would occupy `0x19FC..0x19FF`, leaving 6652 application bytes. A recognized
+profile requires a fitting image and passing USB admission checks.
 
 The [external software USB review](docs/SOFTWARE_USB_REFERENCES.md) compares
 USBtiny, other V-USB clock/phase engines, RV003USB, vmeiosis and STM8 examples.

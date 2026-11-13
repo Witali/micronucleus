@@ -183,9 +183,9 @@ reachable with a new SOP pending too. The direct-SBIC variant was not admitted;
 this counterexample disproves its proposed invariant rather than establishing
 its full behavior by itself.
 
-## Current 1280-byte target at 0x1B00
+## Historical 1280-byte target at 0x1B00
 
-The current target is 1 KiB plus 256 bytes, or 1280 bytes, without LED.
+The target at this checkpoint was 1 KiB plus 256 bytes, or 1280 bytes, without LED.
 This region starts at 0x1B00. The strict source at 68a4d21 measures 1380 bytes
 there, exceeding the target by 100 bytes; the measurement hash is
 `4982b48f1f8f6efa479d29204cda697b448ca3fcc5fa3c0a05f696307fc4ec50`.

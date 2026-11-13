@@ -89,7 +89,9 @@ witnesses include both permitted single-ended observation states.
 
 The inherited normal DATA/SYNC failures remain mandatory. A full selector run
 must keep reporting them; ACK-only results do not qualify the entire loader.
-The 1280-byte target is still unachieved.
+The 1536-byte target is 424 bytes below the current body. The full 71-group
+baseline passes 64 groups. See the [combined crossover audit](../../docs/COMBINED_CROSSOVER_2026_11_13.md)
+for the seven open groups and the expanded waveform coverage.
 
 The [November 9 full inventory](../../docs/USB_RX_EOP_2026_11_09.md#ack-correctness-baseline)
 records all 65 original groups, the additional fractional-DATA gate, and the

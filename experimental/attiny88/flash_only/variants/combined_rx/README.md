@@ -8,7 +8,7 @@ The body is **1766 bytes at 0x1900**, SHA256
 `9459888f75d3c98fb636cabb910ae401f69f858bc68dfc4d1eb1eb02a89a2f4e`.
 The 1792-byte region contains 28 Flash pages and twenty-six spare bytes. The existing
 four-byte application postscript lies at 0x18FC..0x18FF, leaving 6396 application
-bytes linked at zero. The 1280-byte objective remains 486 bytes away.
+bytes linked at zero. The current 1536-byte objective is 230 bytes away.
 
 This is an unqualified control checkpoint. A historical 54-group run belongs
 to the preceding image; newer mandatory gates expose ordinary receive errors.
