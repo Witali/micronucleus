@@ -21,6 +21,7 @@ earlier 54-group pass as complete qualification.
 | Required behavior | Specification basis | Executable checks |
 | --- | --- | --- |
 | NRZI and eight-symbol low-speed SYNC, including legal SE0 and SE1 crossover observations during acquisition | Sections 7.1.4.1, 7.1.8 and 7.1.10 | `test_usb_rx_waveforms`, `test_ep0_failed_sync`, `test_rx_sync_crossover`, `test_rx_sync_crossover_se1`, `test_tx_digital` |
+| Legal crossover observations during both SYNC and the packet body, including consecutive transitions and fractional receiver entry phases | Sections 7.1.2.1, 7.1.4.1, 7.1.10 and Table 7-10 | `test_rx_combined_crossover` |
 | Stuffed zero after six ones, including before EOP; reject seven consecutive ones | Sections 7.1.9/7.1.9.1 | `test_usb_rx_waveforms`, `test_tx_digital`, `test_rx_terminal_bounds` |
 | Accept only permitted all-one final dribble; reject arbitrary fractional DATA tails | Section 7.1.9.1, Figure 7-33 | `test_data_framing`, `test_usb_rx_waveforms`, `test_rx_eop_matrix`, `test_rx_terminal_crc` |
 | Accept noninteger final-symbol stretching on ACK and DATA with the minimum 670 ns received EOP | Sections 7.1.9.1 and 7.1.13.2 | `test_rx_fractional_dribble`, `test_rx_fractional_data` |
@@ -329,8 +330,8 @@ Digital instruction tests do not measure cable propagation, analog thresholds,
 pin rise/fall times or oscillator drift. Those need physical measurements;
 software tests must not be described as complete electrical USB certification.
 
-The mandatory `test_rx_sync_crossover_se1` expands the current verifier to
-70 groups. It preserves the existing 1080-injection/54-pristine SYNC corpus
+The mandatory `test_rx_sync_crossover_se1` added a 70th group. It preserves
+the existing 1080-injection/54-pristine SYNC corpus
 and receive oracle, and adds independently certified 210 ns both-high
 observations. Its centered placement has matched 300 ns monotonic edges,
 a 2.0 V differential crossing and a 1.3 V single-ended threshold. The exact
@@ -339,6 +340,18 @@ injected cases; all 54 controls pass, and every recorded error/response
 observation matches. These are additional inherited mandatory failures.
 Those supplemental runs are separate from the completed 69-group gates;
 registration alone does not establish a single completed 70-group run.
+
+`test_rx_combined_crossover` adds a 71st group. It applies the certified
+210 ns both-low or both-high observations to all SYNC and packet transitions
+of eligible ACK and two SETUP DATA packets. The fixtures certify differential
+jitter and settling between transitions before applying each voltage witness.
+The exhaustive run adds fractional phases through 40.75 clocks. This checks
+whether a SYNC phase change that improves acquisition also preserves the
+following packet and its response or ACK state. The 1960-byte `e081fcf7`
+body fails 2721 of 6480 injected cases. All 810 pristine controls pass.
+The required receive and timing checks remain strict.
+The [combined-crossover audit](COMBINED_CROSSOVER_2026_11_13.md) records the
+poll configurations and the newly failing contexts that ruled them out.
 
 The [historical receive comparison](HISTORICAL_USB_RX.md) records which defects
 are inherited from official v2.6 / installed compact v3.0 and which appeared

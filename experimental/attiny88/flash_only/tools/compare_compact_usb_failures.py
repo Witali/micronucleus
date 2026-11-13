@@ -15,6 +15,8 @@ GROUPS = (
     ('test_rx_crossover_se1', 'se1-crossover'),
     ('test_rx_crossover_payloads', 'asymmetric-payloads'),
     ('test_rx_sync_crossover', 'sync-crossover'),
+    ('test_rx_sync_crossover_se1', 'sync-se1-crossover'),
+    ('test_rx_combined_crossover', 'combined-crossover'),
     ('test_status_boundary_crossover', 'short-status-crossover'),
 )
 OBSERVATIONS = {'errors', 'response', 'events', 'tx_length', 'pending', 'true_eop', 'early_drive'}
